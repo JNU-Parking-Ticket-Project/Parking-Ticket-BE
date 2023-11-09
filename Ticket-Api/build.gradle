@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.jnu'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.12'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation project(':Ticket-Domain')
+    implementation project(':Ticket-Common')
+    implementation project(':Ticket-Infrastructure')
+
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

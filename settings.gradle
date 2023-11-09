@@ -1,0 +1,6 @@
+rootProject.name = 'ticket'
+
+include 'Ticket-Domain'
+include 'Ticket-Infrastructure'
+include 'Ticket-Api'
+include 'Ticket-Common'
