@@ -32,6 +32,10 @@ out/
 !**/src/test/**/out/
 
 ### NetBeans ###
+/build
+/build/sonar
+/build/spotless
+/build/tmp
 /nbproject/private/
 /nbbuild/
 /dist/

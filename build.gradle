@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '2.7.7'
     id 'com.diffplug.spotless' version '6.11.0'
-    id "org.sonarqube" version "3.5.0.2730"
+    id "org.sonarqube" version "4.4.1.3373"
 }
 
 bootJar.enabled = false
@@ -15,9 +15,10 @@ apply plugin: 'org.sonarqube'
 
 sonarqube {
     properties {
-        property 'sonar.projectKey', 'jnu-parking-ticket-project'
-        property 'sonar.organization', 'JNU-Parking-Ticket-Project'
-        property 'sonar.host.url', 'https://sonarcloud.io'
+        property "sonar.projectKey", "JNU-Parking-Ticket-Project_Parking-Ticket-BE"
+        property "sonar.organization", "jnu-parking-ticket-project"
+        property "sonar.host.url", "https://sonarcloud.io"
+//        property "sonar.gradle.skipCompile", "true"
         property 'sonar.sources', 'src'
         property 'sonar.language', 'java'
         property 'sonar.sourceEncoding', 'UTF-8'
@@ -93,9 +94,9 @@ subprojects {
 
     sonarqube {
         properties {
-            property 'sonar.java.binaries', "${buildDir}/classes"
-            property 'sonar.coverage.jacoco.xmlReportPaths', "${buildDir}/reports/jacoco.xml"
-            property "sonar.gradle.skipCompile", "true"
+            property 'sonar.java.binaries', "${layout.buildDirectory}/classes"
+            property 'sonar.coverage.jacoco.xmlReportPaths', "${layout.buildDirectory}/reports/jacoco/test/jacocoTestReport.xml"
+            property 'sonar.gradle.skipCompile', 'true'
         }
     }
 
