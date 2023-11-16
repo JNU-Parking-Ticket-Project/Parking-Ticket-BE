@@ -1,16 +1,21 @@
 package com.jnu.ticketapi.common.errors.exception;
 
+
+import com.jnu.ticketapi.common.utils.ApiResponse;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
-import pickup_shuttle.pickup._core.utils.ApiUtils;
 
 @Getter
-public class Exception401 extends RuntimeException{
-    public Exception401(String message) { super(message); }
+public class Exception401 extends RuntimeException {
+    public Exception401(String message) {
+        super(message);
+    }
 
-    public ApiUtils.ApiResult<?> body(){ return ApiUtils.error(getMessage(), HttpStatus.UNAUTHORIZED); }
+    public ApiResponse.ApiResult<?> body() {
+        return ApiResponse.error(getMessage(), HttpStatus.UNAUTHORIZED);
+    }
 
-    public HttpStatus status(){
+    public HttpStatus status() {
         return HttpStatus.UNAUTHORIZED;
     }
 }
