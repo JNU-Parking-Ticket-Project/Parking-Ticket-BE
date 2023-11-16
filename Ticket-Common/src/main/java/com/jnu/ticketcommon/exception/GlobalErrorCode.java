@@ -2,6 +2,7 @@ package com.jnu.ticketcommon.exception;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.*;
 
+import com.jnu.ticketcommon.annotation.ExplainError;
 import java.lang.reflect.Field;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
