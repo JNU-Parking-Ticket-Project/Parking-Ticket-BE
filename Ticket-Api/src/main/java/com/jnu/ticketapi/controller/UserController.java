@@ -3,8 +3,8 @@ package com.jnu.ticketapi.controller;
 
 import com.jnu.ticketapi.application.port.UserUseCase;
 import com.jnu.ticketapi.common.utils.ApiResponse;
-import com.jnu.ticketdomain.domains.dto.LoginUserRpDto;
-import com.jnu.ticketdomain.domains.dto.LoginUserRqDto;
+import com.jnu.ticketdomain.domains.dto.LoginUserResponseDto;
+import com.jnu.ticketdomain.domains.dto.LoginUserRequestsDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,8 +18,8 @@ public class UserController {
     private final UserUseCase userUseCase;
 
     @PostMapping("/login")
-    public ApiResponse.ApiResult<LoginUserRpDto> logInUser(
-            @RequestBody LoginUserRqDto loginUserRqDto) {
-        return ApiResponse.success(userUseCase.login(loginUserRqDto));
+    public ApiResponse.ApiResult<LoginUserResponseDto> logInUser(
+            @RequestBody LoginUserRequestsDto loginUserRequestsDto) {
+        return ApiResponse.success(userUseCase.login(loginUserRequestsDto));
     }
 }

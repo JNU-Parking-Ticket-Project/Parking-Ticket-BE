@@ -1,8 +1,8 @@
 package com.jnu.ticketapi.application.port;
 
 
-import com.jnu.ticketdomain.domains.dto.LoginUserRpDto;
-import com.jnu.ticketdomain.domains.dto.LoginUserRqDto;
+import com.jnu.ticketdomain.domains.dto.LoginUserResponseDto;
+import com.jnu.ticketdomain.domains.dto.LoginUserRequestsDto;
 import com.jnu.ticketdomain.domains.user.domian.User;
 import java.util.Optional;
 
@@ -11,5 +11,5 @@ public interface UserUseCase {
 
     User save(User user);
 
-    LoginUserRpDto login(LoginUserRqDto loginUserRqDto);
+    LoginUserResponseDto login(LoginUserRequestsDto loginUserRequestsDto);
 }

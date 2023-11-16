@@ -3,8 +3,8 @@ package com.jnu.ticketapi.application.service;
 
 import com.jnu.ticketapi.application.port.UserUseCase;
 import com.jnu.ticketapi.common.errors.exception.Exception400;
-import com.jnu.ticketdomain.domains.dto.LoginUserRpDto;
-import com.jnu.ticketdomain.domains.dto.LoginUserRqDto;
+import com.jnu.ticketdomain.domains.dto.LoginUserResponseDto;
+import com.jnu.ticketdomain.domains.dto.LoginUserRequestsDto;
 import com.jnu.ticketdomain.domains.user.adapter.UserAdapter;
 import com.jnu.ticketdomain.domains.user.domian.User;
 import java.util.Optional;
@@ -34,17 +34,17 @@ public class UserService implements UserUseCase {
     email로 유저를 찾아서 있으면 비밀번호가 맞는지 확인하고 맞으면 토큰발급
      */
     @Override
-    public LoginUserRpDto login(LoginUserRqDto loginUserRqDto) {
+    public LoginUserResponseDto login(LoginUserRequestsDto loginUserRequestsDto) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-        User user = findByEmail(loginUserRqDto.email()).get();
+        User user = findByEmail(loginUserRequestsDto.email()).get();
         if (user == null) {
-            save(loginUserRqDto.toEntity(loginUserRqDto));
+            save(loginUserRequestsDto.toEntity(loginUserRequestsDto));
             // TODO: 토큰 발급, 리프레쉬 쿠키에 구워주기
-            return LoginUserRpDto.builder().accessToken(null).build();
+            return LoginUserResponseDto.builder().accessToken(null).build();
         }
-        if (!bCryptPasswordEncoder.matches(loginUserRqDto.pwd(), user.getPwd())) {
+        if (!bCryptPasswordEncoder.matches(loginUserRequestsDto.pwd(), user.getPwd())) {
             throw new Exception400("비밀번호가 틀렸습니다.");
         }
-        return LoginUserRpDto.builder().accessToken(null).build();
+        return LoginUserResponseDto.builder().accessToken(null).build();
     }
 }
