@@ -4,9 +4,11 @@ import static com.jnu.ticketcommon.consts.TicketStatic.SWAGGER_DOCS_VERSION;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketcommon.annotation.ApiErrorCodeExample;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import com.jnu.ticketcommon.annotation.DisableSwaggerSecurity;
 import com.jnu.ticketcommon.annotation.ExplainError;
+import com.jnu.ticketcommon.exception.BaseErrorCode;
 import com.jnu.ticketcommon.exception.ErrorReason;
 import com.jnu.ticketcommon.exception.ErrorResponse;
 import com.jnu.ticketcommon.exception.TicketCodeException;
@@ -58,7 +60,7 @@ public class SwaggerConfig {
 
     private Info swaggerInfo() {
         License license = new License();
-        license.setUrl("https://github.com/JNU-Parking-Ticket-Project/Parking-Ticket-BE/branches");
+        license.setUrl("https://github.com/JNU-Parking-Ticket-Project/Parking-Ticket-BE");
         license.setName("전남대-주차권-관리");
 
         return new Info()
@@ -92,6 +94,8 @@ public class SwaggerConfig {
                     handlerMethod.getMethodAnnotation(DisableSwaggerSecurity.class);
             ApiErrorExceptionsExample apiErrorExceptionsExample =
                     handlerMethod.getMethodAnnotation(ApiErrorExceptionsExample.class);
+            ApiErrorCodeExample apiErrorCodeExample =
+                    handlerMethod.getMethodAnnotation(ApiErrorCodeExample.class);
 
             List<String> tags = getTags(handlerMethod);
             // DisableSecurity 어노테이션있을시 스웨거 시큐리티 설정 삭제
@@ -107,8 +111,44 @@ public class SwaggerConfig {
                 generateExceptionResponseExample(operation, apiErrorExceptionsExample.value());
             }
             // ApiErrorCodeExample 어노테이션 단 메소드 적용
+            if (apiErrorCodeExample != null) {
+                generateErrorCodeResponseExample(operation, apiErrorCodeExample.value());
+            }
             return operation;
         };
+    }
+
+    /**
+     * BaseErrorCode 타입의 이넘값들을 문서화 시킵니다. ExplainError 어노테이션으로 부가설명을 붙일수있습니다. 필드들을 가져와서 예시 에러 객체를
+     * 동적으로 생성해서 예시값으로 붙입니다.
+     */
+    private void generateErrorCodeResponseExample(
+            Operation operation, Class<? extends BaseErrorCode> type) {
+        ApiResponses responses = operation.getResponses();
+
+        BaseErrorCode[] errorCodes = type.getEnumConstants();
+
+        Map<Integer, List<ExampleHolder>> statusWithExampleHolders =
+                Arrays.stream(errorCodes)
+                        .map(
+                                baseErrorCode -> {
+                                    try {
+                                        ErrorReason errorReason = baseErrorCode.getErrorReason();
+                                        return ExampleHolder.builder()
+                                                .holder(
+                                                        getSwaggerExample(
+                                                                baseErrorCode.getExplainError(),
+                                                                errorReason))
+                                                .code(errorReason.getStatus())
+                                                .name(errorReason.getCode())
+                                                .build();
+                                    } catch (NoSuchFieldException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                })
+                        .collect(groupingBy(ExampleHolder::getCode));
+
+        addExamplesToResponses(responses, statusWithExampleHolders);
     }
 
     /**
@@ -165,8 +205,9 @@ public class SwaggerConfig {
                     MediaType mediaType = new MediaType();
                     ApiResponse apiResponse = new ApiResponse();
                     v.forEach(
-                            exampleHolder -> mediaType.addExamples(
-                                    exampleHolder.getName(), exampleHolder.getHolder()));
+                            exampleHolder ->
+                                    mediaType.addExamples(
+                                            exampleHolder.getName(), exampleHolder.getHolder()));
                     content.addMediaType("application/json", mediaType);
                     apiResponse.setContent(content);
                     responses.addApiResponse(status.toString(), apiResponse);
