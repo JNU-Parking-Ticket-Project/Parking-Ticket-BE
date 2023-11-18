@@ -11,7 +11,6 @@ public class TicketStatic {
     public static final Integer DEVELOPER_COLUMNS_ID = 1;
     public static final Integer DESIGNER_COLUMNS_ID = 2;
     public static final Integer PLANNER_COLUMNS_ID = 3;
-    //    itemsPerPage
     public static final Integer COUNTS_PER_PAGE = 8;
     public static final Integer ANSWER_COUNTS_PER_PERSON = 33;
 
