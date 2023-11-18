@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import com.jnu.ticketcommon.annotation.DisableSwaggerSecurity;
 import com.jnu.ticketcommon.annotation.ExplainError;
-import com.jnu.ticketcommon.exception.BaseErrorCode;
 import com.jnu.ticketcommon.exception.ErrorReason;
 import com.jnu.ticketcommon.exception.ErrorResponse;
 import com.jnu.ticketcommon.exception.TicketCodeException;
@@ -19,6 +18,9 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.examples.Example;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.security.SecurityScheme.In;
@@ -30,7 +32,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.servlet.ServletContext;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.customizers.OperationCustomizer;
@@ -103,8 +104,7 @@ public class SwaggerConfig {
             }
             // ApiErrorExceptionsExample 어노테이션 단 메소드 적용
             if (apiErrorExceptionsExample != null) {
-                                generateExceptionResponseExample(operation,
-                 apiErrorExceptionsExample.value());
+                generateExceptionResponseExample(operation, apiErrorExceptionsExample.value());
             }
             // ApiErrorCodeExample 어노테이션 단 메소드 적용
             return operation;
@@ -113,13 +113,11 @@ public class SwaggerConfig {
 
     /**
      * SwaggerExampleExceptions 타입의 클래스를 문서화 시킵니다. SwaggerExampleExceptions 타입의 클래스는 필드로
-     * TicketCodeException 타입을 가지며, TicketCodeException 의 errorReason 와,ExplainError 의 설명을
-     * 문서화시킵니다.
+     * TicketCodeException 타입을 가지며, TicketCodeException 의 errorReason 와,ExplainError 의 설명을 문서화시킵니다.
      */
     private void generateExceptionResponseExample(Operation operation, Class<?> type) {
         ApiResponses responses = operation.getResponses();
 
-        // ----------------생성
         Object bean = applicationContext.getBean(type);
         Field[] declaredFields = bean.getClass().getDeclaredFields();
         Map<Integer, List<ExampleHolder>> statusWithExampleHolders =
@@ -141,6 +139,7 @@ public class SwaggerConfig {
                                                 .name(field.getName())
                                                 .build();
                                     } catch (IllegalAccessException e) {
+                                        // 문서가 생성되지 않으면 안되므로 런타임 예외를 던집니다.
                                         throw new RuntimeException(e);
                                     }
                                 })
@@ -157,16 +156,33 @@ public class SwaggerConfig {
         example.setValue(errorResponse);
         return example;
     }
+
+    private void addExamplesToResponses(
+            ApiResponses responses, Map<Integer, List<ExampleHolder>> statusWithExampleHolders) {
+        statusWithExampleHolders.forEach(
+                (status, v) -> {
+                    Content content = new Content();
+                    MediaType mediaType = new MediaType();
+                    ApiResponse apiResponse = new ApiResponse();
+                    v.forEach(
+                            exampleHolder -> {
+                                mediaType.addExamples(
+                                        exampleHolder.getName(), exampleHolder.getHolder());
+                            });
+                    content.addMediaType("application/json", mediaType);
+                    apiResponse.setContent(content);
+                    responses.addApiResponse(status.toString(), apiResponse);
+                });
+    }
+
     private static List<String> getTags(HandlerMethod handlerMethod) {
         List<String> tags = new ArrayList<>();
 
         Tag[] methodTags = handlerMethod.getMethod().getAnnotationsByType(Tag.class);
-        List<String> methodTagStrings =
-                Arrays.stream(methodTags).map(Tag::name).collect(Collectors.toList());
+        List<String> methodTagStrings = Arrays.stream(methodTags).map(Tag::name).toList();
 
         Tag[] classTags = handlerMethod.getClass().getAnnotationsByType(Tag.class);
-        List<String> classTagStrings =
-                Arrays.stream(classTags).map(Tag::name).collect(Collectors.toList());
+        List<String> classTagStrings = Arrays.stream(classTags).map(Tag::name).toList();
         tags.addAll(methodTagStrings);
         tags.addAll(classTagStrings);
         return tags;
