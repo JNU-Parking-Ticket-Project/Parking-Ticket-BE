@@ -10,9 +10,9 @@ import com.jnu.ticketcommon.exception.BaseErrorCode;
 import com.jnu.ticketcommon.exception.ErrorReason;
 import com.jnu.ticketcommon.exception.ErrorResponse;
 import com.jnu.ticketcommon.exception.GlobalErrorCode;
+import com.jnu.ticketcommon.exception.JsonSerializeFailedException;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.exception.TicketDynamicException;
-import java.io.IOException;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -108,7 +108,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         try {
             errorsToJsonString = new ObjectMapper().writeValueAsString(fieldAndErrorMessages);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw JsonSerializeFailedException.EXCEPTION;
         }
         ErrorResponse errorResponse =
                 new ErrorResponse(status.value(), status.name(), errorsToJsonString, url);
@@ -174,8 +174,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    protected ResponseEntity<ErrorResponse> handleException(Exception e, HttpServletRequest request)
-            throws IOException {
+    protected ResponseEntity<ErrorResponse> handleException(
+            Exception e, HttpServletRequest request) {
         String url =
                 UriComponentsBuilder.fromHttpRequest(new ServletServerHttpRequest(request))
                         .build()

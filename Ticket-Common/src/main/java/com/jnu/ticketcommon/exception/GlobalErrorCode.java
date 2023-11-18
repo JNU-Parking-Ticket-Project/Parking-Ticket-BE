@@ -30,11 +30,14 @@ public enum GlobalErrorCode implements BaseErrorCode {
     ACCESS_TOKEN_NOT_EXIST(FORBIDDEN, "AUTH_403_2", "알맞은 accessToken을 넣어주세요."),
     @ExplainError("인증 토큰이 잘못됐을 때 발생하는 오류입니다.")
     INVALID_TOKEN(UNAUTHORIZED, "GLOBAL_401_1", "잘못된 토큰입니다. 재 로그인 해주세요"),
+    @ExplainError("XSS 공격이 의심되는 입력이 감지되었습니다. 정상적인 입력값을 넣어주세요.")
+    XSS_SCRIPT_ATTACK(BAD_REQUEST, "GLOBAL_400_3", "XSS 공격이 의심되는 입력이 감지되었습니다. 정상적인 입력값을 넣어주세요."),
 
     @ExplainError("500번대 알수없는 오류입니다. 서버 관리자에게 문의 주세요")
     INTERNAL_SERVER_ERROR(INTERNAL_SERVER, "GLOBAL_500_1", "서버 오류. 관리자에게 문의 부탁드립니다."),
-    @ExplainError("XSS 공격이 의심되는 입력이 감지되었습니다. 정상적인 입력값을 넣어주세요.")
-    XSS_SCRIPT_ATTACK(BAD_REQUEST, "GLOBAL_400_3", "XSS 공격이 의심되는 입력이 감지되었습니다. 정상적인 입력값을 넣어주세요."),
+
+    @ExplainError("객체 직렬화 오류 / 날짜 포맷이 잘못됐을 때 발생하는 오류입니다. ( ISO 8601 기준으로 요청을 넣어주세요 )")
+    DATE_FORMAT_SERIALIZE_ERROR(BAD_REQUEST, "GLOBAL_500_3", "객체 직렬화 오류"),
 
     OTHER_SERVER_BAD_REQUEST(BAD_REQUEST, "FEIGN_400_1", "Other server bad request"),
     OTHER_SERVER_UNAUTHORIZED(BAD_REQUEST, "FEIGN_400_2", "Other server unauthorized"),
