@@ -17,6 +17,7 @@ import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
@@ -41,7 +42,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    /** Json 날짜 형식 파싱에 대한 에러 핸들러 */
+    /** Json 날짜 형식 파싱에 대한 에러 핸들러 내부에서 변환할 때 발생하는 에러입니다. */
     @ExceptionHandler({InvalidFormatException.class, DateTimeParseException.class})
     public ResponseEntity<ErrorResponse> jsonParseExceptionHandler(
             DateTimeParseException e, HttpServletRequest request) {
@@ -92,6 +93,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             @NotNull WebRequest request) {
 
         List<FieldError> errors = ex.getBindingResult().getFieldErrors();
+        String errorsToJsonString;
+
+        // HttpServletRequest Caching
         ServletWebRequest servletWebRequest = (ServletWebRequest) request;
         String url =
                 UriComponentsBuilder.fromHttpRequest(
@@ -102,9 +106,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 errors.stream()
                         .collect(
                                 Collectors.toMap(
-                                        FieldError::getField, FieldError::getDefaultMessage));
-
-        String errorsToJsonString = null;
+                                        FieldError::getField,
+                                        fieldError ->
+                                                Optional.ofNullable(fieldError.getDefaultMessage())
+                                                        .orElse("메시지 없음")));
         try {
             errorsToJsonString = new ObjectMapper().writeValueAsString(fieldAndErrorMessages);
         } catch (JsonProcessingException e) {
