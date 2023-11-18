@@ -1,10 +1,15 @@
 package com.jnu.ticketapi.config;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.SWAGGER_DOCS_VERSION;
+import static java.util.stream.Collectors.groupingBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import com.jnu.ticketcommon.annotation.DisableSwaggerSecurity;
+import com.jnu.ticketcommon.annotation.ExplainError;
+import com.jnu.ticketcommon.exception.BaseErrorCode;
+import com.jnu.ticketcommon.exception.ErrorReason;
+import com.jnu.ticketcommon.exception.TicketCodeException;
 import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.models.Components;
@@ -12,14 +17,17 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.security.SecurityScheme.In;
 import io.swagger.v3.oas.models.security.SecurityScheme.Type;
 import io.swagger.v3.oas.models.servers.Server;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.servlet.ServletContext;
 import lombok.RequiredArgsConstructor;
@@ -93,14 +101,52 @@ public class SwaggerConfig {
             }
             // ApiErrorExceptionsExample 어노테이션 단 메소드 적용
             if (apiErrorExceptionsExample != null) {
-                //                generateExceptionResponseExample(operation,
-                // apiErrorExceptionsExample.value());
+                                generateExceptionResponseExample(operation,
+                 apiErrorExceptionsExample.value());
             }
             // ApiErrorCodeExample 어노테이션 단 메소드 적용
             return operation;
         };
     }
 
+    /**
+     * SwaggerExampleExceptions 타입의 클래스를 문서화 시킵니다. SwaggerExampleExceptions 타입의 클래스는 필드로
+     * TicketCodeException 타입을 가지며, TicketCodeException 의 errorReason 와,ExplainError 의 설명을
+     * 문서화시킵니다.
+     */
+    private void generateExceptionResponseExample(Operation operation, Class<?> type) {
+        ApiResponses responses = operation.getResponses();
+
+        // ----------------생성
+        Object bean = applicationContext.getBean(type);
+        Field[] declaredFields = bean.getClass().getDeclaredFields();
+        Map<Integer, List<ExampleHolder>> statusWithExampleHolders =
+                Arrays.stream(declaredFields)
+                        .filter(field -> field.getAnnotation(ExplainError.class) != null)
+                        .filter(field -> field.getType() == TicketCodeException.class)
+                        .map(
+                                field -> {
+                                    try {
+                                        TicketCodeException exception =
+                                                (TicketCodeException) field.get(bean);
+                                        ExplainError annotation =
+                                                field.getAnnotation(ExplainError.class);
+                                        String value = annotation.value();
+                                        ErrorReason errorReason = exception.getErrorReason();
+                                        return ExampleHolder.builder()
+                                                .holder(getSwaggerExample(value, errorReason))
+                                                .code(errorReason.getStatus())
+                                                .name(field.getName())
+                                                .build();
+                                    } catch (IllegalAccessException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                })
+                        .collect(groupingBy(ExampleHolder::getCode));
+
+        // -------------------------- 콘텐츠 세팅 코드별로 진행
+        addExamplesToResponses(responses, statusWithExampleHolders);
+    }
     private static List<String> getTags(HandlerMethod handlerMethod) {
         List<String> tags = new ArrayList<>();
 
