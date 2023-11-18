@@ -1,8 +1,8 @@
 package com.jnu.ticketcommon.exception;
 
-public class OtherServerInternalSeverErrorException extends RecruitCodeException {
+public class OtherServerInternalSeverErrorException extends TicketCodeException {
 
-    public static final RecruitCodeException EXCEPTION =
+    public static final TicketCodeException EXCEPTION =
             new OtherServerInternalSeverErrorException();
 
     private OtherServerInternalSeverErrorException() {

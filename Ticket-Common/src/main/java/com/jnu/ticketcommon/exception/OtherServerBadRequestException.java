@@ -1,8 +1,8 @@
 package com.jnu.ticketcommon.exception;
 
-public class OtherServerBadRequestException extends RecruitCodeException {
+public class OtherServerBadRequestException extends TicketCodeException {
 
-    public static final RecruitCodeException EXCEPTION = new OtherServerBadRequestException();
+    public static final TicketCodeException EXCEPTION = new OtherServerBadRequestException();
 
     private OtherServerBadRequestException() {
         super(GlobalErrorCode.OTHER_SERVER_BAD_REQUEST);
