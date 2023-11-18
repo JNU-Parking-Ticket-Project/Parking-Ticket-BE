@@ -9,12 +9,14 @@ import com.jnu.ticketcommon.annotation.DisableSwaggerSecurity;
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.BaseErrorCode;
 import com.jnu.ticketcommon.exception.ErrorReason;
+import com.jnu.ticketcommon.exception.ErrorResponse;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.examples.Example;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.responses.ApiResponses;
@@ -146,6 +148,14 @@ public class SwaggerConfig {
 
         // -------------------------- 콘텐츠 세팅 코드별로 진행
         addExamplesToResponses(responses, statusWithExampleHolders);
+    }
+
+    private Example getSwaggerExample(String value, ErrorReason errorReason) {
+        ErrorResponse errorResponse = new ErrorResponse(errorReason, "요청시 패스정보입니다.");
+        Example example = new Example();
+        example.description(value);
+        example.setValue(errorResponse);
+        return example;
     }
     private static List<String> getTags(HandlerMethod handlerMethod) {
         List<String> tags = new ArrayList<>();
