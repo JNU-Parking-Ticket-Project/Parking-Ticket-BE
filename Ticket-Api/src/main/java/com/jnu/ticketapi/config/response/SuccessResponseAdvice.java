@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.config.response;
 
 
-import band.gosrock.common.dto.SuccessResponse;
+import com.jnu.ticketcommon.dto.SuccessResponse;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
@@ -12,7 +12,7 @@ import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
-@RestControllerAdvice(basePackages = "band.gosrock")
+@RestControllerAdvice(basePackages = "com.jnu")
 public class SuccessResponseAdvice implements ResponseBodyAdvice {
 
     @Override
