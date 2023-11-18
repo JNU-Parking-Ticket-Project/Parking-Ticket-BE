@@ -165,10 +165,8 @@ public class SwaggerConfig {
                     MediaType mediaType = new MediaType();
                     ApiResponse apiResponse = new ApiResponse();
                     v.forEach(
-                            exampleHolder -> {
-                                mediaType.addExamples(
-                                        exampleHolder.getName(), exampleHolder.getHolder());
-                            });
+                            exampleHolder -> mediaType.addExamples(
+                                    exampleHolder.getName(), exampleHolder.getHolder()));
                     content.addMediaType("application/json", mediaType);
                     apiResponse.setContent(content);
                     responses.addApiResponse(status.toString(), apiResponse);
