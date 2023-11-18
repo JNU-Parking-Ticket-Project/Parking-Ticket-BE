@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.config;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.SWAGGER_DOCS_VERSION;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
@@ -9,6 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.security.SecurityScheme.In;
 import io.swagger.v3.oas.models.security.SecurityScheme.Type;
@@ -40,6 +43,18 @@ public class SwaggerConfig {
         String contextPath = servletContext.getContextPath();
         Server server = new Server().url(contextPath);
         return new OpenAPI().servers(List.of(server)).components(authSetting()).info(swaggerInfo());
+    }
+
+    private Info swaggerInfo() {
+        License license = new License();
+        license.setUrl("https://github.com/JNU-Parking-Ticket-Project/Parking-Ticket-BE/branches");
+        license.setName("전남대-주차권-관리");
+
+        return new Info()
+                .version(SWAGGER_DOCS_VERSION)
+                .title("\"전남대 주차권 신청 서버 API문서\"")
+                .description("전남대 주차권 신청 서버의 API 문서 입니다.")
+                .license(license);
     }
 
     private Components authSetting() {

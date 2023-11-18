@@ -22,6 +22,7 @@ public class TicketStatic {
     public static final int NOT_FOUND = 404;
     public static final int TOO_MANY_REQUESTS = 429;
     public static final int INTERNAL_SERVER = 500;
+    public static final String SWAGGER_DOCS_VERSION = "v0.0.1";
     public static final String PASSWORD_SUCCESS_CHANGE_MESSAGE = "성공적으로 비밀번호가 변경됐습니다";
     public static final String[] SwaggerPatterns = {
         "/swagger-resources/**",
