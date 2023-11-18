@@ -1,13 +1,13 @@
-package com.jnu.ticketapi;
+package com.jnu.ticketcommon;
 
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class TicketApiApplication {
+public class TicketCommonApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(TicketApiApplication.class, args);
+        SpringApplication.run(TicketCommonApplication.class, args);
     }
 }
