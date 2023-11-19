@@ -5,7 +5,7 @@ import com.jnu.ticketapi.application.port.UserUseCase;
 import com.jnu.ticketapi.common.errors.exception.Exception400;
 import com.jnu.ticketdomain.domains.dto.LoginUserResponseDto;
 import com.jnu.ticketdomain.domains.dto.LoginUserRequestsDto;
-import com.jnu.ticketdomain.domains.user.adapter.UserAdapter;
+import com.jnu.ticketdomain.domains.user.adapter.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domian.User;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -17,16 +17,16 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class UserService implements UserUseCase {
-    private final UserAdapter userAdapter;
+    private final UserAdaptor userAdaptor;
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return userAdapter.findByEmail(email);
+        return userAdaptor.findByEmail(email);
     }
 
     @Override
     public User save(User user) {
-        return userAdapter.save(user);
+        return userAdaptor.save(user);
     }
 
     /*
