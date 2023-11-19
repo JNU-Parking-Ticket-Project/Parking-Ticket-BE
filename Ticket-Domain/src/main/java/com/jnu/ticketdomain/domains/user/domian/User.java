@@ -2,18 +2,21 @@ package com.jnu.ticketdomain.domains.user.domian;
 
 
 import com.jnu.ticketdomain.domains.BaseTimeEntity;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+
+import javax.persistence.*;
+
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Getter
+@Table(name = "user_tb")
+@DynamicInsert
 public class User extends BaseTimeEntity {
     @Column(name = "pwd", nullable = false)
     private String pwd;
@@ -23,7 +26,7 @@ public class User extends BaseTimeEntity {
     @ColumnDefault("'USER'")
     private UserRole userRole;
 
-    @Column(name = "nickname", nullable = false)
+    @Column(name = "status", nullable = false)
     @ColumnDefault("''")
     private String status;
 

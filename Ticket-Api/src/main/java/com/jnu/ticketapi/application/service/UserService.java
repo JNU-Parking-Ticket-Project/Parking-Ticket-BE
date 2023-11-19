@@ -36,15 +36,19 @@ public class UserService implements UserUseCase {
     @Override
     public LoginUserResponseDto login(LoginUserRequestsDto loginUserRequestsDto) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-        User user = findByEmail(loginUserRequestsDto.email()).get();
-        if (user == null) {
-            save(loginUserRequestsDto.toEntity(loginUserRequestsDto));
-            // TODO: 토큰 발급, 리프레쉬 쿠키에 구워주기
-            return LoginUserResponseDto.builder().accessToken(null).build();
+        Optional<User> userOptional = findByEmail(loginUserRequestsDto.email());
+        if (userOptional.isEmpty()) {
+            User newUser = loginUserRequestsDto.toEntity(loginUserRequestsDto);
+            save(newUser);
+            // TODO: 토큰 발급
+            return LoginUserResponseDto.builder().accessToken("아직 미구현").build();
+        } else {
+            User user = userOptional.get();
+            if (!bCryptPasswordEncoder.matches(loginUserRequestsDto.pwd(), user.getPwd())) {
+                throw new Exception400("비밀번호가 틀렸습니다");
+            }
+            // TODO: 토큰 발급
+            return LoginUserResponseDto.builder().accessToken("아직 미구현").build();
         }
-        if (!bCryptPasswordEncoder.matches(loginUserRequestsDto.pwd(), user.getPwd())) {
-            throw new Exception400("비밀번호가 틀렸습니다.");
-        }
-        return LoginUserResponseDto.builder().accessToken(null).build();
     }
 }
