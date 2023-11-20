@@ -53,4 +53,4 @@ out/
 
 *.xlsx
 
-DuDoong-Domain/src/main/generated/**/*.java
+Ticket-Domain/src/main/generated/**/*.java
