@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class RecruitCodeException extends RuntimeException {
+public class TicketCodeException extends RuntimeException {
     private BaseErrorCode errorCode;
 
     public ErrorReason getErrorReason() {

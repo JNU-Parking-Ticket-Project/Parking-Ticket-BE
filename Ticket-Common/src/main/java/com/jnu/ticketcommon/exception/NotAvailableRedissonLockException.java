@@ -1,8 +1,8 @@
 package com.jnu.ticketcommon.exception;
 
-public class NotAvailableRedissonLockException extends RecruitCodeException {
+public class NotAvailableRedissonLockException extends TicketCodeException {
 
-    public static final RecruitCodeException EXCEPTION = new NotAvailableRedissonLockException();
+    public static final TicketCodeException EXCEPTION = new NotAvailableRedissonLockException();
 
     private NotAvailableRedissonLockException() {
         super(GlobalErrorCode.NOT_AVAILABLE_REDISSON_LOCK);
