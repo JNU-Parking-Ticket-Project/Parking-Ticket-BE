@@ -21,6 +21,9 @@ public enum GlobalErrorCode implements BaseErrorCode {
     @ExplainError("밸리데이션 (검증 과정 수행속 ) 발생하는 오류입니다.")
     ARGUMENT_NOT_VALID_ERROR(BAD_REQUEST, "GLOBAL_400_1", "검증 오류"),
 
+    @ExplainError("사용자가 비밀번호를 잘못 입력했을 때 발생하는 오류입니다.")
+    BAD_CREDENTIAL(BAD_REQUEST, "AUTH_400_1", "비밀번호가 잘못되었습니다."),
+
     @ExplainError("accessToken 만료시 발생하는 오류입니다.")
     TOKEN_EXPIRED(UNAUTHORIZED, "AUTH_401_1", "인증 시간이 만료되었습니다. 인증토큰을 재 발급 해주세요"),
 
