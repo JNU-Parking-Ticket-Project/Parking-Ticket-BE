@@ -30,7 +30,7 @@ public class RedisCacheConfig {
                                 RedisSerializationContext.SerializationPair.fromSerializer(
                                         new GenericJackson2JsonRedisSerializer()))
                         // redis ttl 30분 설정
-                        .entryTtl(Duration.ofMinutes(30L));
+                        .entryTtl(Duration.ofHours(1L));
 
         return RedisCacheManager.RedisCacheManagerBuilder.fromConnectionFactory(cf)
                 .cacheDefaults(redisCacheConfiguration)
