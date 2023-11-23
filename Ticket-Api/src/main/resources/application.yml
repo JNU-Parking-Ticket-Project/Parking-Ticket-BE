@@ -1,13 +1,12 @@
+spring:
+ profiles:
+   active: dev
+
 ---
 spring:
   config:
     activate:
       on-profile: dev
-  profiles:
-    include:
-      - infrastructure
-      - domain
-      - common
   datasource:
     url: ${DEV_DATASOURCE_URL:jdbc:h2:mem:test;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE}
     driverClassName: ${DEV_DATASOURCE_DRIVER:org.h2.Driver}
@@ -35,11 +34,6 @@ spring:
   config:
     activate:
       on-profile: prod
-  profiles:
-    include:
-      - infrastructure
-      - domain
-      - common
   datasource:
     url: ${PROD_DATASOURCE_URL:jdbc:h2:mem:test;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE}
     driverClassName: ${PROD_DATASOURCE_DRIVER:org.h2.Driver}
@@ -52,9 +46,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-  h2:
-    console:
-      enabled: true
   logging:
     level:
       org:
