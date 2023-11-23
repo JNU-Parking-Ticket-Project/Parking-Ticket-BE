@@ -39,8 +39,9 @@ public class User {
     private boolean emailConfirmed;
 
     @Builder
-    public User(String pwd, String email) {
+    public User(String pwd, String email, UserRole userRole) {
         this.pwd = pwd;
         this.email = email;
+        this.userRole = userRole;
     }
 }

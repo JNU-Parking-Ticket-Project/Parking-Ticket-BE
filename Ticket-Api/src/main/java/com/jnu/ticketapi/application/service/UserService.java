@@ -2,9 +2,9 @@ package com.jnu.ticketapi.application.service;
 
 
 import com.jnu.ticketapi.application.port.UserUseCase;
+import com.jnu.ticketapi.dto.TokenDto;
 import com.jnu.ticketcommon.exception.BadCredentialException;
 import com.jnu.ticketdomain.domain.dto.LoginUserRequestDto;
-import com.jnu.ticketdomain.domain.dto.LoginUserResponseDto;
 import com.jnu.ticketdomain.domain.user.User;
 import com.jnu.ticketdomain.persistence.UserPersistenceAdapter;
 import java.util.Optional;
@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class UserService implements UserUseCase {
     private final UserPersistenceAdapter userPersistenceAdapter;
+    private final AuthService authService;
+    private static final String SERVER = "Server";
 
     @Override
     public Optional<User> findByEmail(String email) {
@@ -38,21 +40,20 @@ public class UserService implements UserUseCase {
      */
     @Override
     @Transactional
-    public LoginUserResponseDto login(LoginUserRequestDto loginUserRequestDto) {
+    public TokenDto login(LoginUserRequestDto loginUserRequestDto) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         Optional<User> userOptional = findByEmail(loginUserRequestDto.email());
+        User user;
         if (userOptional.isEmpty()) {
-            User newUser = loginUserRequestDto.toEntity(loginUserRequestDto);
-            save(newUser);
-            // TODO: 토큰 발급
-            return LoginUserResponseDto.builder().accessToken("아직 미구현").build();
+            user = loginUserRequestDto.toEntity(loginUserRequestDto);
+            save(user);
+
         } else {
-            User user = userOptional.get();
+            user = userOptional.get();
             if (!bCryptPasswordEncoder.matches(loginUserRequestDto.pwd(), user.getPwd())) {
                 throw BadCredentialException.EXCEPTION;
             }
-            // TODO: 토큰 발급
-            return LoginUserResponseDto.builder().accessToken("아직 미구현").build();
         }
+        return authService.generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
     }
 }
