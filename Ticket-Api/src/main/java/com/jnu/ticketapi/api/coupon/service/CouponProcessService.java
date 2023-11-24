@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CouponService {
+public class CouponProcessService {
     private final RedissonClient redissonClient;
     private final CouponAdaptor couponAdaptor;
     /** 재고 감소 */
@@ -29,16 +29,21 @@ public class CouponService {
         coupon.validateIssuePeriod();
         // 쿠폰 발급 저장소에 데이터 추가
         RList<String> couponStorage = redissonClient.getList("쿠폰 발급 저장소");
+        log.info("쿠폰 발급 저장소에 데이터 추가" + coupon.toString());
         couponStorage.add(coupon.toString());
     }
     /** Worker method to process coupon issuance from the storage */
-    @Scheduled(fixedDelay = 500)
+    @Scheduled(fixedDelay = 1000)
+    @Transactional
     @Async
     public void processCouponIssuance() {
         RList<String> couponStorage = redissonClient.getList("쿠폰 발급 저장소");
         if (couponStorage.size() > 0) {
             // Pop coupon data from the storage
             String couponData = couponStorage.remove(0);
+            //            LPOP
+
+            log.info(couponData);
             // Process the coupon data / DB insert
             processCouponData(couponData);
         }

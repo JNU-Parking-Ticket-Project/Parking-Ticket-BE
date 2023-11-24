@@ -13,7 +13,7 @@ import org.springframework.core.env.Environment;
 
 @SpringBootApplication
 @RequiredArgsConstructor
-@ComponentScan(basePackages = {"com.jnu.ticket*"})
+@ComponentScan(basePackages = {"com.jnu"})
 @Slf4j
 public class TicketApiApplication implements ApplicationListener<ApplicationReadyEvent> {
     private final Environment environment;
@@ -22,7 +22,7 @@ public class TicketApiApplication implements ApplicationListener<ApplicationRead
 
         SpringApplication.run(TicketApiApplication.class, args);
     }
-
+    // 현재 활성화된 프로파일을 로그로 출력
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info("applicationReady status" + Arrays.toString(environment.getActiveProfiles()));
