@@ -27,10 +27,11 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @ConditionalOnExpression("${ableRedissonLock:true}")
 public class RedissonLockAop {
+
     private final RedissonClient redissonClient;
     private final CallTransactionFactory callTransactionFactory;
 
-    @Around("@annotation(com.jnu.ticketdomain.common.aop.redissonLock.RedissonLock)")
+    @Around("@annotation(RedissonLock)")
     public Object lock(final ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
