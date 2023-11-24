@@ -109,8 +109,6 @@ public class AuthService implements AuthUseCase {
                         .getTime()); // timeout(milliseconds)
     }
 
-    // 권한 이름 가져오기
-
     // AT로부터 principal 추출
     private String getPrincipal(String requestAccessToken) {
         return jwtResolver.getAuthentication(requestAccessToken).getName();
