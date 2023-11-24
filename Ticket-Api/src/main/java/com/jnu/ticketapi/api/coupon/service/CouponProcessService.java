@@ -52,6 +52,7 @@ public class CouponProcessService {
     private void processCouponData(String couponData) {
         Coupon coupon = new ObjectMapper().convertValue(couponData, Coupon.class);
         coupon.decreaseCouponStock();
+        log.info("remain Coupon amount : " + coupon.getCouponStockInfo().getRemainingAmount());
         log.info("쿠폰 발급 완료" + coupon.getCouponCode());
         // coupon human matching table insert
     }

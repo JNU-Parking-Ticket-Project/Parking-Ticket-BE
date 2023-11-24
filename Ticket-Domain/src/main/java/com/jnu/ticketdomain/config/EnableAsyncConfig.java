@@ -15,6 +15,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 public class EnableAsyncConfig implements AsyncConfigurer {
 
     private final CustomAsyncExceptionHandler customAsyncExceptionHandler;
+
     @Override
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -24,6 +25,7 @@ public class EnableAsyncConfig implements AsyncConfigurer {
         executor.initialize();
         return executor;
     }
+
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return customAsyncExceptionHandler;

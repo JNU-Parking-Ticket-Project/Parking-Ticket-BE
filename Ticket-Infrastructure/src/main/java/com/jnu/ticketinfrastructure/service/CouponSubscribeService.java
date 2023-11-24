@@ -3,7 +3,6 @@ package com.jnu.ticketinfrastructure.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketinfrastructure.model.ChatMessage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +23,9 @@ public class CouponSubscribeService implements MessageListener {
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {
-            Map<String, String> map = mapper.readValue(message.toString(), new TypeReference<Map<String, String>>() {});
+            Map<String, String> map =
+                    mapper.readValue(
+                            message.toString(), new TypeReference<Map<String, String>>() {});
             String chatMessage = map.get("message");
             log.info("chatMessage : {}", chatMessage);
             messageList.add(chatMessage);
