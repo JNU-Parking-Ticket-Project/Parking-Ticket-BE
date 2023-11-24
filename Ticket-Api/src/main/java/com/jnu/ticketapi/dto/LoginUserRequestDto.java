@@ -1,4 +1,4 @@
-package com.jnu.ticketdomain.domain.dto;
+package com.jnu.ticketapi.dto;
 
 
 import com.jnu.ticketdomain.domain.user.User;
