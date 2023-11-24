@@ -1,55 +1,22 @@
+# commons
+api:
+  prefix : ${API_PREFIX:/api}
 spring:
- profiles:
-   active: dev
+  profiles:
+    include:
+      - domain
+      - common
+      - infrastructure
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+springdoc:
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+  swagger-ui:
+    tags-sorter: alpha
 
----
-spring:
-  config:
-    activate:
-      on-profile: dev
-  datasource:
-    url: ${DEV_DATASOURCE_URL:jdbc:h2:mem:test;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE}
-    driverClassName: ${DEV_DATASOURCE_DRIVER:org.h2.Driver}
-    username: ${DEV_DATASOURCE_USERNAME:sa}
-    password: ${DEV_DATASOURCE_PASSWORD:}
 
-  jpa:
-    database-platform: ${DEV_JPA_DATABASE-PLATFORM:org.hibernate.dialect.H2Dialect}
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-  h2:
-    console:
-      enabled: true
-  logging:
-    level:
-      org:
-        hibernate:
-          SQL: DEBUG
-jwt:
-  secret: ${DEV_JWT_SECRET:secret}
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-  datasource:
-    url: ${PROD_DATASOURCE_URL:jdbc:h2:mem:test;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE}
-    driverClassName: ${PROD_DATASOURCE_DRIVER:org.h2.Driver}
-    username: ${PROD_DATASOURCE_USERNAME:sa}
-    password: ${PROD_DATASOURCE_PASSWORD:}
-
-  jpa:
-    database-platform: ${PROD_JPA_DATABASE-PLATFORM:org.hibernate.dialect.H2Dialect}
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-  logging:
-    level:
-      org:
-        hibernate:
-          SQL: DEBUG
-jwt:
-  secret: ${PROD_JWT_SECRET:secret}
+server:
+  servlet:
+    context-path: /api
+  forward-headers-strategy: framework
