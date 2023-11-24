@@ -1,18 +1,23 @@
 package com.jnu.ticketapi.application.port;
 
 
+import com.jnu.ticketapi.dto.LoginUserRequestDto;
+import com.jnu.ticketapi.dto.LoginUserResponseDto;
+import com.jnu.ticketapi.dto.ReissueTokenResponseDto;
 import com.jnu.ticketapi.dto.TokenDto;
 
 public interface AuthUseCase {
-    boolean validate(String requestAccessTokenInHeader);
+    boolean validate(String refreshToken);
 
-    TokenDto reissue(String requestAccessTokenInHeader, String requestRefreshToken);
+    ReissueTokenResponseDto reissue(String requestAccessTokenInHeader, String requestRefreshToken);
 
     TokenDto generateToken(String provider, String email, String authorities);
 
     void saveRefreshToken(String provider, String principal, String refreshToken);
 
-    String resolveToken(String requestAccessTokenInHeader);
+    LoginUserResponseDto login(LoginUserRequestDto loginUserRequestDto);
 
     void logout(String requestAccessTokenInHeader);
+
+    String extractToken(String bearerToken);
 }

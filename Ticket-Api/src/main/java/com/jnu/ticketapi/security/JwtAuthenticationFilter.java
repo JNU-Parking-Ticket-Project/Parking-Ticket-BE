@@ -20,8 +20,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
-        String accessToken = jwtResolver.extractToken(request);
+        String bearerToken = request.getHeader("Authorization");
+        String accessToken = jwtResolver.extractToken(bearerToken);
 
         if (accessToken != null && jwtResolver.accessTokenValidateToken(accessToken)) {
             Authentication authentication = jwtResolver.getAuthentication(accessToken);

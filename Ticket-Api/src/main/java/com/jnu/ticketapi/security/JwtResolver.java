@@ -10,7 +10,6 @@ import java.security.Key;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -99,8 +98,7 @@ public class JwtResolver {
         }
     }
 
-    public String extractToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+    public String extractToken(String bearerToken) {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_TYPE)) {
             return bearerToken.substring(7);
         }

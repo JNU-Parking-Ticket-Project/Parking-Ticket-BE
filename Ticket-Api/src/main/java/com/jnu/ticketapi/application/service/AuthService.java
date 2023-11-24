@@ -2,16 +2,22 @@ package com.jnu.ticketapi.application.service;
 
 
 import com.jnu.ticketapi.application.port.AuthUseCase;
+import com.jnu.ticketapi.dto.LoginUserRequestDto;
+import com.jnu.ticketapi.dto.LoginUserResponseDto;
+import com.jnu.ticketapi.dto.ReissueTokenResponseDto;
 import com.jnu.ticketapi.dto.TokenDto;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketapi.security.JwtResolver;
+import com.jnu.ticketcommon.exception.BadCredentialException;
 import com.jnu.ticketcommon.exception.InvalidTokenException;
+import com.jnu.ticketdomain.domain.user.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
 import groovy.util.logging.Slf4j;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,23 +29,24 @@ public class AuthService implements AuthUseCase {
 
     private final JwtResolver jwtResolver;
     private final JwtGenerator jwtGenerator;
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final RedisService redisService;
-
+    private final UserService userService;
     private static final String SERVER = "Server";
 
-    // AT가 만료일자만 초과한 유효한 토큰인지 검사
     @Override
-    public boolean validate(String requestAccessTokenInHeader) {
-        String requestAccessToken = resolveToken(requestAccessTokenInHeader);
-        return jwtResolver.accessTokenValidateToken(requestAccessToken); // true = 재발급
+    public boolean validate( String refreshToken) {
+        if(!jwtResolver.refreshTokenValidateToken(refreshToken)) {
+            throw InvalidTokenException.EXCEPTION; // false = 재로그인
+        } else
+            return true; // true = 재발급
     }
 
     // 토큰 재발급: validate 메서드가 true 반환할 때만 사용 -> AT, RT 재발급
     @Override
     @Transactional
-    public TokenDto reissue(String requestAccessTokenInHeader, String requestRefreshToken) {
-        String requestAccessToken = resolveToken(requestAccessTokenInHeader);
+    public ReissueTokenResponseDto reissue(
+            String requestAccessTokenInHeader, String requestRefreshToken) {
+        String requestAccessToken = extractToken(requestAccessTokenInHeader);
 
         Authentication authentication = jwtResolver.getAuthentication(requestAccessToken);
         String principal = getPrincipal(requestAccessToken);
@@ -61,13 +68,13 @@ public class AuthService implements AuthUseCase {
 
         // 토큰 재발급 및 Redis 업데이트
         redisService.deleteValues("RT(" + SERVER + "):" + principal); // 기존 RT 삭제
-        TokenDto tokenDto =
-                TokenDto.builder()
+        ReissueTokenResponseDto reissueTokenDto =
+                ReissueTokenResponseDto.builder()
                         .accessToken(jwtGenerator.generateAccessToken(principal, authorities))
                         .refreshToken(jwtGenerator.generateRefreshToken(principal, authorities))
                         .build();
-        saveRefreshToken(SERVER, principal, tokenDto.refreshToken());
-        return tokenDto;
+        saveRefreshToken(SERVER, principal, reissueTokenDto.refreshToken());
+        return reissueTokenDto;
     }
 
     // 토큰 발급
@@ -109,20 +116,10 @@ public class AuthService implements AuthUseCase {
         return jwtResolver.getAuthentication(requestAccessToken).getName();
     }
 
-    // "Bearer {AT}"에서 AT 추출
-    @Override
-    public String resolveToken(String requestAccessTokenInHeader) {
-        if (requestAccessTokenInHeader != null
-                && requestAccessTokenInHeader.startsWith("Bearer ")) {
-            return requestAccessTokenInHeader.substring(7);
-        }
-        return null;
-    }
-
     @Override
     @Transactional
     public void logout(String requestAccessTokenInHeader) {
-        String requestAccessToken = resolveToken(requestAccessTokenInHeader);
+        String requestAccessToken = extractToken(requestAccessTokenInHeader);
         String principal = getPrincipal(requestAccessToken);
 
         // Redis에 저장되어 있는 RT 삭제
@@ -130,5 +127,34 @@ public class AuthService implements AuthUseCase {
         if (refreshTokenInRedis != null) {
             redisService.deleteValues("RT(" + SERVER + "):" + principal);
         }
+    }
+
+    @Override
+    @Transactional
+    public LoginUserResponseDto login(LoginUserRequestDto loginUserRequestDto) {
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        Optional<User> userOptional = userService.findByEmail(loginUserRequestDto.email());
+        User user;
+        if (userOptional.isEmpty()) {
+            user = loginUserRequestDto.toEntity(loginUserRequestDto);
+            userService.save(user);
+
+        } else {
+            user = userOptional.get();
+            if (!bCryptPasswordEncoder.matches(loginUserRequestDto.pwd(), user.getPwd())) {
+                throw BadCredentialException.EXCEPTION;
+            }
+        }
+        TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
+        return LoginUserResponseDto.builder()
+                .accessToken(tokenDto.accessToken())
+                .refreshToken(tokenDto.refreshToken())
+                .build();
+    }
+
+    // "Bearer {AT}"에서 AT 추출
+    @Override
+    public String extractToken(String bearerToken) {
+        return jwtResolver.extractToken(bearerToken);
     }
 }
