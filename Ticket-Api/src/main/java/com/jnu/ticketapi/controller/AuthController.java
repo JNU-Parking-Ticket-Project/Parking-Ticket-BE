@@ -6,12 +6,13 @@ import com.jnu.ticketapi.dto.LoginUserRequestDto;
 import com.jnu.ticketapi.dto.LoginUserResponseDto;
 import com.jnu.ticketapi.dto.ReissueTokenRequestDto;
 import com.jnu.ticketapi.dto.ReissueTokenResponseDto;
+import com.jnu.ticketcommon.message.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/v1")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthUseCase authUseCase;
@@ -37,6 +38,6 @@ public class AuthController {
     @PostMapping("/auth/logout")
     public ResponseEntity<String> logOut(@RequestHeader("Authorization") String bearerToken) {
         authUseCase.logout(bearerToken);
-        return ResponseEntity.ok("로그아웃이 완료 되었습니다.");
+        return ResponseEntity.ok(ResponseMessage.SUCCESS_LOGOUT);
     }
 }
