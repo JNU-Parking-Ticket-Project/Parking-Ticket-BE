@@ -41,8 +41,7 @@ public class AuthService implements AuthUseCase {
     // 토큰 재발급: validate 메서드가 true 반환할 때만 사용 -> AT, RT 재발급
     @Override
     @Transactional
-    public ReissueTokenResponseDto reissue(
-            String requestAccessToken, String requestRefreshToken) {
+    public ReissueTokenResponseDto reissue(String requestAccessToken, String requestRefreshToken) {
 
         Authentication authentication = jwtResolver.getAuthentication(requestAccessToken);
         String principal = getPrincipal(requestAccessToken);
