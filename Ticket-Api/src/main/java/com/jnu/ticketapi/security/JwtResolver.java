@@ -15,7 +15,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Slf4j
@@ -34,7 +33,6 @@ public class JwtResolver {
         this.customUserDetailsService = customUserDetailsService;
     }
 
-    @Transactional(readOnly = true)
     public Authentication getAuthentication(String accessToken) {
         // 토큰 복호화
         Claims claims = parseClaims(accessToken);
@@ -48,7 +46,6 @@ public class JwtResolver {
                 customUserDetails, "", customUserDetails.getAuthorities());
     }
 
-    @Transactional(readOnly = true)
     public boolean accessTokenValidateToken(String accessToken) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken);
@@ -67,7 +64,6 @@ public class JwtResolver {
         return false;
     }
 
-    @Transactional(readOnly = true)
     public boolean refreshTokenValidateToken(String refreshToken) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(refreshToken);
@@ -86,7 +82,6 @@ public class JwtResolver {
         return false;
     }
 
-    @Transactional(readOnly = true)
     public Claims parseClaims(String Token) {
         try {
             return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(Token).getBody();
@@ -96,7 +91,6 @@ public class JwtResolver {
         }
     }
 
-    @Transactional(readOnly = true)
     public String extractToken(String bearerToken) {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_TYPE)) {
             return bearerToken.substring(7);
@@ -104,7 +98,6 @@ public class JwtResolver {
         return null;
     }
 
-    @Transactional(readOnly = true)
     public String getAuthorities(Authentication authentication) {
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
