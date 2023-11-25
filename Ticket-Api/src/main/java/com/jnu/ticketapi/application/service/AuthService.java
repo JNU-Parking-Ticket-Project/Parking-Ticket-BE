@@ -12,15 +12,15 @@ import com.jnu.ticketcommon.exception.BadCredentialException;
 import com.jnu.ticketcommon.exception.InvalidTokenException;
 import com.jnu.ticketdomain.domain.user.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
-import groovy.util.logging.Slf4j;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -143,6 +143,8 @@ public class AuthService implements AuthUseCase {
             }
         }
         TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
+        log.info("accessToken : " + tokenDto.accessToken());
+        log.info("refreshToken : " + tokenDto.refreshToken());
         return LoginUserResponseDto.builder()
                 .accessToken(tokenDto.accessToken())
                 .refreshToken(tokenDto.refreshToken())
