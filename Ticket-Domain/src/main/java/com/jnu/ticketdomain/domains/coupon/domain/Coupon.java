@@ -61,13 +61,9 @@ public class Coupon {
             throw NotIssuingCouponPeriodException.EXCEPTION;
         }
     }
+
     public CouponStockInfo getCouponStockInfo(List<Sector> sectors) {
-        Integer total = sectors.stream()
-                .map(Sector::getTotal)
-                .reduce(0, Integer::sum);
-        return CouponStockInfo.builder()
-                .issuedAmount(total)
-                .remainingAmount(total)
-                .build();
+        Integer total = sectors.stream().map(Sector::getTotal).reduce(0, Integer::sum);
+        return CouponStockInfo.builder().issuedAmount(total).remainingAmount(total).build();
     }
 }

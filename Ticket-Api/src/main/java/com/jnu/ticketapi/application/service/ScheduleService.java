@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.application.service;
 
+
 import com.jnu.ticketapi.application.port.ScheduleUseCase;
 import com.jnu.ticketapi.dto.ScheduleRequestDto;
 import com.jnu.ticketapi.dto.ScheduleResponseDto;

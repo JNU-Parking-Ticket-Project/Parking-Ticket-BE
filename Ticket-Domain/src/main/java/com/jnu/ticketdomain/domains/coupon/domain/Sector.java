@@ -48,8 +48,8 @@ public class Sector {
         this.total = sectorCapacity + reserve;
     }
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "coupon_id", nullable = false)
-//    private Coupon coupon;
+    //    @ManyToOne(fetch = FetchType.LAZY)
+    //    @JoinColumn(name = "coupon_id", nullable = false)
+    //    private Coupon coupon;
 
 }

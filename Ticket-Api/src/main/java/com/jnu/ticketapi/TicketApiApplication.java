@@ -18,6 +18,7 @@ import org.springframework.core.env.Environment;
 @Slf4j
 public class TicketApiApplication implements ApplicationListener<ApplicationReadyEvent> {
     private final Environment environment;
+
     @Value("${a.b}")
     private String a;
 
