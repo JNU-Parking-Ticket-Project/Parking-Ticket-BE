@@ -1,12 +1,12 @@
 package com.jnu.ticketapi;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.dto.LoginUserRequestDto;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,11 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-@WithMockUser(username = "test", roles = "USER")
+@Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 // @Sql("classpath:db/teardown.sql")
 @AutoConfigureMockMvc
@@ -37,15 +36,14 @@ class TicketApiApplicationTests {
                 // given
                 LoginUserRequestDto requestsDto =
                         LoginUserRequestDto.builder()
-                                .email("ekrrrdj2@jnu.ac.kr")
+                                .email("ekrrrdj21@jnu.ac.kr")
                                 .pwd("1234")
                                 .build();
                 String requestBody = om.writeValueAsString(requestsDto);
                 // when
                 ResultActions resultActions =
                         mvc.perform(
-                                post("/api/v1/user/login")
-                                        .with(csrf())
+                                post("/v1/auth/login")
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(requestBody));
                 // eye
@@ -54,7 +52,12 @@ class TicketApiApplicationTests {
                 resultActions.andExpectAll(
                         status().isOk(),
                         jsonPath("$.success").value(true),
-                        jsonPath("$.data.accessToken").value("아직 미구현"));
+                        /*
+                        accessToken, refreshToken 요청마다 새로 발급되서 예측을 할 수 없어서 exists()로 검사
+                         */
+                        jsonPath("$.data.accessToken").exists());
+                jsonPath("$.data.refreshToken").exists();
+                log.info("responseBody : " + responseBody);
             }
         }
     }
