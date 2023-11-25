@@ -34,8 +34,8 @@ public enum GlobalErrorCode implements BaseErrorCode {
     ACCESS_TOKEN_NOT_VALID(FORBIDDEN, "AUTH_403_2", "알맞은 accessToken을 넣어주세요."),
     @ExplainError("헤더에 올바른 accessToken을 담지않았을 때 발생하는 오류(형식 불일치 등)")
     REFRESH_TOKEN_NOT_VALID(FORBIDDEN, "AUTH_403_3", "알맞은 refreshToken을 넣어주세요."),
-    @ExplainError("토큰에 권한정보가 없을 때 발생하는 오류입니다.")
-    AUTHORITY_NOT_EXIST(FORBIDDEN, "AUTH_403_4", "토큰에 권한이 없습니다."),
+    @ExplainError("토큰에 이메일 정보가 없을 때 발생하는 오류입니다.")
+    EMAIL_NOT_EXIST(FORBIDDEN, "AUTH_403_4", "토큰에 이메일이 없습니다."),
     @ExplainError("인증은 되었지만 해당 리소스에 접근할 충분한 권한이 없을 때 발생하는 오류입니다.")
     AUTHORITY_NOT_VALID(FORBIDDEN, "AUTH_403_5", "권한이 유효하지 않습니다."),
     @ExplainError("인증 토큰이 잘못됐을 때 발생하는 오류입니다.")
