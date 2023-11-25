@@ -1,7 +1,9 @@
 package com.jnu.ticketdomain.domains.coupon.domain;
 
 
+import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
+import com.jnu.ticketdomain.domains.coupon.event.CouponExpiredEvent;
 import com.jnu.ticketdomain.domains.coupon.exception.NotIssuingCouponPeriodException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +16,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.PostPersist;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -49,6 +52,11 @@ public class Coupon {
         this.dateTimePeriod = dateTimePeriod;
         this.couponStockInfo = getCouponStockInfo(sector);
         this.sector = sector;
+    }
+
+    @PostPersist
+    public void postPersist() {
+        Events.raise(CouponExpiredEvent.from(dateTimePeriod));
     }
 
     public void decreaseCouponStock() {
