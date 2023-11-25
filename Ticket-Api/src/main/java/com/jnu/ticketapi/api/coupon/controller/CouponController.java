@@ -2,9 +2,11 @@ package com.jnu.ticketapi.api.coupon.controller;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.COUPON_SUCCESS_REGISTER_MESSAGE;
 
+import com.jnu.ticketapi.api.coupon.docs.CreateCouponExceptionDocs;
 import com.jnu.ticketapi.api.coupon.model.request.CouponRegisterRequest;
 import com.jnu.ticketapi.api.coupon.service.CouponRegisterUseCase;
 import com.jnu.ticketapi.api.coupon.service.CouponWithDrawUseCase;
+import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
@@ -24,6 +26,7 @@ public class CouponController {
     private final CouponWithDrawUseCase couponWithDrawUseCase;
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
+    @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
     @PostMapping("/coupon")
     public ResponseEntity<String> issueCoupon(
             @RequestBody @Valid CouponRegisterRequest couponRegisterRequest) {

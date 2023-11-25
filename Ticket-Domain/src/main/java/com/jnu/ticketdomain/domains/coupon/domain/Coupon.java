@@ -4,6 +4,7 @@ package com.jnu.ticketdomain.domains.coupon.domain;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.coupon.event.CouponExpiredEvent;
+import com.jnu.ticketdomain.domains.coupon.exception.InvalidPeriodCouponException;
 import com.jnu.ticketdomain.domains.coupon.exception.NotIssuingCouponPeriodException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -65,8 +66,10 @@ public class Coupon {
 
     public void validateIssuePeriod() {
         LocalDateTime nowTime = LocalDateTime.now();
-        if (!dateTimePeriod.contains(nowTime)) {
-            throw NotIssuingCouponPeriodException.EXCEPTION;
+        if (dateTimePeriod.contains(nowTime) ||
+                dateTimePeriod.getEndAt().isBefore(nowTime) ||
+                dateTimePeriod.getEndAt().isBefore(dateTimePeriod.getStartAt())) {
+            throw InvalidPeriodCouponException.EXCEPTION;
         }
     }
 
