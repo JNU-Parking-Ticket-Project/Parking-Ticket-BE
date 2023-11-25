@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.config.response;
 
 
+import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -17,8 +18,10 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             HttpServletResponse response,
             AuthenticationException authException)
             throws IOException, ServletException {
-        // 유효한 자격증명을 제공하지 않고 접근하려 할때 401
+        // 인증되지 않은 사용자가 보호된 리소스에 접근하려고 할 때 401
         response.setCharacterEncoding("utf-8");
-        response.sendError(401, "인가되지 않은 사용자입니다.");
+        response.sendError(
+                GlobalErrorCode.AUTHENTICATION_NOT_VALID.getStatus(),
+                GlobalErrorCode.AUTHENTICATION_NOT_VALID.getReason());
     }
 }

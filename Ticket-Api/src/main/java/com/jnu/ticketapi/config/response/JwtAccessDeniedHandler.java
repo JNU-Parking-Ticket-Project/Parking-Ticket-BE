@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.config.response;
 
 
+import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -17,8 +18,10 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
             HttpServletResponse response,
             AccessDeniedException accessDeniedException)
             throws IOException, ServletException {
-        // 필요한 권한이 없이 접근하려 할때 403
+        // 인증은 되었지만 충분한 권한이 없는 경 403
         response.setCharacterEncoding("utf-8");
-        response.sendError(403, "권한이 없습니다.");
+        response.sendError(
+                GlobalErrorCode.AUTHORITY_NOT_VALID.getStatus(),
+                GlobalErrorCode.AUTHORITY_NOT_VALID.getReason());
     }
 }
