@@ -56,3 +56,4 @@ out/
 DuDoong-Domain/src/main/generated/**/*.java
 
 .env
+dump.rdb
