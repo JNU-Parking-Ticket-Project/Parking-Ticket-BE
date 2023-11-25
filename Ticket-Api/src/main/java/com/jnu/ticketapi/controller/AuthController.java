@@ -32,7 +32,8 @@ public class AuthController {
     }
 
     @PostMapping("/auth/logout")
-    public ResponseEntity<LogoutUserResponseDto> logOut(@RequestHeader("Authorization") String bearerToken) {
+    public ResponseEntity<LogoutUserResponseDto> logOut(
+            @RequestHeader("Authorization") String bearerToken) {
         LogoutUserResponseDto responseDto = authUseCase.logout(bearerToken);
         return ResponseEntity.ok(responseDto);
     }

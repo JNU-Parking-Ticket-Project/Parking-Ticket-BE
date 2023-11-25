@@ -7,6 +7,8 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
+import java.security.Key;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,9 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.security.Key;
-import java.util.stream.Collectors;
-
 @Slf4j
 @Component
 public class JwtResolver {
@@ -27,12 +26,14 @@ public class JwtResolver {
     private static final String BEARER_TYPE = "Bearer";
     private Key key;
 
-    public JwtResolver(@Value("${jwt.secret}") String secretKey,
-                       CustomUserDetailsService customUserDetailsService) {
+    public JwtResolver(
+            @Value("${jwt.secret}") String secretKey,
+            CustomUserDetailsService customUserDetailsService) {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.customUserDetailsService = customUserDetailsService;
     }
+
     @Transactional(readOnly = true)
     public Authentication getAuthentication(String accessToken) {
         // 토큰 복호화
@@ -46,6 +47,7 @@ public class JwtResolver {
         return new UsernamePasswordAuthenticationToken(
                 customUserDetails, "", customUserDetails.getAuthorities());
     }
+
     @Transactional(readOnly = true)
     public boolean accessTokenValidateToken(String accessToken) {
         try {
@@ -64,6 +66,7 @@ public class JwtResolver {
         }
         return false;
     }
+
     @Transactional(readOnly = true)
     public boolean refreshTokenValidateToken(String refreshToken) {
         try {
@@ -82,6 +85,7 @@ public class JwtResolver {
         }
         return false;
     }
+
     @Transactional(readOnly = true)
     public Claims parseClaims(String Token) {
         try {
@@ -91,6 +95,7 @@ public class JwtResolver {
             return e.getClaims();
         }
     }
+
     @Transactional(readOnly = true)
     public String extractToken(String bearerToken) {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_TYPE)) {
@@ -98,6 +103,7 @@ public class JwtResolver {
         }
         return null;
     }
+
     @Transactional(readOnly = true)
     public String getAuthorities(Authentication authentication) {
         return authentication.getAuthorities().stream()
