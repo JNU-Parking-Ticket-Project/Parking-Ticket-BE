@@ -29,7 +29,7 @@ public class CouponProcessService {
         coupon.validateIssuePeriod();
         // 쿠폰 발급 저장소에 데이터 추가
         RList<String> couponStorage = redissonClient.getList("쿠폰 발급 저장소");
-        log.info("쿠폰 발급 저장소에 데이터 추가" + coupon.toString());
+        log.info("쿠폰 발급 저장소에 데이터 추가" + coupon);
         couponStorage.add(coupon.toString());
     }
     /** Worker method to process coupon issuance from the storage */
@@ -42,7 +42,6 @@ public class CouponProcessService {
             // Pop coupon data from the storage
             String couponData = couponStorage.remove(0);
             //            LPOP
-
             log.info(couponData);
             // Process the coupon data / DB insert
             processCouponData(couponData);

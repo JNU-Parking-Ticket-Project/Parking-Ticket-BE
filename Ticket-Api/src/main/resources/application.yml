@@ -14,8 +14,6 @@ springdoc:
   default-consumes-media-type: application/json
   swagger-ui:
     tags-sorter: alpha
-
-
 server:
   servlet:
     context-path: /api

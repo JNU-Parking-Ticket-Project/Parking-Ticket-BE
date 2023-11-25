@@ -13,11 +13,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CouponStockInfo {
 
-    private Long issuedAmount;
-    private Long remainingAmount;
+    private Integer issuedAmount;
+    private Integer remainingAmount;
 
     @Builder
-    public CouponStockInfo(Long issuedAmount, Long remainingAmount) {
+    public CouponStockInfo(Integer issuedAmount, Integer remainingAmount) {
         this.issuedAmount = issuedAmount;
         this.remainingAmount = remainingAmount;
     }
