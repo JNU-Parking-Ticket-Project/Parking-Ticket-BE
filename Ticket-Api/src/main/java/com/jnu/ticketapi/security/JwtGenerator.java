@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtGenerator {
 
-    private static final String USER_EMAIL_CLAIM_KEY = "memberEmail";
-    private static final String USER_ROLE_CLAIM_KEY = "memberRole";
+    private static final String USER_EMAIL_CLAIM_KEY = "Email";
+    private static final String USER_AUTH_CLAM_KEY = "Auth";
 
     private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 30; // 30분
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 7; // 7일
@@ -34,7 +34,7 @@ public class JwtGenerator {
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .claim(USER_EMAIL_CLAIM_KEY, email)
-                .claim(USER_ROLE_CLAIM_KEY, authority)
+                .claim(USER_AUTH_CLAM_KEY, authority)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_EXPIRE_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -46,7 +46,7 @@ public class JwtGenerator {
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .claim(USER_EMAIL_CLAIM_KEY, email)
-                .claim(USER_ROLE_CLAIM_KEY, authority)
+                .claim(USER_AUTH_CLAM_KEY, authority)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_EXPIRE_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
