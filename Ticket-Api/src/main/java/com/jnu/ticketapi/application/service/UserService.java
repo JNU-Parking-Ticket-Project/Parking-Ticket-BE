@@ -13,10 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = true)
 public class UserService implements UserUseCase {
     private final UserPersistenceAdapter userPersistenceAdapter;
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<User> findByEmail(String email) {
         return userPersistenceAdapter.findByEmail(email);
@@ -27,9 +27,4 @@ public class UserService implements UserUseCase {
     public User save(User user) {
         return userPersistenceAdapter.save(user);
     }
-
-    /*
-    email로 유저를 찾아서 없으면 회원가입 후 토큰발급
-    email로 유저를 찾아서 있으면 비밀번호가 맞는지 확인하고 맞으면 토큰발급
-     */
 }

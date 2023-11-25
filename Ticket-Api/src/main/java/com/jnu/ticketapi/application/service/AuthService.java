@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AuthService implements AuthUseCase {
 
@@ -33,12 +32,12 @@ public class AuthService implements AuthUseCase {
     private final UserService userService;
     private static final String SERVER = "Server";
 
+    @Transactional(readOnly = true)
     @Override
-    public boolean validate( String refreshToken) {
-        if(!jwtResolver.refreshTokenValidateToken(refreshToken)) {
+    public boolean validate(String refreshToken) {
+        if (!jwtResolver.refreshTokenValidateToken(refreshToken)) {
             throw InvalidTokenException.EXCEPTION; // false = 재로그인
-        } else
-            return true; // true = 재발급
+        } else return true; // true = 재발급
     }
 
     // 토큰 재발급: validate 메서드가 true 반환할 때만 사용 -> AT, RT 재발급
@@ -151,6 +150,7 @@ public class AuthService implements AuthUseCase {
     }
 
     // "Bearer {AT}"에서 AT 추출
+    @Transactional(readOnly = true)
     @Override
     public String extractToken(String bearerToken) {
         return jwtResolver.extractToken(bearerToken);
