@@ -2,6 +2,8 @@ package com.jnu.ticketapi.api.coupon.service;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketapi.api.coupon.model.request.CouponRegisterRequest;
+import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.common.aop.redissonLock.RedissonLock;
 import com.jnu.ticketdomain.domains.coupon.adaptor.CouponAdaptor;
 import com.jnu.ticketdomain.domains.coupon.domain.Coupon;
@@ -11,15 +13,23 @@ import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@UseCase
 @RequiredArgsConstructor
 @Slf4j
-public class CouponProcessService {
+public class CouponRegisterUseCase {
     private final RedissonClient redissonClient;
     private final CouponAdaptor couponAdaptor;
+
+    @Transactional
+    public void registerCoupon(CouponRegisterRequest couponRegisterRequest) {
+        // 쿠폰 등록 로직 구현
+        Coupon coupon =
+                new Coupon(couponRegisterRequest.dateTimePeriod(), couponRegisterRequest.sectors());
+        coupon.validateIssuePeriod();
+        couponAdaptor.save(coupon);
+    }
     /** 재고 감소 */
     @Transactional
     @RedissonLock(LockName = "재고감소", identifier = "id", paramClassType = Coupon.class)
