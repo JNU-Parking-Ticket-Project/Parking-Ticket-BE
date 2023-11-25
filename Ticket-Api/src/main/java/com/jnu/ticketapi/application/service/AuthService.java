@@ -42,8 +42,7 @@ public class AuthService implements AuthUseCase {
     @Override
     @Transactional
     public ReissueTokenResponseDto reissue(
-            String requestAccessTokenInHeader, String requestRefreshToken) {
-        String requestAccessToken = extractToken(requestAccessTokenInHeader);
+            String requestAccessToken, String requestRefreshToken) {
 
         Authentication authentication = jwtResolver.getAuthentication(requestAccessToken);
         String principal = getPrincipal(requestAccessToken);
