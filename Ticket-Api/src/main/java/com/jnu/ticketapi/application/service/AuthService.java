@@ -2,14 +2,12 @@ package com.jnu.ticketapi.application.service;
 
 
 import com.jnu.ticketapi.application.port.AuthUseCase;
-import com.jnu.ticketapi.dto.LoginUserRequestDto;
-import com.jnu.ticketapi.dto.LoginUserResponseDto;
-import com.jnu.ticketapi.dto.ReissueTokenResponseDto;
-import com.jnu.ticketapi.dto.TokenDto;
+import com.jnu.ticketapi.dto.*;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketapi.security.JwtResolver;
 import com.jnu.ticketcommon.exception.BadCredentialException;
 import com.jnu.ticketcommon.exception.InvalidTokenException;
+import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domain.user.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
 import lombok.RequiredArgsConstructor;
@@ -115,7 +113,7 @@ public class AuthService implements AuthUseCase {
 
     @Override
     @Transactional
-    public void logout(String requestAccessTokenInHeader) {
+    public LogoutUserResponseDto logout(String requestAccessTokenInHeader) {
         String requestAccessToken = extractToken(requestAccessTokenInHeader);
         String principal = getPrincipal(requestAccessToken);
 
@@ -124,6 +122,7 @@ public class AuthService implements AuthUseCase {
         if (refreshTokenInRedis != null) {
             redisService.deleteValues("RT(" + SERVER + "):" + principal);
         }
+        return LogoutUserResponseDto.builder().message(ResponseMessage.SUCCESS_LOGOUT).build();
     }
 
     @Override

@@ -1,10 +1,7 @@
 package com.jnu.ticketapi.application.port;
 
 
-import com.jnu.ticketapi.dto.LoginUserRequestDto;
-import com.jnu.ticketapi.dto.LoginUserResponseDto;
-import com.jnu.ticketapi.dto.ReissueTokenResponseDto;
-import com.jnu.ticketapi.dto.TokenDto;
+import com.jnu.ticketapi.dto.*;
 
 public interface AuthUseCase {
     boolean validate(String refreshToken);
@@ -17,7 +14,7 @@ public interface AuthUseCase {
 
     LoginUserResponseDto login(LoginUserRequestDto loginUserRequestDto);
 
-    void logout(String requestAccessTokenInHeader);
+    LogoutUserResponseDto logout(String requestAccessTokenInHeader);
 
     String extractToken(String bearerToken);
 }

@@ -2,11 +2,7 @@ package com.jnu.ticketapi.controller;
 
 
 import com.jnu.ticketapi.application.port.AuthUseCase;
-import com.jnu.ticketapi.dto.LoginUserRequestDto;
-import com.jnu.ticketapi.dto.LoginUserResponseDto;
-import com.jnu.ticketapi.dto.ReissueTokenRequestDto;
-import com.jnu.ticketapi.dto.ReissueTokenResponseDto;
-import com.jnu.ticketcommon.message.ResponseMessage;
+import com.jnu.ticketapi.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,8 +32,8 @@ public class AuthController {
     }
 
     @PostMapping("/auth/logout")
-    public ResponseEntity<String> logOut(@RequestHeader("Authorization") String bearerToken) {
-        authUseCase.logout(bearerToken);
-        return ResponseEntity.ok(ResponseMessage.SUCCESS_LOGOUT);
+    public ResponseEntity<LogoutUserResponseDto> logOut(@RequestHeader("Authorization") String bearerToken) {
+        LogoutUserResponseDto responseDto = authUseCase.logout(bearerToken);
+        return ResponseEntity.ok(responseDto);
     }
 }
