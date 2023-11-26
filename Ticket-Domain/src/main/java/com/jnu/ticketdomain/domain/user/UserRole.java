@@ -10,9 +10,9 @@ public enum UserRole {
     COUNCIL - 학생회
     USER - 사용자
     */
-    ADMIN("ROLE_ADMIN"),
-    COUNCIL("ROLE_COUNCIL"),
-    USER("ROLE_USER");
+    ADMIN("ADMIN"),
+    COUNCIL("COUNCIL"),
+    USER("USER");
 
     UserRole(String value) {
         this.value = value;

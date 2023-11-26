@@ -12,11 +12,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class CustomUserDetails implements UserDetails {
 
     private final User user;
+    private final static String PREFIX = "ROLE_";
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(() -> user.getUserRole().getValue());
+        authorities.add(() -> PREFIX + user.getUserRole().getValue());
         return authorities;
     }
 
