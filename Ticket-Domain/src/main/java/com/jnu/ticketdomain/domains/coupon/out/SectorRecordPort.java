@@ -7,9 +7,11 @@ import java.util.List;
 
 @Port
 public interface SectorRecordPort {
-    public Sector save(Sector coupon);
+    Sector save(Sector coupon);
 
     void saveAll(List<Sector> sectorList);
 
     void updateAll(List<Sector> prevSector, List<Sector> sectorList);
+
+    void delete(Sector sector);
 }

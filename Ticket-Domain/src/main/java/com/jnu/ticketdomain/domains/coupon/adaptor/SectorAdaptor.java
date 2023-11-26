@@ -40,4 +40,9 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
     public void updateAll(List<Sector> prevSector, List<Sector> sectorList) {
         couponRepository.saveAll(prevSector);
     }
+
+    @Override
+    public void delete(Sector sector) {
+        couponRepository.delete(sector);
+    }
 }

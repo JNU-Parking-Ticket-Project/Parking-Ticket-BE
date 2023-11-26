@@ -33,6 +33,7 @@ public class SectorRegisterUseCase {
                         .toList();
         sectorRecordPort.saveAll(sectorList);
     }
+
     @Transactional
     public void update(List<SectorRegisterRequest> sectors) {
         // to Sector List

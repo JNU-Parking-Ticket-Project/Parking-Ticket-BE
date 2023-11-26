@@ -64,7 +64,8 @@ public class Sector {
         checkCouponLeft();
         this.remainingAmount = remainingAmount - 1;
     }
-    public void update(Sector sector){
+
+    public void update(Sector sector) {
         this.sectorNumber = sector.sectorNumber;
         this.name = sector.name;
         this.sectorCapacity = sector.sectorCapacity;
