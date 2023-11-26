@@ -10,4 +10,6 @@ public interface SectorRecordPort {
     public Sector save(Sector coupon);
 
     void saveAll(List<Sector> sectorList);
+
+    void updateAll(List<Sector> prevSector, List<Sector> sectorList);
 }

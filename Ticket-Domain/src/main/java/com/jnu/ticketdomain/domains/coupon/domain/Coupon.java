@@ -38,12 +38,11 @@ public class Coupon {
     @Column(name = "coupon_code")
     private String couponCode;
 
+    @Embedded private DateTimePeriod dateTimePeriod;
+
     @Enumerated(EnumType.STRING)
     private CouponStatus couponStatus;
     // 쿠폰 발행 가능 기간
-    @Embedded private DateTimePeriod dateTimePeriod;
-
-    @Embedded private CouponStockInfo couponStockInfo;
 
     // 구간별 정보
     @OneToMany
@@ -54,7 +53,6 @@ public class Coupon {
     public Coupon(DateTimePeriod dateTimePeriod, List<Sector> sector) {
         this.couponCode = UUID.randomUUID().toString().substring(0, 6);
         this.dateTimePeriod = dateTimePeriod;
-        this.couponStockInfo = getCouponStockInfo(sector);
         this.sector = sector;
         this.couponStatus = CouponStatus.READY;
     }
@@ -64,10 +62,6 @@ public class Coupon {
         Events.raise(CouponExpiredEvent.from(dateTimePeriod));
     }
 
-    public void decreaseCouponStock() {
-        couponStockInfo.decreaseCouponStock();
-    }
-
     public void validateIssuePeriod() {
         LocalDateTime nowTime = LocalDateTime.now();
         if (dateTimePeriod.contains(nowTime)
@@ -75,10 +69,5 @@ public class Coupon {
                 || dateTimePeriod.getEndAt().isBefore(dateTimePeriod.getStartAt())) {
             throw InvalidPeriodCouponException.EXCEPTION;
         }
-    }
-
-    public CouponStockInfo getCouponStockInfo(List<Sector> sectors) {
-        Integer total = sectors.stream().map(Sector::getTotal).reduce(0, Integer::sum);
-        return CouponStockInfo.builder().issuedAmount(total).remainingAmount(total).build();
     }
 }

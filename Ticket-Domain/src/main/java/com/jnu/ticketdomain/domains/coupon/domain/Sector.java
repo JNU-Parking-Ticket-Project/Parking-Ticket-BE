@@ -1,6 +1,7 @@
 package com.jnu.ticketdomain.domains.coupon.domain;
 
 
+import com.jnu.ticketdomain.domains.coupon.exception.NoCouponStockLeftException;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -37,8 +38,11 @@ public class Sector {
     private Integer reserve;
 
     // 총 정원
-    @Column(name = "total")
-    private Integer total;
+    @Column(name = "issue_amount", nullable = false)
+    private Integer issueAmount;
+
+    @Column(name = "remaining_amount")
+    private Integer remainingAmount;
 
     @Builder
     public Sector(String sectorNumber, String name, Integer sectorCapacity, Integer reserve) {
@@ -46,11 +50,26 @@ public class Sector {
         this.name = name;
         this.sectorCapacity = sectorCapacity;
         this.reserve = reserve;
-        this.total = sectorCapacity + reserve;
+        this.issueAmount = sectorCapacity + reserve;
+        this.remainingAmount = issueAmount;
     }
 
-    //    @ManyToOne(fetch = FetchType.LAZY)
-    //    @JoinColumn(name = "coupon_id", nullable = false)
-    //    private Coupon coupon;
+    public void checkCouponLeft() {
+        if (remainingAmount < 1) { // 재고 없을 경우 에러 처리
+            throw NoCouponStockLeftException.EXCEPTION;
+        }
+    }
 
+    public void decreaseCouponStock() {
+        checkCouponLeft();
+        this.remainingAmount = remainingAmount - 1;
+    }
+    public void update(Sector sector){
+        this.sectorNumber = sector.sectorNumber;
+        this.name = sector.name;
+        this.sectorCapacity = sector.sectorCapacity;
+        this.reserve = sector.reserve;
+        this.issueAmount = sector.sectorCapacity + sector.reserve;
+        this.remainingAmount = issueAmount;
+    }
 }

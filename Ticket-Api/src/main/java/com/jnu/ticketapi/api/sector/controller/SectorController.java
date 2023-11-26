@@ -12,6 +12,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,6 +26,13 @@ public class SectorController {
     @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
     @PostMapping("/sector")
     public ResponseEntity<String> setCoupon(@RequestBody List<SectorRegisterRequest> sectors) {
+        sectorRegisterUseCase.execute(sectors);
+        return ResponseEntity.ok(SECTOR_SUCCESS_REGISTER_MESSAGE);
+    }
+    @Operation(summary = "구간 수정", description = "구간 삭제(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
+    @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
+    @PutMapping("/sector")
+    public ResponseEntity<String> updateCoupon(@RequestBody List<SectorRegisterRequest> sectors) {
         sectorRegisterUseCase.execute(sectors);
         return ResponseEntity.ok(SECTOR_SUCCESS_REGISTER_MESSAGE);
     }

@@ -53,8 +53,7 @@ public class CouponWithDrawUseCase {
 
     private void processCouponData(String couponData) {
         Coupon coupon = new ObjectMapper().convertValue(couponData, Coupon.class);
-        coupon.decreaseCouponStock();
-        log.info("remain Coupon amount : " + coupon.getCouponStockInfo().getRemainingAmount());
+        // TODO 잔여량
         log.info("쿠폰 발급 완료" + coupon.getCouponCode());
     }
 }
