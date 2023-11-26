@@ -1,3 +1,6 @@
 package com.jnu.ticketapi.dto;
 
-public record ReissueTokenRequestDto(String accessToken, String refreshToken) {}
+import lombok.Builder;
+
+@Builder
+public record ReissueTokenRequestDto(String refreshToken) {}
