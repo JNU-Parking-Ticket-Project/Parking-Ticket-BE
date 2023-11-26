@@ -105,7 +105,7 @@ public class AuthService implements AuthUseCase {
     }
 
     // AT로부터 principal 추출
-    private String getPrincipal(String requestAccessToken) {
+    public String getPrincipal(String requestAccessToken) {
         return jwtResolver.getAuthentication(requestAccessToken).getName();
     }
 
