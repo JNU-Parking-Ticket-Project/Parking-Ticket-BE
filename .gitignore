@@ -53,4 +53,7 @@ out/
 
 *.xlsx
 
-Ticket-Domain/src/main/generated/**/*.java
+DuDoong-Domain/src/main/generated/**/*.java
+
+.env
+dump.rdb

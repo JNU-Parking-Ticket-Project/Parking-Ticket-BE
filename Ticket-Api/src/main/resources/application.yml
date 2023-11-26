@@ -1,20 +1,48 @@
 # commons
 api:
-  prefix : ${API_PREFIX:/api}
+  prefix: ${API_PREFIX:/api}
+
 spring:
   profiles:
+    active: dev
     include:
       - domain
       - common
       - infrastructure
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+  datasource:
+    url: ${DEV_DATASOURCE_URL:jdbc:h2:mem:test}
+    driverClassName: ${DEV_DATASOURCE_DRIVER:org.h2.Driver}
+    username: ${DEV_DATASOURCE_USERNAME:sa}
+    password: ${DEV_DATASOURCE_PASSWORD:}
+
+  jpa:
+    database-platform: ${DEV_JPA_DATABASE-PLATFORM:org.hibernate.dialect.H2Dialect}
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  h2:
+    console:
+      enabled: true
+
+  logging:
+    level:
+      org:
+        hibernate:
+          SQL: DEBUG
+
 springdoc:
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
   swagger-ui:
     tags-sorter: alpha
 
+jwt:
+  secret: ${DEV_JWT_SECRET:}
 
 server:
   servlet:
