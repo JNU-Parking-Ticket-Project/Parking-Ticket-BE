@@ -27,6 +27,7 @@ public class TicketStatic {
     public static final String REDIS_CHANNEL_NAME = "쿠폰발급";
     public static final String PASSWORD_SUCCESS_CHANGE_MESSAGE = "성공적으로 비밀번호가 변경됐습니다";
     public static final String COUPON_SUCCESS_REGISTER_MESSAGE = "성공적으로 쿠폰이 등록됐습니다";
+    public static final String SECTOR_SUCCESS_REGISTER_MESSAGE = "성공적으로 구간이 등록됐습니다";
     public static final String[] SwaggerPatterns = {
         "/swagger-resources/**",
         "/swagger-ui/**",

@@ -31,6 +31,7 @@ public class Sector {
     // 구간별 정원
     @Column(name = "sector_capacity", nullable = false)
     private Integer sectorCapacity;
+
     // 예비 정원
     @Column(name = "reserve", nullable = false)
     private Integer reserve;

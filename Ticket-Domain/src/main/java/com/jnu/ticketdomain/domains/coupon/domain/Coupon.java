@@ -5,13 +5,14 @@ import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.coupon.event.CouponExpiredEvent;
 import com.jnu.ticketdomain.domains.coupon.exception.InvalidPeriodCouponException;
-import com.jnu.ticketdomain.domains.coupon.exception.NotIssuingCouponPeriodException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -37,6 +38,8 @@ public class Coupon {
     @Column(name = "coupon_code")
     private String couponCode;
 
+    @Enumerated(EnumType.STRING)
+    private CouponStatus couponStatus;
     // 쿠폰 발행 가능 기간
     @Embedded private DateTimePeriod dateTimePeriod;
 
@@ -53,6 +56,7 @@ public class Coupon {
         this.dateTimePeriod = dateTimePeriod;
         this.couponStockInfo = getCouponStockInfo(sector);
         this.sector = sector;
+        this.couponStatus = CouponStatus.READY;
     }
 
     @PostPersist
@@ -66,9 +70,9 @@ public class Coupon {
 
     public void validateIssuePeriod() {
         LocalDateTime nowTime = LocalDateTime.now();
-        if (dateTimePeriod.contains(nowTime) ||
-                dateTimePeriod.getEndAt().isBefore(nowTime) ||
-                dateTimePeriod.getEndAt().isBefore(dateTimePeriod.getStartAt())) {
+        if (dateTimePeriod.contains(nowTime)
+                || dateTimePeriod.getEndAt().isBefore(nowTime)
+                || dateTimePeriod.getEndAt().isBefore(dateTimePeriod.getStartAt())) {
             throw InvalidPeriodCouponException.EXCEPTION;
         }
     }

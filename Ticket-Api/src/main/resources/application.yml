@@ -1,6 +1,6 @@
 # commons
 api:
-  prefix : ${API_PREFIX:/api}
+  prefix : ${API_PREFIX:/api/v1}
 spring:
   profiles:
     include:

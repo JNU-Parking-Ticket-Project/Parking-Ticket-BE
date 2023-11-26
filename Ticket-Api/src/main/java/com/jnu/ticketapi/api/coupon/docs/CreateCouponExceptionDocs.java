@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.coupon.docs;
 
+
 import com.jnu.ticketcommon.annotation.ExceptionDoc;
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.TicketCodeException;

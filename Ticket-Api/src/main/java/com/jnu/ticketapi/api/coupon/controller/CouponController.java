@@ -14,11 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1")
 @Tag(name = "2. [쿠폰]")
 @RequiredArgsConstructor
 public class CouponController {
@@ -28,9 +26,17 @@ public class CouponController {
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
     @PostMapping("/coupon")
-    public ResponseEntity<String> issueCoupon(
+    public ResponseEntity<String> setCoupon(
             @RequestBody @Valid CouponRegisterRequest couponRegisterRequest) {
         couponRegisterUseCase.registerCoupon(couponRegisterRequest);
+        return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
+    }
+
+    @Operation(summary = "주차권 신청", description = "주차권 신청(주차권 신청시 잔고 감소)")
+    @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
+    @PostMapping("/coupon/applicant")
+    public ResponseEntity<String> issueCoupon() {
+        couponWithDrawUseCase.issueCoupon();
         return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
     }
 }

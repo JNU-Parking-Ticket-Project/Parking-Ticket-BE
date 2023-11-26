@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CouponStockInfo {
-
     private Integer issuedAmount;
     private Integer remainingAmount;
 
