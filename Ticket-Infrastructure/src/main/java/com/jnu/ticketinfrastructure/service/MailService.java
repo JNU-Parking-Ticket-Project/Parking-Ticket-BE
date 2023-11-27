@@ -21,8 +21,8 @@ import software.amazon.awssdk.services.ses.model.*;
 public class MailService{
 
 
-    @Value("${mail-address}")
-    private final String mailAddress;
+    @Value("${aws.ses.mail-address}")
+    private String mailAddress;
     private final SesAsyncClient sesAsyncClient;
     private final SpringTemplateEngine springTemplateEngine;
 
