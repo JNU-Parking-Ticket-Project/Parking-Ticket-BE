@@ -2,8 +2,8 @@ package com.jnu.ticketinfrastructure.config.aws;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
-import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceAsync;
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceAsyncClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,12 +28,12 @@ public class AwsSesConfig {
     private String region;
 
     @Bean
-    public AmazonSimpleEmailService amazonSimpleEmailService() {
+    public AmazonSimpleEmailServiceAsync amazonSimpleEmailService() {
         final BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(accessKey, secretKey);
         final AWSStaticCredentialsProvider awsStaticCredentialsProvider = new AWSStaticCredentialsProvider(
                 basicAWSCredentials);
 
-        return AmazonSimpleEmailServiceClientBuilder.standard()
+        return AmazonSimpleEmailServiceAsyncClientBuilder.standard()
                 .withCredentials(awsStaticCredentialsProvider)
                 .withRegion(region)
                 .build();
