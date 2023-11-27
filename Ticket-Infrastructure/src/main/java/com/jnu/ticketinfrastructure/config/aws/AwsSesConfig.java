@@ -1,12 +1,11 @@
 package com.jnu.ticketinfrastructure.config.aws;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceAsync;
-import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceAsyncClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ses.SesAsyncClient;
 
 /**
  * AWS SES 연결하기 위한 설정 파일
@@ -28,14 +27,11 @@ public class AwsSesConfig {
     private String region;
 
     @Bean
-    public AmazonSimpleEmailServiceAsync amazonSimpleEmailService() {
-        final BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(accessKey, secretKey);
-        final AWSStaticCredentialsProvider awsStaticCredentialsProvider = new AWSStaticCredentialsProvider(
-                basicAWSCredentials);
+    public SesAsyncClient sesAsyncClient() {
 
-        return AmazonSimpleEmailServiceAsyncClientBuilder.standard()
-                .withCredentials(awsStaticCredentialsProvider)
-                .withRegion(region)
+        return SesAsyncClient.builder()
+                .credentialsProvider(() -> AwsBasicCredentials.create(accessKey, secretKey))
+                .region(Region.of(region))
                 .build();
     }
 
