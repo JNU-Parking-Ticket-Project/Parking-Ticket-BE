@@ -44,7 +44,7 @@ public class SectorController {
 
     @Operation(summary = "구간 삭제", description = "구간 삭제(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
     @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
-    @DeleteMapping("/sector/${sector-id}")
+    @DeleteMapping("/sector/{sector-id}")
     public ResponseEntity<String> deleteCoupon(@PathVariable("sector-id") Long sectorId) {
         sectorDeleteUseCase.execute(sectorId);
         return ResponseEntity.ok(SECTOR_SUCCESS_DELETE_MESSAGE);
