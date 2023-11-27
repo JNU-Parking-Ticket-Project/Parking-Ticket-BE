@@ -6,6 +6,8 @@ import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.common.aop.redissonLock.RedissonLock;
 import com.jnu.ticketdomain.domains.coupon.adaptor.CouponAdaptor;
 import com.jnu.ticketdomain.domains.coupon.domain.Coupon;
+import com.jnu.ticketdomain.domains.coupon.domain.Sector;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RList;
@@ -29,6 +31,7 @@ public class CouponWithDrawUseCase {
         coupon.validateIssuePeriod();
         // 쿠폰 발급 저장소에 데이터 추가
         RList<String> couponStorage = redissonClient.getList("쿠폰 발급 저장소");
+        // TODO 구간별 파라미터 추가되면 특정 구감만 재고 감소를 하도록 수정
         log.info("쿠폰 발급 저장소에 데이터 추가" + coupon);
         couponStorage.add(coupon.toString());
     }
@@ -41,7 +44,7 @@ public class CouponWithDrawUseCase {
         if (couponStorage.size() > 0) {
             // Pop coupon data from the storage
             String couponData = couponStorage.remove(0);
-            //            LPOP
+            // LPOP
             log.info(couponData);
             // Process the coupon data / DB insert
             processCouponData(couponData);
@@ -54,6 +57,8 @@ public class CouponWithDrawUseCase {
     private void processCouponData(String couponData) {
         Coupon coupon = new ObjectMapper().convertValue(couponData, Coupon.class);
         // TODO 잔여량
+        List<Sector> sector = coupon.getSector();
+        sector.forEach(Sector::decreaseCouponStock);
         log.info("쿠폰 발급 완료" + coupon.getCouponCode());
     }
 }
