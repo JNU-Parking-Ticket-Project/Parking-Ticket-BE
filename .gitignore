@@ -45,7 +45,7 @@ out/
 ### VS Code ###
 .vscode/
 
-
+.env
 ### sonarlint ###
 */*.iml
 **/*.iml
