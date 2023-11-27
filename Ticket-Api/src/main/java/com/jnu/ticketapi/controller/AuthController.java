@@ -3,10 +3,11 @@ package com.jnu.ticketapi.controller;
 
 import com.jnu.ticketapi.application.port.AuthUseCase;
 import com.jnu.ticketapi.dto.*;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+@SecurityRequirement(name = "access-token")
 @RestController
 @RequestMapping("/v1")
 @RequiredArgsConstructor

@@ -19,7 +19,6 @@ public class TicketApiApplication implements ApplicationListener<ApplicationRead
     private final Environment environment;
 
     public static void main(String[] args) {
-
         SpringApplication.run(TicketApiApplication.class, args);
     }
     // 현재 활성화된 프로파일을 로그로 출력
