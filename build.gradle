@@ -12,7 +12,6 @@ repositories {
 }
 
 apply plugin: 'org.sonarqube'
-
 sonarqube {
     properties {
         property "sonar.projectKey", "JNU-Parking-Ticket-Project_Parking-Ticket-BE"
