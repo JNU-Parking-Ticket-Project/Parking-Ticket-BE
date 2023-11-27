@@ -5,7 +5,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/gradle/wrapper/gradle-wrapper.jar
 **/.gradle
-!**/build
+**/build
 build
 !**/src/main/**/build/
 !**/src/test/**/build/
@@ -33,6 +33,7 @@ out/
 
 ### NetBeans ###
 /build
+**/build/**
 /build/sonar
 /build/spotless
 /build/tmp
@@ -45,7 +46,7 @@ out/
 ### VS Code ###
 .vscode/
 
-
+.env
 ### sonarlint ###
 */*.iml
 **/*.iml
