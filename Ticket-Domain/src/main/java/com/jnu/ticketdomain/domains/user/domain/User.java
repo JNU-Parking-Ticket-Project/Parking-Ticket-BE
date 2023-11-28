@@ -1,4 +1,4 @@
-package com.jnu.ticketdomain.domain.user;
+package com.jnu.ticketdomain.domains.user.domain;
 
 
 import javax.persistence.*;
@@ -26,7 +26,7 @@ public class User {
     @Column(name = "role", nullable = false)
     @ColumnDefault("'USER'")
     private UserRole userRole;
-    //TODO: 토의 한 것 기반으로 예비 등수 필드 추가
+    // TODO: 토의 한 것 기반으로 예비 등수 필드 추가
     @Column(name = "status", nullable = false)
     @ColumnDefault("'불합격'")
     private String status;

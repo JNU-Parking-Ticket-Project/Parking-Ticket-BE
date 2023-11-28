@@ -1,11 +1,11 @@
-package com.jnu.ticketdomain.persistence;
+package com.jnu.ticketdomain.domains.user.adaptor;
 
 
 import com.jnu.ticketcommon.annotation.Adaptor;
-import com.jnu.ticketdomain.domain.user.User;
-import com.jnu.ticketdomain.domain.user.UserRepository;
-import com.jnu.ticketdomain.out.UserLoadPort;
-import com.jnu.ticketdomain.out.UserRecordPort;
+import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.out.UserLoadPort;
+import com.jnu.ticketdomain.domains.user.out.UserRecordPort;
+import com.jnu.ticketdomain.domains.user.repository.UserRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Adaptor
 @RequiredArgsConstructor
 @Component
-public class UserPersistenceAdapter implements UserLoadPort, UserRecordPort {
+public class UserAdaptor implements UserLoadPort, UserRecordPort {
     private final UserRepository userRepository;
 
     @Override

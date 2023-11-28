@@ -1,8 +1,8 @@
-package com.jnu.ticketdomain.out;
+package com.jnu.ticketdomain.domains.user.out;
 
 
 import com.jnu.ticketcommon.annotation.Port;
-import com.jnu.ticketdomain.domain.user.User;
+import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.Optional;
 
 @Port
