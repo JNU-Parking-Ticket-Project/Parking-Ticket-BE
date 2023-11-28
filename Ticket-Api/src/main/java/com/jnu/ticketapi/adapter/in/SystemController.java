@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.adapter.in;
 
+
 import com.jnu.ticketapi.application.port.ScheduleUseCase;
 import com.jnu.ticketapi.dto.ScheduleRequestDto;
 import com.jnu.ticketapi.dto.ScheduleResponseDto;
@@ -19,11 +20,9 @@ public class SystemController {
 
     @PostMapping("/schedule")
     public ResponseEntity<ScheduleResponseDto> createSchedule(
-            @RequestBody ScheduleRequestDto scheduleRequestDto)
-    {
+            @RequestBody ScheduleRequestDto scheduleRequestDto) {
         ScheduleResponseDto scheduleResponseDto =
                 scheduleUseCase.createSchedule(scheduleRequestDto);
         return ResponseEntity.ok(scheduleResponseDto);
-
     }
 }
