@@ -26,10 +26,14 @@ public class User {
     @Column(name = "role", nullable = false)
     @ColumnDefault("'USER'")
     private UserRole userRole;
-
+    //TODO: 토의 한 것 기반으로 예비 등수 필드 추가
     @Column(name = "status", nullable = false)
-    @ColumnDefault("''")
+    @ColumnDefault("'불합격'")
     private String status;
+
+    @Column(name = "sequence", nullable = false)
+    @ColumnDefault("-2")
+    private int sequence;
 
     @Column(name = "email", nullable = false, unique = true)
     private String email;
