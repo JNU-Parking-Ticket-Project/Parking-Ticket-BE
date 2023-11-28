@@ -13,11 +13,11 @@ import javax.servlet.http.HttpServletRequest;
 
 @Component
 @RequiredArgsConstructor
-public class EmailAop implements HandlerMethodArgumentResolver {
+public class GetEmailAop implements HandlerMethodArgumentResolver {
     private final AuthService authService;
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        boolean hasEmailAnnotation = parameter.hasParameterAnnotation(Email.class);
+        boolean hasEmailAnnotation = parameter.hasParameterAnnotation(GetEmail.class);
         boolean hasStringType = String.class.isAssignableFrom(parameter.getParameterType());
         return hasEmailAnnotation && hasStringType;
     }
