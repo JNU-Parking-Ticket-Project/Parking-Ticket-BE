@@ -20,4 +20,8 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
                 .orElse(null);
     }
 
+    @Override
+    public Registration save(Registration registration) {
+        return registrationRepository.save(registration);
+    }
 }
