@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.dto;
+package com.jnu.ticketapi.api.registration.model.response;
 
 
 import lombok.Builder;

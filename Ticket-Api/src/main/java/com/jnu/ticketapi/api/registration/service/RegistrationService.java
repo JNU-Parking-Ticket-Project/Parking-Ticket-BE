@@ -1,7 +1,9 @@
 package com.jnu.ticketapi.api.registration.service;
 
 
+import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequestDto;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
+import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponseDto;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketapi.application.port.RegistrationUseCase;
