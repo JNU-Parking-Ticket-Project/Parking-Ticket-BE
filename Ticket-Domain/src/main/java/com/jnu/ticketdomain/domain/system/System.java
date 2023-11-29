@@ -1,12 +1,12 @@
 package com.jnu.ticketdomain.domain.system;
 
+
+import java.time.LocalDateTime;
+import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
-
-import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,8 +25,8 @@ public class System {
     private LocalDateTime endedAt;
 
     @Builder
-    public System(LocalDateTime startedAt, LocalDateTime endedAt){
-        this.startedAt=startedAt;
-        this.endedAt=endedAt;
+    public System(LocalDateTime startedAt, LocalDateTime endedAt) {
+        this.startedAt = startedAt;
+        this.endedAt = endedAt;
     }
 }
