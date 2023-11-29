@@ -1,6 +1,8 @@
-package com.jnu.ticketapi.application.service;
+package com.jnu.ticketapi.api.registration.service;
 
 
+import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
+import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketapi.application.port.RegistrationUseCase;
 import com.jnu.ticketapi.dto.*;
@@ -28,6 +30,10 @@ public class RegistrationService implements RegistrationUseCase {
         return registrationAdaptor.findByUserId(userId);
     }
 
+    @Override
+    public Registration save(Registration registration) {
+        return registrationAdaptor.save(registration);
+    }
 
     @Override
     @Transactional(readOnly = true )
@@ -37,11 +43,20 @@ public class RegistrationService implements RegistrationUseCase {
         // 신청자가 임시저장을 하지 않았을 경우
         if (registration == null) {
             return GetRegistrationResponseDto.builder()
-                    .sector(converter.sectorToDto(sectorList))
+                    .sector(converter.toSectorDto(sectorList))
                     .email(email)
                     .build();
         }
         // 신청자가 임시저장을 했을 경우
-        return converter.toGetRegistrationResponseDto(email, registration, converter.sectorToDto(sectorList));
+        return converter.toGetRegistrationResponseDto(email, registration, converter.toSectorDto(sectorList));
+    }
+
+    @Override
+    @Transactional
+    public TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto) {
+        Sector sector = sectorAdaptor.findById(requestDto.sectorId());
+        Registration registration = converter.temporaryToRegistration(requestDto, sector);
+        Registration jpaRegistration = save(registration);
+        return converter.toTemporarySaveResponseDto(jpaRegistration);
     }
 }
