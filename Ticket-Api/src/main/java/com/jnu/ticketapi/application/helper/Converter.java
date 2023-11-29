@@ -1,8 +1,7 @@
 package com.jnu.ticketapi.application.helper;
 
 
-import com.jnu.ticketapi.dto.GetRegistrationResponseDto;
-import com.jnu.ticketapi.dto.SectorDto;
+import com.jnu.ticketapi.dto.*;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketcommon.annotation.Helper;
@@ -52,10 +51,32 @@ public class Converter {
                 .isSaved(false)
                 .build();
     }
+
+    public Registration finalToRegistration(FinalSaveRequestDto requestDto, Sector sector) {
+        return Registration.builder()
+                .email(requestDto.email())
+                .name(requestDto.name())
+                .studentNum(requestDto.studentNum())
+                .affiliation(requestDto.affiliation())
+                .carNum(requestDto.carNum())
+                .isLight(requestDto.isLight())
+                .phoneNum(requestDto.phoneNum())
+                .sector(sector)
+                .isSaved(true)
+                .build();
+    }
+
     public TemporarySaveResponse toTemporarySaveResponseDto(Registration registration) {
         return TemporarySaveResponse.builder()
                 .registrationId(registration.getId())
                 .message(ResponseMessage.SUCCESS_TEMPORARY_SAVE)
+                .build();
+    }
+
+    public FinalSaveResponseDto toFinalSaveResponseDto(Registration registration) {
+        return FinalSaveResponseDto.builder()
+                .registrationId(registration.getId())
+                .message(ResponseMessage.SUCCESS_FINAL_SAVE)
                 .build();
     }
 }

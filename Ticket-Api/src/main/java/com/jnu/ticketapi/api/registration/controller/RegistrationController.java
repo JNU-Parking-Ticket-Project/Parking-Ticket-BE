@@ -4,6 +4,8 @@ package com.jnu.ticketapi.api.registration.controller;
 import com.jnu.ticketapi.application.port.RegistrationUseCase;
 import com.jnu.ticketapi.application.port.UserUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
+import com.jnu.ticketapi.dto.FinalSaveRequestDto;
+import com.jnu.ticketapi.dto.FinalSaveResponseDto;
 import com.jnu.ticketapi.dto.GetRegistrationResponseDto;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
@@ -32,4 +34,11 @@ public class RegistrationController {
         TemporarySaveResponse responseDto = registrationUseCase.temporarySave(requestDto);
         return ResponseEntity.ok(responseDto);
     }
+
+    @PostMapping("/registration/true")
+    public ResponseEntity<FinalSaveResponseDto> finalSave(@RequestBody FinalSaveRequestDto requestDto) {
+        FinalSaveResponseDto responseDto = registrationUseCase.finalSave(requestDto);
+        return ResponseEntity.ok(responseDto);
+    }
+
 }
