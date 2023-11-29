@@ -21,7 +21,7 @@ import org.springframework.util.StringUtils;
 @Component
 public class JwtResolver {
     private final CustomUserDetailsService customUserDetailsService;
-    private static final String AUTHORITIES_KEY = "Email";
+    private static final String EMAIL_KEY = "Email";
     private static final String BEARER_TYPE = "Bearer";
     private Key key;
 
@@ -37,10 +37,10 @@ public class JwtResolver {
         // 토큰 복호화
         Claims claims = parseClaims(accessToken);
 
-        if (claims.get(AUTHORITIES_KEY) == null) {
+        if (claims.get(EMAIL_KEY) == null) {
             throw EmailNotExistException.EXCEPTION;
         }
-        String email = claims.get(AUTHORITIES_KEY).toString();
+        String email = claims.get(EMAIL_KEY).toString();
         CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(email);
         return new UsernamePasswordAuthenticationToken(
                 customUserDetails, "", customUserDetails.getAuthorities());
