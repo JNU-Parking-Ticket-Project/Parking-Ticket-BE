@@ -1,8 +1,9 @@
 package com.jnu.ticketapi.common.aop;
 
 
-import com.jnu.ticketapi.application.service.AuthService;
 import javax.servlet.http.HttpServletRequest;
+
+import com.jnu.ticketapi.security.JwtResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
@@ -13,9 +14,9 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 @Component
 @RequiredArgsConstructor
-public class GetEmailAop implements HandlerMethodArgumentResolver {
-    private final AuthService authService;
-
+public class EmailMethodArgumentResolver implements HandlerMethodArgumentResolver {
+    private final JwtResolver jwtResolver;
+    private static final String EMAIL_KEY = "Email";
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         boolean hasEmailAnnotation = parameter.hasParameterAnnotation(GetEmail.class);
@@ -32,7 +33,7 @@ public class GetEmailAop implements HandlerMethodArgumentResolver {
             throws Exception {
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
         String requestAccessTokenInHeader = request.getHeader("Authorization");
-        String requestAccessToken = authService.extractToken(requestAccessTokenInHeader);
-        return authService.getPrincipal(requestAccessToken);
+        String requestAccessToken = jwtResolver.extractToken(requestAccessTokenInHeader);
+        return jwtResolver.parseClaims(requestAccessToken).get(EMAIL_KEY).toString();
     }
 }
