@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.application.helper;
 
 
-import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequestDto;
+import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponseDto;
 import com.jnu.ticketapi.dto.*;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
@@ -54,7 +54,7 @@ public class Converter {
                 .build();
     }
 
-    public Registration finalToRegistration(FinalSaveRequestDto requestDto, Sector sector) {
+    public Registration finalToRegistration(FinalSaveRequest requestDto, Sector sector) {
         return Registration.builder()
                 .email(requestDto.email())
                 .name(requestDto.name())

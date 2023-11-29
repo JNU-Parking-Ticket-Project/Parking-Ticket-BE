@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.application.port;
 
 
-import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequestDto;
+import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponseDto;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
@@ -13,5 +13,5 @@ public interface RegistrationUseCase {
     GetRegistrationResponseDto getRegistration(Long userId, String email);
     TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto);
     Registration save(Registration registration);
-    FinalSaveResponseDto finalSave(FinalSaveRequestDto requestDto);
+    FinalSaveResponseDto finalSave(FinalSaveRequest requestDto);
 }

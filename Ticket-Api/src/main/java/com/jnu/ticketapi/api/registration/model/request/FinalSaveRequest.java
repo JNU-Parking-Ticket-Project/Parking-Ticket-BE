@@ -4,7 +4,7 @@ package com.jnu.ticketapi.api.registration.model.request;
 import lombok.Builder;
 
 @Builder
-public record FinalSaveRequestDto (
+public record FinalSaveRequest(
         String email,
         String name,
         int studentNum,

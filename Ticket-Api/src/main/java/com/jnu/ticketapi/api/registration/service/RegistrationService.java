@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.api.registration.service;
 
 
-import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequestDto;
+import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponseDto;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
@@ -65,7 +65,7 @@ public class RegistrationService implements RegistrationUseCase {
 
     @Override
     @Transactional
-    public FinalSaveResponseDto finalSave(FinalSaveRequestDto requestDto) {
+    public FinalSaveResponseDto finalSave(FinalSaveRequest requestDto) {
         /*
         임시저장을 했으면 isSave만 true로 변경
          */
