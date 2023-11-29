@@ -8,4 +8,6 @@ import java.util.Optional;
 @Port
 public interface UserLoadPort {
     Optional<User> findByEmail(String email);
+
+    User findByEmail2(String email);
 }
