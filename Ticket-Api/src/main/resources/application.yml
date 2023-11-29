@@ -1,10 +1,8 @@
-# commons
 api:
   prefix: ${API_PREFIX:/api}
 
 spring:
   profiles:
-    active: dev
     include:
       - domain
       - common
@@ -13,13 +11,13 @@ spring:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
   datasource:
-    url: ${DEV_DATASOURCE_URL:jdbc:h2:mem:test}
-    driverClassName: ${DEV_DATASOURCE_DRIVER:org.h2.Driver}
-    username: ${DEV_DATASOURCE_USERNAME:sa}
-    password: ${DEV_DATASOURCE_PASSWORD:}
+    url: ${DATASOURCE_URL:jdbc:h2:~/test;DB_CLOSE_DELAY=-1;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${DATASOURCE_USERNAME:sa}
+    password: ${DATASOURCE_PASSWORD:}
+    driver-class-name: ${DATASOURCE_DRIVER:org.h2.Driver}
 
   jpa:
-    database-platform: ${DEV_JPA_DATABASE-PLATFORM:org.hibernate.dialect.H2Dialect}
+    database-platform: ${JPA_DATABASE_PLATFORM:org.hibernate.dialect.MySQL8Dialect}
     show-sql: true
     properties:
       hibernate:
@@ -42,9 +40,37 @@ springdoc:
     tags-sorter: alpha
 
 jwt:
-  secret: ${DEV_JWT_SECRET:}
+  secret: ${JWT_SECRET:}
 
 server:
   servlet:
     context-path: /api
   forward-headers-strategy: framework
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+
+jwt:
+  secret: abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${DB_NAME}?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    password: ${MYSQL_PASSWORD}
+    username: ${MYSQL_USERNAME}
+  jpa:
+    properties:
+      hibernate:
+        default_batch_fetch_size: ${JPA_BATCH_FETCH_SIZE:100}
+    hibernate:
+      ddl-auto: validate
+    database-platform: org.hibernate.dialect.MySQL8Dialect
