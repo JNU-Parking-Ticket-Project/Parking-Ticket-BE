@@ -83,4 +83,8 @@ public class Registration {
         this.user = user;
         this.sector = sector;
     }
+
+    public void updateIsSaved(boolean isSaved) {
+        this.isSaved = isSaved;
+    }
 }
