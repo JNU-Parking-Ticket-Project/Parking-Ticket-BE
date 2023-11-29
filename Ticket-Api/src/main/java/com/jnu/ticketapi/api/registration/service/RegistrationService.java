@@ -54,7 +54,7 @@ public class RegistrationService implements RegistrationUseCase {
     @Override
     @Transactional
     public TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto) {
-        Sector sector = sectorAdaptor.findById(requestDto.sectorId());
+        Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
         Registration registration = converter.temporaryToRegistration(requestDto, sector);
         Registration jpaRegistration = save(registration);
         return converter.toTemporarySaveResponseDto(jpaRegistration);

@@ -12,4 +12,4 @@ public record TemporarySaveRequest(
         String carNum,
         boolean isLight,
         String phoneNum,
-        Long sectorId) {}
+        Long selectSectorId) {}
