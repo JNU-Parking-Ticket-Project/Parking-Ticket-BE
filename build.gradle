@@ -3,7 +3,6 @@ plugins {
     id 'org.springframework.boot' version '2.7.7'
     id 'com.diffplug.spotless' version '6.11.0'
     id "org.sonarqube" version "4.4.1.3373"
-    id 'com.google.cloud.tools.jib' version '3.4.0'
 }
 
 apply plugin: 'org.sonarqube'
@@ -118,39 +117,5 @@ spotless {
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
-    }
-}
-
-jib {
-    def serverPort = "8080"
-    def dockerUsername = System.getenv("DOCKER_USERNAME")
-    def dockerPassword = System.getenv("DOCKER_PASSWORD")
-    def imageName = System.getenv("IMAGE_NAME")
-
-    from {
-        image = 'amazoncorretto:17-alpine3.17-jdk'
-    }
-    to {
-        image = imageName + ':latest'
-        tags = ['latest']
-    }
-    container {
-        jvmFlags = [
-                '-Dspring.profiles.active=prod',
-                '-Dserver.port=' + serverPort,
-                '-Xms2G', '-Xmx2G',
-                '-XX:+UseG1GC',
-                '-XX:+UseContainerSupport',
-                '-XX:+DisableExplicitGC',
-                '-server'
-        ]
-        environment = [
-                'MYSQL_HOST'    : System.getenv("MYSQL_HOST"),
-                'MYSQL_PORT'    : System.getenv("MYSQL_PORT"),
-                'MYSQL_DATABASE': System.getenv("MYSQL_DATABASE"),
-                'MYSQL_USERNAME': System.getenv("MYSQL_USERNAME"),
-                'MYSQL_PASSWORD': System.getenv("MYSQL_PASSWORD"),
-        ]
-        ports = ['8080']
     }
 }
