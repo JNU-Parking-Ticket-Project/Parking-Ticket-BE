@@ -10,29 +10,6 @@ spring:
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
-  datasource:
-    url: ${DATASOURCE_URL:jdbc:h2:~/test;DB_CLOSE_DELAY=-1;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE}
-    username: ${DATASOURCE_USERNAME:sa}
-    password: ${DATASOURCE_PASSWORD:}
-    driver-class-name: ${DATASOURCE_DRIVER:org.h2.Driver}
-
-  jpa:
-    database-platform: ${JPA_DATABASE_PLATFORM:org.hibernate.dialect.MySQL8Dialect}
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
-  h2:
-    console:
-      enabled: true
-
-  logging:
-    level:
-      org:
-        hibernate:
-          SQL: DEBUG
-
 springdoc:
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
@@ -55,22 +32,3 @@ spring:
 
 jwt:
   secret: abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890
-
----
-
-spring:
-  config:
-    activate:
-      on-profile: prod
-  datasource:
-    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${DB_NAME}?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    password: ${MYSQL_PASSWORD}
-    username: ${MYSQL_USERNAME}
-  jpa:
-    properties:
-      hibernate:
-        default_batch_fetch_size: ${JPA_BATCH_FETCH_SIZE:100}
-    hibernate:
-      ddl-auto: validate
-    database-platform: org.hibernate.dialect.MySQL8Dialect
