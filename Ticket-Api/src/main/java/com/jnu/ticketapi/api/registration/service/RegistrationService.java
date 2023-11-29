@@ -6,6 +6,7 @@ import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketapi.application.port.RegistrationUseCase;
 import com.jnu.ticketapi.dto.*;
+import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.coupon.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
@@ -58,5 +59,25 @@ public class RegistrationService implements RegistrationUseCase {
         Registration registration = converter.temporaryToRegistration(requestDto, sector);
         Registration jpaRegistration = save(registration);
         return converter.toTemporarySaveResponseDto(jpaRegistration);
+    }
+
+    @Override
+    @Transactional
+    public FinalSaveResponseDto finalSave(FinalSaveRequestDto requestDto) {
+        /*
+        임시저장을 했으면 isSave만 true로 변경
+         */
+        if(requestDto.registrationId() != null) {
+            Registration registration = registrationAdaptor.findById(requestDto.registrationId());
+            registration.updateIsSaved(true);
+            return FinalSaveResponseDto.builder()
+                    .registrationId(registration.getId())
+                    .message(ResponseMessage.SUCCESS_FINAL_SAVE)
+                    .build();
+        }
+        Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
+        Registration registration = converter.finalToRegistration(requestDto, sector);
+        Registration jpaRegistration = save(registration);
+        return converter.toFinalSaveResponseDto(jpaRegistration);
     }
 }
