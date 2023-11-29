@@ -16,9 +16,7 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
 
     @Override
     public Registration findByUserId(Long userId) {
-        return registrationRepository
-                .findByUserId(userId)
-                .orElse(null);
+        return registrationRepository.findByUserId(userId).orElse(null);
     }
 
     @Override

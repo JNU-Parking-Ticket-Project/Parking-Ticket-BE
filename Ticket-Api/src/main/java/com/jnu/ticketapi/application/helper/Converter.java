@@ -2,15 +2,14 @@ package com.jnu.ticketapi.application.helper;
 
 
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
-import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponseDto;
-import com.jnu.ticketapi.dto.*;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
+import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponseDto;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
+import com.jnu.ticketapi.dto.*;
 import com.jnu.ticketcommon.annotation.Helper;
 import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +26,9 @@ public class Converter {
                                         .build())
                 .collect(Collectors.toList());
     }
-    public GetRegistrationResponseDto toGetRegistrationResponseDto (String email, Registration registration, List<SectorDto> sectorDtoList) {
+
+    public GetRegistrationResponseDto toGetRegistrationResponseDto(
+            String email, Registration registration, List<SectorDto> sectorDtoList) {
         return GetRegistrationResponseDto.builder()
                 .email(email)
                 .name(registration.getName())
@@ -40,6 +41,7 @@ public class Converter {
                 .selectSectorId(registration.getSector().getId())
                 .build();
     }
+
     public Registration temporaryToRegistration(TemporarySaveRequest requestDto, Sector sector) {
         return Registration.builder()
                 .email(requestDto.email())

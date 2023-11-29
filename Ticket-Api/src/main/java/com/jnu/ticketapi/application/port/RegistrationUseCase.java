@@ -10,8 +10,12 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 
 public interface RegistrationUseCase {
     Registration findByUserId(Long userId);
+
     GetRegistrationResponseDto getRegistration(Long userId, String email);
+
     TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto);
+
     Registration save(Registration registration);
+
     FinalSaveResponseDto finalSave(FinalSaveRequest requestDto);
 }

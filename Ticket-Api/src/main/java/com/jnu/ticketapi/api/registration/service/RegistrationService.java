@@ -14,11 +14,10 @@ import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +38,7 @@ public class RegistrationService implements RegistrationUseCase {
     }
 
     @Override
-    @Transactional(readOnly = true )
+    @Transactional(readOnly = true)
     public GetRegistrationResponseDto getRegistration(Long userId, String email) {
         Registration registration = findByUserId(userId);
         List<Sector> sectorList = sectorAdaptor.findAll();
@@ -51,7 +50,8 @@ public class RegistrationService implements RegistrationUseCase {
                     .build();
         }
         // 신청자가 임시저장을 했을 경우
-        return converter.toGetRegistrationResponseDto(email, registration, converter.toSectorDto(sectorList));
+        return converter.toGetRegistrationResponseDto(
+                email, registration, converter.toSectorDto(sectorList));
     }
 
     @Override
@@ -69,7 +69,7 @@ public class RegistrationService implements RegistrationUseCase {
         /*
         임시저장을 했으면 isSave만 true로 변경
          */
-        if(requestDto.registrationId() != null) {
+        if (requestDto.registrationId() != null) {
             Registration registration = registrationAdaptor.findById(requestDto.registrationId());
             registration.updateIsSaved(true);
             return FinalSaveResponseDto.builder()

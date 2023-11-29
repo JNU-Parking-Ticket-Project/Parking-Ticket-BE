@@ -7,5 +7,6 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 @Port
 public interface RegistrationLoadPort {
     Registration findByUserId(Long userId);
+
     Registration findById(Long id);
 }

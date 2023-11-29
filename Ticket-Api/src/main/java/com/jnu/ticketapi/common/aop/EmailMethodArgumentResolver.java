@@ -1,9 +1,8 @@
 package com.jnu.ticketapi.common.aop;
 
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.jnu.ticketapi.security.JwtResolver;
+import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
@@ -17,6 +16,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 public class EmailMethodArgumentResolver implements HandlerMethodArgumentResolver {
     private final JwtResolver jwtResolver;
     private static final String EMAIL_KEY = "Email";
+
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         boolean hasEmailAnnotation = parameter.hasParameterAnnotation(GetEmail.class);
