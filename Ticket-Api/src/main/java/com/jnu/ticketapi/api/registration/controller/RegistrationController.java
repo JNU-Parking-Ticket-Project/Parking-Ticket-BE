@@ -1,16 +1,16 @@
-package com.jnu.ticketapi.controller;
+package com.jnu.ticketapi.api.registration.controller;
 
 
 import com.jnu.ticketapi.application.port.RegistrationUseCase;
 import com.jnu.ticketapi.application.port.UserUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
 import com.jnu.ticketapi.dto.GetRegistrationResponseDto;
+import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
+import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @SecurityRequirement(name = "access-token")
 @RestController
@@ -24,6 +24,12 @@ public class RegistrationController {
     public ResponseEntity<GetRegistrationResponseDto> getRegistration(@GetEmail String email) {
         Long userId = userUseCase.findByEmail2(email).getId();
         GetRegistrationResponseDto responseDto = registrationUseCase.getRegistration(userId, email);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @PostMapping("/registration/false")
+    public ResponseEntity<TemporarySaveResponse> temporarySave(@RequestBody TemporarySaveRequest requestDto) {
+        TemporarySaveResponse responseDto = registrationUseCase.temporarySave(requestDto);
         return ResponseEntity.ok(responseDto);
     }
 }

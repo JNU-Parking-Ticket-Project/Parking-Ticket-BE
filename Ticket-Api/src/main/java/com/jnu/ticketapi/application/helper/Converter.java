@@ -3,7 +3,10 @@ package com.jnu.ticketapi.application.helper;
 
 import com.jnu.ticketapi.dto.GetRegistrationResponseDto;
 import com.jnu.ticketapi.dto.SectorDto;
+import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
+import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketcommon.annotation.Helper;
+import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 
@@ -12,7 +15,7 @@ import java.util.stream.Collectors;
 
 @Helper
 public class Converter {
-    public List<SectorDto> sectorToDto(List<Sector> sectorList) {
+    public List<SectorDto> toSectorDto(List<Sector> sectorList) {
         return sectorList.stream()
                 .map(
                         (sector) ->
@@ -36,6 +39,23 @@ public class Converter {
                 .selectSectorId(registration.getSector().getId())
                 .build();
     }
-
-
+    public Registration temporaryToRegistration(TemporarySaveRequest requestDto, Sector sector) {
+        return Registration.builder()
+                .email(requestDto.email())
+                .name(requestDto.name())
+                .studentNum(requestDto.studentNum())
+                .affiliation(requestDto.affiliation())
+                .carNum(requestDto.carNum())
+                .isLight(requestDto.isLight())
+                .phoneNum(requestDto.phoneNum())
+                .sector(sector)
+                .isSaved(false)
+                .build();
+    }
+    public TemporarySaveResponse toTemporarySaveResponseDto(Registration registration) {
+        return TemporarySaveResponse.builder()
+                .registrationId(registration.getId())
+                .message(ResponseMessage.SUCCESS_TEMPORARY_SAVE)
+                .build();
+    }
 }
