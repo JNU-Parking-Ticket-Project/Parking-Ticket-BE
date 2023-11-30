@@ -5,19 +5,19 @@ plugins {
     id "org.sonarqube" version "4.4.1.3373"
 }
 
+apply plugin: 'org.sonarqube'
+
 bootJar.enabled = false
 
 repositories {
     mavenCentral()
 }
 
-apply plugin: 'org.sonarqube'
 sonarqube {
     properties {
         property "sonar.projectKey", "JNU-Parking-Ticket-Project_Parking-Ticket-BE"
         property "sonar.organization", "jnu-parking-ticket-project"
         property "sonar.host.url", "https://sonarcloud.io"
-//        property "sonar.gradle.skipCompile", "true"
         property 'sonar.sources', 'src'
         property 'sonar.language', 'java'
         property 'sonar.sourceEncoding', 'UTF-8'
@@ -34,13 +34,11 @@ subprojects {
     sourceCompatibility = '17'
 
     apply plugin: 'java'
-    // build.gradle에서 api() 를 사용하려면 java-library 사용
-    apply plugin: 'java-library'
+    apply plugin: 'java-library' // build.gradle에서 api() 를 사용하려면 java-library 사용
     apply plugin: 'org.springframework.boot'
-    // spring boot dependency를 사용하여 사용중인 부트 버전에서 자동으로 의존성을 가져온다.
-    apply plugin: 'io.spring.dependency-management'
-
+    apply plugin: 'io.spring.dependency-management' // spring boot dependency를 사용하여 사용중인 부트 버전에서 자동으로 의존성을 가져온다.
     apply plugin: 'jacoco'
+
     configurations {
         compileOnly {
             extendsFrom annotationProcessor
@@ -54,25 +52,17 @@ subprojects {
 
     jacocoTestReport {
         dependsOn test
-        // reports version issue
-        // https://stackoverflow.com/questions/73546718/changing-enabled-to-required-throws-an-error-in-gradle
-//        reports {
-//            html.enabled true // html 설정
-//            csv.enabled true // csv 설정
-//            xml.enabled true
-//            xml.destination file("${buildDir}/reports/jacoco.xml")
-//        }
+
         reports {
             xml.required = false
             csv.required = false
             html.required = true
         }
-        def Qdomains = []
 
+        def Qdomains = []
         for (qPattern in '**/QA'..'**/QZ') { // qPattern = '**/QA', '**/QB', ... '*.QZ'
             Qdomains.add(qPattern + '*')
         }
-
         afterEvaluate {
             classDirectories.setFrom(
                     files(classDirectories.files.collect {
@@ -89,8 +79,8 @@ subprojects {
             )
         }
     }
-    apply plugin: 'org.sonarqube'
 
+    apply plugin: 'org.sonarqube'
     sonarqube {
         properties {
             property 'sonar.java.binaries', "${layout.buildDirectory}/classes"
@@ -98,8 +88,6 @@ subprojects {
             property 'sonar.gradle.skipCompile', 'true'
         }
     }
-
-
 
     repositories {
         mavenCentral()
