@@ -2,13 +2,17 @@ package com.jnu.ticketapi.config;
 
 
 import com.jnu.ticketcommon.exception.SecurityContextNotFoundException;
+import com.jnu.ticketdomain.out.UserLoadPort;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.CollectionUtils;
 
+@RequiredArgsConstructor
 public class SecurityUtils {
+    private final UserLoadPort userLoadPort;
     private static SimpleGrantedAuthority anonymous = new SimpleGrantedAuthority("ROLE_USER");
     private static SimpleGrantedAuthority swagger = new SimpleGrantedAuthority("ROLE_SWAGGER");
 
