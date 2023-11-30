@@ -64,7 +64,7 @@ jobs:
 
   call-deploy-workflow:
     if: github.event_name == 'push'
-    needs: [ prepare-variables, call-build-workflow ]
+    needs: [ prepare-environments, call-build-workflow ]
     name: 서비스 배포
     uses: ./.github/workflows/deploy.yaml
     permissions:
