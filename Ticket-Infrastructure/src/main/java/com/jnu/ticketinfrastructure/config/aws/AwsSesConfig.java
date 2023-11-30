@@ -1,5 +1,6 @@
 package com.jnu.ticketinfrastructure.config.aws;
 
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,8 +9,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ses.SesAsyncClient;
 
 /**
- * AWS SES 연결하기 위한 설정 파일
- * accessKey, secretKey, region 을 application.yml 파일에 작성해야 한다.
+ * AWS SES 연결하기 위한 설정 파일 accessKey, secretKey, region 을 application.yml 파일에 작성해야 한다.
  *
  * @author cookie
  * @version 1.0
@@ -34,5 +34,4 @@ public class AwsSesConfig {
                 .region(Region.of(region))
                 .build();
     }
-
 }

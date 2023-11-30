@@ -4,30 +4,12 @@ api:
 
 spring:
   profiles:
-    active: dev
     include:
       - domain
       - common
       - infrastructure
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
-
-  datasource:
-    url: ${DEV_DATASOURCE_URL:jdbc:h2:mem:test}
-    driverClassName: ${DEV_DATASOURCE_DRIVER:org.h2.Driver}
-    username: ${DEV_DATASOURCE_USERNAME:sa}
-    password: ${DEV_DATASOURCE_PASSWORD:}
-
-  jpa:
-    database-platform: ${DEV_JPA_DATABASE-PLATFORM:org.hibernate.dialect.H2Dialect}
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
-  h2:
-    console:
-      enabled: true
 
   logging:
     level:
@@ -42,7 +24,7 @@ springdoc:
     tags-sorter: alpha
 
 jwt:
-  secret: ${DEV_JWT_SECRET:}
+  secret: ${DEV_JWT_SECRET:secretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecret}
 
 server:
   servlet:
