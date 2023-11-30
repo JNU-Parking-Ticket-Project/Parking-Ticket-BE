@@ -31,6 +31,8 @@ jobs:
 
       - name: 환경 변수 설정
         id: setup-env
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
         run: |
           echo "image-name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "image-tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
