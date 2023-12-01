@@ -15,6 +15,9 @@ import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import java.util.List;
+
+import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +42,11 @@ public class RegistrationService implements RegistrationUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public GetRegistrationResponse getRegistration(Long userId, String email) {
+    public GetRegistrationResponse getRegistration(String email) {
+        User user = userAdaptor.findByEmail(email).orElseThrow(
+                () -> NotFoundUserException.EXCEPTION
+        );
+        Long userId = user.getId();
         Registration registration = findByUserId(userId);
         List<Sector> sectorList = sectorAdaptor.findAll();
         // 신청자가 임시저장을 하지 않았을 경우

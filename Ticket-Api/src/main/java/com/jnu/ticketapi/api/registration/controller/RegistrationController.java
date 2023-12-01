@@ -9,6 +9,8 @@ import com.jnu.ticketapi.application.port.RegistrationUseCase;
 import com.jnu.ticketapi.application.port.UserUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
 import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
+import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,8 +26,7 @@ public class RegistrationController {
 
     @GetMapping("/registration")
     public ResponseEntity<GetRegistrationResponse> getRegistration(@GetEmail String email) {
-        Long userId = userUseCase.findByEmail2(email).getId();
-        GetRegistrationResponse responseDto = registrationUseCase.getRegistration(userId, email);
+        GetRegistrationResponse responseDto = registrationUseCase.getRegistration(email);
         return ResponseEntity.ok(responseDto);
     }
 

@@ -23,11 +23,6 @@ public class UserService implements UserUseCase {
     }
 
     @Override
-    public User findByEmail2(String email) {
-        return userAdaptor.findByEmail2(email);
-    }
-
-    @Override
     @Transactional
     public User save(User user) {
         return userAdaptor.save(user);

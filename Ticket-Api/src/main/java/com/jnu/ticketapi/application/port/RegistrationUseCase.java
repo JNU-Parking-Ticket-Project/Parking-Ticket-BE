@@ -11,7 +11,7 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 public interface RegistrationUseCase {
     Registration findByUserId(Long userId);
 
-    GetRegistrationResponse getRegistration(Long userId, String email);
+    GetRegistrationResponse getRegistration(String email);
 
     TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto);
 

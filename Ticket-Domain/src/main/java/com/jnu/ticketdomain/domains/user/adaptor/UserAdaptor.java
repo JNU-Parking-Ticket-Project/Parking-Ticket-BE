@@ -24,14 +24,6 @@ public class UserAdaptor implements UserLoadPort, UserRecordPort {
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
-    /*
-    Email로 User를 찾아서 userId를 찾을 때 등등 .. 사용
-    findByEmail로 User를 불러오고 유저가 null이면 안되기 때문에 null일때 예외 던짐
-     */
-    @Override
-    public User findByEmail2(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> NotFoundUserException.EXCEPTION);
-    }
 
     @Override
     public User save(User user) {
