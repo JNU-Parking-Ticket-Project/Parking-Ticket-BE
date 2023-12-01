@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.security;
 
 
-import com.jnu.ticketdomain.domain.user.User;
+import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.ArrayList;
 import java.util.Collection;
 import lombok.RequiredArgsConstructor;

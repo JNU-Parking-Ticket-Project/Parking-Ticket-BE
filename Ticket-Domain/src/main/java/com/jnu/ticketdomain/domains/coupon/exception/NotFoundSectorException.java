@@ -7,6 +7,6 @@ public class NotFoundSectorException extends TicketCodeException {
     public static final TicketCodeException EXCEPTION = new NotFoundSectorException();
 
     private NotFoundSectorException() {
-        super(CouponErrorCode.NOT_FOUND_COUPON);
+        super(SectorErrorCode.NOT_FOUND_SECTOR);
     }
 }

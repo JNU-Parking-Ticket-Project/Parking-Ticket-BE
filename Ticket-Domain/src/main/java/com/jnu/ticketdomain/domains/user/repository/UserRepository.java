@@ -1,6 +1,7 @@
-package com.jnu.ticketdomain.domain.user;
+package com.jnu.ticketdomain.domains.user.repository;
 
 
+import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

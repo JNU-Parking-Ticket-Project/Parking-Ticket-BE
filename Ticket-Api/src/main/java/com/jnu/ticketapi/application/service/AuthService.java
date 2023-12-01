@@ -8,7 +8,7 @@ import com.jnu.ticketapi.security.JwtResolver;
 import com.jnu.ticketcommon.exception.BadCredentialException;
 import com.jnu.ticketcommon.exception.InvalidTokenException;
 import com.jnu.ticketcommon.message.ResponseMessage;
-import com.jnu.ticketdomain.domain.user.User;
+import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -105,7 +105,7 @@ public class AuthService implements AuthUseCase {
     }
 
     // AT로부터 principal 추출
-    private String getPrincipal(String requestAccessToken) {
+    public String getPrincipal(String requestAccessToken) {
         return jwtResolver.getAuthentication(requestAccessToken).getName();
     }
 
