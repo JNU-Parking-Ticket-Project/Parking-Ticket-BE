@@ -3,7 +3,6 @@ package com.jnu.ticketdomain.domains.user.adaptor;
 
 import com.jnu.ticketcommon.annotation.Adaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
-import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 import com.jnu.ticketdomain.domains.user.out.UserLoadPort;
 import com.jnu.ticketdomain.domains.user.out.UserRecordPort;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;

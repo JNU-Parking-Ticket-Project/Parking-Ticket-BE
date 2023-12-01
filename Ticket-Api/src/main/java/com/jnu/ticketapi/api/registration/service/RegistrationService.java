@@ -14,10 +14,9 @@ import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
-import java.util.List;
-
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,9 +42,8 @@ public class RegistrationService implements RegistrationUseCase {
     @Override
     @Transactional(readOnly = true)
     public GetRegistrationResponse getRegistration(String email) {
-        User user = userAdaptor.findByEmail(email).orElseThrow(
-                () -> NotFoundUserException.EXCEPTION
-        );
+        User user =
+                userAdaptor.findByEmail(email).orElseThrow(() -> NotFoundUserException.EXCEPTION);
         Long userId = user.getId();
         Registration registration = findByUserId(userId);
         List<Sector> sectorList = sectorAdaptor.findAll();
@@ -63,7 +61,7 @@ public class RegistrationService implements RegistrationUseCase {
 
     @Override
     @Transactional
-    //TODO : 채승이 피드백 email은 굳이 안받아도된다
+    // TODO : 채승이 피드백 email은 굳이 안받아도된다
 
     public TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto) {
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
@@ -74,7 +72,7 @@ public class RegistrationService implements RegistrationUseCase {
 
     @Override
     @Transactional
-    //TODO : 채승이 피드백 email은 굳이 안받아도된다
+    // TODO : 채승이 피드백 email은 굳이 안받아도된다
 
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto) {
         /*
