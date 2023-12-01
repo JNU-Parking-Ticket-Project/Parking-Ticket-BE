@@ -6,10 +6,10 @@ build/
 !**/gradle/wrapper/gradle-wrapper.jar
 **/.gradle
 **/build
+**/build/**
 build
-!**/src/main/**/build/
-!**/src/test/**/build/
-
+**/src/main/**/build/
+**/src/test/**/build/
 ### STS ###
 .apt_generated
 .classpath
@@ -32,6 +32,7 @@ out/
 !**/src/test/**/out/
 
 ### NetBeans ###
+
 /build
 **/build/**
 /build/sonar

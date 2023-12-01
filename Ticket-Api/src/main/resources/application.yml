@@ -10,6 +10,12 @@ spring:
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
+  logging:
+    level:
+      org:
+        hibernate:
+          SQL: DEBUG
+
 springdoc:
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
@@ -17,18 +23,24 @@ springdoc:
     tags-sorter: alpha
 
 jwt:
-  secret: ${JWT_SECRET:}
+  secret: ${DEV_JWT_SECRET:secretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecret}
 
 server:
   servlet:
     context-path: /api
   forward-headers-strategy: framework
 
+logging:
+  level:
+    org.springframework.orm.jpa.JpaTransactionManager: INFO
+    # HikariCP
+    com.zaxxer: ERROR
+    org.hibernate:
+      SQL: INFO
+      type.descriptor.sql.BasicBinder: INFO
+    org.springframework.transaction: INFO
 ---
 spring:
   config:
     activate:
       on-profile: test
-
-jwt:
-  secret: abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890
