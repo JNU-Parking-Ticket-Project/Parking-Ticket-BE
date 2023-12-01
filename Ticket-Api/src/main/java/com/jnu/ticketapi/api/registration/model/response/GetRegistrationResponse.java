@@ -1,11 +1,13 @@
-package com.jnu.ticketapi.dto;
+package com.jnu.ticketapi.api.registration.model.response;
 
 
 import java.util.List;
+
+import com.jnu.ticketapi.dto.SectorDto;
 import lombok.Builder;
 
 @Builder
-public record GetRegistrationResponseDto(
+public record GetRegistrationResponse(
         String email,
         String name,
         int studentNum,

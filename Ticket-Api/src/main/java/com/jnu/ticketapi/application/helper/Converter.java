@@ -3,7 +3,8 @@ package com.jnu.ticketapi.application.helper;
 
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
-import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponseDto;
+import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
+import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.dto.*;
 import com.jnu.ticketcommon.annotation.Helper;
@@ -27,9 +28,9 @@ public class Converter {
                 .collect(Collectors.toList());
     }
 
-    public GetRegistrationResponseDto toGetRegistrationResponseDto(
+    public GetRegistrationResponse toGetRegistrationResponseDto(
             String email, Registration registration, List<SectorDto> sectorDtoList) {
-        return GetRegistrationResponseDto.builder()
+        return GetRegistrationResponse.builder()
                 .email(email)
                 .name(registration.getName())
                 .studentNum(registration.getStudentNum())
@@ -77,8 +78,8 @@ public class Converter {
                 .build();
     }
 
-    public FinalSaveResponseDto toFinalSaveResponseDto(Registration registration) {
-        return FinalSaveResponseDto.builder()
+    public FinalSaveResponse toFinalSaveResponseDto(Registration registration) {
+        return FinalSaveResponse.builder()
                 .registrationId(registration.getId())
                 .message(ResponseMessage.SUCCESS_FINAL_SAVE)
                 .build();

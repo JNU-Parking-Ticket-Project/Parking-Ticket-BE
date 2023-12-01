@@ -3,12 +3,12 @@ package com.jnu.ticketapi.api.registration.controller;
 
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
-import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponseDto;
+import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.application.port.RegistrationUseCase;
 import com.jnu.ticketapi.application.port.UserUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
-import com.jnu.ticketapi.dto.GetRegistrationResponseDto;
+import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +23,9 @@ public class RegistrationController {
     private final UserUseCase userUseCase;
 
     @GetMapping("/registration")
-    public ResponseEntity<GetRegistrationResponseDto> getRegistration(@GetEmail String email) {
+    public ResponseEntity<GetRegistrationResponse> getRegistration(@GetEmail String email) {
         Long userId = userUseCase.findByEmail2(email).getId();
-        GetRegistrationResponseDto responseDto = registrationUseCase.getRegistration(userId, email);
+        GetRegistrationResponse responseDto = registrationUseCase.getRegistration(userId, email);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -37,9 +37,9 @@ public class RegistrationController {
     }
 
     @PostMapping("/registration/true")
-    public ResponseEntity<FinalSaveResponseDto> finalSave(
+    public ResponseEntity<FinalSaveResponse> finalSave(
             @RequestBody FinalSaveRequest requestDto) {
-        FinalSaveResponseDto responseDto = registrationUseCase.finalSave(requestDto);
+        FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto);
         return ResponseEntity.ok(responseDto);
     }
 }
