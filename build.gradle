@@ -17,10 +17,11 @@ sonarqube {
         property "sonar.projectKey", "JNU-Parking-Ticket-Project_Parking-Ticket-BE"
         property "sonar.organization", "jnu-parking-ticket-project"
         property "sonar.host.url", "https://sonarcloud.io"
-//        property "sonar.gradle.skipCompile", "true"
         property 'sonar.sources', 'src'
         property 'sonar.language', 'java'
         property 'sonar.sourceEncoding', 'UTF-8'
+        property 'sonar.java.enablePreview', 'true'
+        property 'sonar.java.binaries', "${project.projectDir}/build/classes"
         property 'sonar.test.inclusions', '**/*Test.java'
         property 'sonar.exclusions', '**/test/**, **/Q*.java, **/*Doc*.java, **/resources/** ,**/*Application*.java , **/*Config*.java,' +
                 '**/*Dto*.java, **/*Request*.java, **/*Response*.java ,**/*Exception*.java ,**/*ErrorCode*.java'
@@ -93,9 +94,8 @@ subprojects {
 
     sonarqube {
         properties {
-            property 'sonar.java.binaries', "${layout.buildDirectory}/classes"
-            property 'sonar.coverage.jacoco.xmlReportPaths', "${layout.buildDirectory}/reports/jacoco/test/jacocoTestReport.xml"
-            property 'sonar.gradle.skipCompile', 'true'
+            property 'sonar.java.binaries', "${project.projectDir}/build/classes"
+            property 'sonar.coverage.jacoco.xmlReportPaths', "${layout.buildDirectory}/reports/jacoco.xml"
         }
     }
 

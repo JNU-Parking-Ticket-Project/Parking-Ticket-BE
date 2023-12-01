@@ -37,7 +37,7 @@ jobs:
 
       - name: spotless check
         run:
-          ./server/gradlew spotlessCheck --no-daemon
+          ./gradlew spotlessCheck --no-daemon
 
 #      - name: test and analyze
 #        env:
