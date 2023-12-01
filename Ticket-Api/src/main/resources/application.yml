@@ -1,4 +1,3 @@
-# commons
 api:
   prefix: ${API_PREFIX:/api}
 
@@ -40,3 +39,8 @@ logging:
       SQL: INFO
       type.descriptor.sql.BasicBinder: INFO
     org.springframework.transaction: INFO
+---
+spring:
+  config:
+    activate:
+      on-profile: test
