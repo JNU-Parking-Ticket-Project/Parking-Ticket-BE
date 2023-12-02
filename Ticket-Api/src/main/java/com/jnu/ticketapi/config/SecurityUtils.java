@@ -2,7 +2,7 @@ package com.jnu.ticketapi.config;
 
 
 import com.jnu.ticketcommon.exception.SecurityContextNotFoundException;
-import com.jnu.ticketdomain.out.UserLoadPort;
+import com.jnu.ticketdomain.domains.user.out.UserLoadPort;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
