@@ -57,9 +57,9 @@ jobs:
       id-token: write
       contents: read
     with:
-      image-tag: ${{ needs.prepare-variables.outputs.image-tag }}
-      spring-profile-active: ${{ needs.prepare-variables.outputs.spring-profile-active }}
-      image-name: ${{ needs.prepare-variables.outputs.image-name }}
+      image-tag: ${{ needs.prepare-environments.outputs.image-tag }}
+      spring-profile-active: ${{ needs.prepare-environments.outputs.spring-profile-active }}
+      image-name: ${{ needs.prepare-environments.outputs.image-name }}
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
