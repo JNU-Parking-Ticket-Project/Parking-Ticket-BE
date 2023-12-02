@@ -6,6 +6,7 @@ import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.coupon.adaptor.CouponAdaptor;
 import com.jnu.ticketdomain.domains.coupon.domain.Coupon;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
+import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class CouponWithDrawUseCase {
     private final RedissonClient redissonClient;
+    private final WaitingQueueService waitingQueueService;
     private final CouponAdaptor couponAdaptor;
     /** 재고 감소 */
     @Transactional
@@ -33,6 +35,9 @@ public class CouponWithDrawUseCase {
         // TODO 구간별 파라미터 추가되면 특정 구감만 재고 감소를 하도록 수정
         log.info("쿠폰 발급 저장소에 데이터 추가" + coupon);
         couponStorage.add(coupon.toString());
+        Boolean result = waitingQueueService.registerQueue(coupon.getCouponCode(), coupon.getId());
+        // Arrow result failure -> throw exception
+
     }
     /** Worker method to process coupon issuance from the storage */
     @Scheduled(fixedDelay = 1000)
