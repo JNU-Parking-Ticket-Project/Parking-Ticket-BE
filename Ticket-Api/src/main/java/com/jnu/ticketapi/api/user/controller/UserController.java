@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.controller;
+package com.jnu.ticketapi.api.user.controller;
 
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

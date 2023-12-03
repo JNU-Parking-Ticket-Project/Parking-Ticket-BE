@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.application.service;
 
 
+import com.jnu.ticketapi.api.user.service.UserService;
 import com.jnu.ticketapi.application.port.AuthUseCase;
 import com.jnu.ticketapi.dto.*;
 import com.jnu.ticketapi.security.JwtGenerator;

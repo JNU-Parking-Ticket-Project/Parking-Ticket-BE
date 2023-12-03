@@ -1,7 +1,6 @@
-package com.jnu.ticketapi.application.service;
+package com.jnu.ticketapi.api.user.service;
 
 
-import com.jnu.ticketapi.application.port.UserUseCase;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.Optional;

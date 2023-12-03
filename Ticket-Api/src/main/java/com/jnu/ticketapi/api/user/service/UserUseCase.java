@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.application.port;
+package com.jnu.ticketapi.api.user.service;
 
 
 import com.jnu.ticketdomain.domains.user.domain.User;
