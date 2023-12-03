@@ -1,5 +1,6 @@
 package com.example.couponapi.service;
 
+
 import com.jnu.ticketapi.api.coupon.model.request.WaitingQueueRequestDto;
 import com.jnu.ticketinfrastructure.service.CouponIssueService;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
@@ -12,7 +13,8 @@ public class WaitingQueueApiService {
     private final CouponIssueService couponIssueService;
     private final org.slf4j.Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-    public WaitingQueueApiService(WaitingQueueService waitingQueueService, CouponIssueService couponIssueService) {
+    public WaitingQueueApiService(
+            WaitingQueueService waitingQueueService, CouponIssueService couponIssueService) {
         this.waitingQueueService = waitingQueueService;
         this.couponIssueService = couponIssueService;
     }
@@ -21,7 +23,8 @@ public class WaitingQueueApiService {
         if (!canRegister(input.getCouponTitle())) {
             return false;
         }
-        Boolean result = waitingQueueService.registerQueue(input.getCouponTitle(), input.getUserId());
+        Boolean result =
+                waitingQueueService.registerQueue(input.getCouponTitle(), input.getUserId());
         return result != null && result;
     }
 
@@ -41,4 +44,3 @@ public class WaitingQueueApiService {
         return true;
     }
 }
-

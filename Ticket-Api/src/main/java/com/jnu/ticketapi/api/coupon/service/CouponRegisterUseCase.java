@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CouponRegisterUseCase {
     private final CouponAdaptor couponAdaptor;
     private final WaitingQueueService waitingQueueService;
+
     @Transactional
     public void registerCoupon(CouponRegisterRequest couponRegisterRequest) {
         List<Sector> sectors = couponRegisterRequest.getSectors();

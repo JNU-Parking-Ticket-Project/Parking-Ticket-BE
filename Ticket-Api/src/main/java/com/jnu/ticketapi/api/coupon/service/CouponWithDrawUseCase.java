@@ -2,6 +2,7 @@ package com.jnu.ticketapi.api.coupon.service;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.coupon.adaptor.CouponAdaptor;
 import com.jnu.ticketdomain.domains.coupon.domain.Coupon;
@@ -64,5 +65,11 @@ public class CouponWithDrawUseCase {
         List<Sector> sector = coupon.getSector();
         sector.forEach(Sector::decreaseCouponStock);
         log.info("쿠폰 발급 완료" + coupon.getCouponCode());
+    }
+
+    @Transactional(readOnly = true)
+    public Long getCouponOrder() {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        return waitingQueueService.getWaitingOrder("쿠폰 발급 저장소", currentUserId);
     }
 }

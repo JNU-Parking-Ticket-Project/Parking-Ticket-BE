@@ -1,16 +1,16 @@
 package com.jnu.ticketinfrastructure.service;
 
-import com.jnu.ticketinfrastructure.redis.RedisRepository;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
+import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.LinkedList;
 import java.util.Queue;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class WaitingQueueService {
     private final RedisRepository redisRepository;
-    private final org.slf4j.Logger log = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
     public WaitingQueueService(RedisRepository redisRepository) {
         this.redisRepository = redisRepository;
@@ -35,5 +35,3 @@ public class WaitingQueueService {
         return redisRepository.zRank(key, value);
     }
 }
-
-

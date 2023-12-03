@@ -1,10 +1,10 @@
 package com.jnu.ticketinfrastructure.redis;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Set;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
-
-import java.util.Set;
 
 @Repository
 public class RedisRepository {
@@ -52,5 +52,3 @@ public class RedisRepository {
         return redisTemplate.opsForSet().size(key);
     }
 }
-
-

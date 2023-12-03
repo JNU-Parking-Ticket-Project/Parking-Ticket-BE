@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,5 +39,12 @@ public class CouponController {
     public ResponseEntity<String> issueCoupon() {
         couponWithDrawUseCase.issueCoupon();
         return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
+    }
+
+    @Operation(summary = "주차권 순서 조회", description = "주차권 순서 확인")
+    @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
+    @GetMapping("/coupon/order")
+    public ResponseEntity<Long> getCouponOrder() {
+        return ResponseEntity.ok(couponWithDrawUseCase.getCouponOrder());
     }
 }
