@@ -57,9 +57,9 @@ jobs:
       id-token: write
       contents: read
     with:
-      image-tag: ${{ needs.prepare-variables.outputs.image-tag }}
-      spring-profile-active: ${{ needs.prepare-variables.outputs.spring-profile-active }}
-      image-name: ${{ needs.prepare-variables.outputs.image-name }}
+      image-tag: ${{ needs.prepare-environments.outputs.image-tag }}
+      spring-profile-active: ${{ needs.prepare-environments.outputs.spring-profile-active }}
+      image-name: ${{ needs.prepare-environments.outputs.image-name }}
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -79,8 +79,8 @@ jobs:
       SSH_PORT: ${{ secrets.SSH_PORT }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     with:
-      image-tag: ${{ needs.prepare-variables.outputs.image-tag }}
-      spring-profile-active: ${{ needs.prepare-variables.outputs.spring-profile-active }}
-      environment: ${{ needs.prepare-variables.outputs.environment }}
-      image-name: ${{ needs.prepare-variables.outputs.image-name }}
-      service-name: ${{ needs.prepare-variables.outputs.service-name }}
+      image-tag: ${{ needs.prepare-environments.outputs.image-tag }}
+      spring-profile-active: ${{ needs.prepare-environments.outputs.spring-profile-active }}
+      environment: ${{ needs.prepare-environments.outputs.environment }}
+      image-name: ${{ needs.prepare-environments.outputs.image-name }}
+      service-name: ${{ needs.prepare-environments.outputs.service-name }}

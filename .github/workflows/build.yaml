@@ -47,6 +47,7 @@ jobs:
       - name: 이미지 빌드하고 푸쉬하기
         id: build-image
         env:
+          IMAGE_NAME: ${{ inputs.image-name }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
