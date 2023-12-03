@@ -3,6 +3,7 @@ package com.jnu.ticketapi.api.coupon.controller;
 import static com.jnu.ticketcommon.consts.TicketStatic.COUPON_SUCCESS_REGISTER_MESSAGE;
 
 import com.jnu.ticketapi.api.coupon.docs.CreateCouponExceptionDocs;
+import com.jnu.ticketapi.api.coupon.docs.ReadCouponExceptionDocs;
 import com.jnu.ticketapi.api.coupon.model.request.CouponRegisterRequest;
 import com.jnu.ticketapi.api.coupon.service.CouponRegisterUseCase;
 import com.jnu.ticketapi.api.coupon.service.CouponWithDrawUseCase;
@@ -42,7 +43,7 @@ public class CouponController {
     }
 
     @Operation(summary = "주차권 순서 조회", description = "주차권 순서 확인")
-    @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
+    @ApiErrorExceptionsExample(ReadCouponExceptionDocs.class)
     @GetMapping("/coupon/order")
     public ResponseEntity<Long> getCouponOrder() {
         return ResponseEntity.ok(couponWithDrawUseCase.getCouponOrder());
