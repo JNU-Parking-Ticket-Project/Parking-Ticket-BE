@@ -56,10 +56,11 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            sudo docker rm -f $(docker ps -qa)
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
-            sudo docker stop quokka-prod-was
-            sudo docker run -d --rm --name quokka-prod-was -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
+            sudo docker-compose up -d
+            sudo docker image prune -f
 
       - name: 배포 완료 슬랙 알림 보내기
         uses: 8398a7/action-slack@v3
