@@ -1,4 +1,4 @@
-package com.jnu.ticketdomain.domain.user;
+package com.jnu.ticketdomain.domains.user.domain;
 
 
 import lombok.Getter;

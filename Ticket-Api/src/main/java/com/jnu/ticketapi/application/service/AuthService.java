@@ -8,7 +8,7 @@ import com.jnu.ticketapi.security.JwtResolver;
 import com.jnu.ticketcommon.exception.BadCredentialException;
 import com.jnu.ticketcommon.exception.InvalidTokenException;
 import com.jnu.ticketcommon.message.ResponseMessage;
-import com.jnu.ticketdomain.domain.user.User;
+import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class AuthService implements AuthUseCase {
     public boolean validate(String refreshToken) {
         if (!jwtResolver.refreshTokenValidateToken(refreshToken)) {
             throw InvalidTokenException.EXCEPTION; // false = 재로그인
-        } else return true; // true = 재발급
+        } return true; // true = 재발급
     }
 
     // 토큰 재발급: validate 메서드가 true 반환할 때만 사용 -> AT, RT 재발급
@@ -43,10 +43,15 @@ public class AuthService implements AuthUseCase {
     @Transactional
     public ReissueTokenResponseDto reissue(String requestAccessToken, String requestRefreshToken) {
 
-        Authentication authentication = jwtResolver.getAuthentication(requestAccessToken);
-        String principal = getPrincipal(requestAccessToken);
+        Authentication accessAuthentication = jwtResolver.getAuthentication(requestAccessToken);
+        String accessPrincipal = getPrincipal(requestAccessToken);
+        String refreshPrincipal = getPrincipal(requestRefreshToken);
+        // AT와 RT의 principal이 다를 경우
+        if(!accessPrincipal.equals(refreshPrincipal)) {
+            throw InvalidTokenException.EXCEPTION; // -> 재로그인 요청
+        }
 
-        String refreshTokenInRedis = redisService.getValues("RT(" + SERVER + "):" + principal);
+        String refreshTokenInRedis = redisService.getValues("RT(" + SERVER + "):" + refreshPrincipal);
         if (refreshTokenInRedis == null) { // Redis에 저장되어 있는 RT가 없을 경우
             throw InvalidTokenException.EXCEPTION; // -> 재로그인 요청
         }
@@ -54,21 +59,21 @@ public class AuthService implements AuthUseCase {
         // 요청된 RT의 유효성 검사 & Redis에 저장되어 있는 RT와 같은지 비교
         if (!jwtResolver.refreshTokenValidateToken(requestRefreshToken)
                 || !refreshTokenInRedis.equals(requestRefreshToken)) {
-            redisService.deleteValues("RT(" + SERVER + "):" + principal); // 탈취 가능성 -> 삭제
+            redisService.deleteValues("RT(" + SERVER + "):" + refreshPrincipal); // 탈취 가능성 -> 삭제
             throw InvalidTokenException.EXCEPTION; // -> 재로그인 요청
         }
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String authorities = jwtResolver.getAuthorities(authentication);
+        SecurityContextHolder.getContext().setAuthentication(accessAuthentication);
+        String authorities = jwtResolver.getAuthorities(accessAuthentication);
 
         // 토큰 재발급 및 Redis 업데이트
-        redisService.deleteValues("RT(" + SERVER + "):" + principal); // 기존 RT 삭제
+        redisService.deleteValues("RT(" + SERVER + "):" + refreshPrincipal); // 기존 RT 삭제
         ReissueTokenResponseDto reissueTokenDto =
                 ReissueTokenResponseDto.builder()
-                        .accessToken(jwtGenerator.generateAccessToken(principal, authorities))
-                        .refreshToken(jwtGenerator.generateRefreshToken(principal, authorities))
+                        .accessToken(jwtGenerator.generateAccessToken(refreshPrincipal, authorities))
+                        .refreshToken(jwtGenerator.generateRefreshToken(refreshPrincipal, authorities))
                         .build();
-        saveRefreshToken(SERVER, principal, reissueTokenDto.refreshToken());
+        saveRefreshToken(SERVER, refreshPrincipal, reissueTokenDto.refreshToken());
         return reissueTokenDto;
     }
 
@@ -105,7 +110,7 @@ public class AuthService implements AuthUseCase {
     }
 
     // AT로부터 principal 추출
-    private String getPrincipal(String requestAccessToken) {
+    public String getPrincipal(String requestAccessToken) {
         return jwtResolver.getAuthentication(requestAccessToken).getName();
     }
 
