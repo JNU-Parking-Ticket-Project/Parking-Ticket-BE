@@ -30,14 +30,15 @@ public class RegistrationController {
 
     @PostMapping("/registration/false")
     public ResponseEntity<TemporarySaveResponse> temporarySave(
-            @RequestBody TemporarySaveRequest requestDto) {
-        TemporarySaveResponse responseDto = registrationUseCase.temporarySave(requestDto);
+            @RequestBody TemporarySaveRequest requestDto, @GetEmail String email) {
+        TemporarySaveResponse responseDto = registrationUseCase.temporarySave(requestDto, email);
         return ResponseEntity.ok(responseDto);
     }
 
     @PostMapping("/registration/true")
-    public ResponseEntity<FinalSaveResponse> finalSave(@RequestBody FinalSaveRequest requestDto) {
-        FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto);
+    public ResponseEntity<FinalSaveResponse> finalSave(
+            @RequestBody FinalSaveRequest requestDto, @GetEmail String email) {
+        FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto, email);
         return ResponseEntity.ok(responseDto);
     }
 }
