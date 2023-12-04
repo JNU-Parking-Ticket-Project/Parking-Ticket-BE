@@ -68,6 +68,8 @@ public class SecurityConfig {
                         "/api-docs/**",
                         "/api-docs")
                 .permitAll()
+                .antMatchers(HttpMethod.GET, "/v1/announce")
+                .permitAll()
                 .antMatchers("/v1/**")
                 .authenticated()
                 .anyRequest()
