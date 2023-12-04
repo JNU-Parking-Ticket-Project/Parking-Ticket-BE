@@ -6,6 +6,7 @@ import com.jnu.ticketapi.api.announce.model.response.SaveAnnounceResponse;
 import com.jnu.ticketapi.api.announce.service.GetAnnouncesUseCase;
 import com.jnu.ticketapi.api.announce.service.SaveAnnounceUseCase;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,7 @@ public class AnnounceController {
 
     @PostMapping("/announce")
     @Operation(summary = "공지사항 작성", description = "공지사항 제목, 공지사항 내용")
+    @SecurityRequirement(name = "access-token")
     public ResponseEntity<SaveAnnounceResponse> saveAnnounce(@RequestBody SaveAnnounceRequest saveAnnounceRequest){
         return ResponseEntity.ok(saveAnnounceUseCase.execute(saveAnnounceRequest));
     }
