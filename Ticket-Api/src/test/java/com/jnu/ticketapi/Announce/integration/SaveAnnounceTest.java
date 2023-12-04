@@ -34,7 +34,7 @@ public class SaveAnnounceTest {
 
     @Test
     @DisplayName("성공 : 공지사항 작성")
-    @WithMockUser
+    @WithMockUser(roles = "COUNCIL")
     void save_announces_test() throws Exception {
         {
             // given
@@ -62,9 +62,11 @@ public class SaveAnnounceTest {
 
         }
     }
+
+
     @Test
     @DisplayName("성공 : 공지사항 작성(제목, 내용 Default Value 테스트)")
-    @WithMockUser
+    @WithMockUser(roles = "COUNCIL")
     void save_announces_empty_test() throws Exception {
         {
             // given
