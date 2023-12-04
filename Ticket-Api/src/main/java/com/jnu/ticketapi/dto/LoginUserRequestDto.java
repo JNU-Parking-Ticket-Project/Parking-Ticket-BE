@@ -1,8 +1,8 @@
 package com.jnu.ticketapi.dto;
 
 
-import com.jnu.ticketdomain.domain.user.User;
-import com.jnu.ticketdomain.domain.user.UserRole;
+import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import lombok.Builder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 

@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.security;
 
 
-import com.jnu.ticketdomain.domain.user.User;
+import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.ArrayList;
 import java.util.Collection;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class CustomUserDetails implements UserDetails {
 
     private final User user;
-    private final static String PREFIX = "ROLE_";
+    private static final String PREFIX = "ROLE_";
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

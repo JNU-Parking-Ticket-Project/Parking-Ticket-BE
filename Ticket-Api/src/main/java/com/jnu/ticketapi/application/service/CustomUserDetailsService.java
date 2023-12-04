@@ -2,8 +2,8 @@ package com.jnu.ticketapi.application.service;
 
 
 import com.jnu.ticketapi.security.CustomUserDetails;
-import com.jnu.ticketdomain.domain.user.User;
-import com.jnu.ticketdomain.domain.user.UserRepository;
+import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
