@@ -6,8 +6,6 @@ import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
-import com.jnu.ticketdomain.domains.user.domain.UserRole;
-import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,8 +33,7 @@ public class UserUseCase {
 
     @Transactional
     public UpdateRoleResponse updateRole(Long userId, String role) {
-        User user = findById(userId).orElseThrow(() -> NotFoundUserException.EXCEPTION);
-        user.updateRole(UserRole.valueOf(role));
+        User user = userAdaptor.updateRole(userId, role);
         return converter.toUpdateRoleResponseDto(user);
     }
 }
