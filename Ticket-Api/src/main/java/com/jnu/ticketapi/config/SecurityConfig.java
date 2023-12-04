@@ -89,7 +89,7 @@ public class SecurityConfig {
                 web.ignoring()
                         .antMatchers(HttpMethod.POST, "/v1/auth/login")
                         .antMatchers(HttpMethod.GET, "/error")
-                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
-        //                        .requestMatchers(PathRequest.toH2Console());
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
+                        .requestMatchers(PathRequest.toH2Console());
     }
 }
