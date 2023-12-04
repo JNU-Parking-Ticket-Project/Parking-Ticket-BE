@@ -68,10 +68,10 @@ public class SecurityConfig {
                         "/api-docs/**",
                         "/api-docs")
                 .permitAll()
-                .antMatchers("/v1/**")
-                .authenticated()
                 .antMatchers("/v1/admin/role/**")
                 .hasRole("ADMIN")
+                .antMatchers("/v1/**")
+                .authenticated()
                 .anyRequest()
                 .denyAll();
 
