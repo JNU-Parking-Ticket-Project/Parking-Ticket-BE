@@ -8,10 +8,10 @@ import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 @RequiredArgsConstructor
 @UseCase
 public class UserUseCase {
@@ -24,7 +24,9 @@ public class UserUseCase {
     }
 
     @Transactional(readOnly = true)
-    public Optional<User> findById(Long userId) { return userAdaptor.findById(userId); }
+    public Optional<User> findById(Long userId) {
+        return userAdaptor.findById(userId);
+    }
 
     @Transactional
     public User save(User user) {
@@ -33,10 +35,7 @@ public class UserUseCase {
 
     @Transactional
     public UpdateRoleResponse updateRole(Long userId, String role) {
-        User user = findById(userId)
-                .orElseThrow(
-                        () -> NotFoundUserException.EXCEPTION
-                );
+        User user = findById(userId).orElseThrow(() -> NotFoundUserException.EXCEPTION);
         user.updateRole(UserRole.valueOf(role));
         return converter.toUpdateRoleResponseDto(user);
     }

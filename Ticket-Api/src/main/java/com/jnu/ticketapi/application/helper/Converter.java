@@ -13,7 +13,6 @@ import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
-
 import java.util.List;
 import java.util.stream.Collectors;
 

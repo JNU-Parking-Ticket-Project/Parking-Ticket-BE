@@ -17,9 +17,9 @@ public class UserController {
     private final UserUseCase userUseCase;
 
     @PutMapping("/admin/role/{userId}")
-    public ResponseEntity<UpdateRoleResponse> updateRole(@PathVariable ("userId") Long userId, @RequestBody UpdateRoleRequest request) {
+    public ResponseEntity<UpdateRoleResponse> updateRole(
+            @PathVariable("userId") Long userId, @RequestBody UpdateRoleRequest request) {
         UpdateRoleResponse response = userUseCase.updateRole(userId, request.role());
         return ResponseEntity.ok(response);
     }
 }
-
