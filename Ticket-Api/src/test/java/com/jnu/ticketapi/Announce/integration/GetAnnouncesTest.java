@@ -1,6 +1,5 @@
 package com.jnu.ticketapi.Announce.integration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,39 +24,35 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class GetAnnouncesTest {
 
-
     @Autowired
     private MockMvc mvc;
 
-    @Autowired
-    private ObjectMapper om;
-
-        @Test
-        @DisplayName("성공 : 공지사항 목록 조회")
-        @WithAnonymousUser
-        void get_announces_test() throws Exception {
-            {
-                // given
-                MultiValueMap<String, String> request = new LinkedMultiValueMap<>();
-                request.add("page", "0");
-                request.add("size", "10");
-                request.add("sort", "createdAt,DESC");
+    @Test
+    @DisplayName("성공 : 공지사항 목록 조회")
+    @WithAnonymousUser
+    void get_announces_test() throws Exception {
+        {
+            // given
+            MultiValueMap<String, String> request = new LinkedMultiValueMap<>();
+            request.add("page", "0");
+            request.add("size", "10");
+            request.add("sort", "createdAt,DESC");
 
 
-                // when
-                ResultActions resultActions =
-                        mvc.perform(
-                                get("/v1/announce")
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .queryParams(request));
-                // eye
-                String responseBody = resultActions.andReturn().getResponse().getContentAsString();
-                log.info("responseBody : " + responseBody);
-                // then
-                resultActions.andExpectAll(
-                        status().isOk(),
-                        jsonPath("$.success").value(true));
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            get("/v1/announce")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .queryParams(request));
+            // eye
+            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+            log.info("responseBody : " + responseBody);
+            // then
+            resultActions.andExpectAll(
+                    status().isOk(),
+                    jsonPath("$.success").value(true));
 
-            }
         }
     }
+}
