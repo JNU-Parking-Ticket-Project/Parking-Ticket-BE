@@ -3,8 +3,10 @@ package com.jnu.ticketapi.api.announce.controller;
 import com.jnu.ticketapi.api.announce.model.request.SaveAnnounceRequest;
 import com.jnu.ticketapi.api.announce.model.request.UpdateAnnounceRequest;
 import com.jnu.ticketapi.api.announce.model.response.AnnouncePagingResponse;
+import com.jnu.ticketapi.api.announce.model.response.DeleteAnnounceResponse;
 import com.jnu.ticketapi.api.announce.model.response.SaveAnnounceResponse;
 import com.jnu.ticketapi.api.announce.model.response.UpdateAnnounceResponse;
+import com.jnu.ticketapi.api.announce.service.DeleteAnnounceUseCase;
 import com.jnu.ticketapi.api.announce.service.GetAnnouncesUseCase;
 import com.jnu.ticketapi.api.announce.service.SaveAnnounceUseCase;
 import com.jnu.ticketapi.api.announce.service.UpdateAnnounceUseCase;
@@ -28,6 +30,7 @@ public class AnnounceController {
     private final GetAnnouncesUseCase getAnnouncesUseCase;
     private final SaveAnnounceUseCase saveAnnounceUseCase;
     private final UpdateAnnounceUseCase updateAnnounceUseCase;
+    private final DeleteAnnounceUseCase deleteAnnounceUseCase;
 
     @GetMapping("/announce")
     @Operation(summary = "공지사항 목록 조회", description = "페이지네이션(페이지 번호, 페이지 개수, 정렬)")
@@ -48,6 +51,14 @@ public class AnnounceController {
     public ResponseEntity<UpdateAnnounceResponse> updateAnnounce(@PathVariable Long announceId,
                                                                  @RequestBody UpdateAnnounceRequest updateAnnounceRequest){
         return ResponseEntity.ok(updateAnnounceUseCase.execute(announceId, updateAnnounceRequest));
+    }
+
+    @DeleteMapping("/announce/{announceId}")
+    @Operation(summary = "공지사항 삭제", description = "공지사항 ID")
+    @SecurityRequirement(name = "access-token")
+    public ResponseEntity<DeleteAnnounceResponse> deleteAnnounce(@PathVariable Long announceId){
+
+        return ResponseEntity.ok(deleteAnnounceUseCase.execute(announceId));
     }
 
 }
