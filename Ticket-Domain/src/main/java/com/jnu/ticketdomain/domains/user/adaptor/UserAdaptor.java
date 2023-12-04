@@ -28,4 +28,9 @@ public class UserAdaptor implements UserLoadPort, UserRecordPort {
     public User save(User user) {
         return userRepository.save(user);
     }
+
+    @Override
+    public Optional<User> findById(Long userId) {
+        return userRepository.findById(userId);
+    }
 }
