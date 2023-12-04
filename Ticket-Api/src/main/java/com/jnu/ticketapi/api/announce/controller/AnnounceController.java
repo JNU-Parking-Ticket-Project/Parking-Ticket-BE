@@ -20,7 +20,7 @@ public class AnnounceController {
     private final GetAnnouncesUseCase getAnnouncesUseCase;
 
     @SecurityRequirement(name = "access-token")
-    @GetMapping("/announces")
+    @GetMapping("/announce")
     public ResponseEntity<AnnouncePagingResponse> getAnnounces(@PageableDefault(sort ={"createdAt"}, direction = Sort.Direction.DESC,size = 10) Pageable pageable){
         return ResponseEntity.ok(getAnnouncesUseCase.execute(pageable));
     }
