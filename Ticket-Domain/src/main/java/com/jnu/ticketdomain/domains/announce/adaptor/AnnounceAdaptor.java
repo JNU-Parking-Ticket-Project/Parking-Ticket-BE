@@ -17,7 +17,7 @@ public class AnnounceAdaptor implements AnnounceRecordPort, AnnounceLoadPort {
 
     @Override
     public Announce save(Announce announce) {
-        return null;
+        return announceRepository.save(announce);
     }
 
     @Override
