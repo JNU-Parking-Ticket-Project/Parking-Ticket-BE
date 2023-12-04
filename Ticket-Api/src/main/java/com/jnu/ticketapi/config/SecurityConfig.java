@@ -70,6 +70,8 @@ public class SecurityConfig {
                 .permitAll()
                 .antMatchers("/v1/**")
                 .authenticated()
+                .antMatchers("/v1/admin/roles")
+                .hasRole("ADMIN")
                 .anyRequest()
                 .denyAll();
 
