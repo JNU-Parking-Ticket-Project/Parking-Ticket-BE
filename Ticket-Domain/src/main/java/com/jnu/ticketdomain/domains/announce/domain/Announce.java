@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
 
 import javax.persistence.*;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Table(name = "announce_tb")
+@DynamicInsert
 public class Announce {
 
     @Id
@@ -28,11 +30,11 @@ public class Announce {
     private Long announceId;
 
     @Column(name = "title", nullable = false)
-    @ColumnDefault("제목을 입력해주세요.")
+    @ColumnDefault("'제목을 입력해주세요.'")
     private String announceTitle;
 
     @Column(name = "content", nullable = false)
-    @ColumnDefault("내용을 입력해주세요.")
+    @ColumnDefault("'내용을 입력해주세요.'")
     private String announceContent;
 
     @Column(name = "created_at")
