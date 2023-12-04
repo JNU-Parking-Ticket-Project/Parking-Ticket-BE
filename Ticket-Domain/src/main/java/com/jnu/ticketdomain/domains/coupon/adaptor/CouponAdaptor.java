@@ -23,7 +23,8 @@ public class CouponAdaptor implements CouponRecordPort, CouponLoadPort {
 
     public Coupon findOpenCoupon() {
         return couponRepository
-                .findByCouponStatus(CouponStatus.OPEN)
+                // TODO 추 후에 완성되면 이걸로 변경         .findByCouponStatus(CouponStatus.OPEN)
+                .findByCouponStatus(CouponStatus.READY)
                 .orElseThrow(() -> NotFoundCouponException.EXCEPTION);
     }
 

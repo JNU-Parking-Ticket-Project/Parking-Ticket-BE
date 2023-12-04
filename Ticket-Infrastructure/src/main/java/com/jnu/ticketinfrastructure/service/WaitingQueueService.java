@@ -6,11 +6,13 @@ import java.util.LinkedList;
 import java.util.Queue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+// import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @Service
 @Slf4j
 public class WaitingQueueService {
     private final RedisRepository redisRepository;
+    //        private final SimpMessagingTemplate messagingTemplate;
 
     public WaitingQueueService(RedisRepository redisRepository) {
         this.redisRepository = redisRepository;
@@ -19,8 +21,14 @@ public class WaitingQueueService {
     public Boolean registerQueue(String key, Object value) {
         Double score = (double) System.currentTimeMillis();
         Boolean result = redisRepository.zAddIfAbsent(key, value, score);
-        log.info("register queue key: " + key + ", value: " + value + ", result " + result);
+        if (result) {
+            notifyQueueUpdate(key);
+        }
         return result;
+    }
+
+    private void notifyQueueUpdate(String key) {
+        //        messagingTemplate.convertAndSend(REDIS_COUPON_CHANNEL, key);
     }
 
     public <T> Queue<T> getQueue(String key, long startRank, long endRank, Class<T> type) {

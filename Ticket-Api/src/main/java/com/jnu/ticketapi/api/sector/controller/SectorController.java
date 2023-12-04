@@ -1,6 +1,6 @@
 package com.jnu.ticketapi.api.sector.controller;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.*;
+import static com.jnu.ticketcommon.message.ResponseMessage.*;
 
 import com.jnu.ticketapi.api.sector.docs.CreateSectorExceptionDocs;
 import com.jnu.ticketapi.api.sector.request.SectorRegisterRequest;
@@ -12,13 +12,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@SecurityRequirement(name = "access-token")
 @RestController
 @Tag(name = "3. [구간]")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "access-token")
 @RequestMapping("/v1")
 public class SectorController {
     private final SectorRegisterUseCase sectorRegisterUseCase;
@@ -26,25 +25,25 @@ public class SectorController {
 
     @Operation(summary = "구간 추가", description = "구간 설정(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
     @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
-    @PostMapping("/sector")
-    public ResponseEntity<String> setCoupon(@RequestBody List<SectorRegisterRequest> sectors) {
+    @PostMapping("/sectors")
+    public String setCoupon(@RequestBody List<SectorRegisterRequest> sectors) {
         sectorRegisterUseCase.execute(sectors);
-        return ResponseEntity.ok(SECTOR_SUCCESS_REGISTER_MESSAGE);
+        return SECTOR_SUCCESS_REGISTER_MESSAGE;
     }
 
     @Operation(summary = "구간 수정", description = "구간 삭제(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
     @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
-    @PutMapping("/sector")
-    public ResponseEntity<String> updateCoupon(@RequestBody List<SectorRegisterRequest> sectors) {
+    @PutMapping("/sectors")
+    public String updateCoupon(@RequestBody List<SectorRegisterRequest> sectors) {
         sectorRegisterUseCase.execute(sectors);
-        return ResponseEntity.ok(SECTOR_SUCCESS_UPDATE_MESSAGE);
+        return SECTOR_SUCCESS_UPDATE_MESSAGE;
     }
 
     @Operation(summary = "구간 삭제", description = "구간 삭제(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
     @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
-    @DeleteMapping("/sector/{sector-id}")
-    public ResponseEntity<String> deleteCoupon(@PathVariable("sector-id") Long sectorId) {
+    @DeleteMapping("/sectors/{sector-id}")
+    public String deleteCoupon(@PathVariable("sector-id") Long sectorId) {
         sectorDeleteUseCase.execute(sectorId);
-        return ResponseEntity.ok(SECTOR_SUCCESS_DELETE_MESSAGE);
+        return SECTOR_SUCCESS_DELETE_MESSAGE;
     }
 }

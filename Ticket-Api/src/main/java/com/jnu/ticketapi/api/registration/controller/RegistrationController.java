@@ -9,6 +9,7 @@ import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.application.port.RegistrationUseCase;
 import com.jnu.ticketapi.application.port.UserUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ public class RegistrationController {
         return ResponseEntity.ok(responseDto);
     }
 
+    @Operation(summary = "주차권 임시 신청", description = "주차권 임시 신청(주차권 신청시 잔고 감소)")
     @PostMapping("/registration/false")
     public ResponseEntity<TemporarySaveResponse> temporarySave(
             @RequestBody TemporarySaveRequest requestDto) {
@@ -35,6 +37,7 @@ public class RegistrationController {
         return ResponseEntity.ok(responseDto);
     }
 
+    @Operation(summary = "주차권 최종 신청", description = "주차권 최종 신청 - 실제 잔고 감소")
     @PostMapping("/registration/true")
     public ResponseEntity<FinalSaveResponse> finalSave(@RequestBody FinalSaveRequest requestDto) {
         FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto);

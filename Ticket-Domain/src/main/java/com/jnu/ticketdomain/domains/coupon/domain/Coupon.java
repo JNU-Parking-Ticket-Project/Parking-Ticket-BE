@@ -6,6 +6,7 @@ import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.coupon.event.CouponExpiredEvent;
 import com.jnu.ticketdomain.domains.coupon.exception.InvalidPeriodCouponException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import javax.persistence.*;
@@ -35,9 +36,10 @@ public class Coupon {
     // 쿠폰 발행 가능 기간
 
     // 구간별 정보
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "sector_id")
-    private List<Sector> sector;
+    //    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "coupon", cascade = CascadeType.ALL, orphanRemoval = true)
+    //    @JoinColumn(name = "sector_id")
+    private List<Sector> sector = new ArrayList<>();
 
     @Builder
     public Coupon(DateTimePeriod dateTimePeriod, List<Sector> sector) {

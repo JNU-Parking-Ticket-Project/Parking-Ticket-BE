@@ -24,13 +24,9 @@ public class TicketStatic {
     public static final int TOO_MANY_REQUESTS = 429;
     public static final int INTERNAL_SERVER = 500;
     public static final String SWAGGER_DOCS_VERSION = "v0.0.1";
-    public static final String REDIS_CHANNEL_NAME = "쿠폰발급";
-    public static final String PASSWORD_SUCCESS_CHANGE_MESSAGE = "성공적으로 비밀번호가 변경됐습니다";
-    public static final String COUPON_SUCCESS_REGISTER_MESSAGE = "성공적으로 쿠폰이 등록됐습니다";
-    public static final String SECTOR_SUCCESS_REGISTER_MESSAGE = "성공적으로 구간이 등록됐습니다";
-    public static final String SECTOR_SUCCESS_DELETE_MESSAGE = "성공적으로 구간이 삭제됐습니다";
-    public static final String SECTOR_SUCCESS_UPDATE_MESSAGE = "성공적으로 구간이 수정됐습니다";
 
+    public static final String REDIS_COUPON_CHANNEL = "쿠폰 발급 채널";
+    public static final String REDIS_COUPON_ISSUE_STORE = "쿠폰 발급 저장소";
     public static final String[] SwaggerPatterns = {
         "/swagger-resources/**",
         "/swagger-ui/**",

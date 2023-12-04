@@ -1,12 +1,12 @@
 package com.jnu.ticketinfrastructure.config.redis;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_CHANNEL_NAME;
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_COUPON_CHANNEL;
 
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.service.CouponSubscribeService;
 import java.time.Duration;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +28,6 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
         enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP)
 @Configuration
 @Slf4j
-@RequiredArgsConstructor
 public class RedisConfig {
 
     @Value("${spring.redis.host}")
@@ -39,6 +38,8 @@ public class RedisConfig {
 
     @Value("${spring.redis.password}")
     private String redisPassword;
+
+    @Autowired private CouponSubscribeService couponSubscribeService;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -83,12 +84,12 @@ public class RedisConfig {
     // 리스너어댑터 설정
     @Bean
     MessageListenerAdapter messageListenerAdapter() {
-        return new MessageListenerAdapter(new CouponSubscribeService());
+        return new MessageListenerAdapter(couponSubscribeService);
     }
 
     // pub/sub 토픽 설정
     @Bean
     ChannelTopic topic() {
-        return new ChannelTopic(REDIS_CHANNEL_NAME);
+        return new ChannelTopic(REDIS_COUPON_CHANNEL);
     }
 }
