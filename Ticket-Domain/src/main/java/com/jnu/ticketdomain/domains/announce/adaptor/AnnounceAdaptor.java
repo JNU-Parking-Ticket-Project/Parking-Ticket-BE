@@ -1,6 +1,7 @@
 package com.jnu.ticketdomain.domains.announce.adaptor;
 
 import com.jnu.ticketcommon.annotation.Adaptor;
+import com.jnu.ticketcommon.exception.AnnounceIdNotExistException;
 import com.jnu.ticketdomain.domains.announce.domain.Announce;
 import com.jnu.ticketdomain.domains.announce.out.AnnounceLoadPort;
 import com.jnu.ticketdomain.domains.announce.out.AnnounceRecordPort;
@@ -26,6 +27,13 @@ public class AnnounceAdaptor implements AnnounceRecordPort, AnnounceLoadPort {
         announce.updateTitle(title);
         announce.updateContent(content);
         return announce;
+    }
+
+    @Override
+    public void delete(Long announceId) {
+        Announce announce = announceRepository.findById(announceId)
+                .orElseThrow(() -> AnnounceIdNotExistException.EXCEPTION);
+        announceRepository.delete(announce);
     }
 
     @Override
