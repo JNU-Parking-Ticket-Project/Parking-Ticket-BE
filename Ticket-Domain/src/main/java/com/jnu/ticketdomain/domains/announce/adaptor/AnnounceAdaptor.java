@@ -21,7 +21,16 @@ public class AnnounceAdaptor implements AnnounceRecordPort, AnnounceLoadPort {
     }
 
     @Override
+    public Announce update(Long announceId, String title, String content) {
+        Announce announce = announceRepository.findById(announceId).orElseThrow();
+        announce.updateTitle(title);
+        announce.updateContent(content);
+        return announce;
+    }
+
+    @Override
     public Page<Announce> findAllByOrderByCreatedAtDesc(Pageable pageable) {
         return announceRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
+
 }
