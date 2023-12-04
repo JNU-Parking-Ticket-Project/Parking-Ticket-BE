@@ -7,4 +7,6 @@ public interface AnnounceRecordPort {
     Announce save(Announce announce);
 
     Announce update(Long announceId, String title, String content);
+
+    void delete(Long announceId);
 }
