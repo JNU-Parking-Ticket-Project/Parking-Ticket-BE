@@ -31,8 +31,8 @@ public class DeleteAnnounceTest {
 
     @Test
     @DisplayName("성공 : 공지사항 삭제")
-    @WithMockUser
-    void save_announces_test() throws Exception {
+    @WithMockUser(roles = "COUNCIL")
+    void delete_announces_test() throws Exception {
         {
             // given
             SaveAnnounceRequest saveRequest = SaveAnnounceRequest.builder()
@@ -74,8 +74,8 @@ public class DeleteAnnounceTest {
 
     @Test
     @DisplayName("실패 : 공지사항 목록 삭제(존재하지 않는 공지사항 ID 입력)")
-    @WithMockUser
-    void delete_announces_test() throws Exception {
+    @WithMockUser(roles = "COUNCIL")
+    void delete_announces_fail_test() throws Exception {
         {
             // given
             long announceId = 55L;
