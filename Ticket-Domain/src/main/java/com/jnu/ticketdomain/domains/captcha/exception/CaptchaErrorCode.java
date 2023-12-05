@@ -14,7 +14,8 @@ import static com.jnu.ticketcommon.consts.TicketStatic.NOT_FOUND;
 @Getter
 @AllArgsConstructor
 public enum CaptchaErrorCode implements BaseErrorCode {
-    NOT_FOUND_CAPTCHA(NOT_FOUND, "Captcha_404_1", "존재하지 않는 캡챠입니다.");
+    NOT_FOUND_CAPTCHA(NOT_FOUND, "Captcha_404_1", "존재하지 않는 캡챠입니다."),
+    NOT_FOUND_CAPTCHA_PENDING(NOT_FOUND, "Captcha_404_2", "존재하지 않는 캡챠 인증입니다.");
 
     private final Integer status;
     private final String code;
