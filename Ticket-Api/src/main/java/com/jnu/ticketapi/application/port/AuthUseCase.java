@@ -1,10 +1,10 @@
 package com.jnu.ticketapi.application.port;
 
 
-import com.jnu.ticketapi.api.auth.model.request.LoginUserRequestDto;
-import com.jnu.ticketapi.api.auth.model.response.LoginUserResponseDto;
-import com.jnu.ticketapi.api.auth.model.response.LogoutUserResponseDto;
-import com.jnu.ticketapi.api.auth.model.response.ReissueTokenResponseDto;
+import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
+import com.jnu.ticketapi.api.auth.model.response.LoginUserResponse;
+import com.jnu.ticketapi.api.auth.model.response.LogoutUserResponse;
+import com.jnu.ticketapi.api.auth.model.response.ReissueTokenResponse;
 import com.jnu.ticketapi.api.auth.model.internal.TokenDto;
 import com.jnu.ticketapi.api.user.service.UserUseCase;
 import com.jnu.ticketapi.security.JwtGenerator;
@@ -43,7 +43,7 @@ public class AuthUseCase {
 
     // 토큰 재발급: validate 메서드가 true 반환할 때만 사용 -> AT, RT 재발급
     @Transactional
-    public ReissueTokenResponseDto reissue(String requestAccessToken, String requestRefreshToken) {
+    public ReissueTokenResponse reissue(String requestAccessToken, String requestRefreshToken) {
 
         Authentication accessAuthentication = jwtResolver.getAuthentication(requestAccessToken);
         String accessPrincipal = getPrincipal(requestAccessToken);
@@ -71,8 +71,8 @@ public class AuthUseCase {
 
         // 토큰 재발급 및 Redis 업데이트
         redisService.deleteValues("RT(" + SERVER + "):" + refreshPrincipal); // 기존 RT 삭제
-        ReissueTokenResponseDto reissueTokenDto =
-                ReissueTokenResponseDto.builder()
+        ReissueTokenResponse reissueTokenDto =
+                ReissueTokenResponse.builder()
                         .accessToken(
                                 jwtGenerator.generateAccessToken(refreshPrincipal, authorities))
                         .refreshToken(
@@ -118,7 +118,7 @@ public class AuthUseCase {
     }
 
     @Transactional
-    public LogoutUserResponseDto logout(String requestAccessTokenInHeader) {
+    public LogoutUserResponse logout(String requestAccessTokenInHeader) {
         String requestAccessToken = extractToken(requestAccessTokenInHeader);
         String principal = getPrincipal(requestAccessToken);
 
@@ -127,28 +127,28 @@ public class AuthUseCase {
         if (refreshTokenInRedis != null) {
             redisService.deleteValues("RT(" + SERVER + "):" + principal);
         }
-        return LogoutUserResponseDto.builder().message(ResponseMessage.SUCCESS_LOGOUT).build();
+        return LogoutUserResponse.builder().message(ResponseMessage.SUCCESS_LOGOUT).build();
     }
 
     @Transactional
-    public LoginUserResponseDto login(LoginUserRequestDto loginUserRequestDto) {
+    public LoginUserResponse login(LoginUserRequest loginUserRequest) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-        Optional<User> userOptional = userUseCase.findByEmail(loginUserRequestDto.email());
+        Optional<User> userOptional = userUseCase.findByEmail(loginUserRequest.email());
         User user;
         if (userOptional.isEmpty()) {
-            user = loginUserRequestDto.toEntity(loginUserRequestDto);
+            user = loginUserRequest.toEntity(loginUserRequest);
             userUseCase.save(user);
 
         } else {
             user = userOptional.get();
-            if (!bCryptPasswordEncoder.matches(loginUserRequestDto.pwd(), user.getPwd())) {
+            if (!bCryptPasswordEncoder.matches(loginUserRequest.pwd(), user.getPwd())) {
                 throw BadCredentialException.EXCEPTION;
             }
         }
         TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
         log.info("accessToken : " + tokenDto.accessToken());
         log.info("refreshToken : " + tokenDto.refreshToken());
-        return LoginUserResponseDto.builder()
+        return LoginUserResponse.builder()
                 .accessToken(tokenDto.accessToken())
                 .refreshToken(tokenDto.refreshToken())
                 .build();

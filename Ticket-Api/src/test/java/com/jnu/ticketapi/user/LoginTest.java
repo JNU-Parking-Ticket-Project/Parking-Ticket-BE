@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketapi.api.auth.model.request.LoginUserRequestDto;
+import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,8 +35,8 @@ public class LoginTest {
         void loginTest() throws Exception {
             {
                 // given
-                LoginUserRequestDto requestsDto =
-                        LoginUserRequestDto.builder()
+                LoginUserRequest requestsDto =
+                        LoginUserRequest.builder()
                                 .email("ekrrrdj21@jnu.ac.kr")
                                 .pwd("1234")
                                 .build();
