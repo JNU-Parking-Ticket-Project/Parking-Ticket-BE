@@ -76,6 +76,8 @@ public class SecurityConfig {
                 .hasRole("COUNCIL")
                 .antMatchers(HttpMethod.DELETE, "v1/announce/**")
                 .hasRole("COUNCIL")
+                .antMatchers("/v1/admin/role/**")
+                .hasRole("ADMIN")
                 .antMatchers("/v1/**")
                 .authenticated()
                 .anyRequest()
@@ -96,6 +98,6 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.POST, "/v1/auth/login")
                         .antMatchers(HttpMethod.GET, "/error")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
-                                .requestMatchers(PathRequest.toH2Console());
+                        .requestMatchers(PathRequest.toH2Console());
     }
 }

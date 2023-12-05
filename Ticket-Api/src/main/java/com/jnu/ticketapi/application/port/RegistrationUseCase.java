@@ -13,9 +13,9 @@ public interface RegistrationUseCase {
 
     GetRegistrationResponse getRegistration(String email);
 
-    TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto);
+    TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto, String email);
 
     Registration save(Registration registration);
 
-    FinalSaveResponse finalSave(FinalSaveRequest requestDto);
+    FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email);
 }

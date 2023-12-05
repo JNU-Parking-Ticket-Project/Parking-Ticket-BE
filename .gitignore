@@ -34,7 +34,6 @@ out/
 ### NetBeans ###
 
 /build
-**/build/**
 /build/sonar
 /build/spotless
 /build/tmp
@@ -51,11 +50,8 @@ out/
 ### sonarlint ###
 */*.iml
 **/*.iml
-*.iml
 
 *.xlsx
 
 DuDoong-Domain/src/main/generated/**/*.java
-
-.env
 dump.rdb
