@@ -71,7 +71,7 @@ spring:
       hibernate:
         default_batch_fetch_size: ${JPA_BATCH_FETCH_SIZE:100}
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     database-platform: org.hibernate.dialect.MySQL8Dialect
 logging:
   level:
@@ -97,5 +97,5 @@ spring:
       hibernate:
         default_batch_fetch_size: ${JPA_BATCH_FETCH_SIZE:100}
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create-drop
     database-platform: org.hibernate.dialect.MySQL8Dialect
