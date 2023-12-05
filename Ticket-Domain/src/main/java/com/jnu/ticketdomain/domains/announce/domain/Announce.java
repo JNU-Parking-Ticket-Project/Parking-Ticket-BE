@@ -1,5 +1,8 @@
 package com.jnu.ticketdomain.domains.announce.domain;
 
+
+import java.time.LocalDateTime;
+import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,9 +11,6 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import javax.persistence.*;
-import java.time.LocalDateTime;
 
 /**
  * 공지사항 Entity. 제목과 내용, 생성일 필드가 존재하며, String, String, LocalDateTime 타입이다.
@@ -44,16 +44,16 @@ public class Announce {
     private LocalDateTime createdAt;
 
     @Builder
-    public Announce(String announceTitle, String announceContent){
-        this.announceTitle=announceTitle;
-        this.announceContent=announceContent;
+    public Announce(String announceTitle, String announceContent) {
+        this.announceTitle = announceTitle;
+        this.announceContent = announceContent;
     }
 
-    public void updateTitle(String title){
+    public void updateTitle(String title) {
         this.announceTitle = title;
     }
 
-    public void updateContent(String content){
+    public void updateContent(String content) {
         this.announceContent = content;
     }
 }
