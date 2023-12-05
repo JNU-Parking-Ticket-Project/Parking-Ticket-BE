@@ -1,10 +1,13 @@
 package com.jnu.ticketapi.api.notice.controller;
 
+
+import com.jnu.ticketapi.api.notice.docs.GetNoticeExceptionDocs;
 import com.jnu.ticketapi.api.notice.model.request.UpdateNoticeRequest;
 import com.jnu.ticketapi.api.notice.model.response.NoticeResponse;
 import com.jnu.ticketapi.api.notice.model.response.UpdateNoticeResponse;
 import com.jnu.ticketapi.api.notice.service.GetNoticeUseCase;
 import com.jnu.ticketapi.api.notice.service.UpdateNoticeUseCase;
+import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,14 +30,16 @@ public class NoticeController {
 
     @GetMapping("/notice")
     @Operation(summary = "안내사항 조회")
-    public ResponseEntity<NoticeResponse> getNoticeDetails(){
+    @ApiErrorExceptionsExample(GetNoticeExceptionDocs.class)
+    public ResponseEntity<NoticeResponse> getNoticeDetails() {
         return ResponseEntity.ok(getNoticeUseCase.getNoticeDetails());
     }
 
     @PutMapping("/notice")
     @Operation(summary = "안내사항 수정")
     @SecurityRequirement(name = "access-token")
-    public ResponseEntity<UpdateNoticeResponse> updateNotice(@RequestBody UpdateNoticeRequest updateNoticeRequest){
+    public ResponseEntity<UpdateNoticeResponse> updateNotice(
+            @RequestBody UpdateNoticeRequest updateNoticeRequest) {
         return ResponseEntity.ok(updateNoticeUseCase.updateNotice(updateNoticeRequest));
     }
 }

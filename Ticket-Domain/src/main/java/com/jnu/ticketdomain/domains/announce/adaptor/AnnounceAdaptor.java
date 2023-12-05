@@ -25,7 +25,10 @@ public class AnnounceAdaptor implements AnnounceRecordPort, AnnounceLoadPort {
 
     @Override
     public Announce update(Long announceId, String title, String content) {
-        Announce announce = announceRepository.findById(announceId).orElseThrow(() -> AnnounceNotExistException.EXCEPTION);
+        Announce announce =
+                announceRepository
+                        .findById(announceId)
+                        .orElseThrow(() -> AnnounceNotExistException.EXCEPTION);
         announce.updateTitle(title);
         announce.updateContent(content);
         return announce;
