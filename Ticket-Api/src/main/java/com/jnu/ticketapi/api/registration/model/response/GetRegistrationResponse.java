@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.api.registration.model.response;
 
 
-import com.jnu.ticketapi.dto.SectorDto;
+import com.jnu.ticketapi.api.sector.model.internal.SectorDto;
 import java.util.List;
 import lombok.Builder;
 
