@@ -6,4 +6,6 @@ import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 @Port
 public interface CaptchaLoadPort {
     Captcha findByImageName(String imageName);
+
+    Captcha findByRandom();
 }

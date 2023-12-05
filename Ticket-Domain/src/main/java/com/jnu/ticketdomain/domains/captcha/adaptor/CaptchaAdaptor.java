@@ -17,4 +17,9 @@ public class CaptchaAdaptor implements CaptchaLoadPort {
         return captchaRepository.findByImageName(imageName)
                 .orElseThrow(() -> NotFoundCaptchaException.EXCEPTION);
     }
+
+    @Override
+    public Captcha findByRandom() {
+        return captchaRepository.findByRandom();
+    }
 }
