@@ -57,7 +57,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-            sudo docker rm -f $(docker ps -qa)
+            sudo docker rm -f quokka-prod-was
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
             sudo docker-compose up -d
             sudo docker image prune -f
