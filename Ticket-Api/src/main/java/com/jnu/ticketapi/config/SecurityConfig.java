@@ -73,7 +73,9 @@ public class SecurityConfig {
                         "/v3/api-docs/**",
                         "/v3/api-docs",
                         "/api-docs/**",
-                        "/api-docs")
+                        "/api-docs",
+                        "/v1/auth/login",
+                        "/error")
                 .permitAll()
                 .antMatchers(HttpMethod.GET, "/v1/announce/**")
                 .permitAll()
@@ -102,8 +104,6 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) ->
                 web.ignoring()
-                        .antMatchers("/v1/auth/login")
-                        .antMatchers("/error")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
                         .requestMatchers(PathRequest.toH2Console());
     }
