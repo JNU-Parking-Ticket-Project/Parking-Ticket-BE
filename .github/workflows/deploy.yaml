@@ -62,7 +62,7 @@ jobs:
             sudo docker rm -f quokka-prod-was
             
             # Pull and Deploy new built docker image with new tag
-            sudo docker pull ${{ inputs.image-name }}:${{ inputs.image-tag }}
+            sudo docker pull ${{ inputs.image-name }}:latest
             sudo docker-compose up -d
             
             # Remove all unused docker image
