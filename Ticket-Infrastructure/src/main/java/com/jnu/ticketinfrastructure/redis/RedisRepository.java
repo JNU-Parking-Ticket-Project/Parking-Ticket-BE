@@ -51,4 +51,8 @@ public class RedisRepository {
     public Long sCard(String key) {
         return redisTemplate.opsForSet().size(key);
     }
+
+    public void converAndSend(String channel, String message) {
+        redisTemplate.convertAndSend(channel, message);
+    }
 }
