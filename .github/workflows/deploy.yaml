@@ -30,7 +30,7 @@ on:
         type: string
 
 env:
-  IMAGE_TAG: ${{ inputs.image-tag || 'latest' }}
+  IMAGE_TAG: 'latest'
   ACTIVE_PROFILE: ${{ inputs.spring-profile-active || 'local' }}
   ENVIRONMENT: ${{ inputs.environment || 'local' }}
 
