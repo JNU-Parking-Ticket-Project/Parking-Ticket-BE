@@ -61,20 +61,16 @@ public class RegistrationService implements RegistrationUseCase {
 
     @Override
     @Transactional
-    // TODO : 채승이 피드백 email은 굳이 안받아도된다
-
-    public TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto) {
+    public TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto, String email) {
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
-        Registration registration = converter.temporaryToRegistration(requestDto, sector);
+        Registration registration = converter.temporaryToRegistration(requestDto, sector, email);
         Registration jpaRegistration = save(registration);
         return converter.toTemporarySaveResponseDto(jpaRegistration);
     }
 
     @Override
     @Transactional
-    // TODO : 채승이 피드백 email은 굳이 안받아도된다
-
-    public FinalSaveResponse finalSave(FinalSaveRequest requestDto) {
+    public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
         /*
         임시저장을 했으면 isSave만 true로 변경
          */
@@ -87,7 +83,7 @@ public class RegistrationService implements RegistrationUseCase {
                     .build();
         }
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
-        Registration registration = converter.finalToRegistration(requestDto, sector);
+        Registration registration = converter.finalToRegistration(requestDto, sector, email);
         Registration jpaRegistration = save(registration);
         return converter.toFinalSaveResponseDto(jpaRegistration);
     }

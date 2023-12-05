@@ -43,9 +43,10 @@ public class Converter {
                 .build();
     }
 
-    public Registration temporaryToRegistration(TemporarySaveRequest requestDto, Sector sector) {
+    public Registration temporaryToRegistration(
+            TemporarySaveRequest requestDto, Sector sector, String email) {
         return Registration.builder()
-                .email(requestDto.email())
+                .email(email)
                 .name(requestDto.name())
                 .studentNum(requestDto.studentNum())
                 .affiliation(requestDto.affiliation())
@@ -57,9 +58,10 @@ public class Converter {
                 .build();
     }
 
-    public Registration finalToRegistration(FinalSaveRequest requestDto, Sector sector) {
+    public Registration finalToRegistration(
+            FinalSaveRequest requestDto, Sector sector, String email) {
         return Registration.builder()
-                .email(requestDto.email())
+                .email(email)
                 .name(requestDto.name())
                 .studentNum(requestDto.studentNum())
                 .affiliation(requestDto.affiliation())
