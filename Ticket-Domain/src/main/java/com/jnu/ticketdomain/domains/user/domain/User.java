@@ -45,6 +45,11 @@ public class User {
     @ColumnDefault("false")
     private boolean emailConfirmed;
     // TODO : 이름 ,학번, 전화번호 필드 추가
+
+    public void updateRole(UserRole userRole) {
+        this.userRole = userRole;
+    }
+
     @Builder
     public User(String pwd, String email, UserRole userRole) {
         this.pwd = pwd;
