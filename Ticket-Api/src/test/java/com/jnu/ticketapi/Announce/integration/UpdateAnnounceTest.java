@@ -35,7 +35,7 @@ public class UpdateAnnounceTest {
 
     @Test
     @DisplayName("성공 : 공지사항 수정")
-    @WithMockUser
+    @WithMockUser(roles = "COUNCIL")
     void save_announces_test() throws Exception {
         {
             // given
