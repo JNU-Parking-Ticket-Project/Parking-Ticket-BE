@@ -2,6 +2,8 @@ package com.jnu.ticketdomain.domains.council.domain;
 
 
 import javax.persistence.*;
+
+import com.jnu.ticketdomain.domains.user.domain.User;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,20 +21,17 @@ public class Council {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "email", nullable = false, unique = true)
-    private String email;
-
-    @Column(name = "pwd", nullable = false)
-    private String pwd;
-
     @Column(name = "phone_num", nullable = false)
     private String phoneNum;
 
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Builder
-    public Council(String name, String email, String pwd, String phoneNum) {
+    public Council(String name, String phoneNum, User user) {
         this.name = name;
-        this.email = email;
-        this.pwd = pwd;
         this.phoneNum = phoneNum;
+        this.user = user;
     }
 }
