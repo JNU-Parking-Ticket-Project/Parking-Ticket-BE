@@ -1,8 +1,13 @@
 package com.jnu.ticketapi.Announce.integration;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.Announce.config.DatabaseClearExtension;
 import com.jnu.ticketapi.api.announce.model.request.SaveAnnounceRequest;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,12 +21,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.nio.charset.StandardCharsets;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
@@ -29,11 +28,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(DatabaseClearExtension.class)
 public class SaveAnnounceTest {
 
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
-    @Autowired
-    private ObjectMapper om;
+    @Autowired private ObjectMapper om;
 
     @Test
     @DisplayName("성공 : 공지사항 작성")
@@ -41,12 +38,12 @@ public class SaveAnnounceTest {
     void save_announces_test() throws Exception {
         {
             // given
-            SaveAnnounceRequest request = SaveAnnounceRequest.builder()
-                    .announceTitle("테스트 제목")
-                    .announceContent("테스트 내용")
-                    .build();
+            SaveAnnounceRequest request =
+                    SaveAnnounceRequest.builder()
+                            .announceTitle("테스트 제목")
+                            .announceContent("테스트 내용")
+                            .build();
             String requestBody = om.writeValueAsString(request);
-
 
             // when
             ResultActions resultActions =
@@ -56,16 +53,16 @@ public class SaveAnnounceTest {
                                     .characterEncoding(StandardCharsets.UTF_8)
                                     .content(requestBody));
             // eye
-            String responseBody = resultActions.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+            String responseBody =
+                    resultActions
+                            .andReturn()
+                            .getResponse()
+                            .getContentAsString(StandardCharsets.UTF_8);
             log.info("responseBody : " + responseBody);
             // then
-            resultActions.andExpectAll(
-                    status().isOk(),
-                    jsonPath("$.success").value(true));
-
+            resultActions.andExpectAll(status().isOk(), jsonPath("$.success").value(true));
         }
     }
-
 
     @Test
     @DisplayName("성공 : 공지사항 작성(제목, 내용 Default Value 테스트)")
@@ -73,10 +70,8 @@ public class SaveAnnounceTest {
     void save_announces_empty_test() throws Exception {
         {
             // given
-            SaveAnnounceRequest request = SaveAnnounceRequest.builder()
-                    .build();
+            SaveAnnounceRequest request = SaveAnnounceRequest.builder().build();
             String requestBody = om.writeValueAsString(request);
-
 
             // when
             ResultActions resultActions =
@@ -86,13 +81,14 @@ public class SaveAnnounceTest {
                                     .characterEncoding(StandardCharsets.UTF_8)
                                     .content(requestBody));
             // eye
-            String responseBody = resultActions.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+            String responseBody =
+                    resultActions
+                            .andReturn()
+                            .getResponse()
+                            .getContentAsString(StandardCharsets.UTF_8);
             log.info("responseBody : " + responseBody);
             // then
-            resultActions.andExpectAll(
-                    status().isOk(),
-                    jsonPath("$.success").value(true));
-
+            resultActions.andExpectAll(status().isOk(), jsonPath("$.success").value(true));
         }
     }
 }

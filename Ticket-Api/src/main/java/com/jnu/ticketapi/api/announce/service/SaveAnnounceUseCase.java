@@ -17,7 +17,7 @@ public class SaveAnnounceUseCase {
     private final AnnounceAdaptor announceAdaptor;
 
     @Transactional
-    public SaveAnnounceResponse execute(SaveAnnounceRequest saveAnnounceRequest){
+    public SaveAnnounceResponse execute(SaveAnnounceRequest saveAnnounceRequest) {
         return SaveAnnounceResponse.of(announceAdaptor.save(saveAnnounceRequest.toEntity()));
     }
 }

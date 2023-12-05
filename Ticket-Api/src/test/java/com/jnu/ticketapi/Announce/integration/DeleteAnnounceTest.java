@@ -1,8 +1,13 @@
 package com.jnu.ticketapi.Announce.integration;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.Announce.config.DatabaseClearExtension;
 import com.jnu.ticketapi.api.announce.model.request.SaveAnnounceRequest;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,10 +20,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import java.nio.charset.StandardCharsets;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -26,11 +27,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ExtendWith(DatabaseClearExtension.class)
 public class DeleteAnnounceTest {
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
-    @Autowired
-    private ObjectMapper om;
+    @Autowired private ObjectMapper om;
 
     @Test
     @DisplayName("성공 : 공지사항 삭제")
@@ -38,10 +37,11 @@ public class DeleteAnnounceTest {
     void delete_announces_test() throws Exception {
         {
             // given
-            SaveAnnounceRequest saveRequest = SaveAnnounceRequest.builder()
-                    .announceTitle("테스트 제목")
-                    .announceContent("테스트 내용")
-                    .build();
+            SaveAnnounceRequest saveRequest =
+                    SaveAnnounceRequest.builder()
+                            .announceTitle("테스트 제목")
+                            .announceContent("테스트 내용")
+                            .build();
             String testRequestBody = om.writeValueAsString(saveRequest);
 
             ResultActions testResultActions =
@@ -50,28 +50,31 @@ public class DeleteAnnounceTest {
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .characterEncoding(StandardCharsets.UTF_8)
                                     .content(testRequestBody));
-            String testResponseBody = testResultActions.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+            String testResponseBody =
+                    testResultActions
+                            .andReturn()
+                            .getResponse()
+                            .getContentAsString(StandardCharsets.UTF_8);
             log.info("responseBody : " + testResponseBody);
 
             long announceId = 1L;
-
-
 
             // when
             ResultActions resultActions =
                     mvc.perform(
                             delete("/v1/announce/" + announceId)
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .characterEncoding(StandardCharsets.UTF_8)
-                    );
+                                    .characterEncoding(StandardCharsets.UTF_8));
 
             // eye
-            String responseBody = resultActions.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+            String responseBody =
+                    resultActions
+                            .andReturn()
+                            .getResponse()
+                            .getContentAsString(StandardCharsets.UTF_8);
             log.info("responseBody : " + responseBody);
             // then
-            resultActions.andExpectAll(
-                    status().isOk(),
-                    jsonPath("$.success").value(true));
+            resultActions.andExpectAll(status().isOk(), jsonPath("$.success").value(true));
         }
     }
 
@@ -83,20 +86,21 @@ public class DeleteAnnounceTest {
             // given
             long announceId = 55L;
 
-
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            delete("/v1/announce/"+announceId)
+                            delete("/v1/announce/" + announceId)
                                     .contentType(MediaType.APPLICATION_JSON));
             // eye
-            String responseBody = resultActions.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+            String responseBody =
+                    resultActions
+                            .andReturn()
+                            .getResponse()
+                            .getContentAsString(StandardCharsets.UTF_8);
             log.info("responseBody : " + responseBody);
             // then
             resultActions.andExpectAll(
-                    status().is4xxClientError(),
-                    jsonPath("$.success").value(false));
-
+                    status().is4xxClientError(), jsonPath("$.success").value(false));
         }
     }
 }
