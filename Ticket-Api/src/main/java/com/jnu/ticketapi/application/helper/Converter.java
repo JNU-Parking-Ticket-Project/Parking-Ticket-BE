@@ -1,6 +1,8 @@
 package com.jnu.ticketapi.application.helper;
 
 
+import com.jnu.ticketapi.api.auth.model.internal.TokenDto;
+import com.jnu.ticketapi.api.auth.model.response.LoginCouncilResponse;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
@@ -93,6 +95,13 @@ public class Converter {
         return UpdateRoleResponse.builder()
                 .userId(user.getId())
                 .role(user.getUserRole().toString())
+                .build();
+    }
+
+    public LoginCouncilResponse toLoginCouncilResponseDto(TokenDto tokenDto) {
+        return LoginCouncilResponse.builder()
+                .accessToken(tokenDto.accessToken())
+                .refreshToken(tokenDto.refreshToken())
                 .build();
     }
 }

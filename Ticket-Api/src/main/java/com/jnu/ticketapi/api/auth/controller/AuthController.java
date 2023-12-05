@@ -1,8 +1,10 @@
 package com.jnu.ticketapi.api.auth.controller;
 
 
+import com.jnu.ticketapi.api.auth.model.request.LoginCouncilRequest;
 import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
 import com.jnu.ticketapi.api.auth.model.request.ReissueTokenRequest;
+import com.jnu.ticketapi.api.auth.model.response.LoginCouncilResponse;
 import com.jnu.ticketapi.api.auth.model.response.LoginUserResponse;
 import com.jnu.ticketapi.api.auth.model.response.LogoutUserResponse;
 import com.jnu.ticketapi.api.auth.model.response.ReissueTokenResponse;
@@ -49,6 +51,13 @@ public class AuthController {
     public ResponseEntity<LogoutUserResponse> logOut(
             @RequestHeader("Authorization") String bearerToken) {
         LogoutUserResponse responseDto = authUseCase.logout(bearerToken);
+        return ResponseEntity.ok(responseDto);
+    }
+    @Operation(summary = "학생회 로그인", description = "학생회 로그인(회원가입과 로그인을 따로 처리)")
+    @PostMapping("/auth/login/council")
+    public ResponseEntity<LoginCouncilResponse> logInCouncil(
+            @RequestBody LoginCouncilRequest loginCouncilRequest) {
+        LoginCouncilResponse responseDto = authUseCase.loginCouncil(loginCouncilRequest);
         return ResponseEntity.ok(responseDto);
     }
 }
