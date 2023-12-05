@@ -99,7 +99,9 @@ public class SecurityConfig {
         return (web) ->
                 web.ignoring()
                         .antMatchers(HttpMethod.GET, "/v1/notice")
+                        .antMatchers(HttpMethod.OPTIONS, "/v1/notice")
                         .antMatchers(HttpMethod.GET, "/v1/announce/**", "/v1/announce")
+                        .antMatchers(HttpMethod.OPTIONS, "/v1/announce/**", "/v1/announce")
                         .antMatchers("/v1/auth/login")
                         .antMatchers("/error")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
