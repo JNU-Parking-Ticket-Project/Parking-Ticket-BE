@@ -31,4 +31,16 @@ public class CaptchaPending {
     public CaptchaPending(Captcha captcha) {
         this.captcha = captcha;
     }
+
+    public boolean validate(int answer) {
+        if (captcha.getAnswer() != answer) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public void confirm() {
+        isPending = false;
+    }
 }
