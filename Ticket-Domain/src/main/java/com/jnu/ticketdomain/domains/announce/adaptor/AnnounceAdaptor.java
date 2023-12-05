@@ -44,7 +44,14 @@ public class AnnounceAdaptor implements AnnounceRecordPort, AnnounceLoadPort {
 
     @Override
     public Announce findAnnounceByLastOne() {
-        return announceRepository.findFirst1ByOrderByCreatedAtDesc().orElseThrow(() -> AnnounceNotExistException.EXCEPTION);
+        return announceRepository.findFirst1ByOrderByCreatedAtDesc()
+                .orElseThrow(() -> AnnounceNotExistException.EXCEPTION);
+    }
+
+    @Override
+    public Announce findById(Long announceId) {
+        return announceRepository.findById(announceId)
+                .orElseThrow(() -> AnnounceNotExistException.EXCEPTION);
     }
 
 
