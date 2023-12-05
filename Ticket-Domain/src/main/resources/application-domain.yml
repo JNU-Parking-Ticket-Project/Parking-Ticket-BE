@@ -11,7 +11,7 @@ spring:
       maximum-pool-size: 20
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create-drop
     generate-ddl: true
     show-sql: ${SHOW_SQL:true}
     properties:
@@ -44,6 +44,14 @@ spring:
       on-profile: test
   datasource:
     url: jdbc:h2:~/test;DB_CLOSE_DELAY=-1;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+  jpa:
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
 
 ---
 

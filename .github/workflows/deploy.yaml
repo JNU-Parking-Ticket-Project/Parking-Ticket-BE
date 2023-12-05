@@ -57,10 +57,16 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-            sudo docker rm -f $(docker ps -qa)
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image-name }}:${{ inputs.image-tag }}
+            
+            # Remove origin was container 
+            sudo docker rm -f quokka-prod-was
+            
+            # Pull and Deploy new built docker image with new tag
+            sudo docker pull ${{ inputs.image-name }}:${{ inputs.image-tag }}
             sudo docker-compose up -d
-            sudo docker image prune -f
+            
+            # Remove all unused docker image
+            sudo docker image prune -a -f
 
       - name: 배포 완료 슬랙 알림 보내기
         uses: 8398a7/action-slack@v3
