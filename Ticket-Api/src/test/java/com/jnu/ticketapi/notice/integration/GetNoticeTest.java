@@ -1,8 +1,14 @@
 package com.jnu.ticketapi.notice.integration;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.Announce.config.DatabaseClearExtension;
 import com.jnu.ticketapi.api.notice.model.request.UpdateNoticeRequest;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,13 +23,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.nio.charset.StandardCharsets;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
@@ -31,11 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(DatabaseClearExtension.class)
 public class GetNoticeTest {
 
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
-    @Autowired
-    private ObjectMapper om;
+    @Autowired private ObjectMapper om;
 
     @Test
     @DisplayName("성공 : 안내사항 조회")
@@ -43,11 +40,9 @@ public class GetNoticeTest {
     void get_notice_test() throws Exception {
         // give
         String noticeContent = "테스트 안내사항";
-        UpdateNoticeRequest updateNoticeRequest = UpdateNoticeRequest.builder()
-                .noticeContent(noticeContent)
-                .build();
+        UpdateNoticeRequest updateNoticeRequest =
+                UpdateNoticeRequest.builder().noticeContent(noticeContent).build();
         String givenRequestBody = om.writeValueAsString(updateNoticeRequest);
-
 
         ResultActions givenRequest =
                 mvc.perform(
@@ -55,9 +50,9 @@ public class GetNoticeTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .characterEncoding(StandardCharsets.UTF_8)
                                 .content(givenRequestBody));
-        String givenResponse = givenRequest.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        String givenResponse =
+                givenRequest.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         log.info("givenResponse : " + givenResponse);
-
 
         // when
         ResultActions resultActions =
@@ -66,9 +61,9 @@ public class GetNoticeTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .characterEncoding(StandardCharsets.UTF_8));
 
-
         // eye
-        String responseBody = resultActions.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        String responseBody =
+                resultActions.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         log.info("responseBody : " + responseBody);
 
         // then
@@ -84,7 +79,6 @@ public class GetNoticeTest {
     void get_notice_fail_test() throws Exception {
         // give
 
-
         // when
         ResultActions resultActions =
                 mvc.perform(
@@ -92,9 +86,9 @@ public class GetNoticeTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .characterEncoding(StandardCharsets.UTF_8));
 
-
         // eye
-        String responseBody = resultActions.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        String responseBody =
+                resultActions.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         log.info("responseBody : " + responseBody);
 
         // then

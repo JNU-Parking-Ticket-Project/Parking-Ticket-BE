@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.notice.service;
 
+
 import com.jnu.ticketapi.api.notice.model.request.UpdateNoticeRequest;
 import com.jnu.ticketapi.api.notice.model.response.UpdateNoticeResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
@@ -16,7 +17,8 @@ public class UpdateNoticeUseCase {
     private final NoticeAdaptor noticeAdaptor;
 
     @Transactional
-    public UpdateNoticeResponse updateNotice(UpdateNoticeRequest updateNoticeRequest){
-        return UpdateNoticeResponse.of(noticeAdaptor.updateNotice(updateNoticeRequest.noticeContent()));
+    public UpdateNoticeResponse updateNotice(UpdateNoticeRequest updateNoticeRequest) {
+        return UpdateNoticeResponse.of(
+                noticeAdaptor.updateNotice(updateNoticeRequest.noticeContent()));
     }
 }

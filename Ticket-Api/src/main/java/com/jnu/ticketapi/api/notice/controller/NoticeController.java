@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.notice.controller;
 
+
 import com.jnu.ticketapi.api.notice.model.request.UpdateNoticeRequest;
 import com.jnu.ticketapi.api.notice.model.response.NoticeResponse;
 import com.jnu.ticketapi.api.notice.model.response.UpdateNoticeResponse;
@@ -27,14 +28,15 @@ public class NoticeController {
 
     @GetMapping("/notice")
     @Operation(summary = "안내사항 조회")
-    public ResponseEntity<NoticeResponse> getNoticeDetails(){
+    public ResponseEntity<NoticeResponse> getNoticeDetails() {
         return ResponseEntity.ok(getNoticeUseCase.getNoticeDetails());
     }
 
     @PutMapping("/notice")
     @Operation(summary = "안내사항 수정")
     @SecurityRequirement(name = "access-token")
-    public ResponseEntity<UpdateNoticeResponse> updateNotice(@RequestBody UpdateNoticeRequest updateNoticeRequest){
+    public ResponseEntity<UpdateNoticeResponse> updateNotice(
+            @RequestBody UpdateNoticeRequest updateNoticeRequest) {
         return ResponseEntity.ok(updateNoticeUseCase.updateNotice(updateNoticeRequest));
     }
 }
