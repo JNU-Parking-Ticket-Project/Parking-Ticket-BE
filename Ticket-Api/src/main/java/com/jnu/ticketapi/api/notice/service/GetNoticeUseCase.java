@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.notice.service;
 
+
 import com.jnu.ticketapi.api.notice.model.response.NoticeResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.notice.adaptor.NoticeAdaptor;
@@ -15,7 +16,7 @@ public class GetNoticeUseCase {
     private final NoticeAdaptor noticeAdaptor;
 
     @Transactional(readOnly = true)
-    public NoticeResponse getNoticeDetails(){
+    public NoticeResponse getNoticeDetails() {
         return NoticeResponse.of(noticeAdaptor.findLastOne());
     }
 }

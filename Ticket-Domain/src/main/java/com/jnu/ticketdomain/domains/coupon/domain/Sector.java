@@ -7,6 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,6 +49,10 @@ public class Sector {
     @Column(name = "remaining_amount")
     private Integer remainingAmount;
 
+    @ManyToOne
+    @JoinColumn(name = "coupon_id")
+    private Coupon coupon;
+
     @Builder
     public Sector(String sectorNumber, String name, Integer sectorCapacity, Integer reserve) {
         this.sectorNumber = sectorNumber;
@@ -54,7 +60,7 @@ public class Sector {
         this.sectorCapacity = sectorCapacity;
         this.reserve = reserve;
         this.issueAmount = sectorCapacity + reserve;
-        this.remainingAmount = issueAmount;
+        this.remainingAmount = this.issueAmount;
     }
 
     public void checkCouponLeft() {
@@ -75,5 +81,9 @@ public class Sector {
         this.reserve = sector.reserve;
         this.issueAmount = sector.sectorCapacity + sector.reserve;
         this.remainingAmount = issueAmount;
+    }
+
+    public void setCoupon(Coupon savedCoupon) {
+        this.coupon = savedCoupon;
     }
 }

@@ -1,6 +1,9 @@
 package com.jnu.ticketapi.api.announce.controller;
 
 
+import com.jnu.ticketapi.api.announce.docs.DeleteAnnounceExceptionDocs;
+import com.jnu.ticketapi.api.announce.docs.GetAnnounceExceptionDocs;
+import com.jnu.ticketapi.api.announce.docs.UpdateAnnounceExceptionDocs;
 import com.jnu.ticketapi.api.announce.model.request.SaveAnnounceRequest;
 import com.jnu.ticketapi.api.announce.model.request.UpdateAnnounceRequest;
 import com.jnu.ticketapi.api.announce.model.response.*;
@@ -8,6 +11,7 @@ import com.jnu.ticketapi.api.announce.service.DeleteAnnounceUseCase;
 import com.jnu.ticketapi.api.announce.service.GetAnnouncesUseCase;
 import com.jnu.ticketapi.api.announce.service.SaveAnnounceUseCase;
 import com.jnu.ticketapi.api.announce.service.UpdateAnnounceUseCase;
+import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,6 +54,7 @@ public class AnnounceController {
 
     @PutMapping("/announce/{announceId}")
     @Operation(summary = "공지사항 수정", description = "공지사항 제목, 공지사항 내용")
+    @ApiErrorExceptionsExample(UpdateAnnounceExceptionDocs.class)
     @SecurityRequirement(name = "access-token")
     public ResponseEntity<UpdateAnnounceResponse> updateAnnounce(
             @PathVariable Long announceId,
@@ -59,6 +64,7 @@ public class AnnounceController {
 
     @DeleteMapping("/announce/{announceId}")
     @Operation(summary = "공지사항 삭제", description = "공지사항 ID")
+    @ApiErrorExceptionsExample(DeleteAnnounceExceptionDocs.class)
     @SecurityRequirement(name = "access-token")
     public ResponseEntity<DeleteAnnounceResponse> deleteAnnounce(@PathVariable Long announceId) {
 
@@ -67,12 +73,14 @@ public class AnnounceController {
 
     @Operation(summary = "공지사항 최신 게시글 하나 조회(메인화면)")
     @GetMapping("/announce/last")
+    @ApiErrorExceptionsExample(GetAnnounceExceptionDocs.class)
     public ResponseEntity<AnnounceResponse> getAnnounce() {
         return ResponseEntity.ok(getAnnouncesUseCase.getOne());
     }
 
     @Operation(summary = "공지사항 상세조회")
     @GetMapping("/announce/{announceId}")
+    @ApiErrorExceptionsExample(GetAnnounceExceptionDocs.class)
     public ResponseEntity<AnnounceDetailsResponse> getAnnounceDetails(
             @PathVariable Long announceId) {
         return ResponseEntity.ok(getAnnouncesUseCase.getOneDetails(announceId));

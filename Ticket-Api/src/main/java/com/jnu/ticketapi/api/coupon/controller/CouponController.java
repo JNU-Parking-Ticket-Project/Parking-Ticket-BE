@@ -1,18 +1,19 @@
 package com.jnu.ticketapi.api.coupon.controller;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.COUPON_SUCCESS_REGISTER_MESSAGE;
+import static com.jnu.ticketcommon.message.ResponseMessage.COUPON_SUCCESS_REGISTER_MESSAGE;
 
 import com.jnu.ticketapi.api.coupon.docs.CreateCouponExceptionDocs;
-import com.jnu.ticketapi.api.coupon.model.request.CouponRegisterRequest;
+import com.jnu.ticketapi.api.coupon.docs.ReadCouponExceptionDocs;
 import com.jnu.ticketapi.api.coupon.service.CouponRegisterUseCase;
 import com.jnu.ticketapi.api.coupon.service.CouponWithDrawUseCase;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
+import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,17 +31,23 @@ public class CouponController {
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
     @PostMapping("/coupon")
-    public ResponseEntity<String> setCoupon(
-            @RequestBody @Valid CouponRegisterRequest couponRegisterRequest) {
-        couponRegisterUseCase.registerCoupon(couponRegisterRequest);
+    public ResponseEntity<String> setCoupon(@RequestBody DateTimePeriod dateTimePeriod) {
+        couponRegisterUseCase.registerCoupon(dateTimePeriod);
         return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
     }
 
     @Operation(summary = "주차권 신청", description = "주차권 신청(주차권 신청시 잔고 감소)")
     @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
-    @PostMapping("/coupon/applicant")
+    @PostMapping("/coupon/apply")
     public ResponseEntity<String> issueCoupon() {
         couponWithDrawUseCase.issueCoupon();
         return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
+    }
+
+    @Operation(summary = "주차권 순서 조회", description = "주차권 순서 확인")
+    @ApiErrorExceptionsExample(ReadCouponExceptionDocs.class)
+    @GetMapping("/coupon/order")
+    public ResponseEntity<Long> getCouponOrder() {
+        return ResponseEntity.ok(couponWithDrawUseCase.getCouponOrder());
     }
 }

@@ -1,9 +1,10 @@
 package com.jnu.ticketapi.api.coupon.service;
 
 
-import com.jnu.ticketapi.api.coupon.model.request.CouponRegisterRequest;
 import com.jnu.ticketcommon.annotation.UseCase;
+import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.coupon.adaptor.CouponAdaptor;
+import com.jnu.ticketdomain.domains.coupon.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.coupon.domain.Coupon;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import java.util.List;
@@ -16,12 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class CouponRegisterUseCase {
     private final CouponAdaptor couponAdaptor;
+    private final SectorAdaptor sectorAdaptor;
 
     @Transactional
-    public void registerCoupon(CouponRegisterRequest couponRegisterRequest) {
-        List<Sector> sectors = couponRegisterRequest.getSectors();
-        Coupon coupon = new Coupon(couponRegisterRequest.dateTimePeriod(), sectors);
+    public void registerCoupon(DateTimePeriod dateTimePeriod) {
+        List<Sector> sectors = sectorAdaptor.findAll();
+        Coupon coupon = new Coupon(dateTimePeriod, sectors);
         coupon.validateIssuePeriod();
-        couponAdaptor.save(coupon);
+        Coupon savedCoupon = couponAdaptor.save(coupon);
+        sectors.forEach(sector -> sector.setCoupon(savedCoupon));
     }
 }

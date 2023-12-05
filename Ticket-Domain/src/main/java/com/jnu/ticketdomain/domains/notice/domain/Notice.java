@@ -1,5 +1,8 @@
 package com.jnu.ticketdomain.domains.notice.domain;
 
+
+import java.time.LocalDateTime;
+import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,9 +11,6 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,11 +37,11 @@ public class Notice {
     private LocalDateTime modifiedAt;
 
     @Builder
-    public Notice(String noticeContent){
-        this.noticeContent=noticeContent;
+    public Notice(String noticeContent) {
+        this.noticeContent = noticeContent;
     }
 
-    public void updateContent(String content){
+    public void updateContent(String content) {
         this.noticeContent = content;
     }
 }
