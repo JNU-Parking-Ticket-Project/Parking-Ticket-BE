@@ -9,6 +9,6 @@ import java.util.Optional;
 public interface CaptchaRepository extends JpaRepository<Captcha, Long> {
     Optional<Captcha> findByImageName(String imageName);
 
-    @Query("select c from Captcha c order by rand() limit 1")
+    @Query("select c from Captcha c order by rand()")
     Captcha findByRandom();
 }
