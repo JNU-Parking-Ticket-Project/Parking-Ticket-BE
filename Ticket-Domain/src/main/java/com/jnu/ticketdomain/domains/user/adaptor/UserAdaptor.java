@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 
 @Adaptor
 @RequiredArgsConstructor
-@Component
 public class UserAdaptor implements UserLoadPort, UserRecordPort {
     private final UserRepository userRepository;
     /*
