@@ -29,7 +29,6 @@ dependencies {
     implementation project(':Ticket-Domain')
     implementation project(':Ticket-Common')
     implementation project(':Ticket-Infrastructure')
-
 }
 
 tasks.named('test') {

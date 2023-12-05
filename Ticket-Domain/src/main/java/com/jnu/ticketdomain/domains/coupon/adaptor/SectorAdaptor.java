@@ -32,8 +32,8 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
     }
 
     @Override
-    public void saveAll(List<Sector> sectorList) {
-        couponRepository.saveAll(sectorList);
+    public List<Sector> saveAll(List<Sector> sectorList) {
+        return couponRepository.saveAll(sectorList);
     }
 
     @Override

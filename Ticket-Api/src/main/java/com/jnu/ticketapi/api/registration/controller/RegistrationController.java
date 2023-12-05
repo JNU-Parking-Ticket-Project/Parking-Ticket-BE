@@ -34,7 +34,7 @@ public class RegistrationController {
         return ResponseEntity.ok(responseDto);
     }
 
-    @Operation(summary = "임시 저장", description = "임시 저장")
+    @Operation(summary = "주차권 임시 신청", description = "주차권 임시 신청(주차권 신청시 잔고 감소)")
     @PostMapping("/registration/false")
     public ResponseEntity<TemporarySaveResponse> temporarySave(
             @RequestBody TemporarySaveRequest requestDto, @GetEmail String email) {

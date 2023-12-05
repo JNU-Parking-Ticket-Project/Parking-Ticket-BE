@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.api.registration.service;
 
 
+import com.jnu.ticketapi.api.coupon.service.CouponWithDrawUseCase;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
@@ -28,6 +29,7 @@ public class RegistrationService implements RegistrationUseCase {
     private final SectorAdaptor sectorAdaptor;
     private final UserAdaptor userAdaptor;
     private final Converter converter;
+    private final CouponWithDrawUseCase couponWithDrawUseCase;
 
     @Override
     public Registration findByUserId(Long userId) {
@@ -85,6 +87,7 @@ public class RegistrationService implements RegistrationUseCase {
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
         Registration registration = converter.finalToRegistration(requestDto, sector, email);
         Registration jpaRegistration = save(registration);
+        couponWithDrawUseCase.issueCoupon();
         return converter.toFinalSaveResponseDto(jpaRegistration);
     }
 }

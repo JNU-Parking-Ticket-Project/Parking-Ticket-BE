@@ -1,9 +1,11 @@
 spring:
   datasource:
-    url: ${DATASOURCE_URL:jdbc:h2:~/test;DB_CLOSE_DELAY=-1;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE}
-    username: ${DATASOURCE_USERNAME:sa}
+    url: jdbc:mysql://localhost:3306/ticket?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
+#    url: ${DATASOURCE_URL:jdbc:h2:~/test;DB_CLOSE_DELAY=-1;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${DATASOURCE_USERNAME:root}
     password: ${DATASOURCE_PASSWORD:}
-    driver-class-name: ${DATASOURCE_DRIVER:org.h2.Driver}
+#    driver-class-name: ${DATASOURCE_DRIVER:org.h2.Driver}
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maxLifetime: 580000
       maximum-pool-size: 20
