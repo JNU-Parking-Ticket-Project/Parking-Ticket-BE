@@ -17,10 +17,10 @@ import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 @UseCase
 @RequiredArgsConstructor
 public class RegistrationUseCase {
@@ -37,6 +37,7 @@ public class RegistrationUseCase {
     public Registration save(Registration registration) {
         return registrationAdaptor.save(registration);
     }
+
     public User findById(Long userId) {
         return userAdaptor.findById(userId);
     }
@@ -63,7 +64,8 @@ public class RegistrationUseCase {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
-        Registration registration = converter.temporaryToRegistration(requestDto, sector, email, user);
+        Registration registration =
+                converter.temporaryToRegistration(requestDto, sector, email, user);
         Registration jpaRegistration = save(registration);
         return converter.toTemporarySaveResponseDto(jpaRegistration);
     }
