@@ -68,13 +68,9 @@ public class SecurityConfig {
                         "/api-docs/**",
                         "/api-docs")
                 .permitAll()
-                .antMatchers(HttpMethod.GET, "/v1/announce/**")
-                .permitAll()
-                .antMatchers("/v1/announce/**")
+                .antMatchers("/v1/announce/**", "/v1/announce")
                 .hasAnyRole("COUNCIL", "ADMIN")
-                .antMatchers(HttpMethod.GET, "v1/notice/**")
-                .permitAll()
-                .antMatchers("/v1/notice/**")
+                .antMatchers("/v1/notice/**", "/v1/notice")
                 .hasAnyRole("COUNCIL", "ADMIN")
                 .antMatchers("/v1/admin/role/**")
                 .hasRole("ADMIN")
@@ -97,6 +93,8 @@ public class SecurityConfig {
                 web.ignoring()
                         .antMatchers(HttpMethod.POST, "/v1/auth/login")
                         .antMatchers(HttpMethod.GET, "/error")
+                        .antMatchers(HttpMethod.GET, "/v1/notice")
+                        .antMatchers(HttpMethod.GET, "/v1/announce/**", "/v1/announce")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
                         .requestMatchers(PathRequest.toH2Console());
     }
