@@ -51,6 +51,8 @@ public enum GlobalErrorCode implements BaseErrorCode {
     ANNOUNCE_ID_NOT_EXIST_ERROR(NOT_FOUND, "ANNOUNCE_404_1", "잘못된 공지사항 ID가 입력되었습니다."),
     @ExplainError("작성된 공지사항이 존재하지 않습니다.")
     ANNOUNCE_NOT_EXIST_ERROR(NOT_FOUND, "ANNOUNCE_404_2", "공지사항이 존재하지 않습니다."),
+    @ExplainError("작성된 안내사항이 존재하지 않습니다.")
+    NOTICE_NOT_EXIST_ERROR(NOT_FOUND, "NOTICE_404_1", "안내사항이 존재하지 않습니다."),
 
     OTHER_SERVER_BAD_REQUEST(BAD_REQUEST, "FEIGN_400_1", "Other server bad request"),
     OTHER_SERVER_UNAUTHORIZED(BAD_REQUEST, "FEIGN_400_2", "Other server unauthorized"),

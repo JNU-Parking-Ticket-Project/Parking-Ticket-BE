@@ -73,18 +73,12 @@ public class SecurityConfig {
                         "/v3/api-docs/**",
                         "/v3/api-docs",
                         "/api-docs/**",
-                        "/api-docs",
-                        "/v1/auth/login",
-                        "/error")
+                        "/api-docs")
                 .permitAll()
-                .antMatchers(HttpMethod.GET, "/v1/announce/**")
-                .permitAll()
-                .antMatchers(HttpMethod.POST, "/v1/announce")
-                .hasRole("COUNCIL")
-                .antMatchers(HttpMethod.PUT, "/v1/announce/**")
-                .hasRole("COUNCIL")
-                .antMatchers(HttpMethod.DELETE, "v1/announce/**")
-                .hasRole("COUNCIL")
+                .antMatchers("/v1/announce/**", "/v1/announce")
+                .hasAnyRole("COUNCIL", "ADMIN")
+                .antMatchers("/v1/notice/**", "/v1/notice")
+                .hasAnyRole("COUNCIL", "ADMIN")
                 .antMatchers("/v1/admin/role/**")
                 .hasRole("ADMIN")
                 .antMatchers("/v1/**")
@@ -104,6 +98,10 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) ->
                 web.ignoring()
+                        .antMatchers(HttpMethod.GET, "/v1/notice")
+                        .antMatchers(HttpMethod.GET, "/v1/announce/**", "/v1/announce")
+                        .antMatchers("/v1/auth/login")
+                        .antMatchers("/error")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
                         .requestMatchers(PathRequest.toH2Console());
     }
