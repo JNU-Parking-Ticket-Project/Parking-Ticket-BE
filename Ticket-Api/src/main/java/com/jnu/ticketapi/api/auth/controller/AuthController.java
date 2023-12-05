@@ -1,8 +1,12 @@
-package com.jnu.ticketapi.controller;
+package com.jnu.ticketapi.api.auth.controller;
 
 
+import com.jnu.ticketapi.api.auth.model.request.LoginUserRequestDto;
+import com.jnu.ticketapi.api.auth.model.request.ReissueTokenRequestDto;
+import com.jnu.ticketapi.api.auth.model.response.LoginUserResponseDto;
+import com.jnu.ticketapi.api.auth.model.response.LogoutUserResponseDto;
+import com.jnu.ticketapi.api.auth.model.response.ReissueTokenResponseDto;
 import com.jnu.ticketapi.application.port.AuthUseCase;
-import com.jnu.ticketapi.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,8 +1,12 @@
 package com.jnu.ticketapi.application.port;
 
 
+import com.jnu.ticketapi.api.auth.model.request.LoginUserRequestDto;
+import com.jnu.ticketapi.api.auth.model.response.LoginUserResponseDto;
+import com.jnu.ticketapi.api.auth.model.response.LogoutUserResponseDto;
+import com.jnu.ticketapi.api.auth.model.response.ReissueTokenResponseDto;
+import com.jnu.ticketapi.api.auth.model.response.TokenResponse;
 import com.jnu.ticketapi.api.user.service.UserUseCase;
-import com.jnu.ticketapi.dto.*;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketapi.security.JwtResolver;
 import com.jnu.ticketcommon.annotation.UseCase;
@@ -80,20 +84,20 @@ public class AuthUseCase {
 
     // 토큰 발급
     @Transactional
-    public TokenDto generateToken(String provider, String email, String authorities) {
+    public TokenResponse generateToken(String provider, String email, String authorities) {
         // RT가 이미 있을 경우
         if (redisService.getValues("RT(" + provider + "):" + email) != null) {
             redisService.deleteValues("RT(" + provider + "):" + email); // 삭제
         }
 
         // AT, RT 생성 및 Redis에 RT 저장
-        TokenDto tokenDto =
-                TokenDto.builder()
+        TokenResponse tokenResponse =
+                TokenResponse.builder()
                         .accessToken(jwtGenerator.generateAccessToken(email, authorities))
                         .refreshToken(jwtGenerator.generateRefreshToken(email, authorities))
                         .build();
-        saveRefreshToken(provider, email, tokenDto.refreshToken());
-        return tokenDto;
+        saveRefreshToken(provider, email, tokenResponse.refreshToken());
+        return tokenResponse;
     }
 
     // RT를 Redis에 저장
@@ -141,12 +145,12 @@ public class AuthUseCase {
                 throw BadCredentialException.EXCEPTION;
             }
         }
-        TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
-        log.info("accessToken : " + tokenDto.accessToken());
-        log.info("refreshToken : " + tokenDto.refreshToken());
+        TokenResponse tokenResponse = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
+        log.info("accessToken : " + tokenResponse.accessToken());
+        log.info("refreshToken : " + tokenResponse.refreshToken());
         return LoginUserResponseDto.builder()
-                .accessToken(tokenDto.accessToken())
-                .refreshToken(tokenDto.refreshToken())
+                .accessToken(tokenResponse.accessToken())
+                .refreshToken(tokenResponse.refreshToken())
                 .build();
     }
 
