@@ -102,8 +102,8 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.GET, "/v1/announce/**", "/v1/announce")
                         .antMatchers("/v1/auth/login")
                         .antMatchers("/error")
-                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
-                        .requestMatchers(PathRequest.toH2Console());
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+//                        .requestMatchers(PathRequest.toH2Console());
     }
     /*
     Spring Mvc CORS 설정을 해주면 corsConfigurationSource() 메서드를 구현할 필요가 없다고는 하는데
