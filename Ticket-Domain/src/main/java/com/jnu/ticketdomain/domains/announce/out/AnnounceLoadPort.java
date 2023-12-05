@@ -9,4 +9,6 @@ public interface AnnounceLoadPort {
     Page<Announce> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     Announce findAnnounceByLastOne();
+
+    Announce findById(Long announceId);
 }
