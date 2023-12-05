@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.announce.service;
 
+
 import com.jnu.ticketapi.api.announce.model.request.UpdateAnnounceRequest;
 import com.jnu.ticketapi.api.announce.model.response.UpdateAnnounceResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
@@ -16,7 +17,12 @@ public class UpdateAnnounceUseCase {
     private final AnnounceAdaptor announceAdaptor;
 
     @Transactional
-    public UpdateAnnounceResponse execute(Long announceId, UpdateAnnounceRequest updateAnnounceRequest){
-        return UpdateAnnounceResponse.of(announceAdaptor.update(announceId, updateAnnounceRequest.announceTitle(), updateAnnounceRequest.announceContent()));
+    public UpdateAnnounceResponse execute(
+            Long announceId, UpdateAnnounceRequest updateAnnounceRequest) {
+        return UpdateAnnounceResponse.of(
+                announceAdaptor.update(
+                        announceId,
+                        updateAnnounceRequest.announceTitle(),
+                        updateAnnounceRequest.announceContent()));
     }
 }
