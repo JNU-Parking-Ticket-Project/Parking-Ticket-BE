@@ -7,6 +7,7 @@ import com.jnu.ticketapi.security.JwtAuthenticationFilter;
 import com.jnu.ticketapi.security.JwtExceptionFilter;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketapi.security.JwtResolver;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +19,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -48,6 +52,9 @@ public class SecurityConfig {
                 .disable()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .cors()
+                .configurationSource(corsConfigurationSource())
                 .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
@@ -99,5 +106,21 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.GET, "/error")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
                         .requestMatchers(PathRequest.toH2Console());
+    }
+    /*
+    Spring Mvc CORS 설정을 해주면 corsConfigurationSource() 메서드를 구현할 필요가 없다고는 하는데
+    혹시몰라서 일단 작성해놓음
+    */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+
+        config.setAllowedOrigins(List.of("http://localhost:4200"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }
