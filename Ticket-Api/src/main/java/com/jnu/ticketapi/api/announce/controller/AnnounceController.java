@@ -64,4 +64,11 @@ public class AnnounceController {
         return ResponseEntity.ok(getAnnouncesUseCase.getOne());
     }
 
+    @Operation(summary = "공지사항 상세조회")
+    @GetMapping("/announce/{announceId}")
+    public ResponseEntity<AnnounceDetailsResponse> getAnnounceDetails(@PathVariable Long announceId){
+        return ResponseEntity.ok(getAnnouncesUseCase.getOneDetails(announceId));
+    }
+
+
 }
