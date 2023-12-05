@@ -36,10 +36,7 @@ public class LoginTest {
             {
                 // given
                 LoginUserRequest requestsDto =
-                        LoginUserRequest.builder()
-                                .email("ekrrrdj21@jnu.ac.kr")
-                                .pwd("1234")
-                                .build();
+                        LoginUserRequest.builder().email("ekrrrdj21@jnu.ac.kr").pwd("1234").build();
                 String requestBody = om.writeValueAsString(requestsDto);
                 // when
                 ResultActions resultActions =

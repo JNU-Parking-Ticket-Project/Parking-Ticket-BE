@@ -10,7 +10,6 @@ import com.jnu.ticketdomain.domains.user.out.UserRecordPort;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Adaptor
 @RequiredArgsConstructor

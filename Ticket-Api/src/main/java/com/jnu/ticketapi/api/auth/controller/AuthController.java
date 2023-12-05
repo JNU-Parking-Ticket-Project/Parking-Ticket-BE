@@ -53,6 +53,7 @@ public class AuthController {
         LogoutUserResponse responseDto = authUseCase.logout(bearerToken);
         return ResponseEntity.ok(responseDto);
     }
+
     @Operation(summary = "학생회 로그인", description = "학생회 로그인(회원가입과 로그인을 따로 처리)")
     @PostMapping("/auth/login/council")
     public ResponseEntity<LoginCouncilResponse> logInCouncil(

@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.council.adaptor;
 
+
 import com.jnu.ticketcommon.annotation.Adaptor;
 import com.jnu.ticketdomain.domains.council.out.CouncilLoadPort;
 import com.jnu.ticketdomain.domains.council.out.CouncilRecordPort;
@@ -15,9 +16,6 @@ public class CouncilAdaptor implements CouncilLoadPort, CouncilRecordPort {
 
     @Override
     public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(
-                        () -> NotFoundUserException.EXCEPTION
-                );
+        return userRepository.findByEmail(email).orElseThrow(() -> NotFoundUserException.EXCEPTION);
     }
 }

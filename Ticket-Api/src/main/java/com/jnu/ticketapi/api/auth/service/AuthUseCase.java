@@ -19,14 +19,13 @@ import com.jnu.ticketcommon.exception.InvalidTokenException;
 import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -173,12 +172,12 @@ public class AuthUseCase {
         return jwtResolver.extractToken(bearerToken);
     }
 
-    //학생회 로그인
+    // 학생회 로그인
     @Transactional
     public LoginCouncilResponse loginCouncil(LoginCouncilRequest loginCouncilRequest) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         User user = councilUseCase.findByEmail(loginCouncilRequest.email());
-        if(!bCryptPasswordEncoder.matches(loginCouncilRequest.pwd(), user.getPwd())){
+        if (!bCryptPasswordEncoder.matches(loginCouncilRequest.pwd(), user.getPwd())) {
             throw BadCredentialException.EXCEPTION;
         }
         TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
