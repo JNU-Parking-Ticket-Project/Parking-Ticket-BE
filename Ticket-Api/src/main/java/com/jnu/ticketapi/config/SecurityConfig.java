@@ -23,7 +23,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtGenerator jwtGenerator;
@@ -102,7 +102,7 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.OPTIONS, "/v1/notice")
                         .antMatchers(HttpMethod.GET, "/v1/announce/**", "/v1/announce")
                         .antMatchers(HttpMethod.OPTIONS, "/v1/announce/**", "/v1/announce")
-                        .antMatchers("/v1/auth/login")
+                        .antMatchers("/v1/auth/login/**")
                         .antMatchers("/error")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
         //                        .requestMatchers(PathRequest.toH2Console());
