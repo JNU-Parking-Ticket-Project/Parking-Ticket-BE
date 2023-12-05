@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.announce.service;
 
+import com.jnu.ticketapi.api.announce.model.response.AnnounceDetailsResponse;
 import com.jnu.ticketapi.api.announce.model.response.AnnouncePagingResponse;
 import com.jnu.ticketapi.api.announce.model.response.AnnounceResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
@@ -27,6 +28,11 @@ public class GetAnnouncesUseCase {
     @Transactional(readOnly = true)
     public AnnounceResponse getOne(){
         return AnnounceResponse.of(announceAdaptor.findAnnounceByLastOne());
+    }
+
+    @Transactional(readOnly = true)
+    public AnnounceDetailsResponse getOneDetails(Long announceId){
+        return AnnounceDetailsResponse.of(announceAdaptor.findById(announceId));
     }
 
 
