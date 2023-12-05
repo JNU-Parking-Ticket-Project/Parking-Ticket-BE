@@ -35,7 +35,8 @@ public class AuthService implements AuthUseCase {
     public boolean validate(String refreshToken) {
         if (!jwtResolver.refreshTokenValidateToken(refreshToken)) {
             throw InvalidTokenException.EXCEPTION; // false = 재로그인
-        } return true; // true = 재발급
+        }
+        return true; // true = 재발급
     }
 
     // 토큰 재발급: validate 메서드가 true 반환할 때만 사용 -> AT, RT 재발급
@@ -47,11 +48,12 @@ public class AuthService implements AuthUseCase {
         String accessPrincipal = getPrincipal(requestAccessToken);
         String refreshPrincipal = getPrincipal(requestRefreshToken);
         // AT와 RT의 principal이 다를 경우
-        if(!accessPrincipal.equals(refreshPrincipal)) {
+        if (!accessPrincipal.equals(refreshPrincipal)) {
             throw InvalidTokenException.EXCEPTION; // -> 재로그인 요청
         }
 
-        String refreshTokenInRedis = redisService.getValues("RT(" + SERVER + "):" + refreshPrincipal);
+        String refreshTokenInRedis =
+                redisService.getValues("RT(" + SERVER + "):" + refreshPrincipal);
         if (refreshTokenInRedis == null) { // Redis에 저장되어 있는 RT가 없을 경우
             throw InvalidTokenException.EXCEPTION; // -> 재로그인 요청
         }
@@ -70,8 +72,10 @@ public class AuthService implements AuthUseCase {
         redisService.deleteValues("RT(" + SERVER + "):" + refreshPrincipal); // 기존 RT 삭제
         ReissueTokenResponseDto reissueTokenDto =
                 ReissueTokenResponseDto.builder()
-                        .accessToken(jwtGenerator.generateAccessToken(refreshPrincipal, authorities))
-                        .refreshToken(jwtGenerator.generateRefreshToken(refreshPrincipal, authorities))
+                        .accessToken(
+                                jwtGenerator.generateAccessToken(refreshPrincipal, authorities))
+                        .refreshToken(
+                                jwtGenerator.generateRefreshToken(refreshPrincipal, authorities))
                         .build();
         saveRefreshToken(SERVER, refreshPrincipal, reissueTokenDto.refreshToken());
         return reissueTokenDto;
