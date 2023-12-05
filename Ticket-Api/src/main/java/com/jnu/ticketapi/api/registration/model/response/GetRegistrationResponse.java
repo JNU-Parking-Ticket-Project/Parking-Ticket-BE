@@ -9,7 +9,7 @@ import lombok.Builder;
 public record GetRegistrationResponse(
         String email,
         String name,
-        int studentNum,
+        Integer studentNum,
         String affiliation,
         String carNum,
         boolean isLight,
