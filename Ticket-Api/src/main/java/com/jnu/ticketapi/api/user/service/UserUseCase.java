@@ -21,11 +21,6 @@ public class UserUseCase {
         return userAdaptor.findByEmail(email);
     }
 
-    @Transactional(readOnly = true)
-    public Optional<User> findById(Long userId) {
-        return userAdaptor.findById(userId);
-    }
-
     @Transactional
     public User save(User user) {
         return userAdaptor.save(user);

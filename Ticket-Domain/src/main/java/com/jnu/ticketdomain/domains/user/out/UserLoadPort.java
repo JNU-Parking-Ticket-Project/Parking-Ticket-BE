@@ -9,5 +9,5 @@ import java.util.Optional;
 public interface UserLoadPort {
     Optional<User> findByEmail(String email);
 
-    Optional<User> findById(Long userId);
+    User findById(Long userId);
 }
