@@ -11,7 +11,6 @@ import com.jnu.ticketapi.api.announce.service.DeleteAnnounceUseCase;
 import com.jnu.ticketapi.api.announce.service.GetAnnouncesUseCase;
 import com.jnu.ticketapi.api.announce.service.SaveAnnounceUseCase;
 import com.jnu.ticketapi.api.announce.service.UpdateAnnounceUseCase;
-import com.jnu.ticketapi.api.coupon.docs.CreateCouponExceptionDocs;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
