@@ -7,4 +7,6 @@ import org.springframework.data.domain.Pageable;
 public interface AnnounceLoadPort {
 
     Page<Announce> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    Announce findAnnounceByLastOne();
 }

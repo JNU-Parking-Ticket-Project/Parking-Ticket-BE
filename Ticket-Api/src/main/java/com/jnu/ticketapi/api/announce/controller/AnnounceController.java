@@ -2,10 +2,7 @@ package com.jnu.ticketapi.api.announce.controller;
 
 import com.jnu.ticketapi.api.announce.model.request.SaveAnnounceRequest;
 import com.jnu.ticketapi.api.announce.model.request.UpdateAnnounceRequest;
-import com.jnu.ticketapi.api.announce.model.response.AnnouncePagingResponse;
-import com.jnu.ticketapi.api.announce.model.response.DeleteAnnounceResponse;
-import com.jnu.ticketapi.api.announce.model.response.SaveAnnounceResponse;
-import com.jnu.ticketapi.api.announce.model.response.UpdateAnnounceResponse;
+import com.jnu.ticketapi.api.announce.model.response.*;
 import com.jnu.ticketapi.api.announce.service.DeleteAnnounceUseCase;
 import com.jnu.ticketapi.api.announce.service.GetAnnouncesUseCase;
 import com.jnu.ticketapi.api.announce.service.SaveAnnounceUseCase;
@@ -59,6 +56,12 @@ public class AnnounceController {
     public ResponseEntity<DeleteAnnounceResponse> deleteAnnounce(@PathVariable Long announceId){
 
         return ResponseEntity.ok(deleteAnnounceUseCase.execute(announceId));
+    }
+
+    @Operation(summary = "공지사항 최신 게시글 하나 조회(메인화면)")
+    @GetMapping("/announce/last")
+    public ResponseEntity<AnnounceResponse> getAnnounce(){
+        return ResponseEntity.ok(getAnnouncesUseCase.getOne());
     }
 
 }

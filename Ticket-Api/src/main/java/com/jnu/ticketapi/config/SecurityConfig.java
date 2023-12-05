@@ -68,7 +68,7 @@ public class SecurityConfig {
                         "/api-docs/**",
                         "/api-docs")
                 .permitAll()
-                .antMatchers(HttpMethod.GET, "/v1/announce")
+                .antMatchers(HttpMethod.GET, "/v1/announce/**")
                 .permitAll()
                 .antMatchers(HttpMethod.POST, "/v1/announce")
                 .hasRole("COUNCIL")

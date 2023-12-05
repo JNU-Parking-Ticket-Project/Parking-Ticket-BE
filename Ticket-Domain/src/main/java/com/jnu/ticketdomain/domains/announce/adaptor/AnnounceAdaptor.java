@@ -2,6 +2,7 @@ package com.jnu.ticketdomain.domains.announce.adaptor;
 
 import com.jnu.ticketcommon.annotation.Adaptor;
 import com.jnu.ticketcommon.exception.AnnounceIdNotExistException;
+import com.jnu.ticketcommon.exception.AnnounceNotExistException;
 import com.jnu.ticketdomain.domains.announce.domain.Announce;
 import com.jnu.ticketdomain.domains.announce.out.AnnounceLoadPort;
 import com.jnu.ticketdomain.domains.announce.out.AnnounceRecordPort;
@@ -40,5 +41,11 @@ public class AnnounceAdaptor implements AnnounceRecordPort, AnnounceLoadPort {
     public Page<Announce> findAllByOrderByCreatedAtDesc(Pageable pageable) {
         return announceRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
+
+    @Override
+    public Announce findAnnounceByLastOne() {
+        return announceRepository.findFirst1ByOrderByCreatedAtDesc().orElseThrow(() -> AnnounceNotExistException.EXCEPTION);
+    }
+
 
 }
