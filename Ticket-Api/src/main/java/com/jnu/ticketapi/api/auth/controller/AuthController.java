@@ -6,7 +6,7 @@ import com.jnu.ticketapi.api.auth.model.request.ReissueTokenRequest;
 import com.jnu.ticketapi.api.auth.model.response.LoginUserResponse;
 import com.jnu.ticketapi.api.auth.model.response.LogoutUserResponse;
 import com.jnu.ticketapi.api.auth.model.response.ReissueTokenResponse;
-import com.jnu.ticketapi.application.port.AuthUseCase;
+import com.jnu.ticketapi.api.auth.service.AuthUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

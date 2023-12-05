@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.application.port;
+package com.jnu.ticketapi.api.auth.service;
 
 
 import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
