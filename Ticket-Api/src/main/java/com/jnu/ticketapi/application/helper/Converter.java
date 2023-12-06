@@ -9,12 +9,10 @@ import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
 import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.api.sector.model.internal.SectorDto;
-import com.jnu.ticketapi.api.user.model.response.UpdateRoleResponse;
 import com.jnu.ticketcommon.annotation.Helper;
 import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -88,13 +86,6 @@ public class Converter {
         return FinalSaveResponse.builder()
                 .registrationId(registration.getId())
                 .message(ResponseMessage.SUCCESS_FINAL_SAVE)
-                .build();
-    }
-
-    public UpdateRoleResponse toUpdateRoleResponseDto(User user) {
-        return UpdateRoleResponse.builder()
-                .userId(user.getId())
-                .role(user.getUserRole().toString())
                 .build();
     }
 
