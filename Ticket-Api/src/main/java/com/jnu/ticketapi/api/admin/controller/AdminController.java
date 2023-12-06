@@ -2,8 +2,8 @@ package com.jnu.ticketapi.api.admin.controller;
 
 
 import com.jnu.ticketapi.api.admin.service.AdminUseCase;
-import com.jnu.ticketapi.api.user.model.request.UpdateRoleRequest;
-import com.jnu.ticketapi.api.user.model.response.UpdateRoleResponse;
+import com.jnu.ticketapi.api.admin.model.request.UpdateRoleRequest;
+import com.jnu.ticketapi.api.admin.model.response.UpdateRoleResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

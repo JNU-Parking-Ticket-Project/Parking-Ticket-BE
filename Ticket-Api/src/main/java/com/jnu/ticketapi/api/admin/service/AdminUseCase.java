@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.api.admin.service;
 
 
-import com.jnu.ticketapi.api.user.model.response.UpdateRoleResponse;
+import com.jnu.ticketapi.api.admin.model.response.UpdateRoleResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.admin.adaptor.AdminAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;

@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.api.user.model.response;
+package com.jnu.ticketapi.api.admin.model.response;
 
 
 import com.jnu.ticketdomain.domains.user.domain.User;
