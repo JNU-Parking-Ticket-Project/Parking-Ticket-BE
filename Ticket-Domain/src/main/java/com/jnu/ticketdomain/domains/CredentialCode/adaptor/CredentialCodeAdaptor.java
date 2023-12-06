@@ -5,6 +5,7 @@ import com.jnu.ticketdomain.domains.CredentialCode.domain.CredentialCode;
 import com.jnu.ticketdomain.domains.CredentialCode.out.CredentialCodeLoadPort;
 import com.jnu.ticketdomain.domains.CredentialCode.out.CredentialCodeRecordPort;
 import com.jnu.ticketdomain.domains.CredentialCode.repository.CredentialCodeRepository;
+import com.jnu.ticketdomain.domains.user.exception.CredentialCodeNotExistException;
 import lombok.RequiredArgsConstructor;
 
 @Adaptor
@@ -19,5 +20,12 @@ public class CredentialCodeAdaptor implements CredentialCodeRecordPort, Credenti
         if(credentialCodeRepository.existsByEmail(credentialCode.getEmail()))
             credentialCodeRepository.deleteByEmail(credentialCode.getEmail());
         return credentialCodeRepository.save(credentialCode);
+    }
+
+    @Override
+    public String getEmail(String code) {
+        return credentialCodeRepository.findByCode(code)
+                .orElseThrow(() -> CredentialCodeNotExistException.EXCEPTION)
+                .getEmail();
     }
 }
