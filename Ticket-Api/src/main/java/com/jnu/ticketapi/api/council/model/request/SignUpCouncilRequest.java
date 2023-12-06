@@ -6,7 +6,8 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-public record SignUpCouncilRequest(String email, String pwd, String name, String phoneNum) {
+public record SignUpCouncilRequest(
+        String email, String pwd, String name, String phoneNum, Integer studentNum) {
     public User toUserEntity(SignUpCouncilRequest signUpCouncilRequest) {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         return User.builder()
@@ -21,6 +22,7 @@ public record SignUpCouncilRequest(String email, String pwd, String name, String
                 .name(signUpCouncilRequest.name())
                 .phoneNum(signUpCouncilRequest.phoneNum())
                 .user(user)
+                .studentNum(signUpCouncilRequest.studentNum())
                 .build();
     }
 }
