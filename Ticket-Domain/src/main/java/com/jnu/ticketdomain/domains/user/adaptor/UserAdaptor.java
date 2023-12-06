@@ -31,10 +31,7 @@ public class UserAdaptor implements UserLoadPort, UserRecordPort {
 
     @Override
     public User findById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(
-                        () -> NotFoundUserException.EXCEPTION
-                );
+        return userRepository.findById(userId).orElseThrow(() -> NotFoundUserException.EXCEPTION);
     }
 
     @Override
