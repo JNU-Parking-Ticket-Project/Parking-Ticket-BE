@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.CredentialCode.adaptor;
 
+
 import com.jnu.ticketcommon.annotation.Adaptor;
 import com.jnu.ticketdomain.domains.CredentialCode.domain.CredentialCode;
 import com.jnu.ticketdomain.domains.CredentialCode.out.CredentialCodeLoadPort;
@@ -14,17 +15,17 @@ public class CredentialCodeAdaptor implements CredentialCodeRecordPort, Credenti
 
     private final CredentialCodeRepository credentialCodeRepository;
 
-
     @Override
     public CredentialCode saveCode(CredentialCode credentialCode) {
-        if(credentialCodeRepository.existsByEmail(credentialCode.getEmail()))
+        if (credentialCodeRepository.existsByEmail(credentialCode.getEmail()))
             credentialCodeRepository.deleteByEmail(credentialCode.getEmail());
         return credentialCodeRepository.save(credentialCode);
     }
 
     @Override
     public String getEmail(String code) {
-        return credentialCodeRepository.findByCode(code)
+        return credentialCodeRepository
+                .findByCode(code)
                 .orElseThrow(() -> CredentialCodeNotExistException.EXCEPTION)
                 .getEmail();
     }

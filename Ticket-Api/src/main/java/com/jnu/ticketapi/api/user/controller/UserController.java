@@ -37,14 +37,15 @@ public class UserController {
 
     @Operation(summary = "비밀번호 찾기 메일 전송", description = "비밀번호 찾기 메일 전송")
     @PostMapping("/user/password/find")
-    public ResponseEntity<FindPasswordResponse> sendMail(@RequestBody FindPasswordRequest findPasswordRequest){
+    public ResponseEntity<FindPasswordResponse> sendMail(
+            @RequestBody FindPasswordRequest findPasswordRequest) {
         return ResponseEntity.ok(credentialCodeUseCase.sendMail(findPasswordRequest));
     }
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호 재설정")
     @PostMapping("/user/update/password/{code}")
-    public ResponseEntity<UpdatePasswordResponse> updatePassword(@PathVariable String code,
-                                                                 @RequestBody UpdatePasswordRequest updatePasswordRequest){
+    public ResponseEntity<UpdatePasswordResponse> updatePassword(
+            @PathVariable String code, @RequestBody UpdatePasswordRequest updatePasswordRequest) {
 
         return ResponseEntity.ok(updatePasswordUseCase.execute(code, updatePasswordRequest));
     }

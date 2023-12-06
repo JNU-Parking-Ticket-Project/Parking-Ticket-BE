@@ -1,9 +1,14 @@
 package com.jnu.ticketapi.user;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.Announce.config.DatabaseClearExtension;
 import com.jnu.ticketapi.api.user.model.request.FindPasswordRequest;
 import com.jnu.ticketapi.dto.LoginUserRequestDto;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,12 +22,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.nio.charset.StandardCharsets;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
@@ -30,8 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(DatabaseClearExtension.class)
 public class FindPasswordTest {
 
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
     @Autowired private ObjectMapper om;
 
@@ -41,19 +39,15 @@ public class FindPasswordTest {
     void find_password_test() throws Exception {
         // given
         LoginUserRequestDto requestsDto =
-                LoginUserRequestDto.builder()
-                        .email("pon05114@naver.com")
-                        .pwd("1234")
-                        .build();
+                LoginUserRequestDto.builder().email("pon05114@naver.com").pwd("1234").build();
         String testRequestBody = om.writeValueAsString(requestsDto);
-                mvc.perform(
-                        post("/v1/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(testRequestBody));
+        mvc.perform(
+                post("/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(testRequestBody));
 
-        FindPasswordRequest findPasswordRequest = FindPasswordRequest.builder()
-                .email("pon05114@naver.com")
-                .build();
+        FindPasswordRequest findPasswordRequest =
+                FindPasswordRequest.builder().email("pon05114@naver.com").build();
         String requestBody = om.writeValueAsString(findPasswordRequest);
 
         // when
@@ -70,8 +64,6 @@ public class FindPasswordTest {
         log.info("responseBody : " + responseBody);
 
         // then
-        resultActions.andExpectAll(
-                status().isOk(),
-                jsonPath("$.success").value(true));
+        resultActions.andExpectAll(status().isOk(), jsonPath("$.success").value(true));
     }
 }

@@ -1,11 +1,11 @@
 package com.jnu.ticketdomain.domains.CredentialCode.domain;
 
+
+import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import javax.persistence.*;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,12 +25,12 @@ public class CredentialCode {
     private String email;
 
     @Builder
-    public CredentialCode(String code, String email){
-        this.code=code;
-        this.email=email;
+    public CredentialCode(String code, String email) {
+        this.code = code;
+        this.email = email;
     }
 
-    public void updateCode(String code){
+    public void updateCode(String code) {
         this.code = code;
     }
 }

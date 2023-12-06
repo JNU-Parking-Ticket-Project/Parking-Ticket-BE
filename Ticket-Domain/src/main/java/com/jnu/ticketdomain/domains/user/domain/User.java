@@ -50,7 +50,7 @@ public class User {
         this.userRole = userRole;
     }
 
-    public void updatePassword(String password){
+    public void updatePassword(String password) {
         this.pwd = password;
     }
 

@@ -1,5 +1,9 @@
 package com.jnu.ticketapi.user;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.Announce.config.DatabaseClearExtension;
 import com.jnu.ticketapi.api.user.model.request.UpdatePasswordRequest;
@@ -7,6 +11,8 @@ import com.jnu.ticketdomain.domains.CredentialCode.domain.CredentialCode;
 import com.jnu.ticketdomain.domains.CredentialCode.repository.CredentialCodeRepository;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,13 +27,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
@@ -35,31 +34,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(DatabaseClearExtension.class)
 public class UpdatePasswordTest {
 
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
     @Autowired private ObjectMapper om;
-    @Autowired
-    private CredentialCodeRepository credentialCodeRepository;
-    @Autowired
-    private UserRepository userRepository;
+    @Autowired private CredentialCodeRepository credentialCodeRepository;
+    @Autowired private UserRepository userRepository;
 
     public static final String CODE = UUID.randomUUID().toString();
 
     @BeforeEach
-    public void setUp(){
+    public void setUp() {
 
-        User user = User.builder()
-                .email("pon05114@naver.com")
-                .pwd("testPassword")
-                .build();
+        User user = User.builder().email("pon05114@naver.com").pwd("testPassword").build();
         userRepository.saveAndFlush(user);
-        CredentialCode credentialCode = CredentialCode.builder()
-                .email("pon05114@naver.com")
-                .code(CODE)
-                .build();
+        CredentialCode credentialCode =
+                CredentialCode.builder().email("pon05114@naver.com").code(CODE).build();
         credentialCodeRepository.saveAndFlush(credentialCode);
-
     }
 
     @Test
@@ -68,9 +58,8 @@ public class UpdatePasswordTest {
     void update_password_test() throws Exception {
         // given
 
-        UpdatePasswordRequest updatePasswordRequest = UpdatePasswordRequest.builder()
-                .password("test1234")
-                .build();
+        UpdatePasswordRequest updatePasswordRequest =
+                UpdatePasswordRequest.builder().password("test1234").build();
         String requestBody = om.writeValueAsString(updatePasswordRequest);
 
         // when
@@ -87,8 +76,6 @@ public class UpdatePasswordTest {
         log.info("responseBody : " + responseBody);
 
         // then
-        resultActions.andExpectAll(
-                status().isOk(),
-                jsonPath("$.success").value(true));
+        resultActions.andExpectAll(status().isOk(), jsonPath("$.success").value(true));
     }
 }
