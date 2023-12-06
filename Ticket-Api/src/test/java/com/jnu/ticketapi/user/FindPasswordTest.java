@@ -6,8 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.Announce.config.DatabaseClearExtension;
+import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
 import com.jnu.ticketapi.api.user.model.request.FindPasswordRequest;
-import com.jnu.ticketapi.dto.LoginUserRequestDto;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
@@ -38,8 +38,8 @@ public class FindPasswordTest {
     @WithMockUser(roles = "COUNCIL")
     void find_password_test() throws Exception {
         // given
-        LoginUserRequestDto requestsDto =
-                LoginUserRequestDto.builder().email("pon05114@naver.com").pwd("1234").build();
+        LoginUserRequest requestsDto =
+                LoginUserRequest.builder().email("pon05114@naver.com").pwd("1234").build();
         String testRequestBody = om.writeValueAsString(requestsDto);
         mvc.perform(
                 post("/v1/auth/login")
