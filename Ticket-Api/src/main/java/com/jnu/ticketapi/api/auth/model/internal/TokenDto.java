@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.dto;
+package com.jnu.ticketapi.api.auth.model.internal;
 
 
 import lombok.Builder;

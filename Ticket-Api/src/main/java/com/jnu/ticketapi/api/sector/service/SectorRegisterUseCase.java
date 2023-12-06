@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.api.sector.service;
 
 
-import com.jnu.ticketapi.api.sector.request.SectorRegisterRequest;
+import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.coupon.out.SectorLoadPort;

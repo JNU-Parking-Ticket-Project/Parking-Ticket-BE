@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.api.sector.request;
+package com.jnu.ticketapi.api.sector.model.request;
 
 
 import lombok.Builder;

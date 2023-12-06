@@ -1,8 +1,16 @@
-package com.jnu.ticketapi.application.port;
+package com.jnu.ticketapi.api.auth.service;
 
 
+import com.jnu.ticketapi.api.auth.model.internal.TokenDto;
+import com.jnu.ticketapi.api.auth.model.request.LoginCouncilRequest;
+import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
+import com.jnu.ticketapi.api.auth.model.response.LoginCouncilResponse;
+import com.jnu.ticketapi.api.auth.model.response.LoginUserResponse;
+import com.jnu.ticketapi.api.auth.model.response.LogoutUserResponse;
+import com.jnu.ticketapi.api.auth.model.response.ReissueTokenResponse;
+import com.jnu.ticketapi.api.council.service.CouncilUseCase;
 import com.jnu.ticketapi.api.user.service.UserUseCase;
-import com.jnu.ticketapi.dto.*;
+import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketapi.security.JwtResolver;
 import com.jnu.ticketcommon.annotation.UseCase;
@@ -27,19 +35,21 @@ public class AuthUseCase {
     private final JwtGenerator jwtGenerator;
     private final RedisService redisService;
     private final UserUseCase userUseCase;
+    private final CouncilUseCase councilUseCase;
+    private final Converter converter;
     private static final String SERVER = "Server";
 
     @Transactional(readOnly = true)
-    public boolean validate(String refreshToken) {
+    public void validate(String refreshToken) {
         if (!jwtResolver.refreshTokenValidateToken(refreshToken)) {
-            throw InvalidTokenException.EXCEPTION; // false = 재로그인
+            throw InvalidTokenException.EXCEPTION; // 재로그인
         }
-        return true; // true = 재발급
+        // 재발급
     }
 
     // 토큰 재발급: validate 메서드가 true 반환할 때만 사용 -> AT, RT 재발급
     @Transactional
-    public ReissueTokenResponseDto reissue(String requestAccessToken, String requestRefreshToken) {
+    public ReissueTokenResponse reissue(String requestAccessToken, String requestRefreshToken) {
 
         Authentication accessAuthentication = jwtResolver.getAuthentication(requestAccessToken);
         String accessPrincipal = getPrincipal(requestAccessToken);
@@ -67,8 +77,8 @@ public class AuthUseCase {
 
         // 토큰 재발급 및 Redis 업데이트
         redisService.deleteValues("RT(" + SERVER + "):" + refreshPrincipal); // 기존 RT 삭제
-        ReissueTokenResponseDto reissueTokenDto =
-                ReissueTokenResponseDto.builder()
+        ReissueTokenResponse reissueTokenDto =
+                ReissueTokenResponse.builder()
                         .accessToken(
                                 jwtGenerator.generateAccessToken(refreshPrincipal, authorities))
                         .refreshToken(
@@ -79,7 +89,10 @@ public class AuthUseCase {
     }
 
     // 토큰 발급
-    @Transactional
+    /*
+    @Transactional을 붙이지 않은 이유는 generateToken을 사용하는 Login 메서드에서
+    @Transactional을 붙이고 있어서 self-invocation이 발생하기 때문이다.
+     */
     public TokenDto generateToken(String provider, String email, String authorities) {
         // RT가 이미 있을 경우
         if (redisService.getValues("RT(" + provider + "):" + email) != null) {
@@ -97,7 +110,10 @@ public class AuthUseCase {
     }
 
     // RT를 Redis에 저장
-    @Transactional
+    /*
+    @Transactional을 붙이지 않은 이유는 saveRefreshToken을 사용하는 reissue 메서드에서
+    @Transactional을 붙이고 있어서 self-invocation이 발생하기 때문이다.
+     */
     public void saveRefreshToken(String provider, String principal, String refreshToken) {
         redisService.setValuesWithTimeout(
                 "RT(" + provider + "):" + principal, // key
@@ -114,7 +130,7 @@ public class AuthUseCase {
     }
 
     @Transactional
-    public LogoutUserResponseDto logout(String requestAccessTokenInHeader) {
+    public LogoutUserResponse logout(String requestAccessTokenInHeader) {
         String requestAccessToken = extractToken(requestAccessTokenInHeader);
         String principal = getPrincipal(requestAccessToken);
 
@@ -123,28 +139,28 @@ public class AuthUseCase {
         if (refreshTokenInRedis != null) {
             redisService.deleteValues("RT(" + SERVER + "):" + principal);
         }
-        return LogoutUserResponseDto.builder().message(ResponseMessage.SUCCESS_LOGOUT).build();
+        return LogoutUserResponse.builder().message(ResponseMessage.SUCCESS_LOGOUT).build();
     }
 
     @Transactional
-    public LoginUserResponseDto login(LoginUserRequestDto loginUserRequestDto) {
+    public LoginUserResponse login(LoginUserRequest loginUserRequest) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-        Optional<User> userOptional = userUseCase.findByEmail(loginUserRequestDto.email());
+        Optional<User> userOptional = userUseCase.findByEmail(loginUserRequest.email());
         User user;
         if (userOptional.isEmpty()) {
-            user = loginUserRequestDto.toEntity(loginUserRequestDto);
+            user = loginUserRequest.toEntity(loginUserRequest);
             userUseCase.save(user);
 
         } else {
             user = userOptional.get();
-            if (!bCryptPasswordEncoder.matches(loginUserRequestDto.pwd(), user.getPwd())) {
+            if (!bCryptPasswordEncoder.matches(loginUserRequest.pwd(), user.getPwd())) {
                 throw BadCredentialException.EXCEPTION;
             }
         }
         TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
         log.info("accessToken : " + tokenDto.accessToken());
         log.info("refreshToken : " + tokenDto.refreshToken());
-        return LoginUserResponseDto.builder()
+        return LoginUserResponse.builder()
                 .accessToken(tokenDto.accessToken())
                 .refreshToken(tokenDto.refreshToken())
                 .build();
@@ -154,5 +170,19 @@ public class AuthUseCase {
     @Transactional(readOnly = true)
     public String extractToken(String bearerToken) {
         return jwtResolver.extractToken(bearerToken);
+    }
+
+    // 학생회 로그인
+    @Transactional
+    public LoginCouncilResponse loginCouncil(LoginCouncilRequest loginCouncilRequest) {
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        User user = councilUseCase.findByEmail(loginCouncilRequest.email());
+        if (!bCryptPasswordEncoder.matches(loginCouncilRequest.pwd(), user.getPwd())) {
+            throw BadCredentialException.EXCEPTION;
+        }
+        TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
+        log.info("accessToken : " + tokenDto.accessToken());
+        log.info("refreshToken : " + tokenDto.refreshToken());
+        return converter.toLoginCouncilResponseDto(tokenDto);
     }
 }
