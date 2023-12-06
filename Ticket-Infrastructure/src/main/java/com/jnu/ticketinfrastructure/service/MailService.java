@@ -10,6 +10,8 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 import software.amazon.awssdk.services.ses.SesAsyncClient;
 import software.amazon.awssdk.services.ses.model.*;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * 비동기 메일 전송을 할 수 있다.
  *
@@ -25,16 +27,16 @@ public class MailService {
     private String mailAddress;
 
     private final SesAsyncClient sesAsyncClient;
-    private final SpringTemplateEngine springTemplateEngine;
+    private final SpringTemplateEngine htmlTemplateEngine;
 
     /**
-     * 메일을 비동기로 전송한다. TODO - 추후 template 작성 후 파라미터에서 template 삭제할 것
+     * 메일을 비동기로 전송한다.
      *
      * @param to - 보낼사람메일 주소. subject - 제목. template - Thyme leaf 로 작성된 html, Context - 내용
      */
-    public void sendMail(String to, String subject, String template, Context context) {
+    public boolean sendMail(String to, String subject, String template, Context context) throws Exception{
 
-        String html = springTemplateEngine.process(template, context);
+        String html = htmlTemplateEngine.process(template, context);
 
         SendEmailRequest sendEmailRequest =
                 SendEmailRequest.builder()
@@ -43,7 +45,11 @@ public class MailService {
                         .source(mailAddress)
                         .build();
 
-        sesAsyncClient.sendEmail(sendEmailRequest);
+
+        CompletableFuture<SendEmailResponse> sendEmailFuture = sesAsyncClient.sendEmail(sendEmailRequest);
+
+        SendEmailResponse sendEmailResponse = sendEmailFuture.get(); // 결과를 기다림
+        return sendEmailResponse.sdkHttpResponse().isSuccessful();
     }
 
     private Message newMessage(String subject, String html) {
