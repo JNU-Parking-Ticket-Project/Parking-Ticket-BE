@@ -21,7 +21,7 @@ public class CaptchaPending {
 
     @Column(name = "is_pending", nullable = false)
     @ColumnDefault("true")
-    private Boolean isPending;
+    private Boolean isPending = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "captcha_id", nullable = false)
