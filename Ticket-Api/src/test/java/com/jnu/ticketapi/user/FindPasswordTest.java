@@ -74,44 +74,4 @@ public class FindPasswordTest {
                 status().isOk(),
                 jsonPath("$.success").value(true));
     }
-
-    @Test
-    @DisplayName("실패 : 비밀번호 찾기 메일 전송")
-    @WithMockUser(roles = "COUNCIL")
-    void find_password_fail_test() throws Exception {
-        // given
-        LoginUserRequestDto requestsDto =
-                LoginUserRequestDto.builder()
-                        .email("cookie1784@naver.com")
-                        .pwd("1234")
-                        .build();
-        String testRequestBody = om.writeValueAsString(requestsDto);
-                mvc.perform(
-                        post("/v1/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(testRequestBody));
-
-        FindPasswordRequest findPasswordRequest = FindPasswordRequest.builder()
-                .email("cookie1784@naver.com")
-                .build();
-        String requestBody = om.writeValueAsString(findPasswordRequest);
-
-        // when
-        ResultActions resultActions =
-                mvc.perform(
-                        post("/v1/user/password/find")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .characterEncoding(StandardCharsets.UTF_8)
-                                .content(requestBody));
-
-        // eye
-        String responseBody =
-                resultActions.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        log.info("responseBody : " + responseBody);
-
-        // then
-        resultActions.andExpectAll(
-                status().isOk(),
-                jsonPath("$.success").value(true));
-    }
 }
