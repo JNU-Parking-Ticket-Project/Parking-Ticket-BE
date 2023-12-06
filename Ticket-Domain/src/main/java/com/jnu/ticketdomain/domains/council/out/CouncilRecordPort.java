@@ -11,3 +11,4 @@ public interface CouncilRecordPort {
 
     Council saveCouncil(Council council);
 }
+

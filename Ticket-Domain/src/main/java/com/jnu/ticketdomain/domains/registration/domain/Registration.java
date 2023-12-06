@@ -62,7 +62,7 @@ public class Registration {
     public Registration(
             String email,
             String name,
-            int studentNum,
+            Integer studentNum,
             String affiliation,
             String carNum,
             boolean isLight,

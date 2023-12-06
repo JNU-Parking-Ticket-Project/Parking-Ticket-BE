@@ -6,7 +6,7 @@ import lombok.Builder;
 @Builder
 public record FinalSaveRequest(
         String name,
-        int studentNum,
+        Integer studentNum,
         String affiliation,
         String carNum,
         boolean isLight,
