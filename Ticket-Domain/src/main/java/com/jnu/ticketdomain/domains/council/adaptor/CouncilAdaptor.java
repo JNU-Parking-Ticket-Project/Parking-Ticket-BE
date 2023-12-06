@@ -9,6 +9,7 @@ import com.jnu.ticketdomain.domains.council.repository.CouncilRepository;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 
 @Adaptor
@@ -30,5 +31,10 @@ public class CouncilAdaptor implements CouncilLoadPort, CouncilRecordPort {
     @Override
     public Council saveCouncil(Council council) {
         return councilRepository.save(council);
+    }
+
+    @Override
+    public List<Council> findAll() {
+        return councilRepository.findAll();
     }
 }
