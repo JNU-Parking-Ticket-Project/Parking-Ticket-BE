@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.dto;
+package com.jnu.ticketapi.api.auth.model.request;
 
 
 import com.jnu.ticketdomain.domains.user.domain.User;
@@ -7,12 +7,12 @@ import lombok.Builder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Builder
-public record LoginUserRequestDto(String email, String pwd) {
-    public User toEntity(LoginUserRequestDto loginUserRequestDto) {
+public record LoginUserRequest(String email, String pwd) {
+    public User toEntity(LoginUserRequest loginUserRequest) {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         return User.builder()
-                .email(loginUserRequestDto.email())
-                .pwd(passwordEncoder.encode(loginUserRequestDto.pwd()))
+                .email(loginUserRequest.email())
+                .pwd(passwordEncoder.encode(loginUserRequest.pwd()))
                 .userRole(UserRole.USER)
                 .build();
     }

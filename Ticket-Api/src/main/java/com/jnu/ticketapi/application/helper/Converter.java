@@ -1,13 +1,15 @@
 package com.jnu.ticketapi.application.helper;
 
 
+import com.jnu.ticketapi.api.auth.model.internal.TokenDto;
+import com.jnu.ticketapi.api.auth.model.response.LoginCouncilResponse;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
 import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
+import com.jnu.ticketapi.api.sector.model.internal.SectorDto;
 import com.jnu.ticketapi.api.user.model.response.UpdateRoleResponse;
-import com.jnu.ticketapi.dto.*;
 import com.jnu.ticketcommon.annotation.Helper;
 import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
@@ -93,6 +95,13 @@ public class Converter {
         return UpdateRoleResponse.builder()
                 .userId(user.getId())
                 .role(user.getUserRole().toString())
+                .build();
+    }
+
+    public LoginCouncilResponse toLoginCouncilResponseDto(TokenDto tokenDto) {
+        return LoginCouncilResponse.builder()
+                .accessToken(tokenDto.accessToken())
+                .refreshToken(tokenDto.refreshToken())
                 .build();
     }
 }

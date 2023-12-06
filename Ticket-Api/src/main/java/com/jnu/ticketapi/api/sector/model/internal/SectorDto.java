@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.dto;
+package com.jnu.ticketapi.api.sector.model.internal;
 
 
 import lombok.Builder;
