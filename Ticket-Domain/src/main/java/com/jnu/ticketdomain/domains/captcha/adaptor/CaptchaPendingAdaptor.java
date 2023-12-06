@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 public class CaptchaPendingAdaptor implements CaptchaPendingLoadPort, CaptchaPendingRecordPort {
     private final CaptchaPendingRepository captchaPendingRepository;
 
-
     @Override
     public CaptchaPending save(CaptchaPending captchaPending) {
         return captchaPendingRepository.save(captchaPending);
@@ -22,7 +21,8 @@ public class CaptchaPendingAdaptor implements CaptchaPendingLoadPort, CaptchaPen
 
     @Override
     public CaptchaPending findById(Long id) {
-        return captchaPendingRepository.findById(id)
+        return captchaPendingRepository
+                .findById(id)
                 .orElseThrow(() -> NotFoundCaptchaPendingException.EXCEPTION);
     }
 }

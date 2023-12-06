@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.captcha.adaptor;
 
+
 import com.jnu.ticketcommon.annotation.Adaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.exception.NotFoundCaptchaException;
@@ -14,7 +15,8 @@ public class CaptchaAdaptor implements CaptchaLoadPort {
 
     @Override
     public Captcha findByImageName(String imageName) {
-        return captchaRepository.findByImageName(imageName)
+        return captchaRepository
+                .findByImageName(imageName)
                 .orElseThrow(() -> NotFoundCaptchaException.EXCEPTION);
     }
 

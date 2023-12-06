@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.captcha.exception;
 
+
 import com.jnu.ticketcommon.exception.TicketCodeException;
 
 public class WrongCaptchaAnswerException extends TicketCodeException {

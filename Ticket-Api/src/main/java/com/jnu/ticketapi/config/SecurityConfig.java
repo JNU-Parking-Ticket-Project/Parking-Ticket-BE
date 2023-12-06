@@ -103,6 +103,7 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.GET, "/v1/announce/**", "/v1/announce")
                         .antMatchers(HttpMethod.OPTIONS, "/v1/announce/**", "/v1/announce")
                         .antMatchers("/v1/auth/login/**")
+                        .antMatchers("/v1/council/signup")
                         .antMatchers("/error")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
         //                        .requestMatchers(PathRequest.toH2Console());

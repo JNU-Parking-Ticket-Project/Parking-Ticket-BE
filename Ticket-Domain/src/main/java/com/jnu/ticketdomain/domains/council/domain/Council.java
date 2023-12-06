@@ -1,9 +1,8 @@
 package com.jnu.ticketdomain.domains.council.domain;
 
 
-import javax.persistence.*;
-
 import com.jnu.ticketdomain.domains.user.domain.User;
+import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;

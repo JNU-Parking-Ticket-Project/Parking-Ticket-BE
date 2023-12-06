@@ -1,16 +1,15 @@
 package com.jnu.ticketdomain.domains.captcha.exception;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.BAD_REQUEST;
+import static com.jnu.ticketcommon.consts.TicketStatic.NOT_FOUND;
+
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.BaseErrorCode;
 import com.jnu.ticketcommon.exception.ErrorReason;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 import java.lang.reflect.Field;
 import java.util.Objects;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.BAD_REQUEST;
-import static com.jnu.ticketcommon.consts.TicketStatic.NOT_FOUND;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
