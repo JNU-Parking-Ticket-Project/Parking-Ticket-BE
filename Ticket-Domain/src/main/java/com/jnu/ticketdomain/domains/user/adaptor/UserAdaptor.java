@@ -40,4 +40,14 @@ public class UserAdaptor implements UserLoadPort, UserRecordPort {
         user.updateRole(UserRole.valueOf(role));
         return user;
     }
+
+    @Override
+    public User updatePassword(String email, String password) {
+        User user =
+                userRepository
+                        .findByEmail(email)
+                        .orElseThrow(() -> NotFoundUserException.EXCEPTION);
+        user.updatePassword(password);
+        return user;
+    }
 }
