@@ -23,14 +23,18 @@ public class Council {
     @Column(name = "phone_num", nullable = false)
     private String phoneNum;
 
+    @Column(name = "student_num", nullable = false)
+    private Integer studentNum;
+
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
 
     @Builder
-    public Council(String name, String phoneNum, User user) {
+    public Council(String name, String phoneNum, User user, Integer studentNum) {
         this.name = name;
         this.phoneNum = phoneNum;
         this.user = user;
+        this.studentNum = studentNum;
     }
 }
