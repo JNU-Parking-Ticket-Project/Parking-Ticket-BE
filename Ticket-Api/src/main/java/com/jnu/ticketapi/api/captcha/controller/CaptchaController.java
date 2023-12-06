@@ -20,7 +20,7 @@ public class CaptchaController {
 
 
     @GetMapping("/captcha")
-    @Operation()
+    @Operation(summary = "캡챠 인증 요청", description = "캡챠 인증하기 위한 정보를 요청합니다. 이는 1차 신청 POST 요청으로 이어집니다.")
     public ResponseEntity<CaptchaPendingResponse> getCaptcha() {
         return ResponseEntity.ok(getCaptchaPendingUseCase.execute());
     }
