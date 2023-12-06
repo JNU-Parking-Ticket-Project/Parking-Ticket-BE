@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.captcha.controller;
 
+
 import com.jnu.ticketapi.api.captcha.model.response.CaptchaPendingResponse;
 import com.jnu.ticketapi.api.captcha.service.GetCaptchaPendingUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class CaptchaController {
 
     private final GetCaptchaPendingUseCase getCaptchaPendingUseCase;
-
 
     @GetMapping("/captcha")
     @Operation()

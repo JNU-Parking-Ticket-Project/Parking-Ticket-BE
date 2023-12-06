@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.captcha.service;
 
+
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaPendingAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaPending;
@@ -20,7 +21,7 @@ public class ValidateCaptchaPendingUseCase {
         CaptchaPending captchaPending = captchaPendingAdaptor.findById(captchaPendingId);
 
         if (captchaPending.validate(answer)) {
-          captchaPending.confirm();
+            captchaPending.confirm();
         } else {
             throw WrongCaptchaAnswerException.EXCEPTION;
         }

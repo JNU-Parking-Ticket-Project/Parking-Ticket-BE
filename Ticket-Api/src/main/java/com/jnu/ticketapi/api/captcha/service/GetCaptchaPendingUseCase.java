@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.captcha.service;
 
+
 import com.jnu.ticketapi.api.captcha.model.response.CaptchaPendingResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
