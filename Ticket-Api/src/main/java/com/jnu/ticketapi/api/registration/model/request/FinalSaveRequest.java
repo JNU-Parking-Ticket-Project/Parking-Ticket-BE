@@ -1,9 +1,8 @@
 package com.jnu.ticketapi.api.registration.model.request;
 
 
-import lombok.Builder;
-
 import java.util.Optional;
+import lombok.Builder;
 
 @Builder
 public record FinalSaveRequest(

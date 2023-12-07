@@ -6,6 +6,7 @@ import com.jnu.ticketapi.config.response.JwtAuthenticationEntryPoint;
 import com.jnu.ticketapi.security.JwtAuthenticationFilter;
 import com.jnu.ticketapi.security.JwtExceptionFilter;
 import com.jnu.ticketapi.security.JwtResolver;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -21,8 +22,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -31,14 +30,11 @@ public class SecurityConfig {
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
     protected String[] councilAndAdminUrls = {
-            "/v1/announce/**",
-            "/v1/notice/**",
-            "/v1/registrations",
-
+        "/v1/announce/**", "/v1/notice/**", "/v1/registrations",
     };
 
     protected String[] adminUrls = {
-            "/v1/admin/**",
+        "/v1/admin/**",
     };
 
     @Bean
@@ -103,23 +99,24 @@ public class SecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return web -> web.ignoring()
-                .antMatchers(HttpMethod.GET, "/v1/notice")
-                .antMatchers(HttpMethod.OPTIONS, "/v1/notice")
-                .antMatchers(HttpMethod.GET, "/v1/announce/**")
-                .antMatchers(HttpMethod.OPTIONS, "/v1/announce/**")
-                .antMatchers(
-                        HttpMethod.POST,
-                        "/v1/user/password/find",
-                        "/v1/user/update/password/**")
-                .antMatchers(
-                        HttpMethod.OPTIONS,
-                        "/v1/user/password/find",
-                        "/v1/user/update/password/**")
-                .antMatchers("/v1/auth/login/**")
-                .antMatchers("/v1/council/signup")
-                .antMatchers("/error")
-                .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+        return web ->
+                web.ignoring()
+                        .antMatchers(HttpMethod.GET, "/v1/notice")
+                        .antMatchers(HttpMethod.OPTIONS, "/v1/notice")
+                        .antMatchers(HttpMethod.GET, "/v1/announce/**")
+                        .antMatchers(HttpMethod.OPTIONS, "/v1/announce/**")
+                        .antMatchers(
+                                HttpMethod.POST,
+                                "/v1/user/password/find",
+                                "/v1/user/update/password/**")
+                        .antMatchers(
+                                HttpMethod.OPTIONS,
+                                "/v1/user/password/find",
+                                "/v1/user/update/password/**")
+                        .antMatchers("/v1/auth/login/**")
+                        .antMatchers("/v1/council/signup")
+                        .antMatchers("/error")
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
     /*
     Spring Mvc CORS 설정을 해주면 corsConfigurationSource() 메서드를 구현할 필요가 없다고는 하는데

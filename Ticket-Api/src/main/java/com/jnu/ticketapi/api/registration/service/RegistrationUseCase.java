@@ -93,6 +93,7 @@ public class RegistrationUseCase {
         couponWithDrawUseCase.issueCoupon();
         return converter.toFinalSaveResponseDto(jpaRegistration);
     }
+
     @Transactional(readOnly = true)
     public GetRegistrationsResponse getRegistrations() {
         List<Registration> registrations = registrationAdaptor.findAll();

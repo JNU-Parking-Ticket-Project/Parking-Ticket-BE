@@ -54,5 +54,4 @@ public class RegistrationController {
         GetRegistrationsResponse responseDto = registrationUseCase.getRegistrations();
         return ResponseEntity.ok(responseDto);
     }
-
 }
