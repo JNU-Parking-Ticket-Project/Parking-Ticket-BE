@@ -3,6 +3,8 @@ package com.jnu.ticketapi.api.registration.model.request;
 
 import lombok.Builder;
 
+import java.util.Optional;
+
 @Builder
 public record FinalSaveRequest(
         String name,
@@ -12,4 +14,4 @@ public record FinalSaveRequest(
         boolean isLight,
         String phoneNum,
         Long selectSectorId,
-        Long registrationId) {}
+        Optional<Long> registrationId) {}
