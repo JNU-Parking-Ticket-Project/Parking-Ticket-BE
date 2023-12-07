@@ -8,7 +8,6 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;
-import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
@@ -27,10 +26,5 @@ public class AdminAdaptor implements AdminLoadPort, AdminRecordPort {
         User user = findUserById(userId).orElseThrow(() -> NotFoundUserException.EXCEPTION);
         user.updateRole(UserRole.valueOf(role));
         return user;
-    }
-
-    @Override
-    public List<User> findUsersByRole(String role) {
-        return null;
     }
 }
