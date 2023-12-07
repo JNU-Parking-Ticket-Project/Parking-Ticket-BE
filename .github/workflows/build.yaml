@@ -56,6 +56,10 @@ jobs:
           MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          AWS_SES_ACCESS_KEY: ${{secrets.AWS_SES_ACCESS_KEY }}
+          AWS_SES_SECRET_KEY: ${{secrets.AWS_SES_SECRET_KEY }}
+          AWS_SES_REGION: ${{secrets.AWS_SES_REGION }}
+          AWS_SES_SEND_MAIL_ADDRESS: ${{secrets.AWS_SES_SEND_MAIL_ADDRESS }}
         run: |
           echo "IMAGE_TAG=$IMAGE_TAG, ACTIVE_PROFILE=$ACTIVE_PROFILE, IMAGE_NAME=$IMAGE_NAME" &&
           chmod +x ./gradlew &&
