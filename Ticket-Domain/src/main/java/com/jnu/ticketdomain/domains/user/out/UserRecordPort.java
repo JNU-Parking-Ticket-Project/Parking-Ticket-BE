@@ -8,7 +8,5 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 public interface UserRecordPort {
     User save(User user);
 
-    User updateRole(Long userId, String role);
-
     User updatePassword(String email, String password);
 }

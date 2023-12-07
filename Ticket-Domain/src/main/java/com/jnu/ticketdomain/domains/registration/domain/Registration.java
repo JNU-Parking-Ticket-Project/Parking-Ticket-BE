@@ -29,7 +29,7 @@ public class Registration {
     private String name;
     // 신청자 학번
     @Column(name = "student_num", nullable = false)
-    private int studentNum;
+    private Integer studentNum;
     // 신청자 단과대학
     @Column(name = "affiliation")
     private String affiliation;
