@@ -9,9 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CredentialCodeRepository extends JpaRepository<CredentialCode, Long> {
 
+    Optional<CredentialCode> findByEmail(String email);
+
     Optional<CredentialCode> findByCode(String code);
-
-    boolean existsByEmail(String email);
-
-    void deleteByEmail(String email);
 }
