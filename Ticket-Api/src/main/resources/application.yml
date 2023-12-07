@@ -44,3 +44,9 @@ spring:
   config:
     activate:
       on-profile: test
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
