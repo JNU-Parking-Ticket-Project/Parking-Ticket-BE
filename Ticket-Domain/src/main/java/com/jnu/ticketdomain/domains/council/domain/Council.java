@@ -24,14 +24,14 @@ public class Council {
     private String phoneNum;
 
     @Column(name = "student_num", nullable = false)
-    private Integer studentNum;
+    private String studentNum;
 
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
 
     @Builder
-    public Council(String name, String phoneNum, User user, Integer studentNum) {
+    public Council(String name, String phoneNum, User user, String studentNum) {
         this.name = name;
         this.phoneNum = phoneNum;
         this.user = user;

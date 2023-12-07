@@ -30,7 +30,7 @@ public class Registration {
     private String name;
     // 신청자 학번
     @Column(name = "student_num", nullable = false)
-    private Integer studentNum;
+    private String studentNum;
     // 신청자 단과대학
     @Column(name = "affiliation")
     private String affiliation;
@@ -67,7 +67,7 @@ public class Registration {
     public Registration(
             String email,
             String name,
-            Integer studentNum,
+            String studentNum,
             String affiliation,
             String carNum,
             boolean isLight,

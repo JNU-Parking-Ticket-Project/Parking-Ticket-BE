@@ -48,6 +48,7 @@ public class RegistrationController {
         FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto, email);
         return ResponseEntity.ok(responseDto);
     }
+
     @Operation(summary = "신청 목록 조회", description = "신청 목록 조회")
     @GetMapping("/registrations")
     public ResponseEntity<GetRegistrationsResponse> getRegistrations() {

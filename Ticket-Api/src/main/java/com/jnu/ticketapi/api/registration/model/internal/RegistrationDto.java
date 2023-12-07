@@ -12,7 +12,7 @@ public record RegistrationDto(
         String name,
         String email,
         String phoneNum,
-        Integer studentNum,
+        String studentNum,
         boolean isLight,
         String carNum,
         String affiliation,

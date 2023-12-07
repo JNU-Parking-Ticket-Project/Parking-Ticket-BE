@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import lombok.Builder;
 
 @Builder
-public record UserDto(Long userId, String name, Integer studentNum, String phoneNum) {
+public record UserDto(Long userId, String name, String studentNum, String phoneNum) {
     public static List<UserDto> of(List<Council> councilList) {
         return councilList.stream()
                 .map(
