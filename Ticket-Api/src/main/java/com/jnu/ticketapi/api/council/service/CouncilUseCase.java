@@ -7,6 +7,7 @@ import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.council.adaptor.CouncilAdaptor;
 import com.jnu.ticketdomain.domains.council.domain.Council;
+import com.jnu.ticketdomain.domains.council.exception.AlreadyExistEmailException;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
@@ -26,6 +27,10 @@ public class CouncilUseCase {
 
     @Transactional
     public SignUpCouncilResponse signUp(SignUpCouncilRequest signUpCouncilRequest) {
+        User alreadyExistUser = userAdaptor.findByEmail(signUpCouncilRequest.email()).orElse(null);
+        if (alreadyExistUser != null) {
+            throw AlreadyExistEmailException.EXCEPTION;
+        }
         User user = signUpCouncilRequest.toUserEntity(signUpCouncilRequest);
         Council council = signUpCouncilRequest.toCouncilEntity(signUpCouncilRequest, user);
         userAdaptor.save(user);
