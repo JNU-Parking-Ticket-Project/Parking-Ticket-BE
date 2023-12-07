@@ -2,7 +2,7 @@ package com.jnu.ticketapi.api.admin.controller;
 
 
 import com.jnu.ticketapi.api.admin.model.request.UpdateRoleRequest;
-import com.jnu.ticketapi.api.admin.model.response.GetUserListResponse;
+import com.jnu.ticketapi.api.admin.model.response.GetUsersResponse;
 import com.jnu.ticketapi.api.admin.model.response.UpdateRoleResponse;
 import com.jnu.ticketapi.api.admin.service.AdminUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,8 +22,8 @@ public class AdminController {
 
     @Operation(summary = "학생회 회원가입 목록 조회", description = "학생회 회원가입 목록을 조회(ADMIN인 유저만 사용 가능)")
     @GetMapping("/admin/councils")
-    public ResponseEntity<GetUserListResponse> getUserList() {
-        GetUserListResponse response = adminUseCase.getUserList();
+    public ResponseEntity<GetUsersResponse> getUserList() {
+        GetUsersResponse response = adminUseCase.getUserList();
         return ResponseEntity.ok(response);
     }
 
