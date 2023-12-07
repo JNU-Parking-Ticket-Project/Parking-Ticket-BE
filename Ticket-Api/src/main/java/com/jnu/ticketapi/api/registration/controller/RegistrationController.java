@@ -34,8 +34,8 @@ public class RegistrationController {
         return ResponseEntity.ok(responseDto);
     }
 
-    @Operation(summary = "주차권 임시 신청", description = "주차권 임시 신청(주차권 신청시 잔고 감소)")
-    @PostMapping("/registration/false")
+    @Operation(summary = "주차권 임시 저장", description = "주차권 임시 저장(주차권 신청시 잔고 감소)")
+    @PostMapping("/registration/temporary")
     public ResponseEntity<TemporarySaveResponse> temporarySave(
             @RequestBody TemporarySaveRequest requestDto, @GetEmail String email) {
         TemporarySaveResponse responseDto = registrationUseCase.temporarySave(requestDto, email);
@@ -43,7 +43,7 @@ public class RegistrationController {
     }
 
     @Operation(summary = "1차 신청", description = "1차 신청")
-    @PostMapping("/registration/true")
+    @PostMapping("/registration")
     public ResponseEntity<FinalSaveResponse> finalSave(
             @RequestBody FinalSaveRequest requestDto, @GetEmail String email) {
         FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto, email);
