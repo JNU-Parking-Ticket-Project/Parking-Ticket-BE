@@ -6,6 +6,7 @@ import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
 import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
+import com.jnu.ticketapi.api.registration.model.response.GetRegistrationsResponse;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketapi.config.SecurityUtils;
@@ -90,5 +91,10 @@ public class RegistrationUseCase {
         Registration jpaRegistration = save(registration);
         couponWithDrawUseCase.issueCoupon();
         return converter.toFinalSaveResponseDto(jpaRegistration);
+    }
+    @Transactional(readOnly = true)
+    public GetRegistrationsResponse getRegistrations() {
+        List<Registration> registrations = registrationAdaptor.findAll();
+        return GetRegistrationsResponse.of(registrations);
     }
 }
