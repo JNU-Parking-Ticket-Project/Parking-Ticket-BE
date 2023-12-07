@@ -11,6 +11,7 @@ public class ResponseMessage {
     public static final String SECTOR_SUCCESS_UPDATE_MESSAGE = "성공적으로 구간이 수정됐습니다";
     public static final String USER_NOT_FOUND_MESSAGE = "유저를 찾을 수 없습니다";
     public static final String SUCCESS_SIGN_UP = "회원가입이 완료 되었습니다.";
+    public static final String IS_POSSIBLE_EMAIL = "사용 가능한 이메일 입니다.";
 
     private ResponseMessage() {}
 }

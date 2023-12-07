@@ -115,6 +115,7 @@ public class SecurityConfig {
                                 "/v1/user/update/password/**")
                         .antMatchers("/v1/auth/login/**")
                         .antMatchers("/v1/council/signup")
+                        .antMatchers("/v1/auth/check/email/**")
                         .antMatchers("/error")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }

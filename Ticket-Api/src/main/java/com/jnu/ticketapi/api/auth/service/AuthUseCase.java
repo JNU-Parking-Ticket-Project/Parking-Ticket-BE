@@ -2,12 +2,10 @@ package com.jnu.ticketapi.api.auth.service;
 
 
 import com.jnu.ticketapi.api.auth.model.internal.TokenDto;
+import com.jnu.ticketapi.api.auth.model.request.CheckEmailRequest;
 import com.jnu.ticketapi.api.auth.model.request.LoginCouncilRequest;
 import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
-import com.jnu.ticketapi.api.auth.model.response.LoginCouncilResponse;
-import com.jnu.ticketapi.api.auth.model.response.LoginUserResponse;
-import com.jnu.ticketapi.api.auth.model.response.LogoutUserResponse;
-import com.jnu.ticketapi.api.auth.model.response.ReissueTokenResponse;
+import com.jnu.ticketapi.api.auth.model.response.*;
 import com.jnu.ticketapi.api.council.service.CouncilUseCase;
 import com.jnu.ticketapi.api.user.service.UserUseCase;
 import com.jnu.ticketapi.application.helper.Converter;
@@ -17,6 +15,7 @@ import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.exception.BadCredentialException;
 import com.jnu.ticketcommon.exception.InvalidTokenException;
 import com.jnu.ticketcommon.message.ResponseMessage;
+import com.jnu.ticketdomain.domains.council.exception.AlreadyExistEmailException;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
 import java.util.Optional;
@@ -184,5 +183,14 @@ public class AuthUseCase {
         log.info("accessToken : " + tokenDto.accessToken());
         log.info("refreshToken : " + tokenDto.refreshToken());
         return converter.toLoginCouncilResponseDto(tokenDto);
+    }
+
+    @Transactional(readOnly = true)
+    public CheckEmailResponse checkEmail(CheckEmailRequest checkEmailRequest) {
+        Optional<User> user = userUseCase.findByEmail(checkEmailRequest.email());
+        if (user.isPresent()) {
+            throw AlreadyExistEmailException.EXCEPTION;
+        }
+        return CheckEmailResponse.of(ResponseMessage.IS_POSSIBLE_EMAIL);
     }
 }

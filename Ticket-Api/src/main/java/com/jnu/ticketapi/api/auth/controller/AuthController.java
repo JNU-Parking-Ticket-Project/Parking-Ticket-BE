@@ -1,13 +1,11 @@
 package com.jnu.ticketapi.api.auth.controller;
 
 
+import com.jnu.ticketapi.api.auth.model.request.CheckEmailRequest;
 import com.jnu.ticketapi.api.auth.model.request.LoginCouncilRequest;
 import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
 import com.jnu.ticketapi.api.auth.model.request.ReissueTokenRequest;
-import com.jnu.ticketapi.api.auth.model.response.LoginCouncilResponse;
-import com.jnu.ticketapi.api.auth.model.response.LoginUserResponse;
-import com.jnu.ticketapi.api.auth.model.response.LogoutUserResponse;
-import com.jnu.ticketapi.api.auth.model.response.ReissueTokenResponse;
+import com.jnu.ticketapi.api.auth.model.response.*;
 import com.jnu.ticketapi.api.auth.service.AuthUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -59,6 +57,14 @@ public class AuthController {
     public ResponseEntity<LoginCouncilResponse> logInCouncil(
             @RequestBody LoginCouncilRequest loginCouncilRequest) {
         LoginCouncilResponse responseDto = authUseCase.loginCouncil(loginCouncilRequest);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @Operation(summary = "이메일 중복 체크", description = "이메일 중복 체크")
+    @PostMapping("/auth/check/email")
+    public ResponseEntity<CheckEmailResponse> checkEmail(
+            @RequestBody CheckEmailRequest checkEmailRequest) {
+        CheckEmailResponse responseDto = authUseCase.checkEmail(checkEmailRequest);
         return ResponseEntity.ok(responseDto);
     }
 }
