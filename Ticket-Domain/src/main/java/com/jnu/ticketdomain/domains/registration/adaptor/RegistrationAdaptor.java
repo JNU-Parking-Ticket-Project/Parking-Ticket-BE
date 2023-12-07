@@ -7,6 +7,7 @@ import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationE
 import com.jnu.ticketdomain.domains.registration.out.RegistrationLoadPort;
 import com.jnu.ticketdomain.domains.registration.out.RegistrationRecordPort;
 import com.jnu.ticketdomain.domains.registration.repository.RegistrationRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -29,5 +30,10 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
         return registrationRepository
                 .findById(id)
                 .orElseThrow(() -> NotFoundRegistrationException.EXCEPTION);
+    }
+
+    @Override
+    public List<Registration> findAll() {
+        return registrationRepository.findAll();
     }
 }
