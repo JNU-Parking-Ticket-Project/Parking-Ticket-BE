@@ -8,7 +8,7 @@ import lombok.Builder;
 
 @Builder
 public record RegistrationDto(
-        Long id,
+        Long registrationId,
         String name,
         String email,
         String phoneNum,
@@ -22,7 +22,7 @@ public record RegistrationDto(
                 .map(
                         registration ->
                                 RegistrationDto.builder()
-                                        .id(registration.getId())
+                                        .registrationId(registration.getId())
                                         .name(registration.getName())
                                         .email(registration.getEmail())
                                         .phoneNum(registration.getPhoneNum())
