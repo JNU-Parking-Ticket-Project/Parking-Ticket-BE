@@ -5,9 +5,9 @@ import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
 import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
+import com.jnu.ticketapi.api.registration.model.response.GetRegistrationsResponse;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.api.registration.service.RegistrationUseCase;
-import com.jnu.ticketapi.api.user.service.UserUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "4. [신청]")
 public class RegistrationController {
     private final RegistrationUseCase registrationUseCase;
-    private final UserUseCase userUseCase;
 
     @Operation(
             summary = "임시 저장 조회",
@@ -34,8 +33,8 @@ public class RegistrationController {
         return ResponseEntity.ok(responseDto);
     }
 
-    @Operation(summary = "주차권 임시 신청", description = "주차권 임시 신청(주차권 신청시 잔고 감소)")
-    @PostMapping("/registration/false")
+    @Operation(summary = "주차권 임시 저장", description = "주차권 임시 저장(주차권 신청시 잔고 감소)")
+    @PostMapping("/registration/temporary")
     public ResponseEntity<TemporarySaveResponse> temporarySave(
             @RequestBody TemporarySaveRequest requestDto, @GetEmail String email) {
         TemporarySaveResponse responseDto = registrationUseCase.temporarySave(requestDto, email);
@@ -43,10 +42,16 @@ public class RegistrationController {
     }
 
     @Operation(summary = "1차 신청", description = "1차 신청")
-    @PostMapping("/registration/true")
+    @PostMapping("/registration")
     public ResponseEntity<FinalSaveResponse> finalSave(
             @RequestBody FinalSaveRequest requestDto, @GetEmail String email) {
         FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto, email);
+        return ResponseEntity.ok(responseDto);
+    }
+    @Operation(summary = "신청 목록 조회", description = "신청 목록 조회")
+    @GetMapping("/registrations")
+    public ResponseEntity<GetRegistrationsResponse> getRegistrations() {
+        GetRegistrationsResponse responseDto = registrationUseCase.getRegistrations();
         return ResponseEntity.ok(responseDto);
     }
 }

@@ -7,8 +7,8 @@ import java.util.List;
 import lombok.Builder;
 
 @Builder
-public record GetUserListResponse(List<UserDto> user) {
-    public static GetUserListResponse of(List<Council> councilList) {
-        return GetUserListResponse.builder().user(UserDto.of(councilList)).build();
+public record GetUsersResponse(List<UserDto> users) {
+    public static GetUsersResponse of(List<Council> councils) {
+        return GetUsersResponse.builder().users(UserDto.of(councils)).build();
     }
 }

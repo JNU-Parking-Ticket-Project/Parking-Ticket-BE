@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.api.admin.service;
 
 
-import com.jnu.ticketapi.api.admin.model.response.GetUserListResponse;
+import com.jnu.ticketapi.api.admin.model.response.GetUsersResponse;
 import com.jnu.ticketapi.api.admin.model.response.UpdateRoleResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.admin.adaptor.AdminAdaptor;
@@ -24,8 +24,8 @@ public class AdminUseCase {
         return UpdateRoleResponse.of(user);
     }
 
-    public GetUserListResponse getUserList() {
+    public GetUsersResponse getUserList() {
         List<Council> councilList = councilAdaptor.findAll();
-        return GetUserListResponse.of(councilList);
+        return GetUsersResponse.of(councilList);
     }
 }
