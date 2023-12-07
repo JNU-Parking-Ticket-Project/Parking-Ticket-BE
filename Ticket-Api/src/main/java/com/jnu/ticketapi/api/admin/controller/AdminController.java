@@ -21,7 +21,7 @@ public class AdminController {
     private final AdminUseCase adminUseCase;
 
     @Operation(summary = "학생회 회원가입 목록 조회", description = "학생회 회원가입 목록을 조회(ADMIN인 유저만 사용 가능)")
-    @GetMapping("admin/list/user")
+    @GetMapping("/admin/councils")
     public ResponseEntity<GetUserListResponse> getUserList() {
         GetUserListResponse response = adminUseCase.getUserList();
         return ResponseEntity.ok(response);
