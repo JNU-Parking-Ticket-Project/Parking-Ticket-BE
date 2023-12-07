@@ -102,6 +102,8 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.OPTIONS, "/v1/notice")
                         .antMatchers(HttpMethod.GET, "/v1/announce/**", "/v1/announce")
                         .antMatchers(HttpMethod.OPTIONS, "/v1/announce/**", "/v1/announce")
+                        .antMatchers(HttpMethod.POST, "/v1/user/password/find", "/v1/user/update/password/**")
+                        .antMatchers(HttpMethod.OPTIONS, "/v1/user/password/find", "/v1/user/update/password/**")
                         .antMatchers("/v1/auth/login/**")
                         .antMatchers("/v1/council/signup")
                         .antMatchers("/error")
