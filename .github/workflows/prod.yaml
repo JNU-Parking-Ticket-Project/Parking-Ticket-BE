@@ -47,6 +47,10 @@ jobs:
           echo "::set-env name=MYSQL_USERNAME::${{ secrets.MYSQL_USERNAME }}"
           echo "::set-env name=MYSQL_PASSWORD::${{ secrets.MYSQL_PASSWORD }}"
           echo "::set-env name=JWT_SECRET::${{ secrets.JWT_SECRET }}"
+          echo "::set-env name=AWS_SES_ACCESS_KEY::${{ secrets.AWS_SES_ACCESS_KEY }}"
+          echo "::set-env name=AWS_SES_SECRET_KEY::${{ secrets.AWS_SES_SECRET_KEY }}"
+          echo "::set-env name=AWS_SES_REGION::${{ secrets.AWS_SES_REGION }}"
+          echo "::set-env name=AWS_SES_SEND_MAIL_ADDRESS::${{ secrets.AWS_SES_SEND_MAIL_ADDRESS }}"
 
   call-build-workflow:
     if: github.event_name == 'push'
