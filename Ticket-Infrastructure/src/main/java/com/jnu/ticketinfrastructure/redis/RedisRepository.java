@@ -2,6 +2,9 @@ package com.jnu.ticketinfrastructure.redis;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketinfrastructure.model.ChatMessage;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -28,8 +31,9 @@ public class RedisRepository {
         return redisTemplate.opsForZSet().range(key, startRank, endRank);
     }
 
-    public <T> Set<T> zPopMin(String key, Long count, Class<T> type) {
-        return (Set<T>) redisTemplate.opsForZSet().popMin(key, count);
+    public <T> Queue<T> zPopMin(String key, Long count, Class<T> type) {
+        Set<T> set = (Set<T>) redisTemplate.opsForZSet().popMin(key, count);
+        return new LinkedList<>(set);
     }
 
     public Long zRank(String key, Object value) {
@@ -52,7 +56,7 @@ public class RedisRepository {
         return redisTemplate.opsForSet().size(key);
     }
 
-    public void converAndSend(String channel, String message) {
-        redisTemplate.convertAndSend(channel, message);
+    public void converAndSend(String channel, ChatMessage chatMessage) {
+        redisTemplate.convertAndSend(channel, chatMessage);
     }
 }
