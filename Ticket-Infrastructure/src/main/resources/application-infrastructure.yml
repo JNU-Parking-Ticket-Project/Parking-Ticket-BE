@@ -12,4 +12,4 @@ aws:
     access-key: ${AWS_SES_ACCESS_KEY:default}
     secret-key: ${AWS_SES_SECRET_KEY:default}
     region: ${AWS_SES_REGION:ap-northeast-2}
-    mail-address: ${AWS_SES_SEND_MAgIL_ADDRESS:}
+    mail-address: ${AWS_SES_SEND_MAIL_ADDRESS:jnu-parking.com}
