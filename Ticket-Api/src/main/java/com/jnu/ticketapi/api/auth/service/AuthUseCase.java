@@ -179,7 +179,8 @@ public class AuthUseCase {
         if (!bCryptPasswordEncoder.matches(loginCouncilRequest.pwd(), user.getPwd())) {
             throw BadCredentialException.EXCEPTION;
         }
-        if(!user.getUserRole().getValue().equals("COUNCIL") && !user.getUserRole().getValue().equals("ADMIN")){
+        if (!user.getUserRole().getValue().equals("COUNCIL")
+                && !user.getUserRole().getValue().equals("ADMIN")) {
             throw IsNotCouncilException.EXCEPTION;
         }
         TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
