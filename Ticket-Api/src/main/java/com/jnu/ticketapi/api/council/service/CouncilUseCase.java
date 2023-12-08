@@ -37,5 +37,4 @@ public class CouncilUseCase {
         councilAdaptor.save(council);
         return SignUpCouncilResponse.of(ResponseMessage.SUCCESS_SIGN_UP);
     }
-
 }
