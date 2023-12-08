@@ -1,13 +1,14 @@
 package com.jnu.ticketapi.application.helper;
 
 
+import com.jnu.ticketapi.api.auth.model.internal.TokenDto;
+import com.jnu.ticketapi.api.auth.model.response.LoginCouncilResponse;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
 import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
-import com.jnu.ticketapi.api.user.model.response.UpdateRoleResponse;
-import com.jnu.ticketapi.dto.*;
+import com.jnu.ticketapi.api.sector.model.internal.SectorDto;
 import com.jnu.ticketcommon.annotation.Helper;
 import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
@@ -21,11 +22,11 @@ public class Converter {
     public List<SectorDto> toSectorDto(List<Sector> sectorList) {
         return sectorList.stream()
                 .map(
-                        (sector) ->
+                        sector ->
                                 SectorDto.builder()
                                         .sectorId(sector.getId())
-                                        .sectorName(sector.getSectorNumber())
-                                        .sectionColleges(sector.getName())
+                                        .sectorNum(sector.getSectorNumber())
+                                        .sectorName(sector.getName())
                                         .build())
                 .collect(Collectors.toList());
     }
@@ -40,13 +41,13 @@ public class Converter {
                 .carNum(registration.getCarNum())
                 .isLight(registration.isLight())
                 .phoneNum(registration.getPhoneNum())
-                .sector(sectorDtoList)
+                .sectors(sectorDtoList)
                 .selectSectorId(registration.getSector().getId())
                 .build();
     }
 
     public Registration temporaryToRegistration(
-            TemporarySaveRequest requestDto, Sector sector, String email) {
+            TemporarySaveRequest requestDto, Sector sector, String email, User user) {
         return Registration.builder()
                 .email(email)
                 .name(requestDto.name())
@@ -57,6 +58,7 @@ public class Converter {
                 .phoneNum(requestDto.phoneNum())
                 .sector(sector)
                 .isSaved(false)
+                .user(user)
                 .build();
     }
 
@@ -90,10 +92,10 @@ public class Converter {
                 .build();
     }
 
-    public UpdateRoleResponse toUpdateRoleResponseDto(User user) {
-        return UpdateRoleResponse.builder()
-                .userId(user.getId())
-                .role(user.getUserRole().toString())
+    public LoginCouncilResponse toLoginCouncilResponseDto(TokenDto tokenDto) {
+        return LoginCouncilResponse.builder()
+                .accessToken(tokenDto.accessToken())
+                .refreshToken(tokenDto.refreshToken())
                 .build();
     }
 }

@@ -6,7 +6,7 @@ import lombok.Builder;
 @Builder
 public record TemporarySaveRequest(
         String name,
-        int studentNum,
+        String studentNum,
         String affiliation,
         String carNum,
         boolean isLight,

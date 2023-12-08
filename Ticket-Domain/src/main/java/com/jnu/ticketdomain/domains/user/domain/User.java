@@ -51,6 +51,10 @@ public class User {
         this.userRole = userRole;
     }
 
+    public void updatePassword(String password) {
+        this.pwd = password;
+    }
+
     @Builder
     public User(String pwd, String email, UserRole userRole) {
         this.pwd = pwd;

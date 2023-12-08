@@ -42,7 +42,7 @@ public class CouponController {
     @DevelopOnlyApi
     @PostMapping("/coupon/apply")
     public ResponseEntity<String> issueCoupon() {
-//        couponWithDrawUseCase.issueCoupon();
+        //        couponWithDrawUseCase.issueCoupon();
         return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
     }
 

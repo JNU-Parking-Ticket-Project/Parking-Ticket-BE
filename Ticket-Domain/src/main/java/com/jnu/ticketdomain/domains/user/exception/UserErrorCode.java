@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.user.exception;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.BAD_REQUEST;
 import static com.jnu.ticketcommon.consts.TicketStatic.NOT_FOUND;
 
 import com.jnu.ticketcommon.annotation.ExplainError;
@@ -13,7 +14,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum UserErrorCode implements BaseErrorCode {
-    NOT_FOUND_USER(NOT_FOUND, "USER_404_1", "존재하지 않는 유저 입니다.");
+    NOT_FOUND_USER(NOT_FOUND, "USER_404_1", "존재하지 않는 유저 입니다."),
+    @ExplainError("정상적인 인증 링크가 아닙니다.")
+    CREDENTIAL_CODE_NOT_EXIST_ERROR(BAD_REQUEST, "USER_400_1", "정상적인 인증 링크가 아닙니다.");
     private final Integer status;
     private final String code;
     private final String reason;

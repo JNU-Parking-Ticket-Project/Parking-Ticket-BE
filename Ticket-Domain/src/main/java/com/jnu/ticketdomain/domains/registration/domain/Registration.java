@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -29,7 +30,7 @@ public class Registration {
     private String name;
     // 신청자 학번
     @Column(name = "student_num", nullable = false)
-    private int studentNum;
+    private String studentNum;
     // 신청자 단과대학
     @Column(name = "affiliation")
     private String affiliation;
@@ -50,6 +51,10 @@ public class Registration {
     @Column(name = "is_saved", nullable = false)
     private boolean isSaved;
 
+    @Column(name = "is_deleted", nullable = false)
+    @ColumnDefault("false")
+    private boolean isDeleted;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -62,7 +67,7 @@ public class Registration {
     public Registration(
             String email,
             String name,
-            int studentNum,
+            String studentNum,
             String affiliation,
             String carNum,
             boolean isLight,

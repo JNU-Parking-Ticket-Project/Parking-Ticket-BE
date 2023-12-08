@@ -5,7 +5,6 @@ import com.jnu.ticketapi.config.response.JwtAccessDeniedHandler;
 import com.jnu.ticketapi.config.response.JwtAuthenticationEntryPoint;
 import com.jnu.ticketapi.security.JwtAuthenticationFilter;
 import com.jnu.ticketapi.security.JwtExceptionFilter;
-import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketapi.security.JwtResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +22,20 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtGenerator jwtGenerator;
     private final JwtResolver jwtResolver;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
+    protected String[] councilAndAdminUrls = {
+        "/v1/announce/**", "/v1/notice/**", "/v1/registrations",
+    };
+
+    protected String[] adminUrls = {
+        "/v1/admin/**",
+    };
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -38,7 +44,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         // httpBasic, csrf, formLogin, rememberMe, logout, session disable
         http.httpBasic()
                 .disable()
@@ -75,11 +80,9 @@ public class SecurityConfig {
                         "/api-docs/**",
                         "/api-docs")
                 .permitAll()
-                .antMatchers("/v1/announce/**", "/v1/announce")
+                .antMatchers(councilAndAdminUrls)
                 .hasAnyRole("COUNCIL", "ADMIN")
-                .antMatchers("/v1/notice/**", "/v1/notice")
-                .hasAnyRole("COUNCIL", "ADMIN")
-                .antMatchers("/v1/admin/role/**")
+                .antMatchers(adminUrls)
                 .hasRole("ADMIN")
                 .antMatchers("/v1/**")
                 .authenticated()
@@ -96,16 +99,25 @@ public class SecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) ->
+        return web ->
                 web.ignoring()
                         .antMatchers(HttpMethod.GET, "/v1/notice")
                         .antMatchers(HttpMethod.OPTIONS, "/v1/notice")
-                        .antMatchers(HttpMethod.GET, "/v1/announce/**", "/v1/announce")
-                        .antMatchers(HttpMethod.OPTIONS, "/v1/announce/**", "/v1/announce")
-                        .antMatchers("/v1/auth/login")
+                        .antMatchers(HttpMethod.GET, "/v1/announce/**")
+                        .antMatchers(HttpMethod.OPTIONS, "/v1/announce/**")
+                        .antMatchers(
+                                HttpMethod.POST,
+                                "/v1/user/password/find",
+                                "/v1/user/update/password/**")
+                        .antMatchers(
+                                HttpMethod.OPTIONS,
+                                "/v1/user/password/find",
+                                "/v1/user/update/password/**")
+                        .antMatchers("/v1/auth/login/**")
+                        .antMatchers("/v1/council/signup")
+                        .antMatchers("/v1/auth/check/email/**")
                         .antMatchers("/error")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
-        //                        .requestMatchers(PathRequest.toH2Console());
     }
     /*
     Spring Mvc CORS 설정을 해주면 corsConfigurationSource() 메서드를 구현할 필요가 없다고는 하는데

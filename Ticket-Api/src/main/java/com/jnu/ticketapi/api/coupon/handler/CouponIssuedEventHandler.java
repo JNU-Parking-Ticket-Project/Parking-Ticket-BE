@@ -29,13 +29,13 @@ public class CouponIssuedEventHandler {
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(CouponIssuedEvent couponIssuedEvent) {
-        waitingQueueService.popQueue(REDIS_COUPON_ISSUE_STORE, 1, ChatMessage.class);
         processCouponData(couponIssuedEvent.getCurrentUserId());
+        // 재고가 처리되야만 대기열에서 제거
+        waitingQueueService.popQueue(REDIS_COUPON_ISSUE_STORE, 1, ChatMessage.class);
     }
 
     private void processCouponData(Long userId) {
         Sector sector = registrationAdaptor.findByUserId(userId).getSector();
-        sector.checkCouponLeft();
         sector.decreaseCouponStock();
     }
 }

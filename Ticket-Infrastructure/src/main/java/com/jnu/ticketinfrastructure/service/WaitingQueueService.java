@@ -7,7 +7,6 @@ import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.LinkedList;
 import java.util.Queue;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.DefaultTypedTuple;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,11 +20,12 @@ public class WaitingQueueService {
 
     public Boolean registerQueue(String key, Long userId) {
         Double score = (double) System.currentTimeMillis();
-        Boolean result = redisRepository.zAddIfAbsent(key, userId, score);
-        if (result) {
+        boolean isPresent = redisRepository.zAddIfAbsent(key, userId, score);
+        // 재고가 있어야 처리
+        if (isPresent) {
             publishMessage(new ChatMessage(userId));
         }
-        return result;
+        return true;
     }
 
     private void publishMessage(ChatMessage message) {
@@ -36,20 +36,13 @@ public class WaitingQueueService {
         return (Queue<T>) new LinkedList<>(redisRepository.zRange(key, startRank, endRank, type));
     }
 
-    //    public <T> Queue<T> popQueue(String key, long count, Class<T> type) {
-    //        return new LinkedList<>(redisRepository.zPopMin(key, count, type));
-    //    }
     public <T> Queue<T> popQueue(String key, long count, Class<T> type) {
-        Queue<DefaultTypedTuple> set = redisRepository.zPopMin(key, count, DefaultTypedTuple.class);
-        Queue<T> queue = new LinkedList<>();
-        set.forEach(
-                tuple -> {
-                    // 직접 변환 코드 추가
-                    String userId = tuple.getValue().toString();
-                    ChatMessage chatMessage = new ChatMessage(Long.getLong(userId));
-                    queue.add((T) chatMessage);
-                });
-        return queue;
+        Queue<T> set = redisRepository.zPopMin(key, count, type);
+        return new LinkedList<>(set);
+    }
+
+    public Object popValue(String key) {
+        return redisRepository.zPopMin(key);
     }
 
     public Long getWaitingOrder(String key, Object value) {
