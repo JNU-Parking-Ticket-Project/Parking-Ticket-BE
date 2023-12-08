@@ -30,7 +30,7 @@ public class SecurityConfig {
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
     protected String[] councilAndAdminUrls = {
-        "/v1/announce/**", "/v1/notice/**", "/v1/registrations",
+        "/v1/announce/**", "/v1/notice/**", "/v1/registrations", "/v1/sectors/**", "/v1/sectors"
     };
 
     protected String[] adminUrls = {
