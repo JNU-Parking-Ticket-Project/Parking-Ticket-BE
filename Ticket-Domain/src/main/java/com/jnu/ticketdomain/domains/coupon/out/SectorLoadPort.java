@@ -7,7 +7,7 @@ import java.util.List;
 
 @Port
 public interface SectorLoadPort {
-    public Sector findById(Long sectorId);
+    Sector findById(Long sectorId);
 
     List<Sector> findAll();
 }

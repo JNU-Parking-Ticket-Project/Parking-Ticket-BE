@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.api.registration.model.response;
 
 
-import com.jnu.ticketapi.api.sector.model.internal.SectorDto;
+import com.jnu.ticketapi.api.sector.model.request.SectorReadRequest;
 import java.util.List;
 import lombok.Builder;
 
@@ -14,5 +14,5 @@ public record GetRegistrationResponse(
         String carNum,
         boolean isLight,
         String phoneNum,
-        List<SectorDto> sectors,
+        List<SectorReadRequest> sectors,
         Long selectSectorId) {}

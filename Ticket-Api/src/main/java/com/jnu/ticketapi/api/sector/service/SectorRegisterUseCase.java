@@ -2,6 +2,7 @@ package com.jnu.ticketapi.api.sector.service;
 
 
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
+import com.jnu.ticketapi.api.sector.model.response.SectorReadResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.coupon.out.SectorLoadPort;
@@ -49,5 +50,10 @@ public class SectorRegisterUseCase {
                                                 sectorRegisterRequest.reserve()))
                         .toList();
         sectorRecordPort.updateAll(prevSector, sectorList);
+    }
+
+    public List<SectorReadResponse> findAll() {
+        List<Sector> all = sectorLoadPort.findAll();
+        return SectorReadResponse.toSectorReadResponses(all);
     }
 }
