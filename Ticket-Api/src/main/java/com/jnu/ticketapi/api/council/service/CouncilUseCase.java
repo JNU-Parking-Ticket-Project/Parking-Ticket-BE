@@ -13,6 +13,7 @@ import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
+
 @UseCase
 @RequiredArgsConstructor
 public class CouncilUseCase {
@@ -32,4 +33,11 @@ public class CouncilUseCase {
         councilAdaptor.save(council);
         return SignUpCouncilResponse.of(ResponseMessage.SUCCESS_SIGN_UP);
     }
+
+//    public List<RegistrationExcelResponse> excelDownload() throws IOException {
+//
+//
+//
+//
+//    }
 }
