@@ -16,6 +16,7 @@ import com.jnu.ticketcommon.exception.BadCredentialException;
 import com.jnu.ticketcommon.exception.InvalidTokenException;
 import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.council.exception.AlreadyExistEmailException;
+import com.jnu.ticketdomain.domains.council.exception.IsNotCouncilException;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
 import java.util.Optional;
@@ -36,6 +37,7 @@ public class AuthUseCase {
     private final UserUseCase userUseCase;
     private final CouncilUseCase councilUseCase;
     private final Converter converter;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private static final String SERVER = "Server";
 
     @Transactional(readOnly = true)
@@ -143,7 +145,6 @@ public class AuthUseCase {
 
     @Transactional
     public LoginUserResponse login(LoginUserRequest loginUserRequest) {
-        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         Optional<User> userOptional = userUseCase.findByEmail(loginUserRequest.email());
         User user;
         if (userOptional.isEmpty()) {
@@ -174,10 +175,12 @@ public class AuthUseCase {
     // 학생회 로그인
     @Transactional
     public LoginCouncilResponse loginCouncil(LoginCouncilRequest loginCouncilRequest) {
-        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         User user = councilUseCase.findByEmail(loginCouncilRequest.email());
         if (!bCryptPasswordEncoder.matches(loginCouncilRequest.pwd(), user.getPwd())) {
             throw BadCredentialException.EXCEPTION;
+        }
+        if(!user.getUserRole().getValue().equals("COUNCIL") && !user.getUserRole().getValue().equals("ADMIN")){
+            throw IsNotCouncilException.EXCEPTION;
         }
         TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
         log.info("accessToken : " + tokenDto.accessToken());
