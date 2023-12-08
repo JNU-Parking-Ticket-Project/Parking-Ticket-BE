@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -18,12 +19,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @EntityListeners(AuditingEntityListener.class)
+@DynamicUpdate
 public class Registration {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     // 신청자 이메일
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
     // 신청자 이름
     @Column(name = "name", nullable = false)
@@ -91,5 +93,16 @@ public class Registration {
 
     public void updateIsSaved(boolean isSaved) {
         this.isSaved = isSaved;
+    }
+
+    public void update(Registration registration) {
+        this.email = registration.getEmail();
+        this.name = registration.getName();
+        this.studentNum = registration.getStudentNum();
+        this.affiliation = registration.getAffiliation();
+        this.carNum = registration.getCarNum();
+        this.isLight = registration.isLight();
+        this.phoneNum = registration.getPhoneNum();
+        this.sector = registration.getSector();
     }
 }
