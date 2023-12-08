@@ -1,8 +1,6 @@
 package com.jnu.ticketcommon.dto;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.OK_REQUEST;
 
-import java.time.LocalDateTime;
 import lombok.Getter;
 
 @Getter

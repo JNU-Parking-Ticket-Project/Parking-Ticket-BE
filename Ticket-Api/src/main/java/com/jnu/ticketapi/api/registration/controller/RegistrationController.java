@@ -3,10 +3,7 @@ package com.jnu.ticketapi.api.registration.controller;
 
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
-import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
-import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
-import com.jnu.ticketapi.api.registration.model.response.GetRegistrationsResponse;
-import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
+import com.jnu.ticketapi.api.registration.model.response.*;
 import com.jnu.ticketapi.api.registration.service.RegistrationUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
 import io.swagger.v3.oas.annotations.Operation;
