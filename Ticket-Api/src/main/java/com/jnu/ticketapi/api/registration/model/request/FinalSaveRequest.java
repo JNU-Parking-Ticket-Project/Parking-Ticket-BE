@@ -13,4 +13,6 @@ public record FinalSaveRequest(
         boolean isLight,
         String phoneNum,
         Long selectSectorId,
-        Optional<Long> registrationId) {}
+        Optional<Long> registrationId,
+        String captchaPendingCode,
+        String captchaAnswer) {}
