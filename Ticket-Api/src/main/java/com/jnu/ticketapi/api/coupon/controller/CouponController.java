@@ -7,6 +7,7 @@ import com.jnu.ticketapi.api.coupon.docs.ReadCouponExceptionDocs;
 import com.jnu.ticketapi.api.coupon.service.CouponRegisterUseCase;
 import com.jnu.ticketapi.api.coupon.service.CouponWithDrawUseCase;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
+import com.jnu.ticketcommon.dto.SuccessResponse;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -31,17 +32,17 @@ public class CouponController {
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
     @PostMapping("/coupons")
-    public ResponseEntity<String> setCoupon(@RequestBody DateTimePeriod dateTimePeriod) {
+    public SuccessResponse setCoupon(@RequestBody DateTimePeriod dateTimePeriod) {
         couponRegisterUseCase.registerCoupon(dateTimePeriod);
-        return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
+        return new SuccessResponse(COUPON_SUCCESS_REGISTER_MESSAGE);
     }
 
     @Operation(summary = "주차권 신청", description = "주차권 신청(주차권 신청시 잔고 감소)")
     @Deprecated(since = "2023-12-08", forRemoval = true)
     @PostMapping("/coupons/apply")
-    public ResponseEntity<String> issueCoupon() {
+    public SuccessResponse issueCoupon() {
         couponWithDrawUseCase.issueCoupon();
-        return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
+        return new SuccessResponse(COUPON_SUCCESS_REGISTER_MESSAGE);
     }
 
     @Operation(summary = "주차권 순서 조회", description = "주차권 순서 확인")
