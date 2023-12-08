@@ -1,20 +1,15 @@
 package com.jnu.ticketcommon.dto;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.OK_REQUEST;
 
 import java.time.LocalDateTime;
 import lombok.Getter;
 
 @Getter
 public class SuccessResponse {
+    private final String message;
 
-    private final boolean success = true;
-    private final int status;
-    private final Object data;
-    private final LocalDateTime timeStamp;
-
-    public SuccessResponse(int status, Object data) {
-        this.status = status;
-        this.data = data;
-        this.timeStamp = LocalDateTime.now();
+    public SuccessResponse(String message) {
+        this.message = message;
     }
 }

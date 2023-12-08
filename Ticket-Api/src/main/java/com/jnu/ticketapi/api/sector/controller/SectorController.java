@@ -1,6 +1,5 @@
 package com.jnu.ticketapi.api.sector.controller;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.OK_REQUEST;
 import static com.jnu.ticketcommon.message.ResponseMessage.*;
 
 import com.jnu.ticketapi.api.sector.docs.CreateSectorExceptionDocs;
@@ -39,7 +38,7 @@ public class SectorController {
     @PostMapping("/sectors")
     public SuccessResponse setCoupon(@Valid @RequestBody List<SectorRegisterRequest> sectors) {
         sectorRegisterUseCase.execute(sectors);
-        return new SuccessResponse(OK_REQUEST, SECTOR_SUCCESS_REGISTER_MESSAGE);
+        return new SuccessResponse(SECTOR_SUCCESS_REGISTER_MESSAGE);
     }
 
     @Operation(summary = "구간 수정", description = "구간 삭제(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
@@ -47,7 +46,7 @@ public class SectorController {
     @PutMapping("/sectors")
     public SuccessResponse updateCoupon(@RequestBody List<SectorRegisterRequest> sectors) {
         sectorRegisterUseCase.execute(sectors);
-        return new SuccessResponse(OK_REQUEST, SECTOR_SUCCESS_UPDATE_MESSAGE);
+        return new SuccessResponse(SECTOR_SUCCESS_UPDATE_MESSAGE);
     }
 
     @Operation(summary = "구간 삭제", description = "구간 삭제(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
@@ -55,6 +54,6 @@ public class SectorController {
     @DeleteMapping("/sectors/{sector-id}")
     public SuccessResponse deleteCoupon(@PathVariable("sector-id") Long sectorId) {
         sectorDeleteUseCase.execute(sectorId);
-        return new SuccessResponse(OK_REQUEST, SECTOR_SUCCESS_DELETE_MESSAGE);
+        return new SuccessResponse(SECTOR_SUCCESS_DELETE_MESSAGE);
     }
 }
