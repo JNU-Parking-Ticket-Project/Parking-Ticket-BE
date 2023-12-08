@@ -9,6 +9,7 @@ import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketapi.application.port.RegistrationUseCase;
+import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.coupon.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
@@ -73,6 +74,8 @@ public class RegistrationService implements RegistrationUseCase {
     @Override
     @Transactional
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        User user = userAdaptor.findById(currentUserId).get();
         /*
         임시저장을 했으면 isSave만 true로 변경
          */
@@ -85,9 +88,9 @@ public class RegistrationService implements RegistrationUseCase {
                     .build();
         }
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
-        Registration registration = converter.finalToRegistration(requestDto, sector, email);
+        Registration registration = converter.finalToRegistration(requestDto, sector, email,user);
         Registration jpaRegistration = save(registration);
-        couponWithDrawUseCase.issueCoupon();
+        couponWithDrawUseCase.issueCoupon(currentUserId);
         return converter.toFinalSaveResponseDto(jpaRegistration);
     }
 }

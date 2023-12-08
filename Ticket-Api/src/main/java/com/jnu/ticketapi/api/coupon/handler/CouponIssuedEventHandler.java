@@ -30,14 +30,12 @@ public class CouponIssuedEventHandler {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(CouponIssuedEvent couponIssuedEvent) {
         waitingQueueService.popQueue(REDIS_COUPON_ISSUE_STORE, 1, ChatMessage.class);
-        //        messages.forEach(message -> processCouponData(message.getUserId()));
         processCouponData(couponIssuedEvent.getCurrentUserId());
     }
 
     private void processCouponData(Long userId) {
         Sector sector = registrationAdaptor.findByUserId(userId).getSector();
         sector.checkCouponLeft();
-        log.info(sector.getRemainingAmount().toString());
         sector.decreaseCouponStock();
     }
 }

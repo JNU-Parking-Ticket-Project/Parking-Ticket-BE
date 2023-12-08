@@ -25,11 +25,10 @@ public class CouponWithDrawUseCase {
             waitTime = 3000,
             leaseTime = 3000,
             timeUnit = TimeUnit.MILLISECONDS)
-    public void issueCoupon() {
+    public void issueCoupon(Long userId) {
         // 재고 감소 로직 구현
-        Long currentUserId = SecurityUtils.getCurrentUserId();
         couponAdaptor.findOpenCoupon().validateIssuePeriod();
-        waitingQueueService.registerQueue(REDIS_COUPON_ISSUE_STORE, currentUserId);
+        waitingQueueService.registerQueue(REDIS_COUPON_ISSUE_STORE, userId);
     }
 
     //    private void processCouponData(String couponData) {

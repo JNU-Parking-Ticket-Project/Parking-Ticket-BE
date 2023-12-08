@@ -7,6 +7,7 @@ import com.jnu.ticketapi.api.coupon.docs.ReadCouponExceptionDocs;
 import com.jnu.ticketapi.api.coupon.service.CouponRegisterUseCase;
 import com.jnu.ticketapi.api.coupon.service.CouponWithDrawUseCase;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
+import com.jnu.ticketcommon.annotation.DevelopOnlyApi;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -38,9 +39,10 @@ public class CouponController {
 
     @Operation(summary = "주차권 신청", description = "주차권 신청(주차권 신청시 잔고 감소)")
     @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
+    @DevelopOnlyApi
     @PostMapping("/coupon/apply")
     public ResponseEntity<String> issueCoupon() {
-        couponWithDrawUseCase.issueCoupon();
+//        couponWithDrawUseCase.issueCoupon();
         return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
     }
 

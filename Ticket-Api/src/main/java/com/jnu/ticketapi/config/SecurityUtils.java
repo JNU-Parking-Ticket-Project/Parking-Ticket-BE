@@ -27,7 +27,7 @@ public class SecurityUtils {
 
         if (authentication.isAuthenticated()
                 && !CollectionUtils.containsAny(
-                        authentication.getAuthorities(), notUserAuthority)) {
+                authentication.getAuthorities(), notUserAuthority)) {
             return Long.valueOf(authentication.getName());
         }
         // 익명유저시 userId 0 반환
