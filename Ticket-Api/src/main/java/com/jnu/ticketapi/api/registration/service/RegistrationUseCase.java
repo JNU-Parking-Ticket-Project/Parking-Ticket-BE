@@ -22,6 +22,7 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,12 +38,12 @@ public class RegistrationUseCase {
     private final CaptchaAdaptor captchaAdaptor;
     private final ValidateCaptchaPendingUseCase validateCaptchaPendingUseCase;
 
-    public Registration findByUserId(Long userId) {
-        return registrationAdaptor.findByUserId(userId);
-    }
-
     public Registration save(Registration registration) {
         return registrationAdaptor.save(registration);
+    }
+
+    public Optional<Registration> findByEmail(String email) {
+        return registrationAdaptor.findByEmail(email);
     }
 
     public User findById(Long userId) {
@@ -51,11 +52,10 @@ public class RegistrationUseCase {
 
     @Transactional(readOnly = true)
     public GetRegistrationResponse getRegistration(String email) {
-        Long currentUserId = SecurityUtils.getCurrentUserId();
-        Registration registration = findByUserId(currentUserId);
+        Optional<Registration> registration = findByEmail(email);
         List<Sector> sectorList = sectorAdaptor.findAll();
         // 신청자가 임시저장을 하지 않았을 경우
-        if (registration == null) {
+        if (registration.isEmpty()) {
             return GetRegistrationResponse.builder()
                     .sectors(converter.toSectorDto(sectorList))
                     .email(email)
@@ -63,7 +63,7 @@ public class RegistrationUseCase {
         }
         // 신청자가 임시저장을 했을 경우
         return converter.toGetRegistrationResponseDto(
-                email, registration, converter.toSectorDto(sectorList));
+                email, registration.get(), converter.toSectorDto(sectorList));
     }
 
     @Transactional
@@ -71,10 +71,14 @@ public class RegistrationUseCase {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
-        Registration registration =
-                converter.temporaryToRegistration(requestDto, sector, email, user);
+        Registration registration = requestDto.toEntity(requestDto, sector, email, user);
+        Optional<Registration> temporaryRegistration = findByEmail(email);
+        if (temporaryRegistration.isPresent()) {
+            temporaryRegistration.get().update(registration);
+            return TemporarySaveResponse.of(temporaryRegistration.get());
+        }
         Registration jpaRegistration = save(registration);
-        return converter.toTemporarySaveResponseDto(jpaRegistration);
+        return TemporarySaveResponse.of(jpaRegistration);
     }
 
     @Transactional
@@ -84,22 +88,19 @@ public class RegistrationUseCase {
         /*
         임시저장을 했으면 isSave만 true로 변경
          */
-        Long registrationId = requestDto.registrationId().orElse(null);
-        if (registrationId != null) {
-            Registration registration = registrationAdaptor.findById(registrationId);
-            registration.updateIsSaved(true);
-            return FinalSaveResponse.builder()
-                    .registrationId(registration.getId())
-                    .message(ResponseMessage.SUCCESS_FINAL_SAVE)
-                    .build();
-        }
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
-        Registration registration = converter.finalToRegistration(requestDto, sector, email, user);
+        Registration registration = requestDto.toEntity(requestDto, sector, email, user);
+        Optional<Registration> temporaryRegistration = findByEmail(email);
+        if (temporaryRegistration.isPresent()) {
+            temporaryRegistration.get().update(registration);
+            temporaryRegistration.get().updateIsSaved(true);
+            return FinalSaveResponse.of(temporaryRegistration.get());
+        }
         Registration jpaRegistration = save(registration);
         couponWithDrawUseCase.issueCoupon();
-        return converter.toFinalSaveResponseDto(jpaRegistration);
+        return FinalSaveResponse.of(jpaRegistration);
     }
 
     @Transactional(readOnly = true)
