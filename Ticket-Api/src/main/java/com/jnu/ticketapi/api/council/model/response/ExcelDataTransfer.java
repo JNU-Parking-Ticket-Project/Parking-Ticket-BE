@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.council.model.response;
 
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,5 +15,4 @@ public class ExcelDataTransfer {
     private String userAffiliation;
     private String carNumber;
     private String carIsLight;
-
 }
