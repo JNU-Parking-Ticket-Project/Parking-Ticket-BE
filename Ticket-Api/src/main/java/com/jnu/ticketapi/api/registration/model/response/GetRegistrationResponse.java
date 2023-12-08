@@ -14,5 +14,5 @@ public record GetRegistrationResponse(
         String carNum,
         boolean isLight,
         String phoneNum,
-        List<SectorDto> sector,
+        List<SectorDto> sectors,
         Long selectSectorId) {}

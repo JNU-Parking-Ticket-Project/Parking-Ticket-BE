@@ -22,11 +22,11 @@ public class Converter {
     public List<SectorDto> toSectorDto(List<Sector> sectorList) {
         return sectorList.stream()
                 .map(
-                        (sector) ->
+                        sector ->
                                 SectorDto.builder()
                                         .sectorId(sector.getId())
-                                        .sectorName(sector.getSectorNumber())
-                                        .sectionColleges(sector.getName())
+                                        .sectorNum(sector.getSectorNumber())
+                                        .sectorName(sector.getName())
                                         .build())
                 .collect(Collectors.toList());
     }
@@ -41,7 +41,7 @@ public class Converter {
                 .carNum(registration.getCarNum())
                 .isLight(registration.isLight())
                 .phoneNum(registration.getPhoneNum())
-                .sector(sectorDtoList)
+                .sectors(sectorDtoList)
                 .selectSectorId(registration.getSector().getId())
                 .build();
     }

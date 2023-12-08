@@ -16,7 +16,7 @@ public record RegistrationDto(
         boolean isLight,
         String carNum,
         String affiliation,
-        String sectorName) {
+        String sectorNum) {
     public static List<RegistrationDto> of(List<Registration> registrations) {
         return registrations.stream()
                 .map(
@@ -30,7 +30,7 @@ public record RegistrationDto(
                                         .isLight(registration.isLight())
                                         .carNum(registration.getCarNum())
                                         .affiliation(registration.getAffiliation())
-                                        .sectorName(registration.getSector().getName())
+                                        .sectorNum(registration.getSector().getSectorNumber())
                                         .build())
                 .collect(Collectors.toList());
     }

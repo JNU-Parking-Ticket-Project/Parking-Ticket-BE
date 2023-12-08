@@ -51,7 +51,7 @@ public class RegistrationUseCase {
         // 신청자가 임시저장을 하지 않았을 경우
         if (registration == null) {
             return GetRegistrationResponse.builder()
-                    .sector(converter.toSectorDto(sectorList))
+                    .sectors(converter.toSectorDto(sectorList))
                     .email(email)
                     .build();
         }
