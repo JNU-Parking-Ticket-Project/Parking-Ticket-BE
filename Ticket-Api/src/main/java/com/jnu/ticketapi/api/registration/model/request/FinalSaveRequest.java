@@ -1,9 +1,9 @@
 package com.jnu.ticketapi.api.registration.model.request;
 
 
-import java.util.Optional;
-
+import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.user.domain.User;
 import lombok.Builder;
 
 @Builder
@@ -17,7 +17,7 @@ public record FinalSaveRequest(
         Long selectSectorId,
         String captchaPendingCode,
         String captchaAnswer) {
-         {
+
     public Registration toEntity(
             FinalSaveRequest requestDto, Sector sector, String email, User user) {
         return Registration.builder()

@@ -13,7 +13,6 @@ import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
-import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.coupon.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
