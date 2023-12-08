@@ -79,15 +79,16 @@ public class RegistrationUseCase {
         /*
         임시저장을 했으면 isSave만 true로 변경
          */
-        Optional<Registration> temporaryRegistration = findByEmail(email);
-        if (temporaryRegistration.isPresent()) {
-            temporaryRegistration.get().updateIsSaved(true);
-            return FinalSaveResponse.of(temporaryRegistration.get());
-        }
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
+        Optional<Registration> temporaryRegistration = findByEmail(email);
+        if (temporaryRegistration.isPresent()) {
+            temporaryRegistration.get().update(registration);
+            temporaryRegistration.get().updateIsSaved(true);
+            return FinalSaveResponse.of(temporaryRegistration.get());
+        }
         Registration jpaRegistration = save(registration);
         couponWithDrawUseCase.issueCoupon();
         return FinalSaveResponse.of(jpaRegistration);
