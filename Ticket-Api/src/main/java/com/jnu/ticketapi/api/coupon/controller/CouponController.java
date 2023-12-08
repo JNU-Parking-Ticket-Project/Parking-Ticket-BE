@@ -30,7 +30,7 @@ public class CouponController {
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
-    @PostMapping("/coupon")
+    @PostMapping("/coupons")
     public ResponseEntity<String> setCoupon(@RequestBody DateTimePeriod dateTimePeriod) {
         couponRegisterUseCase.registerCoupon(dateTimePeriod);
         return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
@@ -38,7 +38,7 @@ public class CouponController {
 
     @Operation(summary = "주차권 신청", description = "주차권 신청(주차권 신청시 잔고 감소)")
     @Deprecated(since = "2023-12-08", forRemoval = true)
-    @PostMapping("/coupon/apply")
+    @PostMapping("/coupons/apply")
     public ResponseEntity<String> issueCoupon() {
         couponWithDrawUseCase.issueCoupon();
         return ResponseEntity.ok(COUPON_SUCCESS_REGISTER_MESSAGE);
@@ -46,7 +46,7 @@ public class CouponController {
 
     @Operation(summary = "주차권 순서 조회", description = "주차권 순서 확인")
     @ApiErrorExceptionsExample(ReadCouponExceptionDocs.class)
-    @GetMapping("/coupon/order")
+    @GetMapping("/coupons/order")
     public ResponseEntity<Long> getCouponOrder() {
         return ResponseEntity.ok(couponWithDrawUseCase.getCouponOrder());
     }
