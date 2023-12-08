@@ -37,7 +37,7 @@ public class CouponController {
     }
 
     @Operation(summary = "주차권 신청", description = "주차권 신청(주차권 신청시 잔고 감소)")
-    @ApiErrorExceptionsExample(CreateCouponExceptionDocs.class)
+    @Deprecated(since = "2023-12-08", forRemoval = true)
     @PostMapping("/coupon/apply")
     public ResponseEntity<String> issueCoupon() {
         couponWithDrawUseCase.issueCoupon();

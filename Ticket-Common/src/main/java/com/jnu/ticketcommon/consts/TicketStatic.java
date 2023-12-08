@@ -14,8 +14,8 @@ public class TicketStatic {
     public static final Integer PLANNER_COLUMNS_ID = 3;
     public static final Integer COUNTS_PER_PAGE = 8;
     public static final Integer ANSWER_COUNTS_PER_PERSON = 33;
-
     public static final int MILLI_TO_SECOND = 1000;
+    public static final int OK_REQUEST = 200;
     public static final int BAD_REQUEST = 400;
     public static final int UNAUTHORIZED = 401;
     public static final int FORBIDDEN = 403;
