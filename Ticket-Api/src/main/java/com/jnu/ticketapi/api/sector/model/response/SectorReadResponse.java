@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.api.sector.model.request;
+package com.jnu.ticketapi.api.sector.model.response;
 
 
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
@@ -16,7 +16,7 @@ public record SectorReadResponse(
     @Builder
     public SectorReadResponse {}
 
-    public static List<SectorReadResponse> toSectorReadResponse(List<Sector> all) {
+    public static List<SectorReadResponse> toSectorReadResponses(List<Sector> all) {
         return all.stream()
                 .map(
                         sector ->

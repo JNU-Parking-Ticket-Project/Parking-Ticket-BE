@@ -4,8 +4,8 @@ import static com.jnu.ticketcommon.consts.TicketStatic.OK_REQUEST;
 import static com.jnu.ticketcommon.message.ResponseMessage.*;
 
 import com.jnu.ticketapi.api.sector.docs.CreateSectorExceptionDocs;
-import com.jnu.ticketapi.api.sector.model.request.SectorReadResponse;
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
+import com.jnu.ticketapi.api.sector.model.response.SectorReadResponse;
 import com.jnu.ticketapi.api.sector.service.SectorDeleteUseCase;
 import com.jnu.ticketapi.api.sector.service.SectorRegisterUseCase;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
