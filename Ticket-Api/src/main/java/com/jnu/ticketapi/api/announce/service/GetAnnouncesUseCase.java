@@ -28,11 +28,11 @@ public class GetAnnouncesUseCase {
 
     @Transactional(readOnly = true)
     public AnnounceResponse getOne() {
-        return AnnounceResponse.of(announceAdaptor.findAnnounceByLastOne());
+        return AnnounceResponse.from(announceAdaptor.findAnnounceByLastOne());
     }
 
     @Transactional(readOnly = true)
     public AnnounceDetailsResponse getOneDetails(Long announceId) {
-        return AnnounceDetailsResponse.of(announceAdaptor.findById(announceId));
+        return AnnounceDetailsResponse.from(announceAdaptor.findById(announceId));
     }
 }

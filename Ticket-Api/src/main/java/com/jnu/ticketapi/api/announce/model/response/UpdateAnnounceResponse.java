@@ -8,7 +8,7 @@ public record UpdateAnnounceResponse(String announceTitle, String announceConten
     @Builder
     public UpdateAnnounceResponse {}
 
-    public static UpdateAnnounceResponse of(Announce announce) {
+    public static UpdateAnnounceResponse from(Announce announce) {
         return UpdateAnnounceResponse.builder()
                 .announceTitle(announce.getAnnounceTitle())
                 .announceContent(announce.getAnnounceContent())

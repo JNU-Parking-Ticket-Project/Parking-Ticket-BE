@@ -8,7 +8,7 @@ public record UpdateNoticeResponse(String noticeContent) {
     @Builder
     public UpdateNoticeResponse {}
 
-    public static UpdateNoticeResponse of(Notice notice) {
+    public static UpdateNoticeResponse from(Notice notice) {
         return UpdateNoticeResponse.builder().noticeContent(notice.getNoticeContent()).build();
     }
 }

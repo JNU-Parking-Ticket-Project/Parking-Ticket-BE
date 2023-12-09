@@ -8,7 +8,7 @@ public record UpdatePasswordResponse(String email) {
     @Builder
     public UpdatePasswordResponse {}
 
-    public static UpdatePasswordResponse of(User user) {
+    public static UpdatePasswordResponse from(User user) {
         return UpdatePasswordResponse.builder().email(user.getEmail()).build();
     }
 }

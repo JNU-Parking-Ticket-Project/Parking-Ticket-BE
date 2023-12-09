@@ -41,6 +41,6 @@ public record AnnouncePagingResponse(
     }
 
     private static List<AnnounceInfoResponse> getAnnounces(List<Announce> announcePaging) {
-        return announcePaging.stream().map(AnnounceInfoResponse::of).collect(Collectors.toList());
+        return announcePaging.stream().map(AnnounceInfoResponse::from).collect(Collectors.toList());
     }
 }

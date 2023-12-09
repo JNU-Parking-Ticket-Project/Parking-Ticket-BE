@@ -6,7 +6,7 @@ import lombok.Builder;
 
 @Builder
 public record UpdateRoleResponse(String role, Long userId) {
-    public static UpdateRoleResponse of(User user) {
+    public static UpdateRoleResponse from(User user) {
         return UpdateRoleResponse.builder()
                 .userId(user.getId())
                 .role(user.getUserRole().toString())

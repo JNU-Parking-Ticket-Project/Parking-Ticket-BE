@@ -21,7 +21,7 @@ public class AdminUseCase {
     @Transactional
     public UpdateRoleResponse updateRole(Long userId, String role) {
         User user = adminAdaptor.updateRole(userId, role);
-        return UpdateRoleResponse.of(user);
+        return UpdateRoleResponse.from(user);
     }
 
     public GetUsersResponse getUserList() {
