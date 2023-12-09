@@ -1,6 +1,7 @@
 package com.jnu.ticketinfrastructure.service;
 
 
+import com.jnu.ticketcommon.consts.MailTemplate;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,5 +59,30 @@ public class MailService {
                 .subject(content)
                 .body(Body.builder().html(builder -> builder.data(html)).build())
                 .build();
+    }
+
+    public boolean sendRegistrationResultMail(String email, String name, String status) {
+        try {
+            Context context = newRegistrationContext(name, status);
+            boolean result =
+                    sendMail(
+                            email,
+                            MailTemplate.REGISTRATION_SUBJECT,
+                            MailTemplate.REGISTRATION_TEMPLATE,
+                            context);
+            log.info("신청 결과 메일 발송. 사용자 이메일 : {}, 결과 : {}", email, result);
+            return result;
+        } catch (Exception e) {
+            log.info("신청 결과 메일 발송 실패. 사용자 이메일 : {}, 에러 로그 : {} ", email, e.getMessage());
+            return false;
+        }
+    }
+
+    public static Context newRegistrationContext(String userName, String pass) {
+        Context context = new Context();
+        context.setVariable(MailTemplate.REGISTRATION_NAME_CONTEXT, userName);
+        context.setVariable(MailTemplate.REGISTRATION_PASS_CONTEXT, pass);
+
+        return context;
     }
 }

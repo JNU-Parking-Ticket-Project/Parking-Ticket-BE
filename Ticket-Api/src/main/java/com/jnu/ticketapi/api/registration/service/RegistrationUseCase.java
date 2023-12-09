@@ -20,13 +20,16 @@ import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketinfrastructure.service.MailService;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
 @RequiredArgsConstructor
+@Slf4j
 public class RegistrationUseCase {
     private final RegistrationAdaptor registrationAdaptor;
     private final SectorAdaptor sectorAdaptor;
@@ -36,6 +39,7 @@ public class RegistrationUseCase {
     private final Encryption encryption;
     private final CaptchaAdaptor captchaAdaptor;
     private final ValidateCaptchaPendingUseCase validateCaptchaPendingUseCase;
+    private final MailService mailService;
 
     public Registration save(Registration registration) {
         return registrationAdaptor.save(registration);
@@ -95,10 +99,20 @@ public class RegistrationUseCase {
         if (temporaryRegistration.isPresent()) {
             temporaryRegistration.get().update(registration);
             temporaryRegistration.get().updateIsSaved(true);
+            mailService.sendRegistrationResultMail(
+                    registration.getEmail(),
+                    registration.getName(),
+                    registration.getUser().getStatus());
             return FinalSaveResponse.of(temporaryRegistration.get());
         }
         Registration jpaRegistration = save(registration);
         couponWithDrawUseCase.issueCoupon();
+
+        mailService.sendRegistrationResultMail(
+                registration.getEmail(),
+                registration.getName(),
+                registration.getUser().getStatus());
+
         return FinalSaveResponse.of(jpaRegistration);
     }
 

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title>합격 여부 안내</title>
+</head>
+<body>
+<h2>안녕하세요, <span th:text="${userName}"></span>님</h2>
+
+<p>전남대 정기 주차권 합격여부 알림 메일입니다.</p>
+
+<p>합격 여부: <span th:text="${pass}"></span></p>
+
+<p>더 많은 정보를 보려면 <a th:href="@{http://jnu-parking.com}">여기</a>를 클릭하세요.</p>
+</body>
+</html>
