@@ -50,3 +50,6 @@ server:
       charset: UTF-8
       enabled: true
       force: true
+encryption:
+  algorithm: ${ENCRYPTION_ALGORITHM:AES}
+  secret: ${ENCRYPTION_SECRET:jnu-parking-fighting}

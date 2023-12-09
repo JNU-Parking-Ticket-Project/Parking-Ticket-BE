@@ -17,7 +17,7 @@ public class ValidateCaptchaPendingUseCase {
     private final CaptchaPendingAdaptor captchaPendingAdaptor;
 
     @Transactional
-    public void execute(long captchaPendingId, int answer) {
+    public void execute(long captchaPendingId, String answer) {
         CaptchaPending captchaPending = captchaPendingAdaptor.findById(captchaPendingId);
 
         if (captchaPending.validate(answer)) {

@@ -53,6 +53,10 @@ public enum GlobalErrorCode implements BaseErrorCode {
     ANNOUNCE_NOT_EXIST_ERROR(NOT_FOUND, "ANNOUNCE_404_2", "공지사항이 존재하지 않습니다."),
     @ExplainError("작성된 안내사항이 존재하지 않습니다.")
     NOTICE_NOT_EXIST_ERROR(NOT_FOUND, "NOTICE_404_1", "안내사항이 존재하지 않습니다."),
+    @ExplainError("서버 내에서 PK 암호화에 오류가 생겼을 때 발생하는 오류입니다.")
+    ENCRYPTION_ERROR(INTERNAL_SERVER, "ENCRYPTION_500_1", "암호화도중 오류가 발생했습니다."),
+    @ExplainError("서버 내에서 PK 복호화에 오류가 생겼을 때 발생하는 오류입니다.")
+    DECRYPTION_ERROR(INTERNAL_SERVER, "DECRYPTION_500_1", "복호화도중 오류가 발생했습니다."),
 
     OTHER_SERVER_BAD_REQUEST(BAD_REQUEST, "FEIGN_400_1", "Other server bad request"),
     OTHER_SERVER_UNAUTHORIZED(BAD_REQUEST, "FEIGN_400_2", "Other server unauthorized"),
