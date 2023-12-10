@@ -1,11 +1,13 @@
 package com.jnu.ticketapi.api.registration.controller;
 
 
+import com.jnu.ticketapi.api.registration.docs.FinalSaveExceptionDocs;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.*;
 import com.jnu.ticketapi.api.registration.service.RegistrationUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
+import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,6 +42,7 @@ public class RegistrationController {
 
     @Operation(summary = "1차 신청", description = "1차 신청")
     @PostMapping("/registration")
+    @ApiErrorExceptionsExample(FinalSaveExceptionDocs.class)
     public ResponseEntity<FinalSaveResponse> finalSave(
             @RequestBody FinalSaveRequest requestDto, @GetEmail String email) {
         FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto, email);
