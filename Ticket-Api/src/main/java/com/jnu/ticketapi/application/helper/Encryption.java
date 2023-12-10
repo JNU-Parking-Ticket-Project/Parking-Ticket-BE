@@ -5,6 +5,7 @@ import com.jnu.ticketcommon.annotation.Helper;
 import com.jnu.ticketcommon.exception.DecryptionErrorException;
 import com.jnu.ticketcommon.exception.EncryptionErrorException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
@@ -27,7 +28,7 @@ public class Encryption {
     private SecretKeySpec generateKey() {
         try {
             if (secretKeySpec == null) {
-                byte[] keyBytes = secret.getBytes("UTF-8");
+                byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
                 MessageDigest sha = MessageDigest.getInstance("SHA-256");
                 keyBytes = sha.digest(keyBytes);
                 keyBytes = Arrays.copyOf(keyBytes, 16); // AES-128을 위한 16바이트 키
