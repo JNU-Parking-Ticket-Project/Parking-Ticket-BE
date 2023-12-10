@@ -20,10 +20,13 @@ public class FinalSaveExceptionDocs implements SwaggerExampleExceptions {
 
     @ExplainError("캡챠 정답이 틀린 경우")
     public TicketCodeException 캡챠_정답이_틀렸습니다 = WrongCaptchaAnswerException.EXCEPTION;
+
     @ExplainError("요청하는 사용자를 찾을 수 없는 경우")
     public TicketCodeException 사용자를_찾을_수_없습니다 = NotFoundUserException.EXCEPTION;
+
     @ExplainError("selectSectorId에 해당 하는 구간을 찾을 수 없는 경우")
     public TicketCodeException 구간을_찾을_수_없습니다 = NotFoundSectorException.EXCEPTION;
+
     @ExplainError("설정한 시간이 현재를 포함하고 있을 경우(쿠폰 검증)")
     public TicketCodeException 쿠폰_검증_시작종료시간_현재를_포함 = InvalidPeriodCouponException.EXCEPTION;
 
