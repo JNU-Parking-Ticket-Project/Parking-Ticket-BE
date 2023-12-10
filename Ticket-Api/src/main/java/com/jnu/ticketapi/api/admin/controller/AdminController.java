@@ -1,10 +1,12 @@
 package com.jnu.ticketapi.api.admin.controller;
 
 
+import com.jnu.ticketapi.api.admin.docs.UpdateRoleExceptionDocs;
 import com.jnu.ticketapi.api.admin.model.request.UpdateRoleRequest;
 import com.jnu.ticketapi.api.admin.model.response.GetUsersResponse;
 import com.jnu.ticketapi.api.admin.model.response.UpdateRoleResponse;
 import com.jnu.ticketapi.api.admin.service.AdminUseCase;
+import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,6 +31,7 @@ public class AdminController {
 
     @Operation(summary = "권한 설정", description = "사용자의 권한을 설정(ADMIN인 유저만 권한 설정을 할 수 있음)")
     @PutMapping("/admin/role/{userId}")
+    @ApiErrorExceptionsExample(UpdateRoleExceptionDocs.class)
     public ResponseEntity<UpdateRoleResponse> updateRole(
             @PathVariable("userId") Long userId, @RequestBody UpdateRoleRequest request) {
         UpdateRoleResponse response = adminUseCase.updateRole(userId, request.role());
