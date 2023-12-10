@@ -7,6 +7,7 @@ import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.user.exception.CredentialCodeNotExistException;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
+
 @ExceptionDoc
 public class UpdatePasswordExceptionDocs implements SwaggerExampleExceptions {
 
