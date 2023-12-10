@@ -1,12 +1,13 @@
 package com.jnu.ticketapi.api.user.docs;
 
 
+import com.jnu.ticketcommon.annotation.ExceptionDoc;
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.user.exception.CredentialCodeNotExistException;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
-
+@ExceptionDoc
 public class UpdatePasswordExceptionDocs implements SwaggerExampleExceptions {
 
     @ExplainError("비밀번호 변경할 사용자가 존재하지 않는 경우")
