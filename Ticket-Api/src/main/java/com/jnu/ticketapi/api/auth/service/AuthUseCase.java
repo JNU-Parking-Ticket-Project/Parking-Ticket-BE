@@ -93,7 +93,7 @@ public class AuthUseCase {
     /*
     @Transactional을 붙이지 않은 이유는 generateToken을 사용하는 Login 메서드에서
     @Transactional을 붙이고 있어서 self-invocation이 발생하기 때문이다.
-        */
+    */
     public TokenDto generateToken(String provider, String email, String authorities) {
         // RT가 이미 있을 경우
         if (redisService.getValues("RT(" + provider + "):" + email) != null) {
@@ -114,7 +114,7 @@ public class AuthUseCase {
     /*
     @Transactional을 붙이지 않은 이유는 saveRefreshToken을 사용하는 reissue 메서드에서
     @Transactional을 붙이고 있어서 self-invocation이 발생하기 때문이다.
-        */
+    */
     public void saveRefreshToken(String provider, String principal, String refreshToken) {
         redisService.setValuesWithTimeout(
                 "RT(" + provider + "):" + principal, // key
