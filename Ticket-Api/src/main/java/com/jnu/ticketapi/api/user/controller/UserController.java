@@ -8,9 +8,7 @@ import com.jnu.ticketapi.api.user.model.response.FindPasswordResponse;
 import com.jnu.ticketapi.api.user.model.response.UpdatePasswordResponse;
 import com.jnu.ticketapi.api.user.service.CredentialCodeUseCase;
 import com.jnu.ticketapi.api.user.service.UpdatePasswordUseCase;
-import com.jnu.ticketapi.api.user.service.UserUseCase;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
-import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "5. [유저]")
 public class UserController {
-    private final UserUseCase userUseCase;
     private final CredentialCodeUseCase credentialCodeUseCase;
     private final UpdatePasswordUseCase updatePasswordUseCase;
 
