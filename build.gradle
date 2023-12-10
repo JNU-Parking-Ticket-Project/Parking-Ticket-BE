@@ -38,7 +38,8 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'java-library' // build.gradle에서 api() 를 사용하려면 java-library 사용
     apply plugin: 'org.springframework.boot'
-    apply plugin: 'io.spring.dependency-management' // spring boot dependency를 사용하여 사용중인 부트 버전에서 자동으로 의존성을 가져온다.
+    apply plugin: 'io.spring.dependency-management'
+    // spring boot dependency를 사용하여 사용중인 부트 버전에서 자동으로 의존성을 가져온다.
     apply plugin: 'jacoco'
 
     configurations {
@@ -115,10 +116,10 @@ spotless {
         target("**/*.java")
         googleJavaFormat().aosp()
         removeUnusedImports()
-//        indentWithTabs(2)
-//        indentWithSpaces(4)
+        indentWithTabs(4)
+        indentWithSpaces(4)
         importOrder()
-        trimTrailingWhitespace()
+//        trimTrailingWhitespace()
         endWithNewline()
     }
 }

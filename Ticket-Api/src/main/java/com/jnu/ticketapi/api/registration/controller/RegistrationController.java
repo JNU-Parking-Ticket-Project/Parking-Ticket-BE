@@ -5,16 +5,24 @@ import com.jnu.ticketapi.api.registration.docs.FinalSaveExceptionDocs;
 import com.jnu.ticketapi.api.registration.docs.TemporarySaveExceptionFDocs;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
-import com.jnu.ticketapi.api.registration.model.response.*;
+import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
+import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
+import com.jnu.ticketapi.api.registration.model.response.GetRegistrationsResponse;
+import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.api.registration.service.RegistrationUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @SecurityRequirement(name = "access-token")
 @RestController
@@ -22,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "4. [신청]")
 public class RegistrationController {
+
     private final RegistrationUseCase registrationUseCase;
 
     @Operation(
@@ -37,7 +46,7 @@ public class RegistrationController {
     @PostMapping("/registration/temporary")
     @ApiErrorExceptionsExample(TemporarySaveExceptionFDocs.class)
     public ResponseEntity<TemporarySaveResponse> temporarySave(
-            @RequestBody TemporarySaveRequest requestDto, @GetEmail String email) {
+            @RequestBody @Valid TemporarySaveRequest requestDto, @GetEmail String email) {
         TemporarySaveResponse responseDto = registrationUseCase.temporarySave(requestDto, email);
         return ResponseEntity.ok(responseDto);
     }
@@ -46,7 +55,7 @@ public class RegistrationController {
     @PostMapping("/registration")
     @ApiErrorExceptionsExample(FinalSaveExceptionDocs.class)
     public ResponseEntity<FinalSaveResponse> finalSave(
-            @RequestBody FinalSaveRequest requestDto, @GetEmail String email) {
+            @RequestBody @Valid FinalSaveRequest requestDto, @GetEmail String email) {
         FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto, email);
         return ResponseEntity.ok(responseDto);
     }
