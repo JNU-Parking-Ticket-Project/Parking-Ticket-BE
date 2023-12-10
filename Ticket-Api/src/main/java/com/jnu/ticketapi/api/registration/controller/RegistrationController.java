@@ -2,6 +2,7 @@ package com.jnu.ticketapi.api.registration.controller;
 
 
 import com.jnu.ticketapi.api.registration.docs.FinalSaveExceptionDocs;
+import com.jnu.ticketapi.api.registration.docs.TemporarySaveExceptionFDocs;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.*;
@@ -34,6 +35,7 @@ public class RegistrationController {
 
     @Operation(summary = "주차권 임시 저장", description = "주차권 임시 저장(주차권 신청시 잔고 감소)")
     @PostMapping("/registration/temporary")
+    @ApiErrorExceptionsExample(TemporarySaveExceptionFDocs.class)
     public ResponseEntity<TemporarySaveResponse> temporarySave(
             @RequestBody TemporarySaveRequest requestDto, @GetEmail String email) {
         TemporarySaveResponse responseDto = registrationUseCase.temporarySave(requestDto, email);
