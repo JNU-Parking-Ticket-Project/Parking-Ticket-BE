@@ -1,6 +1,7 @@
 package com.jnu.ticketdomain.domains.captcha.domain;
 
 
+import java.util.Objects;
 import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -33,12 +34,8 @@ public class CaptchaPending {
         this.captcha = captcha;
     }
 
-    public boolean validate(int answer) {
-        if (captcha.getAnswer() != answer) {
-            return false;
-        }
-
-        return true;
+    public boolean validate(String answer) {
+        return Objects.equals(captcha.getAnswer(), answer);
     }
 
     public void confirm() {

@@ -8,6 +8,7 @@ import com.jnu.ticketdomain.domains.registration.out.RegistrationLoadPort;
 import com.jnu.ticketdomain.domains.registration.out.RegistrationRecordPort;
 import com.jnu.ticketdomain.domains.registration.repository.RegistrationRepository;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -35,5 +36,10 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     @Override
     public List<Registration> findAll() {
         return registrationRepository.findAll();
+    }
+
+    @Override
+    public Optional<Registration> findByEmail(String email) {
+        return registrationRepository.findByEmail(email);
     }
 }

@@ -31,7 +31,7 @@ spring:
 logging:
   level:
     com.zaxxer.hikari.HikariConfig: DEBUG
-    com.zaxxer.hikari: TRACE
+    com.zaxxer.hikari: ERROR
     org.springframework.orm.jpa: DEBUG
     org.springframework.transaction: DEBUG
     org.springframework.aop: DEBUG

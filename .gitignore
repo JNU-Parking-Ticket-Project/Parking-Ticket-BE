@@ -42,6 +42,7 @@ out/
 /dist/
 /nbdist/
 /.nb-gradle/
+**/build/tmp/
 
 ### VS Code ###
 .vscode/
@@ -53,5 +54,4 @@ out/
 
 *.xlsx
 
-DuDoong-Domain/src/main/generated/**/*.java
 dump.rdb

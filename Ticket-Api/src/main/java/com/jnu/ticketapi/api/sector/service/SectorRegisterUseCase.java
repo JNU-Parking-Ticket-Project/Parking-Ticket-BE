@@ -2,6 +2,7 @@ package com.jnu.ticketapi.api.sector.service;
 
 
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
+import com.jnu.ticketapi.api.sector.model.response.SectorReadResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.coupon.out.SectorLoadPort;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class SectorRegisterUseCase {
+
     private final SectorRecordPort sectorRecordPort;
     private final SectorLoadPort sectorLoadPort;
 
@@ -38,7 +40,6 @@ public class SectorRegisterUseCase {
     public void update(List<SectorRegisterRequest> sectors) {
         // to Sector List
         List<Sector> prevSector = sectorLoadPort.findAll();
-
         List<Sector> sectorList =
                 sectors.stream()
                         .map(
@@ -50,5 +51,11 @@ public class SectorRegisterUseCase {
                                                 sectorRegisterRequest.reserve()))
                         .toList();
         sectorRecordPort.updateAll(prevSector, sectorList);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SectorReadResponse> findAll() {
+        List<Sector> all = sectorLoadPort.findAll();
+        return SectorReadResponse.toSectorReadResponses(all);
     }
 }

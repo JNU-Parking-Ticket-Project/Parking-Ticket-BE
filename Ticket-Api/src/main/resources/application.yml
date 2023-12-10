@@ -34,7 +34,7 @@ logging:
   level:
     org.springframework.orm.jpa.JpaTransactionManager: INFO
     # HikariCP
-    com.zaxxer: ERROR
+    com.zaxxer.hikari: ERROR
     org.hibernate:
       SQL: INFO
       type.descriptor.sql.BasicBinder: INFO
@@ -50,3 +50,6 @@ server:
       charset: UTF-8
       enabled: true
       force: true
+encryption:
+  algorithm: ${ENCRYPTION_ALGORITHM:AES}
+  secret: ${ENCRYPTION_SECRET:jnu-parking-fighting}

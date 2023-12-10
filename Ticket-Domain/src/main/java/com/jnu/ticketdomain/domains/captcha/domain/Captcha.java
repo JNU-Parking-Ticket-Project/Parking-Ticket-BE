@@ -20,13 +20,13 @@ public class Captcha {
     private Long id;
 
     @Column(name = "answer", nullable = false)
-    private Integer answer;
+    private String answer;
 
     @Column(name = "image_name", nullable = false)
     private String imageName;
 
     @Builder
-    public Captcha(Integer answer, String imageName) {
+    public Captcha(String answer, String imageName) {
         this.answer = answer;
         this.imageName = imageName;
     }
