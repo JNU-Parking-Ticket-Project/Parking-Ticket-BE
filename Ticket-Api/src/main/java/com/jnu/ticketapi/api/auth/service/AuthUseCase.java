@@ -42,14 +42,6 @@ public class AuthUseCase {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private static final String SERVER = "Server";
 
-    @Transactional(readOnly = true)
-    public void validate(String refreshToken) {
-        if (!jwtResolver.refreshTokenValidateToken(refreshToken)) {
-            throw InvalidTokenException.EXCEPTION; // 재로그인
-        }
-        // 재발급
-    }
-
     // 토큰 재발급: validate 메서드가 true 반환할 때만 사용 -> AT, RT 재발급
     @Transactional
     public ReissueTokenResponse reissue(String requestAccessToken, String requestRefreshToken) {

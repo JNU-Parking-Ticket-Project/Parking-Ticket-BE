@@ -45,7 +45,6 @@ public class AuthController {
             @RequestBody ReissueTokenRequest requestDto,
             @RequestHeader("Authorization") String bearerToken) {
         String accessToken = authUseCase.extractToken(bearerToken);
-        authUseCase.validate(requestDto.refreshToken());
         ReissueTokenResponse responseDto =
                 authUseCase.reissue(accessToken, requestDto.refreshToken());
         return ResponseEntity.ok(responseDto);
