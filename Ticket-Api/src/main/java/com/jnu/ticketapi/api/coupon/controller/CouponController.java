@@ -46,10 +46,17 @@ public class CouponController {
         return new SuccessResponse(COUPON_SUCCESS_REGISTER_MESSAGE);
     }
 
-    @Operation(summary = "주차권 순서 조회", description = "주차권 순서 확인")
+    @Operation(summary = "현재 대기번호 조회", description = "주차권 대기번호 조회")
     @ApiErrorExceptionsExample(ReadCouponExceptionDocs.class)
     @GetMapping("/coupons/order")
     public ResponseEntity<Long> getCouponOrder() {
         return ResponseEntity.ok(couponWithDrawUseCase.getCouponOrder());
+    }
+
+    @Operation(summary = "주차권 신청 기간 조회", description = "주차권 신청 기간 조회")
+    @ApiErrorExceptionsExample(ReadCouponExceptionDocs.class)
+    @GetMapping("/coupons/period")
+    public ResponseEntity<DateTimePeriod> getCouponPeriod() {
+        return ResponseEntity.ok(couponWithDrawUseCase.getCouponPeriod());
     }
 }

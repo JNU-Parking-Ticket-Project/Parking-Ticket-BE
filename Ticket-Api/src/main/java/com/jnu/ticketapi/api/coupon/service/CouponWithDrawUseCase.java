@@ -5,6 +5,7 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_COUPON_ISSUE_STORE;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.common.aop.redissonLock.RedissonLock;
+import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.coupon.adaptor.CouponAdaptor;
 import com.jnu.ticketdomain.domains.coupon.domain.Coupon;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
@@ -17,8 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class CouponWithDrawUseCase {
+
     private final WaitingQueueService waitingQueueService;
     private final CouponAdaptor couponAdaptor;
+
     /** 재고 감소 */
     @Transactional
     @RedissonLock(
@@ -37,5 +40,10 @@ public class CouponWithDrawUseCase {
     public Long getCouponOrder() {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         return waitingQueueService.getWaitingOrder(REDIS_COUPON_ISSUE_STORE, currentUserId);
+    }
+
+    public DateTimePeriod getCouponPeriod() {
+        Coupon openCoupon = couponAdaptor.findOpenCoupon();
+        return openCoupon.getDateTimePeriod();
     }
 }
