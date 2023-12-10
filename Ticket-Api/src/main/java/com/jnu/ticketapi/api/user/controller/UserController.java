@@ -1,13 +1,14 @@
 package com.jnu.ticketapi.api.user.controller;
 
 
+import com.jnu.ticketapi.api.user.docs.UpdatePasswordExceptionDocs;
 import com.jnu.ticketapi.api.user.model.request.FindPasswordRequest;
 import com.jnu.ticketapi.api.user.model.request.UpdatePasswordRequest;
 import com.jnu.ticketapi.api.user.model.response.FindPasswordResponse;
 import com.jnu.ticketapi.api.user.model.response.UpdatePasswordResponse;
 import com.jnu.ticketapi.api.user.service.CredentialCodeUseCase;
 import com.jnu.ticketapi.api.user.service.UpdatePasswordUseCase;
-import com.jnu.ticketapi.api.user.service.UserUseCase;
+import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "5. [유저]")
 public class UserController {
-    private final UserUseCase userUseCase;
     private final CredentialCodeUseCase credentialCodeUseCase;
     private final UpdatePasswordUseCase updatePasswordUseCase;
 
@@ -34,6 +34,7 @@ public class UserController {
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호 재설정")
     @PostMapping("/user/update/password/{code}")
+    @ApiErrorExceptionsExample(UpdatePasswordExceptionDocs.class)
     public ResponseEntity<UpdatePasswordResponse> updatePassword(
             @PathVariable String code, @RequestBody UpdatePasswordRequest updatePasswordRequest) {
 
