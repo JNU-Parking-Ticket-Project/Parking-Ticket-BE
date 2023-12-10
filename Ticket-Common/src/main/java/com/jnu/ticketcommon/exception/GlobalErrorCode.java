@@ -38,6 +38,8 @@ public enum GlobalErrorCode implements BaseErrorCode {
     EMAIL_NOT_EXIST(FORBIDDEN, "AUTH_403_4", "토큰에 이메일이 없습니다."),
     @ExplainError("인증은 되었지만 해당 리소스에 접근할 충분한 권한이 없을 때 발생하는 오류입니다.")
     AUTHORITY_NOT_VALID(FORBIDDEN, "AUTH_403_5", "권한이 유효하지 않습니다."),
+    NOT_EQUAL_PRINCIPAL(FORBIDDEN, "AUTH_403_6", "토큰의 principal이 일치하지 않습니다."),
+    NOT_FOUND_REFRESH_TOKEN(NOT_FOUND, "AUTH_404_1", "리프레시 토큰을 찾을 수 없습니다."),
     @ExplainError("인증 토큰이 잘못됐을 때 발생하는 오류입니다.")
     INVALID_TOKEN(UNAUTHORIZED, "GLOBAL_401_1", "잘못된 토큰입니다. 재 로그인 해주세요"),
     @ExplainError("XSS 공격이 의심되는 입력이 감지되었습니다. 정상적인 입력값을 넣어주세요.")
