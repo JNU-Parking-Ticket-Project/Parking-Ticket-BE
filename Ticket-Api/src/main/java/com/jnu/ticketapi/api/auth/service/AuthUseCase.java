@@ -14,6 +14,8 @@ import com.jnu.ticketapi.security.JwtResolver;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.exception.BadCredentialException;
 import com.jnu.ticketcommon.exception.InvalidTokenException;
+import com.jnu.ticketcommon.exception.NotEqualPrincipalException;
+import com.jnu.ticketcommon.exception.NotFoundRefreshTokenException;
 import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.domains.council.exception.AlreadyExistEmailException;
 import com.jnu.ticketdomain.domains.council.exception.IsNotCouncilException;
@@ -57,13 +59,13 @@ public class AuthUseCase {
         String refreshPrincipal = getPrincipal(requestRefreshToken);
         // AT와 RT의 principal이 다를 경우
         if (!accessPrincipal.equals(refreshPrincipal)) {
-            throw InvalidTokenException.EXCEPTION; // -> 재로그인 요청
+            throw NotEqualPrincipalException.EXCEPTION; // -> 재로그인 요청
         }
 
         String refreshTokenInRedis =
                 redisService.getValues("RT(" + SERVER + "):" + refreshPrincipal);
         if (refreshTokenInRedis == null) { // Redis에 저장되어 있는 RT가 없을 경우
-            throw InvalidTokenException.EXCEPTION; // -> 재로그인 요청
+            throw NotFoundRefreshTokenException.EXCEPTION; // -> 재로그인 요청
         }
 
         // 요청된 RT의 유효성 검사 & Redis에 저장되어 있는 RT와 같은지 비교
