@@ -1,6 +1,7 @@
 package com.jnu.ticketcommon.exception;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
@@ -11,6 +12,11 @@ public class ErrorResponse {
     private final int status;
     private final String code;
     private final String reason;
+
+    @JsonFormat(
+            shape = JsonFormat.Shape.STRING,
+            pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS",
+            timezone = "Asia/Seoul")
     private final LocalDateTime timeStamp;
 
     private final String path;

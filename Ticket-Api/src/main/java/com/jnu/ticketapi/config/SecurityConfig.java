@@ -61,10 +61,6 @@ public class SecurityConfig {
                 .cors()
                 .configurationSource(corsConfigurationSource())
                 .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                .accessDeniedHandler(jwtAccessDeniedHandler)
-                .and()
                 .headers()
                 .frameOptions()
                 .sameOrigin();
