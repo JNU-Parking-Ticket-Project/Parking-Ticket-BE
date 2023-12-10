@@ -8,6 +8,7 @@ import com.jnu.ticketdomain.domains.coupon.out.SectorLoadPort;
 import com.jnu.ticketdomain.domains.coupon.out.SectorRecordPort;
 import com.jnu.ticketdomain.domains.coupon.repository.SectorRepository;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 
 @Adaptor
@@ -38,7 +39,17 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
 
     @Override
     public void updateAll(List<Sector> prevSector, List<Sector> sectorList) {
-        couponRepository.saveAll(prevSector);
+        List<CompletableFuture<Void>> updateFutures =
+                prevSector.parallelStream()
+                        .map(
+                                prev ->
+                                        CompletableFuture.runAsync(
+                                                () ->
+                                                        prev.update(
+                                                                sectorList.get(
+                                                                        prevSector.indexOf(prev)))))
+                        .toList();
+        CompletableFuture.allOf(updateFutures.toArray(new CompletableFuture[0])).join();
     }
 
     @Override

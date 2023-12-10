@@ -35,7 +35,7 @@ public class SectorController {
     @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
     @PutMapping("/sectors")
     public String updateCoupon(@RequestBody List<SectorRegisterRequest> sectors) {
-        sectorRegisterUseCase.execute(sectors);
+        sectorRegisterUseCase.update(sectors);
         return SECTOR_SUCCESS_UPDATE_MESSAGE;
     }
 

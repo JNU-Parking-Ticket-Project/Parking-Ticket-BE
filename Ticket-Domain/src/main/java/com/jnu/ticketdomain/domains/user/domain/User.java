@@ -36,7 +36,7 @@ public class User {
     /*
     User 엔티티의 인스턴스가 생성되고 sequence 필드에 별도의 값이 할당되지 않으면,
     자바의 기본값 규칙에 따라 0으로 초기화 되기 때문에 @ColumnDefault('-2')를 하면 안된다.
-     */
+        */
     private int sequence = -2;
 
     @Column(name = "email", nullable = false, unique = true)

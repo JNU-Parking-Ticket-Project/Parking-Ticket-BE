@@ -38,6 +38,7 @@ public class SectorRegisterUseCase {
     public void update(List<SectorRegisterRequest> sectors) {
         // to Sector List
         List<Sector> prevSector = sectorLoadPort.findAll();
+
         List<Sector> sectorList =
                 sectors.stream()
                         .map(

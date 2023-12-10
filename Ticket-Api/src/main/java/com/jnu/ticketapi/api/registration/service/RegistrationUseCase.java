@@ -77,7 +77,7 @@ public class RegistrationUseCase {
         User user = findById(currentUserId);
         /*
         임시저장을 했으면 isSave만 true로 변경
-         */
+            */
         Long registrationId = requestDto.registrationId().orElse(null);
         if (registrationId != null) {
             Registration registration = registrationAdaptor.findById(registrationId);
