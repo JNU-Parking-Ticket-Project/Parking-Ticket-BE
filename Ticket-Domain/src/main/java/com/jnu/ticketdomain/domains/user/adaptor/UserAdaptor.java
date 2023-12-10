@@ -17,7 +17,7 @@ public class UserAdaptor implements UserLoadPort, UserRecordPort {
     /*
     로그인할 때 사용
     findByEmail로 User를 불러오고 유저가 null일 때 분기처리를 해야함으로 Optional 반환
-     */
+        */
     @Override
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);

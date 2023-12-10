@@ -1,6 +1,8 @@
 package com.jnu.ticketapi.api.sector.controller;
 
-import static com.jnu.ticketcommon.message.ResponseMessage.*;
+import static com.jnu.ticketcommon.message.ResponseMessage.SECTOR_SUCCESS_DELETE_MESSAGE;
+import static com.jnu.ticketcommon.message.ResponseMessage.SECTOR_SUCCESS_REGISTER_MESSAGE;
+import static com.jnu.ticketcommon.message.ResponseMessage.SECTOR_SUCCESS_UPDATE_MESSAGE;
 
 import com.jnu.ticketapi.api.sector.docs.CreateSectorExceptionDocs;
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
@@ -15,7 +17,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Tag(name = "3. [구간]")
@@ -23,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "access-token")
 @RequestMapping("/v1")
 public class SectorController {
+
     private final SectorRegisterUseCase sectorRegisterUseCase;
     private final SectorDeleteUseCase sectorDeleteUseCase;
 

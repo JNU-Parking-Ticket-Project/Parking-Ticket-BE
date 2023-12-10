@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class RegistrationUseCase {
+
     private final RegistrationAdaptor registrationAdaptor;
     private final SectorAdaptor sectorAdaptor;
     private final Converter converter;
@@ -93,6 +94,7 @@ public class RegistrationUseCase {
          */
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
+
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
         Optional<Registration> temporaryRegistration = findByEmail(email);
@@ -106,7 +108,7 @@ public class RegistrationUseCase {
             return FinalSaveResponse.of(temporaryRegistration.get());
         }
         Registration jpaRegistration = save(registration);
-        couponWithDrawUseCase.issueCoupon();
+        couponWithDrawUseCase.issueCoupon(currentUserId);
 
         mailService.sendRegistrationResultMail(
                 registration.getEmail(),

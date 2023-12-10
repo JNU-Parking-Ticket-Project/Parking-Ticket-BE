@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "access-token")
 @RequestMapping("/v1")
 public class CouponController {
+
     private final CouponRegisterUseCase couponRegisterUseCase;
     private final CouponWithDrawUseCase couponWithDrawUseCase;
 
@@ -41,7 +42,7 @@ public class CouponController {
     @Deprecated(since = "2023-12-08", forRemoval = true)
     @PostMapping("/coupons/apply")
     public SuccessResponse issueCoupon() {
-        couponWithDrawUseCase.issueCoupon();
+        //        couponWithDrawUseCase.issueCoupon();
         return new SuccessResponse(COUPON_SUCCESS_REGISTER_MESSAGE);
     }
 

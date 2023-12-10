@@ -6,6 +6,7 @@ import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.common.aop.redissonLock.RedissonLock;
 import com.jnu.ticketdomain.domains.coupon.adaptor.CouponAdaptor;
+import com.jnu.ticketdomain.domains.coupon.domain.Coupon;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -25,24 +26,16 @@ public class CouponWithDrawUseCase {
             waitTime = 3000,
             leaseTime = 3000,
             timeUnit = TimeUnit.MILLISECONDS)
-    public void issueCoupon() {
+    public void issueCoupon(Long userId) {
         // 재고 감소 로직 구현
-        Long currentUserId = SecurityUtils.getCurrentUserId();
-        couponAdaptor.findOpenCoupon().validateIssuePeriod();
-        waitingQueueService.registerQueue(REDIS_COUPON_ISSUE_STORE, currentUserId);
+        Coupon openCoupon = couponAdaptor.findOpenCoupon();
+        openCoupon.validateIssuePeriod();
+        waitingQueueService.registerQueue(REDIS_COUPON_ISSUE_STORE, userId);
     }
-
-    //    private void processCouponData(String couponData) {
-    //        Coupon coupon = new ObjectMapper().convertValue(couponData, Coupon.class);
-    //        // TODO 잔여량
-    //        List<Sector> sector = coupon.getSector();
-    //        sector.forEach(Sector::decreaseCouponStock);
-    //        log.info("쿠폰 발급 완료" + coupon.getCouponCode());
-    //    }
 
     @Transactional(readOnly = true)
     public Long getCouponOrder() {
         Long currentUserId = SecurityUtils.getCurrentUserId();
-        return waitingQueueService.getWaitingOrder("쿠폰 발급 저장소", currentUserId);
+        return waitingQueueService.getWaitingOrder(REDIS_COUPON_ISSUE_STORE, currentUserId);
     }
 }

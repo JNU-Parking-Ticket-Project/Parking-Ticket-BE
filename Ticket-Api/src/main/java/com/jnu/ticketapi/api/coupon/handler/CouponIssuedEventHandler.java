@@ -5,8 +5,8 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_COUPON_ISSUE_STORE;
 import com.jnu.ticketdomain.domains.coupon.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketinfrastructure.domainEvent.CouponIssuedEvent;
+import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
-import java.util.Queue;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -29,14 +29,13 @@ public class CouponIssuedEventHandler {
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(CouponIssuedEvent couponIssuedEvent) {
-        Queue<Long> longs = waitingQueueService.popQueue(REDIS_COUPON_ISSUE_STORE, 1, Long.class);
-        longs.forEach(this::processCouponData);
+        processCouponData(couponIssuedEvent.getCurrentUserId());
+        // 재고가 처리되야만 대기열에서 제거
+        waitingQueueService.popQueue(REDIS_COUPON_ISSUE_STORE, 1, ChatMessage.class);
     }
 
     private void processCouponData(Long userId) {
         Sector sector = registrationAdaptor.findByUserId(userId).getSector();
-        sector.checkCouponLeft();
-        log.info(sector.getRemainingAmount().toString());
         sector.decreaseCouponStock();
     }
 }

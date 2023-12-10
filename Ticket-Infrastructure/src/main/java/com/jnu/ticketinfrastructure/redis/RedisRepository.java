@@ -2,8 +2,12 @@ package com.jnu.ticketinfrastructure.redis;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketinfrastructure.model.ChatMessage;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -28,8 +32,32 @@ public class RedisRepository {
         return redisTemplate.opsForZSet().range(key, startRank, endRank);
     }
 
-    public <T> Set<T> zPopMin(String key, Long count, Class<T> type) {
-        return (Set<T>) redisTemplate.opsForZSet().popMin(key, count);
+    public <T> Queue<T> zPopMin(String key, Long count, Class<T> type) {
+        ZSetOperations.TypedTuple<Object> objectTypedTuple = redisTemplate.opsForZSet().popMin(key);
+        objectTypedTuple.getValue();
+        Set<T> set = (Set<T>) redisTemplate.opsForZSet().popMin(key, count);
+        return new LinkedList<>(set);
+    }
+
+    public Object zPopMin(String key) {
+        ZSetOperations<String, Object> zSetOperations = redisTemplate.opsForZSet();
+
+        // Get the element with the smallest score
+        Set<ZSetOperations.TypedTuple<Object>> tuples = zSetOperations.rangeWithScores(key, 0, 0);
+
+        if (!tuples.isEmpty()) {
+            // Get the first tuple (element with the smallest score)
+            ZSetOperations.TypedTuple<Object> tuple = tuples.iterator().next();
+
+            // Remove the element from the set
+            zSetOperations.remove(key, tuple.getValue());
+
+            // Return the removed element
+            return tuple.getValue();
+        } else {
+            // Set is empty, return null or handle accordingly
+            return null;
+        }
     }
 
     public Long zRank(String key, Object value) {
@@ -52,7 +80,7 @@ public class RedisRepository {
         return redisTemplate.opsForSet().size(key);
     }
 
-    public void converAndSend(String channel, String message) {
-        redisTemplate.convertAndSend(channel, message);
+    public void converAndSend(String channel, ChatMessage chatMessage) {
+        redisTemplate.convertAndSend(channel, chatMessage);
     }
 }

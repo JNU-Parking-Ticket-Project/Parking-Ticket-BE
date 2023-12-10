@@ -2,6 +2,7 @@ package com.jnu.ticketinfrastructure.service;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_COUPON_CHANNEL;
 
+import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -19,14 +20,15 @@ public class WaitingQueueService {
 
     public Boolean registerQueue(String key, Long userId) {
         Double score = (double) System.currentTimeMillis();
-        Boolean result = redisRepository.zAddIfAbsent(key, userId, score);
-        if (result) {
-            publishMessage(String.valueOf(userId));
+        boolean isPresent = redisRepository.zAddIfAbsent(key, userId, score);
+        // 재고가 있어야 처리
+        if (isPresent) {
+            publishMessage(new ChatMessage(userId));
         }
-        return result;
+        return true;
     }
 
-    private void publishMessage(String message) {
+    private void publishMessage(ChatMessage message) {
         redisRepository.converAndSend(REDIS_COUPON_CHANNEL, message);
     }
 
@@ -35,7 +37,12 @@ public class WaitingQueueService {
     }
 
     public <T> Queue<T> popQueue(String key, long count, Class<T> type) {
-        return new LinkedList<>(redisRepository.zPopMin(key, count, type));
+        Queue<T> set = redisRepository.zPopMin(key, count, type);
+        return new LinkedList<>(set);
+    }
+
+    public Object popValue(String key) {
+        return redisRepository.zPopMin(key);
     }
 
     public Long getWaitingOrder(String key, Object value) {

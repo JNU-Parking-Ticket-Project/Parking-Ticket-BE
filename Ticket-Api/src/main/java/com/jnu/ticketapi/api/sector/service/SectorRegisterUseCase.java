@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class SectorRegisterUseCase {
+
     private final SectorRecordPort sectorRecordPort;
     private final SectorLoadPort sectorLoadPort;
 
@@ -52,6 +53,7 @@ public class SectorRegisterUseCase {
         sectorRecordPort.updateAll(prevSector, sectorList);
     }
 
+    @Transactional(readOnly = true)
     public List<SectorReadResponse> findAll() {
         List<Sector> all = sectorLoadPort.findAll();
         return SectorReadResponse.toSectorReadResponses(all);
