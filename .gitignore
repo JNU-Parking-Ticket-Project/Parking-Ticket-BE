@@ -55,3 +55,5 @@ out/
 *.xlsx
 
 dump.rdb
+
+application-local.yml
