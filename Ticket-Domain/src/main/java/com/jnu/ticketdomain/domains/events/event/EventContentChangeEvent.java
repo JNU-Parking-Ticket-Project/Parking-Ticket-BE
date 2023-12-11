@@ -16,7 +16,7 @@ public class EventContentChangeEvent extends DomainEvent {
 
     public static EventContentChangeEvent of(Event event) {
         return EventContentChangeEvent.builder()
-                .couponCode(event.getCouponCode())
+                .couponCode(event.getEventCode())
                 .eventId(event.getId())
                 .build();
     }

@@ -36,6 +36,6 @@ public class EventIssuedEventHandler {
 
     private void processEventData(Long userId) {
         Sector sector = registrationAdaptor.findByUserId(userId).getSector();
-        sector.decreaseCouponStock();
+        sector.decreaseEventStock();
     }
 }

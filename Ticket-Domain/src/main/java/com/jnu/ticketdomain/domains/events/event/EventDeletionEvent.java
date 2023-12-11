@@ -16,7 +16,7 @@ public class EventDeletionEvent extends DomainEvent {
 
     public static EventDeletionEvent of(Event event) {
         return EventDeletionEvent.builder()
-                .couponCode(event.getCouponCode())
+                .couponCode(event.getEventCode())
                 .eventId(event.getId())
                 .build();
     }

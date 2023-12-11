@@ -34,12 +34,12 @@ import lombok.NoArgsConstructor;
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "coupon_id")
+    @Column(name = "event_id")
     private Long id;
 
     // 쿠폰 pubsub을 위한 일련번호 -> UUID String 6자리
-    @Column(name = "coupon_code")
-    private String couponCode;
+    @Column(name = "event_code")
+    private String eventCode;
 
     @Embedded private DateTimePeriod dateTimePeriod;
 
@@ -49,13 +49,13 @@ public class Event {
 
     // 구간별 정보
     //    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @OneToMany(mappedBy = "coupon", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     //    @JoinColumn(name = "sector_id")
     private List<Sector> sector = new ArrayList<>();
 
     @Builder
     public Event(DateTimePeriod dateTimePeriod, List<Sector> sector) {
-        this.couponCode = UUID.randomUUID().toString().substring(0, 6);
+        this.eventCode = UUID.randomUUID().toString().substring(0, 6);
         this.dateTimePeriod = dateTimePeriod;
         this.sector = sector;
         this.eventStatus = EventStatus.READY;

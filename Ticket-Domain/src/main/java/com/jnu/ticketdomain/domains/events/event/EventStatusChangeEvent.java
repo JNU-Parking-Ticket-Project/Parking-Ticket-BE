@@ -11,12 +11,12 @@ import lombok.ToString;
 @Builder
 @ToString
 public class EventStatusChangeEvent extends DomainEvent {
-    private final String couponCode;
+    private final String eventCode;
     private final Long eventId;
 
     public static EventStatusChangeEvent of(Event event) {
         return EventStatusChangeEvent.builder()
-                .couponCode(event.getCouponCode())
+                .eventCode(event.getEventCode())
                 .eventId(event.getId())
                 .build();
     }

@@ -25,6 +25,7 @@ public class EventRegisterUseCase {
         Event event = new Event(dateTimePeriod, sectors);
         event.validateIssuePeriod();
         Event savedEvent = eventAdaptor.save(event);
+        // TODO  기존에 Open 상태의 이벤트가 있으면 Close 시킨다.
         sectors.forEach(sector -> sector.setEvent(savedEvent));
     }
 }

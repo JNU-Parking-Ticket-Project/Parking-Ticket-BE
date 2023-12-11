@@ -1,6 +1,7 @@
 package com.jnu.ticketinfrastructure.service;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_COUPON_CHANNEL;
+
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
@@ -29,7 +30,7 @@ public class WaitingQueueService {
     }
 
     private void publishMessage(ChatMessage message) {
-        redisRepository.converAndSend(REDIS_COUPON_CHANNEL, message);
+        redisRepository.converAndSend(REDIS_EVENT_CHANNEL, message);
     }
 
     public <T> Queue<T> getQueue(String key, long startRank, long endRank, Class<T> type) {

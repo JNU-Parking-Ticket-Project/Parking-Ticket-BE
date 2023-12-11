@@ -1,7 +1,7 @@
 package com.jnu.ticketdomain.domains.events.domain;
 
 
-import com.jnu.ticketdomain.domains.events.exception.NoCouponStockLeftException;
+import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -50,7 +50,7 @@ public class Sector {
     private Integer remainingAmount;
 
     @ManyToOne
-    @JoinColumn(name = "coupon_id")
+    @JoinColumn(name = "event_id")
     private Event event;
 
     @Builder
@@ -63,14 +63,14 @@ public class Sector {
         this.remainingAmount = this.issueAmount;
     }
 
-    public void checkCouponLeft() {
+    public void checkEventLeft() {
         if (remainingAmount < 1) { // 재고 없을 경우 에러 처리
-            throw NoCouponStockLeftException.EXCEPTION;
+            throw NoEventStockLeftException.EXCEPTION;
         }
     }
 
-    public void decreaseCouponStock() {
-        checkCouponLeft();
+    public void decreaseEventStock() {
+        checkEventLeft();
         this.remainingAmount = remainingAmount - 1;
     }
 

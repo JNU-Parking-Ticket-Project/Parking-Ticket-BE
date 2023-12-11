@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
 
-    Optional<Event> findByCouponStatus(EventStatus eventStatus);
+    Optional<Event> findByEventStatus(EventStatus eventStatus);
 
     @Query(
             "select e from Event e where e.dateTimePeriod.endAt < :time and e.eventStatus = com.jnu.ticketdomain.domains.events.domain.EventStatus.OPEN")

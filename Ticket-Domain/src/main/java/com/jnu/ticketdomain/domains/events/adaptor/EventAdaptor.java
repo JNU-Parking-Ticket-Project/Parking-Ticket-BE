@@ -27,12 +27,19 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
     public Event findOpenEvent() {
         return eventRepository
                 // TODO 추 후에 완성되면 이걸로 변경         .findByCouponStatus(CouponStatus.OPEN)
-                .findByCouponStatus(EventStatus.READY)
+                .findByEventStatus(EventStatus.OPEN)
+                .orElseThrow(() -> NotFoundEventException.EXCEPTION);
+    }
+
+    public Event findReadyEvent() {
+        return eventRepository
+                .findByEventStatus(EventStatus.READY)
                 .orElseThrow(() -> NotFoundEventException.EXCEPTION);
     }
 
     public Event updateEventStatus(Event event, EventStatus status) {
         if (status == EventStatus.CLOSED) event.close();
+        else if (status == EventStatus.OPEN) event.open();
         else if (status == EventStatus.CALCULATING) event.calculate();
         else if (status == EventStatus.READY) event.ready();
         else throw UseOtherApiException.EXCEPTION; // open, deleteSoft 는 다른 API 강제
