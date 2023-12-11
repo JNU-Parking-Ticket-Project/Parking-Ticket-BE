@@ -1,4 +1,4 @@
-package com.jnu.ticketdomain.domains.coupon.domain;
+package com.jnu.ticketdomain.domains.event.domain;
 
 
 import com.jnu.ticketcommon.annotation.EnumClass;
