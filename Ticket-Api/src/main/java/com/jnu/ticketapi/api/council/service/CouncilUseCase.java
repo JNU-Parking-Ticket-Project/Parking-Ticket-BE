@@ -32,8 +32,8 @@ public class CouncilUseCase {
             throw AlreadyExistEmailException.EXCEPTION;
         }
         User user = signUpCouncilRequest.toUserEntity(signUpCouncilRequest);
-        Council council = signUpCouncilRequest.toCouncilEntity(signUpCouncilRequest, user);
-        userAdaptor.save(user);
+        User jpaUser = userAdaptor.save(user);
+        Council council = signUpCouncilRequest.toCouncilEntity(signUpCouncilRequest, jpaUser);
         councilAdaptor.save(council);
         return SignUpCouncilResponse.of(ResponseMessage.SUCCESS_SIGN_UP);
     }
