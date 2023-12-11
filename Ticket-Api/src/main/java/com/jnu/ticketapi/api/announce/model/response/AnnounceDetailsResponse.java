@@ -13,7 +13,7 @@ public record AnnounceDetailsResponse(
     @Builder
     public AnnounceDetailsResponse {}
 
-    public static AnnounceDetailsResponse of(Announce announce) {
+    public static AnnounceDetailsResponse from(Announce announce) {
         return AnnounceDetailsResponse.builder()
                 .announceId(announce.getAnnounceId())
                 .announceTitle(announce.getAnnounceTitle())

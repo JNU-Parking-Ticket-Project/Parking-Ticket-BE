@@ -44,6 +44,6 @@ public class CouponSubscribeService implements MessageListener {
     }
 
     public void handleReceivedUserId(Long userId) {
-        eventPublisher.publishEvent(CouponIssuedEvent.from(userId));
+        eventPublisher.publishEvent(CouponIssuedEvent.of(userId));
     }
 }
