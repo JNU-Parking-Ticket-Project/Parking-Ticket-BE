@@ -6,7 +6,7 @@ import com.jnu.ticketapi.api.auth.model.response.LoginCouncilResponse;
 import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
 import com.jnu.ticketapi.api.sector.model.request.SectorReadRequest;
 import com.jnu.ticketcommon.annotation.Helper;
-import com.jnu.ticketdomain.domains.coupon.domain.Sector;
+import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import java.util.List;
 import java.util.stream.Collectors;

@@ -1,9 +1,9 @@
 package com.jnu.ticketinfrastructure.config.redis;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_COUPON_CHANNEL;
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import com.jnu.ticketinfrastructure.service.CouponSubscribeService;
+import com.jnu.ticketinfrastructure.service.EventSubscribeService;
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,7 @@ public class RedisConfig {
     @Value("${spring.redis.password}")
     private String redisPassword;
 
-    @Autowired private CouponSubscribeService couponSubscribeService;
+    @Autowired private EventSubscribeService eventSubscribeService;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -84,12 +84,12 @@ public class RedisConfig {
     // 리스너어댑터 설정
     @Bean
     MessageListenerAdapter messageListenerAdapter() {
-        return new MessageListenerAdapter(couponSubscribeService);
+        return new MessageListenerAdapter(eventSubscribeService);
     }
 
     // pub/sub 토픽 설정
     @Bean
     ChannelTopic topic() {
-        return new ChannelTopic(REDIS_COUPON_CHANNEL);
+        return new ChannelTopic(REDIS_EVENT_CHANNEL);
     }
 }

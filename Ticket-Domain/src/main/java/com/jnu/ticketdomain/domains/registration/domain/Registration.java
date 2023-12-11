@@ -1,7 +1,7 @@
 package com.jnu.ticketdomain.domains.registration.domain;
 
 
-import com.jnu.ticketdomain.domains.coupon.domain.Sector;
+import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import java.time.LocalDateTime;
 import javax.persistence.*;

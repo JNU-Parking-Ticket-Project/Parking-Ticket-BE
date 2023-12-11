@@ -2,7 +2,7 @@ package com.jnu.ticketapi.api.registration.service;
 
 
 import com.jnu.ticketapi.api.captcha.service.ValidateCaptchaUseCase;
-import com.jnu.ticketapi.api.coupon.service.CouponWithDrawUseCase;
+import com.jnu.ticketapi.api.event.service.EventWithDrawUseCase;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
@@ -14,8 +14,8 @@ import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
-import com.jnu.ticketdomain.domains.coupon.adaptor.SectorAdaptor;
-import com.jnu.ticketdomain.domains.coupon.domain.Sector;
+import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
+import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
@@ -36,7 +36,7 @@ public class RegistrationUseCase {
     private final SectorAdaptor sectorAdaptor;
     private final Converter converter;
     private final UserAdaptor userAdaptor;
-    private final CouponWithDrawUseCase couponWithDrawUseCase;
+    private final EventWithDrawUseCase EventWithDrawUseCase;
     private final Encryption encryption;
     private final CaptchaAdaptor captchaAdaptor;
     private final ValidateCaptchaUseCase validateCaptchaUseCase;
@@ -108,7 +108,7 @@ public class RegistrationUseCase {
             return FinalSaveResponse.from(temporaryRegistration.get());
         }
         Registration jpaRegistration = save(registration);
-        couponWithDrawUseCase.issueCoupon(currentUserId);
+        EventWithDrawUseCase.issueEvent(currentUserId);
 
         mailService.sendRegistrationResultMail(
                 registration.getEmail(),

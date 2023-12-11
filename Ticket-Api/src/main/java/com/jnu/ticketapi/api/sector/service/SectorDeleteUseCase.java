@@ -2,9 +2,9 @@ package com.jnu.ticketapi.api.sector.service;
 
 
 import com.jnu.ticketcommon.annotation.UseCase;
-import com.jnu.ticketdomain.domains.coupon.domain.Sector;
-import com.jnu.ticketdomain.domains.coupon.out.SectorLoadPort;
-import com.jnu.ticketdomain.domains.coupon.out.SectorRecordPort;
+import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.out.SectorLoadPort;
+import com.jnu.ticketdomain.domains.events.out.SectorRecordPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
