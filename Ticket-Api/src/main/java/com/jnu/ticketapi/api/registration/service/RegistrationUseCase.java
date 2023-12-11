@@ -2,7 +2,7 @@ package com.jnu.ticketapi.api.registration.service;
 
 
 import com.jnu.ticketapi.api.captcha.service.ValidateCaptchaPendingUseCase;
-import com.jnu.ticketapi.api.coupon.service.CouponWithDrawUseCase;
+import com.jnu.ticketapi.api.event.service.EventWithDrawUseCase;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
@@ -36,7 +36,7 @@ public class RegistrationUseCase {
     private final SectorAdaptor sectorAdaptor;
     private final Converter converter;
     private final UserAdaptor userAdaptor;
-    private final CouponWithDrawUseCase couponWithDrawUseCase;
+    private final EventWithDrawUseCase EventWithDrawUseCase;
     private final Encryption encryption;
     private final CaptchaAdaptor captchaAdaptor;
     private final ValidateCaptchaPendingUseCase validateCaptchaPendingUseCase;
@@ -108,7 +108,7 @@ public class RegistrationUseCase {
             return FinalSaveResponse.of(temporaryRegistration.get());
         }
         Registration jpaRegistration = save(registration);
-        couponWithDrawUseCase.issueCoupon(currentUserId);
+        EventWithDrawUseCase.issueEvent(currentUserId);
 
         mailService.sendRegistrationResultMail(
                 registration.getEmail(),

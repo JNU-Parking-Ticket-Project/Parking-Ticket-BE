@@ -24,7 +24,7 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
                 .orElseThrow(() -> NotFoundEventException.EXCEPTION);
     }
 
-    public Event findOpenCoupon() {
+    public Event findOpenEvent() {
         return eventRepository
                 // TODO 추 후에 완성되면 이걸로 변경         .findByCouponStatus(CouponStatus.OPEN)
                 .findByCouponStatus(EventStatus.READY)
@@ -39,8 +39,11 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
         return eventRepository.save(event);
     }
 
-    public List<Event> closeExpiredEventsEndAtBefore(LocalDateTime time) {
-        Event openCoupon = findOpenCoupon();
+    public List<Event> findEventsByEndAtBeforeAndStatusOpen(LocalDateTime time) {
+        return eventRepository.findByEndAtBeforeAndStatusOpen(time);
+    }
+
+    public List<Event> closeExpiredEventsEndAtBeforeOpen(LocalDateTime time) {
         List<Event> events = findEventsByEndAtBeforeAndStatusOpen(time);
         events.forEach(event -> updateEventStatus(event, EventStatus.CLOSED));
         eventRepository.saveAll(events);

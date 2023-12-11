@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.api.coupon.model.request;
+package com.jnu.ticketapi.api.event.model.request;
 
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -13,5 +13,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class WaitingQueueRequest {
     private String userId;
-    private String couponTitle;
+    private String EventTitle;
 }

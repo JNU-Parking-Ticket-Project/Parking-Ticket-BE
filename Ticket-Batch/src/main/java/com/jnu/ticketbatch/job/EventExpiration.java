@@ -55,9 +55,8 @@ public class EventExpiration {
                         (contribution, chunkContext) -> {
                             log.info(">>>>> 이벤트 자동 만료 작업 실행");
                             LocalDateTime time = dateTimeJobParameter().getTime();
-                            List<Event> events = eventService.closeExpiredEventsEndAtBefore(time);
-                            //                            slackEventExpirationSender.execute(time,
-                            // events);
+                            List<Event> events =
+                                    eventService.closeExpiredEventsEndAtBeforeOpen(time);
                             return RepeatStatus.FINISHED;
                         })
                 .build();

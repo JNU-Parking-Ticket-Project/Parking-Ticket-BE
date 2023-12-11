@@ -25,8 +25,8 @@ public class TicketStatic {
     public static final int INTERNAL_SERVER = 500;
     public static final String SWAGGER_DOCS_VERSION = "v0.0.1";
 
-    public static final String REDIS_COUPON_CHANNEL = "쿠폰 발급 채널";
-    public static final String REDIS_COUPON_ISSUE_STORE = "쿠폰 발급 저장소";
+    public static final String REDIS_EVENT_CHANNEL = "쿠폰 발급 채널";
+    public static final String REDIS_EVENT_ISSUE_STORE = "쿠폰 발급 저장소";
     public static final String[] SwaggerPatterns = {
         "/swagger-resources/**",
         "/swagger-ui/**",

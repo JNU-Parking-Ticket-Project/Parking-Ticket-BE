@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.api.coupon.service;
+package com.jnu.ticketapi.api.event.service;
 
 
 import com.jnu.ticketcommon.annotation.UseCase;
@@ -15,12 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 @UseCase
 @RequiredArgsConstructor
 @Slf4j
-public class CouponRegisterUseCase {
+public class EventRegisterUseCase {
     private final EventAdaptor eventAdaptor;
     private final SectorAdaptor sectorAdaptor;
 
     @Transactional
-    public void registerCoupon(DateTimePeriod dateTimePeriod) {
+    public void registerEvent(DateTimePeriod dateTimePeriod) {
         List<Sector> sectors = sectorAdaptor.findAll();
         Event event = new Event(dateTimePeriod, sectors);
         event.validateIssuePeriod();

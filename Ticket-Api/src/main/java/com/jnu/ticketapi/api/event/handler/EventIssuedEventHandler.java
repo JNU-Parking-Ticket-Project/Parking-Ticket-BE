@@ -1,10 +1,10 @@
-package com.jnu.ticketapi.api.coupon.handler;
+package com.jnu.ticketapi.api.event.handler;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_COUPON_ISSUE_STORE;
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
-import com.jnu.ticketinfrastructure.domainEvent.CouponIssuedEvent;
+import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.RequiredArgsConstructor;
@@ -19,22 +19,22 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class CouponIssuedEventHandler {
+public class EventIssuedEventHandler {
     private final RegistrationAdaptor registrationAdaptor;
     private final WaitingQueueService waitingQueueService;
 
     @Async
     @TransactionalEventListener(
-            classes = CouponIssuedEvent.class,
+            classes = EventIssuedEvent.class,
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handle(CouponIssuedEvent couponIssuedEvent) {
-        processCouponData(couponIssuedEvent.getCurrentUserId());
+    public void handle(EventIssuedEvent EventIssuedEvent) {
+        processEventData(EventIssuedEvent.getCurrentUserId());
         // 재고가 처리되야만 대기열에서 제거
-        waitingQueueService.popQueue(REDIS_COUPON_ISSUE_STORE, 1, ChatMessage.class);
+        waitingQueueService.popQueue(REDIS_EVENT_ISSUE_STORE, 1, ChatMessage.class);
     }
 
-    private void processCouponData(Long userId) {
+    private void processEventData(Long userId) {
         Sector sector = registrationAdaptor.findByUserId(userId).getSector();
         sector.decreaseCouponStock();
     }

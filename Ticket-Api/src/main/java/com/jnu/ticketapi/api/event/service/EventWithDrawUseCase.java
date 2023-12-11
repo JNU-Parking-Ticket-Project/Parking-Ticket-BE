@@ -1,6 +1,6 @@
-package com.jnu.ticketapi.api.coupon.service;
+package com.jnu.ticketapi.api.event.service;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_COUPON_ISSUE_STORE;
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @UseCase
 @RequiredArgsConstructor
 @Slf4j
-public class CouponWithDrawUseCase {
+public class EventWithDrawUseCase {
 
     private final WaitingQueueService waitingQueueService;
     private final EventAdaptor eventAdaptor;
@@ -29,21 +29,21 @@ public class CouponWithDrawUseCase {
             waitTime = 3000,
             leaseTime = 3000,
             timeUnit = TimeUnit.MILLISECONDS)
-    public void issueCoupon(Long userId) {
+    public void issueEvent(Long userId) {
         // 재고 감소 로직 구현
-        Event openEvent = eventAdaptor.findOpenCoupon();
+        Event openEvent = eventAdaptor.findOpenEvent();
         openEvent.validateIssuePeriod();
-        waitingQueueService.registerQueue(REDIS_COUPON_ISSUE_STORE, userId);
+        waitingQueueService.registerQueue(REDIS_EVENT_ISSUE_STORE, userId);
     }
 
     @Transactional(readOnly = true)
-    public Long getCouponOrder() {
+    public Long getEventOrder() {
         Long currentUserId = SecurityUtils.getCurrentUserId();
-        return waitingQueueService.getWaitingOrder(REDIS_COUPON_ISSUE_STORE, currentUserId);
+        return waitingQueueService.getWaitingOrder(REDIS_EVENT_ISSUE_STORE, currentUserId);
     }
 
-    public DateTimePeriod getCouponPeriod() {
-        Event openEvent = eventAdaptor.findOpenCoupon();
+    public DateTimePeriod getEventPeriod() {
+        Event openEvent = eventAdaptor.findOpenEvent();
         return openEvent.getDateTimePeriod();
     }
 }

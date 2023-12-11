@@ -1,10 +1,10 @@
 package com.jnu.ticketinfrastructure.service;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_COUPON_CHANNEL;
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketinfrastructure.domainEvent.CouponIssuedEvent;
+import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CouponSubscribeService implements MessageListener {
+public class EventSubscribeService implements MessageListener {
     @Autowired @Lazy private RedisTemplate<String, Object> redisTemplate;
     private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
@@ -36,7 +36,7 @@ public class CouponSubscribeService implements MessageListener {
             e.printStackTrace();
         }
         // "userId" 키의 값을 추출
-        if (REDIS_COUPON_CHANNEL.equals(channel)) {
+        if (REDIS_EVENT_CHANNEL.equals(channel)) {
             handleReceivedUserId(userId);
         } else {
             log.error("Received message from unknown channel: {}", channel);
@@ -44,6 +44,6 @@ public class CouponSubscribeService implements MessageListener {
     }
 
     public void handleReceivedUserId(Long userId) {
-        eventPublisher.publishEvent(CouponIssuedEvent.from(userId));
+        eventPublisher.publishEvent(EventIssuedEvent.from(userId));
     }
 }
