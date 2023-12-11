@@ -2,6 +2,7 @@ package com.jnu.ticketapi.api.event.controller;
 
 import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_OPEN_MESSAGE;
 import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_REGISTER_MESSAGE;
+import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_UPDATE_STATUS_MESSAGE;
 
 import com.jnu.ticketapi.api.event.docs.CreateEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventExceptionDocs;
@@ -51,7 +52,6 @@ public class EventController {
     @Deprecated(since = "2023-12-08", forRemoval = true)
     @PostMapping("/events/apply")
     public SuccessResponse issueEvent() {
-        //        EventWithDrawUseCase.issueEvent();
         return new SuccessResponse(EVENT_SUCCESS_REGISTER_MESSAGE);
     }
 
@@ -63,19 +63,21 @@ public class EventController {
     }
 
     @Operation(summary = "이벤트를 오픈 상태로 변경합니다.")
-    @PostMapping("events/{event-id}/open")
+    @PostMapping("events/open")
     public SuccessResponse openEventStatus() {
         openEventUseCase.execute();
         return new SuccessResponse(EVENT_SUCCESS_OPEN_MESSAGE);
     }
 
-    @Operation(summary = "이벤트를 상태를 변경합니다.")
-    @PutMapping("events/{event-id}/status")
+    @Operation(
+            summary = "이벤트를 상태를 변경합니다.",
+            description = "이벤트를 상태를 변경합니다.(READY, OPEN, CALCULATING, CLOSED)")
+    @PutMapping("/events/{event-id}/status")
     public SuccessResponse updateEventStatus(
-            @PathVariable Long eventId,
+            @PathVariable(name = "event-id") Long eventId,
             @RequestBody @Valid UpdateEventStatusRequest updateEventDetailRequest) {
         updateEventStatusUseCase.execute(eventId, updateEventDetailRequest);
-        return new SuccessResponse(EVENT_SUCCESS_OPEN_MESSAGE);
+        return new SuccessResponse(EVENT_SUCCESS_UPDATE_STATUS_MESSAGE);
     }
 
     @Operation(summary = "주차권 신청 기간 조회", description = "주차권 신청 기간 조회")

@@ -7,6 +7,7 @@ public class ResponseMessage {
     public static final String PASSWORD_SUCCESS_CHANGE_MESSAGE = "성공적으로 비밀번호가 변경됐습니다";
     public static final String EVENT_SUCCESS_REGISTER_MESSAGE = "성공적으로 이벤트가 등록됐습니다";
     public static final String EVENT_SUCCESS_OPEN_MESSAGE = "성공적으로 이벤트가 오픈됐습니다";
+    public static final String EVENT_SUCCESS_UPDATE_STATUS_MESSAGE = "성공적으로 이벤트 상태가 수정됐습니다";
     public static final String SECTOR_SUCCESS_REGISTER_MESSAGE = "성공적으로 구간이 등록됐습니다";
     public static final String SECTOR_SUCCESS_DELETE_MESSAGE = "성공적으로 구간이 삭제됐습니다";
     public static final String SECTOR_SUCCESS_UPDATE_MESSAGE = "성공적으로 구간이 수정됐습니다";
