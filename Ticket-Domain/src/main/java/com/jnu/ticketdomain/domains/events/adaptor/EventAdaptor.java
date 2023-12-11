@@ -2,6 +2,7 @@ package com.jnu.ticketdomain.domains.events.adaptor;
 
 
 import com.jnu.ticketcommon.annotation.Adaptor;
+import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
@@ -11,6 +12,7 @@ import com.jnu.ticketdomain.domains.events.out.EventRecordPort;
 import com.jnu.ticketdomain.domains.events.repository.EventRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
 @Adaptor
@@ -31,10 +33,10 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
                 .orElseThrow(() -> NotFoundEventException.EXCEPTION);
     }
 
-    public Event findReadyEvent() {
-        return eventRepository
-                .findByEventStatus(EventStatus.READY)
-                .orElseThrow(() -> NotFoundEventException.EXCEPTION);
+    public Result<Event, Object> findReadyEvent() {
+        Optional<Event> event = eventRepository.findByEventStatus(EventStatus.READY);
+        return event.map(Result::success)
+                .orElseGet(() -> Result.failure(NotFoundEventException.EXCEPTION));
     }
 
     public Event updateEventStatus(Event event, EventStatus status) {

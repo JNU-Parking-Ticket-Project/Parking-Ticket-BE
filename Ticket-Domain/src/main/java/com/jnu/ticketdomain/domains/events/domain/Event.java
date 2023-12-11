@@ -106,4 +106,8 @@ public class Event {
     public void close() {
         updateStatus(CLOSED, AlreadyCloseStatusException.EXCEPTION);
     }
+
+    public void updateDateTimePeriod(DateTimePeriod dateTimePeriod) {
+        this.dateTimePeriod = dateTimePeriod;
+    }
 }

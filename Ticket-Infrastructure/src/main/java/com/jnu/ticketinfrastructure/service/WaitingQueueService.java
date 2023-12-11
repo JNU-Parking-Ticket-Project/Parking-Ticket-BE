@@ -1,6 +1,5 @@
 package com.jnu.ticketinfrastructure.service;
 
-
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 
 import com.jnu.ticketinfrastructure.model.ChatMessage;
