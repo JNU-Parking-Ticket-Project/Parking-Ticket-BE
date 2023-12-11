@@ -51,11 +51,13 @@ public class SectorController {
         return new SuccessResponse(SECTOR_SUCCESS_REGISTER_MESSAGE);
     }
 
-    @Operation(summary = "구간 수정", description = "구간 삭제(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
+    @Operation(
+            summary = "구간 수정",
+            description = "구간 수정 -> 수정하면 기존 리스트 다 날아가고 새로 생성됩니다 (구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
     @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
     @PutMapping("/sectors")
     public SuccessResponse updateEvent(@RequestBody List<SectorRegisterRequest> sectors) {
-        sectorRegisterUseCase.execute(sectors);
+        sectorRegisterUseCase.update(sectors);
         return new SuccessResponse(SECTOR_SUCCESS_UPDATE_MESSAGE);
     }
 
