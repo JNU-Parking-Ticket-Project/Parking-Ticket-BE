@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.api.registration.service;
 
 
-import com.jnu.ticketapi.api.captcha.service.ValidateCaptchaPendingUseCase;
+import com.jnu.ticketapi.api.captcha.service.ValidateCaptchaUseCase;
 import com.jnu.ticketapi.api.coupon.service.CouponWithDrawUseCase;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
@@ -39,7 +39,7 @@ public class RegistrationUseCase {
     private final CouponWithDrawUseCase couponWithDrawUseCase;
     private final Encryption encryption;
     private final CaptchaAdaptor captchaAdaptor;
-    private final ValidateCaptchaPendingUseCase validateCaptchaPendingUseCase;
+    private final ValidateCaptchaUseCase validateCaptchaUseCase;
     private final MailService mailService;
 
     public Registration save(Registration registration) {
@@ -87,8 +87,8 @@ public class RegistrationUseCase {
 
     @Transactional
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
-        Long captchaPendingId = encryption.decrypt(requestDto.captchaPendingCode());
-        validateCaptchaPendingUseCase.execute(captchaPendingId, requestDto.captchaAnswer());
+        Long captchaId = encryption.decrypt(requestDto.captchaCode());
+        validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
         /*
         임시저장을 했으면 isSave만 true로 변경
          */

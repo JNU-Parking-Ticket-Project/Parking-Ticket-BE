@@ -15,7 +15,7 @@ import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 
 @ExceptionDoc
 public class FinalSaveExceptionDocs implements SwaggerExampleExceptions {
-    @ExplainError("captchaPending code를 복호화 하는 도중 에러가 발생한 경우")
+    @ExplainError("captcha code를 복호화 하는 도중 에러가 발생한 경우")
     public TicketCodeException 복호화_도중_에러가_발생하였습니다 = DecryptionErrorException.EXCEPTION;
 
     @ExplainError("캡챠 정답이 틀린 경우")
