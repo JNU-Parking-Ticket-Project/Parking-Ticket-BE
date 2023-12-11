@@ -18,6 +18,6 @@ public class SaveAnnounceUseCase {
 
     @Transactional
     public SaveAnnounceResponse execute(SaveAnnounceRequest saveAnnounceRequest) {
-        return SaveAnnounceResponse.of(announceAdaptor.save(saveAnnounceRequest.toEntity()));
+        return SaveAnnounceResponse.from(announceAdaptor.save(saveAnnounceRequest.toEntity()));
     }
 }

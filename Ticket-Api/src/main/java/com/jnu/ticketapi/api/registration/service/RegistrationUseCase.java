@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.api.registration.service;
 
 
-import com.jnu.ticketapi.api.captcha.service.ValidateCaptchaPendingUseCase;
+import com.jnu.ticketapi.api.captcha.service.ValidateCaptchaUseCase;
 import com.jnu.ticketapi.api.event.service.EventWithDrawUseCase;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
@@ -39,7 +39,7 @@ public class RegistrationUseCase {
     private final EventWithDrawUseCase EventWithDrawUseCase;
     private final Encryption encryption;
     private final CaptchaAdaptor captchaAdaptor;
-    private final ValidateCaptchaPendingUseCase validateCaptchaPendingUseCase;
+    private final ValidateCaptchaUseCase validateCaptchaUseCase;
     private final MailService mailService;
 
     public Registration save(Registration registration) {
@@ -79,16 +79,16 @@ public class RegistrationUseCase {
         Optional<Registration> temporaryRegistration = findByEmail(email);
         if (temporaryRegistration.isPresent()) {
             temporaryRegistration.get().update(registration);
-            return TemporarySaveResponse.of(temporaryRegistration.get());
+            return TemporarySaveResponse.from(temporaryRegistration.get());
         }
         Registration jpaRegistration = save(registration);
-        return TemporarySaveResponse.of(jpaRegistration);
+        return TemporarySaveResponse.from(jpaRegistration);
     }
 
     @Transactional
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
-        Long captchaPendingId = encryption.decrypt(requestDto.captchaPendingCode());
-        validateCaptchaPendingUseCase.execute(captchaPendingId, requestDto.captchaAnswer());
+        Long captchaId = encryption.decrypt(requestDto.captchaCode());
+        validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
         /*
         임시저장을 했으면 isSave만 true로 변경
          */
@@ -105,7 +105,7 @@ public class RegistrationUseCase {
                     registration.getEmail(),
                     registration.getName(),
                     registration.getUser().getStatus());
-            return FinalSaveResponse.of(temporaryRegistration.get());
+            return FinalSaveResponse.from(temporaryRegistration.get());
         }
         Registration jpaRegistration = save(registration);
         EventWithDrawUseCase.issueEvent(currentUserId);
@@ -115,7 +115,7 @@ public class RegistrationUseCase {
                 registration.getName(),
                 registration.getUser().getStatus());
 
-        return FinalSaveResponse.of(jpaRegistration);
+        return FinalSaveResponse.from(jpaRegistration);
     }
 
     @Transactional(readOnly = true)

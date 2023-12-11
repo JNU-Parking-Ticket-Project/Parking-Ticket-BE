@@ -18,6 +18,7 @@ dependencies {
     implementation project(':Ticket-Common')
     implementation project(':Ticket-Infrastructure')
     implementation 'org.springframework.boot:spring-boot-starter-batch'
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
     implementation 'org.projectlombok:lombok:1.18.28'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.batch:spring-batch-test'

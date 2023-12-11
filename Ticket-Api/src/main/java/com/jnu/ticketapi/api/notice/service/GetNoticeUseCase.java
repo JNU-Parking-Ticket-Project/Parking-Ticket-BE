@@ -17,6 +17,6 @@ public class GetNoticeUseCase {
 
     @Transactional(readOnly = true)
     public NoticeResponse getNoticeDetails() {
-        return NoticeResponse.of(noticeAdaptor.findLastOne());
+        return NoticeResponse.from(noticeAdaptor.findLastOne());
     }
 }

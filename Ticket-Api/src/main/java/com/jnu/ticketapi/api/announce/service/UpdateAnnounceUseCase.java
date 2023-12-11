@@ -19,7 +19,7 @@ public class UpdateAnnounceUseCase {
     @Transactional
     public UpdateAnnounceResponse execute(
             Long announceId, UpdateAnnounceRequest updateAnnounceRequest) {
-        return UpdateAnnounceResponse.of(
+        return UpdateAnnounceResponse.from(
                 announceAdaptor.update(
                         announceId,
                         updateAnnounceRequest.announceTitle(),

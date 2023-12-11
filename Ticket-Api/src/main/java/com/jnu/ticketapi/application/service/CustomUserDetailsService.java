@@ -3,6 +3,7 @@ package com.jnu.ticketapi.application.service;
 
 import com.jnu.ticketapi.security.CustomUserDetails;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         final User user =
                 userRepository
                         .findByEmail(email)
-                        .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
+                        .orElseThrow(() -> NotFoundUserException.EXCEPTION);
         return new CustomUserDetails(user);
     }
 }

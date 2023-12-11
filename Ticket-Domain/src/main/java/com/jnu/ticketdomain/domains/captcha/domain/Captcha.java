@@ -30,4 +30,8 @@ public class Captcha {
         this.answer = answer;
         this.imageName = imageName;
     }
+
+    public boolean validate(String answer) {
+        return this.answer.equals(answer);
+    }
 }

@@ -19,7 +19,7 @@ public record FinalSaveRequest(
                 @Phone(message = "올바른 형식의 번호를 입력하세요")
                 String phoneNum,
         @Schema(defaultValue = "1", description = "선택한 구간의 id") Long selectSectorId,
-        @Schema(defaultValue = "1234", description = "캡챠 코드") String captchaPendingCode,
+        @Schema(defaultValue = "1234", description = "캡챠 코드") String captchaCode,
         @Schema(defaultValue = "1234", description = "캡챠 답변") String captchaAnswer) {
 
     public Registration toEntity(

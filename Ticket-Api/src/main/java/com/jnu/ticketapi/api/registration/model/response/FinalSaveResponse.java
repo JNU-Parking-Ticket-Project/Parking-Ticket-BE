@@ -7,7 +7,7 @@ import lombok.Builder;
 
 @Builder
 public record FinalSaveResponse(String email, String message) {
-    public static FinalSaveResponse of(Registration registration) {
+    public static FinalSaveResponse from(Registration registration) {
         return FinalSaveResponse.builder()
                 .email(registration.getEmail())
                 .message(ResponseMessage.SUCCESS_FINAL_SAVE)

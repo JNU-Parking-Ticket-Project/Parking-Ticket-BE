@@ -14,9 +14,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum CaptchaErrorCode implements BaseErrorCode {
-    NOT_FOUND_CAPTCHA(NOT_FOUND, "Captcha_404_1", "존재하지 않는 캡챠입니다."),
-    NOT_FOUND_CAPTCHA_PENDING(NOT_FOUND, "Captcha_404_2", "존재하지 않는 캡챠 인증입니다."),
-    WRONG_CAPTCHA_ANSWER(BAD_REQUEST, "Captcha_400_1", "틀린 캡챠 답변입니다.");
+    NOT_FOUND_CAPTCHA(NOT_FOUND, "CAPTCHA_404_1", "존재하지 않는 캡챠입니다."),
+    NOT_FOUND_CAPTCHA_PENDING(NOT_FOUND, "CAPTCHA_404_2", "존재하지 않는 캡챠 인증입니다."),
+    WRONG_CAPTCHA_ANSWER(BAD_REQUEST, "CAPTCHA_400_1", "틀린 캡챠 답변입니다.");
 
     private final Integer status;
     private final String code;
