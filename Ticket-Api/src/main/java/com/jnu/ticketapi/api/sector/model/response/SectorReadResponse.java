@@ -1,7 +1,7 @@
 package com.jnu.ticketapi.api.sector.model.response;
 
 
-import com.jnu.ticketdomain.domains.coupon.domain.Sector;
+import com.jnu.ticketdomain.domains.events.domain.Sector;
 import java.util.List;
 import lombok.Builder;
 

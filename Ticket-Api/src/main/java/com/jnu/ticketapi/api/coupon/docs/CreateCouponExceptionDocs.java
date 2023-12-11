@@ -5,8 +5,8 @@ import com.jnu.ticketcommon.annotation.ExceptionDoc;
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
-import com.jnu.ticketdomain.domains.coupon.exception.InvalidPeriodCouponException;
-import com.jnu.ticketdomain.domains.coupon.exception.NotIssuingCouponPeriodException;
+import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodCouponException;
+import com.jnu.ticketdomain.domains.events.exception.NotIssuingCouponPeriodException;
 
 @ExceptionDoc
 public class CreateCouponExceptionDocs implements SwaggerExampleExceptions {

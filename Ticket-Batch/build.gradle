@@ -1,0 +1,28 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.jnu'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':Ticket-Domain')
+    implementation project(':Ticket-Common')
+    implementation project(':Ticket-Infrastructure')
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+    implementation 'org.projectlombok:lombok:1.18.28'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.batch:spring-batch-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

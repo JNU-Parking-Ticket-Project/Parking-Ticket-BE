@@ -2,7 +2,7 @@ package com.jnu.ticketapi.api.registration.model.request;
 
 
 import com.jnu.ticketcommon.annotation.Phone;
-import com.jnu.ticketdomain.domains.coupon.domain.Sector;
+import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;

@@ -2,7 +2,7 @@ package com.jnu.ticketapi.api.coupon.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_COUPON_ISSUE_STORE;
 
-import com.jnu.ticketdomain.domains.coupon.domain.Sector;
+import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketinfrastructure.domainEvent.CouponIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;

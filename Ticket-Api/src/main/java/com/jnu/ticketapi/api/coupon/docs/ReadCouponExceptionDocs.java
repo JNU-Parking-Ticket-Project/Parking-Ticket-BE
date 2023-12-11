@@ -5,8 +5,8 @@ import com.jnu.ticketcommon.annotation.ExceptionDoc;
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
-import com.jnu.ticketdomain.domains.coupon.exception.NotFoundCouponException;
-import com.jnu.ticketdomain.domains.coupon.exception.NotOpenCouponPeriodException;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundCouponException;
+import com.jnu.ticketdomain.domains.events.exception.NotOpenCouponPeriodException;
 
 @ExceptionDoc
 public class ReadCouponExceptionDocs implements SwaggerExampleExceptions {

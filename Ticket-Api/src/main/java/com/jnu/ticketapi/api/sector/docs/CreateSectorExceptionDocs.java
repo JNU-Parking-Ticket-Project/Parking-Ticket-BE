@@ -5,7 +5,7 @@ import com.jnu.ticketcommon.annotation.ExceptionDoc;
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
-import com.jnu.ticketdomain.domains.coupon.exception.NotFoundSectorException;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 
 @ExceptionDoc
 public class CreateSectorExceptionDocs implements SwaggerExampleExceptions {

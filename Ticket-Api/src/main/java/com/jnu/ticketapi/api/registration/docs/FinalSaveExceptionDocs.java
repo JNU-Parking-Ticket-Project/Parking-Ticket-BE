@@ -7,10 +7,10 @@ import com.jnu.ticketcommon.exception.DecryptionErrorException;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
-import com.jnu.ticketdomain.domains.coupon.exception.InvalidPeriodCouponException;
-import com.jnu.ticketdomain.domains.coupon.exception.NotFoundCouponException;
-import com.jnu.ticketdomain.domains.coupon.exception.NotFoundSectorException;
-import com.jnu.ticketdomain.domains.coupon.exception.NotIssuingCouponPeriodException;
+import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodCouponException;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundCouponException;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
+import com.jnu.ticketdomain.domains.events.exception.NotIssuingCouponPeriodException;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 
 @ExceptionDoc
