@@ -7,8 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 public interface CaptchaRepository extends JpaRepository<Captcha, Long> {
-    Optional<Captcha> findByImageName(String imageName);
 
-    @Query("select c from Captcha c order by rand()")
-    Captcha findByRandom();
+    Optional<Captcha> findById(long id);
+
+    @Query(value = "select * from captcha_tb LIMIT 1 OFFSET :offset", nativeQuery = true)
+    Captcha findOneByOffset(long offset);
 }
