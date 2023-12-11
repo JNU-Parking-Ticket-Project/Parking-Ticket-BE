@@ -8,7 +8,7 @@ public record SaveAnnounceResponse(String announceTitle, String announceContent)
     @Builder
     public SaveAnnounceResponse {}
 
-    public static SaveAnnounceResponse of(Announce announce) {
+    public static SaveAnnounceResponse from(Announce announce) {
         return SaveAnnounceResponse.builder()
                 .announceTitle(announce.getAnnounceTitle())
                 .announceContent(announce.getAnnounceContent())

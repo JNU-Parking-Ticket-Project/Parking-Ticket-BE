@@ -22,7 +22,7 @@ public class UpdatePasswordUseCase {
     public UpdatePasswordResponse execute(
             String code, UpdatePasswordRequest updatePasswordRequest) {
 
-        return UpdatePasswordResponse.of(
+        return UpdatePasswordResponse.from(
                 userAdaptor.updatePassword(
                         credentialCodeAdaptor.getEmail(code),
                         bCryptPasswordEncoder.encode(updatePasswordRequest.password())));

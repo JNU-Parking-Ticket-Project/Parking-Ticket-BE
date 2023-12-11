@@ -7,7 +7,7 @@ import lombok.Builder;
 
 @Builder
 public record TemporarySaveResponse(String email, String message) {
-    public static TemporarySaveResponse of(Registration registration) {
+    public static TemporarySaveResponse from(Registration registration) {
         return TemporarySaveResponse.builder()
                 .email(registration.getEmail())
                 .message(ResponseMessage.SUCCESS_TEMPORARY_SAVE)

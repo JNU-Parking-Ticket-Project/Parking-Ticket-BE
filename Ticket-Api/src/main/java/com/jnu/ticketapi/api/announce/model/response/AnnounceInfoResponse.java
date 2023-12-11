@@ -13,7 +13,7 @@ public record AnnounceInfoResponse(
     @Builder(access = AccessLevel.PACKAGE)
     public AnnounceInfoResponse {}
 
-    public static AnnounceInfoResponse of(@NotNull Announce announce) {
+    public static AnnounceInfoResponse from(@NotNull Announce announce) {
         return AnnounceInfoResponse.builder()
                 .announceId(announce.getAnnounceId())
                 .announceTitle(announce.getAnnounceTitle())

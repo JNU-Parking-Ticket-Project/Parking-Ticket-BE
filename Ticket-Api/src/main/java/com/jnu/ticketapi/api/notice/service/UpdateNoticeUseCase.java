@@ -18,7 +18,7 @@ public class UpdateNoticeUseCase {
 
     @Transactional
     public UpdateNoticeResponse updateNotice(UpdateNoticeRequest updateNoticeRequest) {
-        return UpdateNoticeResponse.of(
+        return UpdateNoticeResponse.from(
                 noticeAdaptor.updateNotice(updateNoticeRequest.noticeContent()));
     }
 }

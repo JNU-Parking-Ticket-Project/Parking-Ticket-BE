@@ -79,10 +79,10 @@ public class RegistrationUseCase {
         Optional<Registration> temporaryRegistration = findByEmail(email);
         if (temporaryRegistration.isPresent()) {
             temporaryRegistration.get().update(registration);
-            return TemporarySaveResponse.of(temporaryRegistration.get());
+            return TemporarySaveResponse.from(temporaryRegistration.get());
         }
         Registration jpaRegistration = save(registration);
-        return TemporarySaveResponse.of(jpaRegistration);
+        return TemporarySaveResponse.from(jpaRegistration);
     }
 
     @Transactional
@@ -105,7 +105,7 @@ public class RegistrationUseCase {
                     registration.getEmail(),
                     registration.getName(),
                     registration.getUser().getStatus());
-            return FinalSaveResponse.of(temporaryRegistration.get());
+            return FinalSaveResponse.from(temporaryRegistration.get());
         }
         Registration jpaRegistration = save(registration);
         couponWithDrawUseCase.issueCoupon(currentUserId);
@@ -115,7 +115,7 @@ public class RegistrationUseCase {
                 registration.getName(),
                 registration.getUser().getStatus());
 
-        return FinalSaveResponse.of(jpaRegistration);
+        return FinalSaveResponse.from(jpaRegistration);
     }
 
     @Transactional(readOnly = true)
