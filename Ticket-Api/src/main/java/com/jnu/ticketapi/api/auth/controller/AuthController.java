@@ -11,6 +11,7 @@ import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
 import com.jnu.ticketapi.api.auth.model.request.ReissueTokenRequest;
 import com.jnu.ticketapi.api.auth.model.response.*;
 import com.jnu.ticketapi.api.auth.service.AuthUseCase;
+import com.jnu.ticketapi.common.aop.GetEmail;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -43,10 +44,11 @@ public class AuthController {
     @ApiErrorExceptionsExample(TokenReissueExceptionDocs.class)
     public ResponseEntity<ReissueTokenResponse> reIssue(
             @RequestBody ReissueTokenRequest requestDto,
-            @RequestHeader("Authorization") String bearerToken) {
+            @RequestHeader("Authorization") String bearerToken,
+            @GetEmail String email) {
         String accessToken = authUseCase.extractToken(bearerToken);
         ReissueTokenResponse responseDto =
-                authUseCase.reissue(accessToken, requestDto.refreshToken());
+                authUseCase.reissue(accessToken, requestDto.refreshToken(), email);
         return ResponseEntity.ok(responseDto);
     }
 
