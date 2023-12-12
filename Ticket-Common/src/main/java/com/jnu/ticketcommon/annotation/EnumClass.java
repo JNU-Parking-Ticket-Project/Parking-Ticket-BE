@@ -12,5 +12,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @JacksonAnnotationsInside
- @JsonDeserialize(using = CustomEnumDeserializer.class)
+@JsonDeserialize(using = CustomEnumDeserializer.class)
 public @interface EnumClass {}

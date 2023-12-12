@@ -4,10 +4,12 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
+import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.common.aop.redissonLock.RedissonLock;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
+import com.jnu.ticketdomain.domains.events.exception.NotReadyEventStatusException;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +45,13 @@ public class EventWithDrawUseCase {
     }
 
     public DateTimePeriod getEventPeriod() {
-        Event openEvent = eventAdaptor.findOpenEvent();
-        return openEvent.getDateTimePeriod();
+        Result<Event, Object> readyEvent = eventAdaptor.findReadyEvent();
+        return readyEvent.fold(
+                (event) -> {
+                    return event.getDateTimePeriod();
+                },
+                (error) -> {
+                    throw NotReadyEventStatusException.EXCEPTION;
+                });
     }
 }
