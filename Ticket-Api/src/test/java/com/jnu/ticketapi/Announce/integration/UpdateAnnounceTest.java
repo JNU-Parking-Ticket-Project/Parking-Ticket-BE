@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketapi.Announce.config.DatabaseClearExtension;
+import com.jnu.ticketapi.config.DatabaseClearExtension;
 import com.jnu.ticketapi.api.announce.model.request.SaveAnnounceRequest;
 import com.jnu.ticketapi.api.announce.model.request.UpdateAnnounceRequest;
 import java.nio.charset.StandardCharsets;

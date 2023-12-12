@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketapi.Announce.config.DatabaseClearExtension;
+import com.jnu.ticketapi.config.DatabaseClearExtension;
 import com.jnu.ticketapi.api.user.model.request.UpdatePasswordRequest;
 import com.jnu.ticketdomain.domains.CredentialCode.domain.CredentialCode;
 import com.jnu.ticketdomain.domains.CredentialCode.repository.CredentialCodeRepository;
