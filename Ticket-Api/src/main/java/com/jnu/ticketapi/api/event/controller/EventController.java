@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -85,6 +86,7 @@ public class EventController {
     @ApiErrorExceptionsExample(ReadEventPeriodExceptionDocs.class)
     @GetMapping("/events/period")
     public ResponseEntity<DateTimePeriod> getEventPeriod() {
-        return ResponseEntity.ok(EventWithDrawUseCase.getEventPeriod());
+        DateTimePeriod eventPeriod = EventWithDrawUseCase.getEventPeriod();
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(eventPeriod);
     }
 }

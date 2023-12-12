@@ -1,6 +1,7 @@
 package com.jnu.ticketdomain.common.vo;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import javax.persistence.Embeddable;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@JsonFormat(shape = JsonFormat.Shape.OBJECT, timezone = "Asia/Seoul")
 public class DateTimePeriod {
     // 쿠폰 발행 시작 시각
     private LocalDateTime startAt;
