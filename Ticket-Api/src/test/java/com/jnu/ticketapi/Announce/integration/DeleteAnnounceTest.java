@@ -74,7 +74,8 @@ public class DeleteAnnounceTest {
                             .getContentAsString(StandardCharsets.UTF_8);
             log.info("responseBody : " + responseBody);
             // then
-            resultActions.andExpectAll(status().isOk(), jsonPath("$.message").value("공지사항이 삭제 되었습니다."));
+            resultActions.andExpectAll(
+                    status().isOk(), jsonPath("$.message").value("공지사항이 삭제 되었습니다."));
         }
     }
 

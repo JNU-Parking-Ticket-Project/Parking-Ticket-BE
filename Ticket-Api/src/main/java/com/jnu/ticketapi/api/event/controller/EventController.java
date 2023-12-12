@@ -6,6 +6,7 @@ import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_UPDATE_
 
 import com.jnu.ticketapi.api.event.docs.CreateEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventExceptionDocs;
+import com.jnu.ticketapi.api.event.docs.ReadEventPeriodExceptionDocs;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventStatusRequest;
 import com.jnu.ticketapi.api.event.service.EventRegisterUseCase;
 import com.jnu.ticketapi.api.event.service.EventWithDrawUseCase;
@@ -81,7 +82,7 @@ public class EventController {
     }
 
     @Operation(summary = "주차권 신청 기간 조회", description = "주차권 신청 기간 조회")
-    @ApiErrorExceptionsExample(ReadEventExceptionDocs.class)
+    @ApiErrorExceptionsExample(ReadEventPeriodExceptionDocs.class)
     @GetMapping("/events/period")
     public ResponseEntity<DateTimePeriod> getEventPeriod() {
         return ResponseEntity.ok(EventWithDrawUseCase.getEventPeriod());
