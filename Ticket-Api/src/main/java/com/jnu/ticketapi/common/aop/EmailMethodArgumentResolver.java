@@ -2,6 +2,7 @@ package com.jnu.ticketapi.common.aop;
 
 
 import com.jnu.ticketapi.security.JwtResolver;
+import com.jnu.ticketcommon.consts.TicketStatic;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
@@ -15,7 +16,6 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 @RequiredArgsConstructor
 public class EmailMethodArgumentResolver implements HandlerMethodArgumentResolver {
     private final JwtResolver jwtResolver;
-    private static final String EMAIL_KEY = "Email";
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -34,6 +34,6 @@ public class EmailMethodArgumentResolver implements HandlerMethodArgumentResolve
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
         String requestAccessTokenInHeader = request.getHeader("Authorization");
         String requestAccessToken = jwtResolver.extractToken(requestAccessTokenInHeader);
-        return jwtResolver.parseClaims(requestAccessToken).get(EMAIL_KEY).toString();
+        return jwtResolver.parseClaims(requestAccessToken).get(TicketStatic.EMAIL_KEY).toString();
     }
 }

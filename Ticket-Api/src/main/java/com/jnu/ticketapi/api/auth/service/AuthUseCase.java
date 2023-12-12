@@ -12,6 +12,7 @@ import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketapi.security.JwtResolver;
 import com.jnu.ticketcommon.annotation.UseCase;
+import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketcommon.exception.BadCredentialException;
 import com.jnu.ticketcommon.exception.InvalidTokenException;
 import com.jnu.ticketcommon.exception.NotEqualPrincipalException;
@@ -40,22 +41,22 @@ public class AuthUseCase {
     private final CouncilUseCase councilUseCase;
     private final Converter converter;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private static final String SERVER = "Server";
 
     // 토큰 재발급: validate 메서드가 true 반환할 때만 사용 -> AT, RT 재발급
     @Transactional
-    public ReissueTokenResponse reissue(String requestAccessToken, String requestRefreshToken) {
+    public ReissueTokenResponse reissue(
+            String requestAccessToken, String requestRefreshToken, String email) {
 
         Authentication accessAuthentication = jwtResolver.getAuthentication(requestAccessToken);
-        String accessPrincipal = getPrincipal(requestAccessToken);
-        String refreshPrincipal = getPrincipal(requestRefreshToken);
+        String refreshEmail =
+                jwtResolver.parseClaims(requestRefreshToken).get(TicketStatic.EMAIL_KEY).toString();
         // AT와 RT의 principal이 다를 경우
-        if (!accessPrincipal.equals(refreshPrincipal)) {
+        if (!email.equals(refreshEmail)) {
             throw NotEqualPrincipalException.EXCEPTION; // -> 재로그인 요청
         }
 
         String refreshTokenInRedis =
-                redisService.getValues("RT(" + SERVER + "):" + refreshPrincipal);
+                redisService.getValues("RT(" + TicketStatic.SERVER + "):" + email);
         if (refreshTokenInRedis == null) { // Redis에 저장되어 있는 RT가 없을 경우
             throw NotFoundRefreshTokenException.EXCEPTION; // -> 재로그인 요청
         }
@@ -63,7 +64,7 @@ public class AuthUseCase {
         // 요청된 RT의 유효성 검사 & Redis에 저장되어 있는 RT와 같은지 비교
         if (!jwtResolver.refreshTokenValidateToken(requestRefreshToken)
                 || !refreshTokenInRedis.equals(requestRefreshToken)) {
-            redisService.deleteValues("RT(" + SERVER + "):" + refreshPrincipal); // 탈취 가능성 -> 삭제
+            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email); // 탈취 가능성 -> 삭제
             throw InvalidTokenException.EXCEPTION; // -> 재로그인 요청
         }
 
@@ -71,15 +72,13 @@ public class AuthUseCase {
         String authorities = jwtResolver.getAuthorities(accessAuthentication);
 
         // 토큰 재발급 및 Redis 업데이트
-        redisService.deleteValues("RT(" + SERVER + "):" + refreshPrincipal); // 기존 RT 삭제
+        redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email); // 기존 RT 삭제
         ReissueTokenResponse reissueTokenDto =
                 ReissueTokenResponse.builder()
-                        .accessToken(
-                                jwtGenerator.generateAccessToken(refreshPrincipal, authorities))
-                        .refreshToken(
-                                jwtGenerator.generateRefreshToken(refreshPrincipal, authorities))
+                        .accessToken(jwtGenerator.generateAccessToken(email, authorities))
+                        .refreshToken(jwtGenerator.generateRefreshToken(email, authorities))
                         .build();
-        saveRefreshToken(SERVER, refreshPrincipal, reissueTokenDto.refreshToken());
+        saveRefreshToken(TicketStatic.SERVER, email, reissueTokenDto.refreshToken());
         return reissueTokenDto;
     }
 
@@ -130,9 +129,10 @@ public class AuthUseCase {
         String principal = getPrincipal(requestAccessToken);
 
         // Redis에 저장되어 있는 RT 삭제
-        String refreshTokenInRedis = redisService.getValues("RT(" + SERVER + "):" + principal);
+        String refreshTokenInRedis =
+                redisService.getValues("RT(" + TicketStatic.SERVER + "):" + principal);
         if (refreshTokenInRedis != null) {
-            redisService.deleteValues("RT(" + SERVER + "):" + principal);
+            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + principal);
         }
         return LogoutUserResponse.builder().message(ResponseMessage.SUCCESS_LOGOUT).build();
     }
@@ -151,7 +151,8 @@ public class AuthUseCase {
                 throw BadCredentialException.EXCEPTION;
             }
         }
-        TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
+        TokenDto tokenDto =
+                generateToken(TicketStatic.SERVER, user.getEmail(), user.getUserRole().getValue());
         log.info("accessToken : " + tokenDto.accessToken());
         log.info("refreshToken : " + tokenDto.refreshToken());
         return LoginUserResponse.builder()
@@ -177,7 +178,8 @@ public class AuthUseCase {
                 && !user.getUserRole().getValue().equals("ADMIN")) {
             throw IsNotCouncilException.EXCEPTION;
         }
-        TokenDto tokenDto = generateToken(SERVER, user.getEmail(), user.getUserRole().getValue());
+        TokenDto tokenDto =
+                generateToken(TicketStatic.SERVER, user.getEmail(), user.getUserRole().getValue());
         log.info("accessToken : " + tokenDto.accessToken());
         log.info("refreshToken : " + tokenDto.refreshToken());
         return converter.toLoginCouncilResponseDto(tokenDto);
