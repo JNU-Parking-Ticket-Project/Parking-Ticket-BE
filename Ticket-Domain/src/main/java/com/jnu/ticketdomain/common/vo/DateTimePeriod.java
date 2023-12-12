@@ -2,6 +2,7 @@ package com.jnu.ticketdomain.common.vo;
 
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import javax.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -19,8 +20,9 @@ public class DateTimePeriod {
 
     @Builder
     public DateTimePeriod(LocalDateTime startAt, LocalDateTime endAt) {
-        this.startAt = startAt;
-        this.endAt = endAt;
+        // TimeZone UTC로 설정
+        this.startAt = startAt.atZone(ZoneId.of("UTC")).toLocalDateTime();
+        this.endAt = endAt.atZone(ZoneId.of("UTC")).toLocalDateTime();
     }
 
     public static DateTimePeriod between(LocalDateTime startAt, LocalDateTime endAt) {
