@@ -1,7 +1,9 @@
 package com.jnu.ticketdomain.common.vo;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import javax.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -11,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@JsonFormat(shape = JsonFormat.Shape.OBJECT, timezone = "Asia/Seoul")
 public class DateTimePeriod {
     // 쿠폰 발행 시작 시각
     private LocalDateTime startAt;
@@ -19,8 +22,9 @@ public class DateTimePeriod {
 
     @Builder
     public DateTimePeriod(LocalDateTime startAt, LocalDateTime endAt) {
-        this.startAt = startAt;
-        this.endAt = endAt;
+        // TimeZone UTC로 설정
+        this.startAt = startAt.atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+        this.endAt = endAt.atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
     }
 
     public static DateTimePeriod between(LocalDateTime startAt, LocalDateTime endAt) {
@@ -29,6 +33,6 @@ public class DateTimePeriod {
 
     public boolean contains(LocalDateTime datetime) {
         return (datetime.isAfter(startAt) || datetime.equals(startAt))
-                && (datetime.isBefore(endAt) || datetime.equals(endAt));
+            && (datetime.isBefore(endAt) || datetime.equals(endAt));
     }
 }
