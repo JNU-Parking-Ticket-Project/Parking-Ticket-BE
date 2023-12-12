@@ -10,6 +10,7 @@ import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,8 +34,8 @@ public class AdminController {
     @PutMapping("/admin/role/{userId}")
     @ApiErrorExceptionsExample(UpdateRoleExceptionDocs.class)
     public ResponseEntity<UpdateRoleResponse> updateRole(
-            @PathVariable("userId") Long userId, @RequestBody UpdateRoleRequest request) {
-        UpdateRoleResponse response = adminUseCase.updateRole(userId, request.role());
+            @PathVariable("userId") Long userId, @RequestBody @Valid UpdateRoleRequest request) {
+        UpdateRoleResponse response = adminUseCase.updateRole(userId, request.role().getValue());
         return ResponseEntity.ok(response);
     }
 }

@@ -1,18 +1,9 @@
 package com.jnu.ticketapi.config.response;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.BAD_REQUEST;
-import static com.jnu.ticketcommon.consts.TicketStatic.CONSTRAINT_VIOLATION_SEPARATOR;
+import static com.jnu.ticketcommon.consts.TicketStatic.*;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.jnu.ticketcommon.exception.BaseErrorCode;
-import com.jnu.ticketcommon.exception.ErrorReason;
-import com.jnu.ticketcommon.exception.ErrorResponse;
-import com.jnu.ticketcommon.exception.GlobalErrorCode;
-import com.jnu.ticketcommon.exception.JsonSerializeFailedException;
-import com.jnu.ticketcommon.exception.TicketCodeException;
-import com.jnu.ticketcommon.exception.TicketDynamicException;
+import com.jnu.ticketcommon.exception.*;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -66,26 +57,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @NotNull
     @Override
-    protected ResponseEntity<Object> handleExceptionInternal(
-            Exception ex,
-            Object body,
-            @NotNull HttpHeaders headers,
-            HttpStatus status,
-            @NotNull WebRequest request) {
-        ServletWebRequest servletWebRequest = (ServletWebRequest) request;
-        String url =
-                UriComponentsBuilder.fromHttpRequest(
-                                new ServletServerHttpRequest(servletWebRequest.getRequest()))
-                        .build()
-                        .toUriString();
-
-        ErrorResponse errorResponse =
-                new ErrorResponse(status.value(), status.name(), ex.getMessage(), url);
-        return super.handleExceptionInternal(ex, errorResponse, headers, status, request);
-    }
-
-    @NotNull
-    @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
             @NotNull HttpHeaders headers,
@@ -94,7 +65,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         List<FieldError> errors = ex.getBindingResult().getFieldErrors();
         String errorsToJsonString;
-
         // HttpServletRequest Caching
         ServletWebRequest servletWebRequest = (ServletWebRequest) request;
         String url =
@@ -102,6 +72,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                 new ServletServerHttpRequest(servletWebRequest.getRequest()))
                         .build()
                         .toUriString();
+
         Map<String, Object> fieldAndErrorMessages =
                 errors.stream()
                         .collect(
@@ -110,11 +81,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                         fieldError ->
                                                 Optional.ofNullable(fieldError.getDefaultMessage())
                                                         .orElse("메시지 없음")));
+
         try {
-            errorsToJsonString = new ObjectMapper().writeValueAsString(fieldAndErrorMessages);
-        } catch (JsonProcessingException e) {
+            errorsToJsonString =
+                    fieldAndErrorMessages.values().stream()
+                            .map(Object::toString)
+                            .collect(Collectors.joining(", "));
+        } catch (Exception e) {
+            log.info("error: {}", e.getMessage());
             throw JsonSerializeFailedException.EXCEPTION;
         }
+
         ErrorResponse errorResponse =
                 new ErrorResponse(status.value(), status.name(), errorsToJsonString, url);
 
@@ -176,6 +153,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         e.getReason(),
                         request.getRequestURL().toString());
         return ResponseEntity.status(HttpStatus.valueOf(e.getStatus())).body(errorResponse);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> IllegalArgumentExceptionHandler(
+            IllegalArgumentException e, HttpServletRequest request) {
+        ErrorResponse errorResponse =
+                new ErrorResponse(
+                        BAD_REQUEST,
+                        BAD_REQUEST_CODE,
+                        e.getMessage(),
+                        request.getRequestURL().toString());
+        return ResponseEntity.status(HttpStatus.valueOf(BAD_REQUEST)).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
