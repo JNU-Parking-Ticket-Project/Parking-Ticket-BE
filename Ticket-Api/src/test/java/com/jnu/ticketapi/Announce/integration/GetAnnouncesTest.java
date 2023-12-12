@@ -1,7 +1,6 @@
 package com.jnu.ticketapi.Announce.integration;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jnu.ticketapi.config.DatabaseClearExtension;
@@ -50,7 +49,7 @@ public class GetAnnouncesTest {
             String responseBody = resultActions.andReturn().getResponse().getContentAsString();
             log.info("responseBody : " + responseBody);
             // then
-            resultActions.andExpectAll(status().isOk(), jsonPath("$.success").value(true));
+            resultActions.andExpectAll(status().isOk());
         }
     }
 }

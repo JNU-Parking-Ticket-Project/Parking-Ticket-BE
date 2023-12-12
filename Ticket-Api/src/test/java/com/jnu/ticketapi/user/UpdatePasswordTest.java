@@ -76,6 +76,6 @@ public class UpdatePasswordTest {
         log.info("responseBody : " + responseBody);
 
         // then
-        resultActions.andExpectAll(status().isOk(), jsonPath("$.success").value(true));
+        resultActions.andExpectAll(status().isOk(), jsonPath("$.email").value("pon05114@naver.com"));
     }
 }
