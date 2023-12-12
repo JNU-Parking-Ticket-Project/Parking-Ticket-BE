@@ -1,7 +1,6 @@
 package com.jnu.ticketapi.user;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,6 +63,6 @@ public class FindPasswordTest {
         log.info("responseBody : " + responseBody);
 
         // then
-        resultActions.andExpectAll(status().isOk(), jsonPath("$.success").value(true));
+        resultActions.andExpectAll(status().isOk());
     }
 }

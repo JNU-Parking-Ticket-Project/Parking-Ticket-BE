@@ -49,12 +49,11 @@ public class LoginTest {
                 // then
                 resultActions.andExpectAll(
                         status().isOk(),
-                        jsonPath("$.success").value(true),
                         /*
                         accessToken, refreshToken 요청마다 새로 발급되서 예측을 할 수 없어서 exists()로 검사
                         */
-                        jsonPath("$.data.accessToken").exists());
-                jsonPath("$.data.refreshToken").exists();
+                        jsonPath("$.accessToken").exists());
+                jsonPath("$.refreshToken").exists();
                 log.info("responseBody : " + responseBody);
             }
         }

@@ -69,8 +69,7 @@ public class GetNoticeTest {
         // then
         resultActions.andExpectAll(
                 status().isOk(),
-                jsonPath("$.success").value(true),
-                jsonPath("$.data.noticeContent").value(noticeContent));
+                jsonPath("$.noticeContent").value(noticeContent));
     }
 
     @Test

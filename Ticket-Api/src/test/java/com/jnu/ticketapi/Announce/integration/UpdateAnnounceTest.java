@@ -83,7 +83,7 @@ public class UpdateAnnounceTest {
                             .getContentAsString(StandardCharsets.UTF_8);
             log.info("responseBody : " + responseBody);
             // then
-            resultActions.andExpectAll(status().isOk(), jsonPath("$.success").value(true));
+            resultActions.andExpectAll(status().isOk(), jsonPath("$.announceTitle").value("수정된 제목"));
         }
     }
 }
