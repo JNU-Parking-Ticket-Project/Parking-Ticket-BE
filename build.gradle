@@ -29,7 +29,6 @@ sonarqube {
         property 'sonar.java.coveragePlugin', 'jacoco'
     }
 }
-
 subprojects {
     group = 'com.jnu'
     version = '0.0.1-SNAPSHOT'
