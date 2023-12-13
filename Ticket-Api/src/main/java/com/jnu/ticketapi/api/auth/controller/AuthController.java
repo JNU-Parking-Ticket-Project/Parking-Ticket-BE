@@ -33,7 +33,7 @@ public class AuthController {
     @Operation(summary = "로그인/회원가입", description = "로그인을 하면 동시에 회원가입이 되면서 로그인 처리")
     @PostMapping("/auth/login")
     public ResponseEntity<LoginUserResponse> logInUser(
-            @RequestBody LoginUserRequest loginUserRequest) {
+            @RequestBody @Valid LoginUserRequest loginUserRequest) {
         LoginUserResponse responseDto = authUseCase.login(loginUserRequest);
         return ResponseEntity.ok(responseDto);
     }

@@ -30,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-@ExtendWith(DatabaseClearExtension.class)
 @Sql("classpath:db/teardown.sql")
 public class LoginCouncilTest {
     @Autowired
@@ -52,15 +51,6 @@ public class LoginCouncilTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody));
 
-        SignUpCouncilRequest request2 =
-                SignUpCouncilRequest.builder().email("ekrrdj21@jnu.ac.kr").name("이진혁").pwd("Dlwlsgur@123").studentNum("21555").phoneNum("010-000-0000").build();
-        String requestBody2 = om.writeValueAsString(request);
-
-
-        mvc.perform(
-                post("/v1/council/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody));
     }
 
     @Nested

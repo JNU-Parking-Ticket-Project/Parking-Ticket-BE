@@ -13,7 +13,6 @@ public class PasswordValidator implements ConstraintValidator<Password, String> 
         if (value == null) {
             return false;
         }
-        boolean yes = value.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$");
-        return yes;
+       return value.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$");
     }
 }
