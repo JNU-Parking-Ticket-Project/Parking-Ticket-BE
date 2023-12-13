@@ -75,7 +75,7 @@ public class AuthController {
     @PostMapping("/auth/check/email")
     @ApiErrorExceptionsExample(CheckEmailExceptionDocs.class)
     public ResponseEntity<CheckEmailResponse> checkEmail(
-            @RequestBody CheckEmailRequest checkEmailRequest) {
+            @RequestBody @Valid CheckEmailRequest checkEmailRequest) {
         CheckEmailResponse responseDto = authUseCase.checkEmail(checkEmailRequest);
         return ResponseEntity.ok(responseDto);
     }
