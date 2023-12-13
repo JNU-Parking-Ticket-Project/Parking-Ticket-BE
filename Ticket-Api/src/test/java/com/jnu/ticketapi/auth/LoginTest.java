@@ -71,8 +71,9 @@ public class LoginTest {
                         /*
                         accessToken, refreshToken 요청마다 새로 발급되서 예측을 할 수 없어서 exists()로 검사
                         */
-                    jsonPath("$.accessToken").exists());
-            jsonPath("$.refreshToken").exists();
+                    jsonPath("$.accessToken").exists(),
+                    jsonPath("$.refreshToken").exists()
+            );
             log.info("responseBody : " + responseBody);
 
         }
@@ -95,8 +96,9 @@ public class LoginTest {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.status").value(400));
-                    jsonPath("$.reason").value(GlobalErrorCode.BAD_CREDENTIAL);
+                    jsonPath("$.status").value(400),
+                    jsonPath("$.reason").value(GlobalErrorCode.BAD_CREDENTIAL.getReason())
+            );
             log.info("responseBody : " + responseBody);
         }
 
@@ -120,8 +122,9 @@ public class LoginTest {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.status").value(400));
-                     jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_PASSWORD);
+                    jsonPath("$.status").value(400),
+                     jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_PASSWORD)
+            );
             log.info("responseBody : " + responseBody);
         }
 
@@ -144,8 +147,9 @@ public class LoginTest {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.status").value(400));
-            jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_EMAIL);
+                    jsonPath("$.status").value(400),
+            jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_EMAIL)
+            );
             log.info("responseBody : " + responseBody);
         }
     }
