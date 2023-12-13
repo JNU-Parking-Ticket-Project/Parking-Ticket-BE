@@ -6,6 +6,7 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import lombok.Builder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 @Builder
 public record SignUpCouncilRequest(
         String email, String pwd, String name, String phoneNum, String studentNum) {

@@ -1,5 +1,9 @@
 package com.jnu.ticketapi.auth;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
 import com.jnu.ticketapi.api.auth.model.request.ReissueTokenRequest;
@@ -24,30 +28,21 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @ExtendWith(DatabaseClearExtension.class)
 public class ReissueTokenTest {
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
-    @Autowired
-    private ObjectMapper om;
+    @Autowired private ObjectMapper om;
 
-    @Autowired
-    private JwtGenerator generator;
+    @Autowired private JwtGenerator generator;
 
-    @Autowired
-    private JwtResolver resolver;
+    @Autowired private JwtResolver resolver;
 
-    @Autowired
-    private RedisService redisService;
+    @Autowired private RedisService redisService;
 
     private final String email = "ekrrrdj21@jnu.ac.kr";
     private final String pwd = "1234";
@@ -111,7 +106,7 @@ public class ReissueTokenTest {
         @Test
         @DisplayName("실패 : 토큰 재발급(자신의 리프레시토큰이 아닐경우)")
         void reissueTokenFailTest() throws Exception {
-            //given
+            // given
             String accessToken = generator.generateAccessToken(email, "USER");
             String fakeEmail = "i'm faker";
             /*
@@ -144,12 +139,13 @@ public class ReissueTokenTest {
         @Test
         @DisplayName("실패 : 토큰 재발급(리프레시 토큰의 인증시간이 만료되었을 경)")
         void reissueTokenFailTest2() throws Exception {
-            //given
+            // given
             String accessToken = generator.generateAccessToken(email, "USER");
             /*
             redis에 저장된 refreshToken 가져오기
              */
-            String refreshToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJFbWFpbCI6ImVrcnJyZGoyMUBqbnUuYWMua3IiLCJBdXRoIjoiVVNFUiIsImlhdCI6MTcwMjM5Mzg5NiwiZXhwIjoxNzAyMzk1Njk2fQ.oFQN-YuTTrQxtg3lGKyHv5AWlTQSzRKHPduyia1B3o4";
+            String refreshToken =
+                    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJFbWFpbCI6ImVrcnJyZGoyMUBqbnUuYWMua3IiLCJBdXRoIjoiVVNFUiIsImlhdCI6MTcwMjM5Mzg5NiwiZXhwIjoxNzAyMzk1Njk2fQ.oFQN-YuTTrQxtg3lGKyHv5AWlTQSzRKHPduyia1B3o4";
             ReissueTokenRequest request =
                     ReissueTokenRequest.builder().refreshToken(refreshToken).build();
             String requestBody = om.writeValueAsString(request);
@@ -176,7 +172,7 @@ public class ReissueTokenTest {
         @Test
         @DisplayName("실패 : 토큰 재발급(리프레시 토큰이 유효하지 않은 경우")
         void reissueTokenFailTest3() throws Exception {
-            //given
+            // given
             String accessToken = generator.generateAccessToken(email, "USER");
             /*
             redis에 저장된 refreshToken 가져오기
@@ -208,7 +204,7 @@ public class ReissueTokenTest {
         @Test
         @DisplayName("실패 : 토큰 재발급(리프레시 토큰이 null 혹은 빈 값으로 들어올 경우")
         void reissueTokenFailTest4() throws Exception {
-            //given
+            // given
             String accessToken = generator.generateAccessToken(email, "USER");
             /*
             redis에 저장된 refreshToken 가져오기
@@ -238,4 +234,3 @@ public class ReissueTokenTest {
         }
     }
 }
-
