@@ -47,6 +47,9 @@ public class AuthUseCase {
     public ReissueTokenResponse reissue(
             String requestAccessToken, String requestRefreshToken, String email) {
 
+        if (!jwtResolver.refreshTokenValidateToken(requestRefreshToken)) {
+            throw InvalidTokenException.EXCEPTION;
+        }
         Authentication accessAuthentication = jwtResolver.getAuthentication(requestAccessToken);
         String refreshEmail =
                 jwtResolver.parseClaims(requestRefreshToken).get(TicketStatic.EMAIL_KEY).toString();
@@ -58,14 +61,8 @@ public class AuthUseCase {
         String refreshTokenInRedis =
                 redisService.getValues("RT(" + TicketStatic.SERVER + "):" + email);
         if (refreshTokenInRedis == null) { // Redis에 저장되어 있는 RT가 없을 경우
+            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
             throw NotFoundRefreshTokenException.EXCEPTION; // -> 재로그인 요청
-        }
-
-        // 요청된 RT의 유효성 검사 & Redis에 저장되어 있는 RT와 같은지 비교
-        if (!jwtResolver.refreshTokenValidateToken(requestRefreshToken)
-                || !refreshTokenInRedis.equals(requestRefreshToken)) {
-            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email); // 탈취 가능성 -> 삭제
-            throw InvalidTokenException.EXCEPTION; // -> 재로그인 요청
         }
 
         SecurityContextHolder.getContext().setAuthentication(accessAuthentication);
