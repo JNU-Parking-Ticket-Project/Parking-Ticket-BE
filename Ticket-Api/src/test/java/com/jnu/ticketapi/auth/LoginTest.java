@@ -1,12 +1,10 @@
 package com.jnu.ticketapi.auth;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
+import com.jnu.ticketcommon.message.ValidationMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,44 +16,112 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 public class LoginTest {
 
-    @Autowired private MockMvc mvc;
+    @Autowired
+    private MockMvc mvc;
 
-    @Autowired private ObjectMapper om;
+    @Autowired
+    private ObjectMapper om;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        // given
+        LoginUserRequest request =
+                LoginUserRequest.builder().email("ekrrrdj123@jnu.ac.kr").pwd("Dlwlsgur@123").build();
+        String requestBody = om.writeValueAsString(request);
+        // when
+        ResultActions resultActions =
+                mvc.perform(
+                        post("/v1/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody));
+    }
 
     @Nested
     class loginTest {
         @Test
         @DisplayName("성공 : 로그인")
         void loginTest() throws Exception {
-            {
-                // given
-                LoginUserRequest requestsDto =
-                        LoginUserRequest.builder().email("ekrrrdj21@jnu.ac.kr").pwd("1234").build();
-                String requestBody = om.writeValueAsString(requestsDto);
-                // when
-                ResultActions resultActions =
-                        mvc.perform(
-                                post("/v1/auth/login")
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(requestBody));
-                // eye
-                String responseBody = resultActions.andReturn().getResponse().getContentAsString();
-                // then
-                resultActions.andExpectAll(
-                        status().isOk(),
+
+            // given
+            LoginUserRequest request =
+                    LoginUserRequest.builder().email("ekrrrdj21@jnu.ac.kr").pwd("Dlwlsgur@123").build();
+            String requestBody = om.writeValueAsString(request);
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            post("/v1/auth/login")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(requestBody));
+            // eye
+            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+            // then
+            resultActions.andExpectAll(
+                    status().isOk(),
                         /*
                         accessToken, refreshToken 요청마다 새로 발급되서 예측을 할 수 없어서 exists()로 검사
                         */
-                        jsonPath("$.accessToken").exists());
-                jsonPath("$.refreshToken").exists();
-                log.info("responseBody : " + responseBody);
-            }
+                    jsonPath("$.accessToken").exists());
+            jsonPath("$.refreshToken").exists();
+            log.info("responseBody : " + responseBody);
+
+        }
+
+        @Test
+        @DisplayName("실패 : 로그인(비밀번호 틀린 경우")
+        void loginTestFail() throws Exception {
+            // given
+            LoginUserRequest request =
+                    LoginUserRequest.builder().email("ekrrrdj123@jnu.ac.kr").pwd("Qkrdudrb@123").build();
+            String requestBody = om.writeValueAsString(request);
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            post("/v1/auth/login")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(requestBody));
+            // eye
+            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+            // then
+            resultActions.andExpectAll(
+                    status().is4xxClientError(),
+                    jsonPath("$.status").value(400));
+                    jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_PASSWORD);
+            log.info("responseBody : " + responseBody);
+        }
+
+
+        @Test
+        @DisplayName("실패 : 비밀번호가 정규식에 맞지 않는경우")
+        void loginTestFail2() throws Exception {
+
+            // given
+            LoginUserRequest request =
+                    LoginUserRequest.builder().email("ekrrrdj21@jnu.ac.kr").pwd("1234").build();
+            String requestBody = om.writeValueAsString(request);
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            post("/v1/auth/login")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(requestBody));
+            // eye
+            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+            // then
+            resultActions.andExpectAll(
+                    status().is4xxClientError(),
+                    jsonPath("$.status").value(400));
+                     jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_PASSWORD);
+            log.info("responseBody : " + responseBody);
         }
     }
 }
