@@ -6,7 +6,6 @@ import com.jnu.ticketapi.config.response.JwtAuthenticationEntryPoint;
 import com.jnu.ticketapi.security.JwtAuthenticationFilter;
 import com.jnu.ticketapi.security.JwtExceptionFilter;
 import com.jnu.ticketapi.security.JwtResolver;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -18,9 +17,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -59,7 +55,6 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .cors()
-                .configurationSource(corsConfigurationSource())
                 .and()
                 .headers()
                 .frameOptions()
@@ -114,23 +109,5 @@ public class SecurityConfig {
                         .antMatchers("/v1/auth/check/email/**")
                         .antMatchers("/error")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
-    }
-    /*
-    Spring Mvc CORS 설정을 해주면 corsConfigurationSource() 메서드를 구현할 필요가 없다고는 하는데
-    혹시몰라서 일단 작성해놓음
-    */
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-
-        config.setAllowedOrigins(List.of("http://localhost:4200"));
-        config.setAllowedOrigins(List.of("https://apply.jnu-parking.com"));
-        config.setAllowedOrigins(List.of("https://manager.jnu-parking.com"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
     }
 }

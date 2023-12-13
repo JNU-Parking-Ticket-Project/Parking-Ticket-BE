@@ -9,6 +9,10 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Cors 설정
+ */
+
 @Configuration
 @RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
