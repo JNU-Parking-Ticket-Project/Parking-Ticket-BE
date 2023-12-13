@@ -2,6 +2,7 @@ package com.jnu.ticketapi.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
+import com.jnu.ticketapi.config.DatabaseClearExtension;
 import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.message.ValidationMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
+@ExtendWith(DatabaseClearExtension.class)
 public class LoginTest {
 
     @Autowired

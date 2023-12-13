@@ -3,6 +3,7 @@ package com.jnu.ticketapi.auth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.api.auth.model.request.LoginCouncilRequest;
 import com.jnu.ticketapi.api.council.model.request.SignUpCouncilRequest;
+import com.jnu.ticketapi.config.DatabaseClearExtension;
 import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.message.ValidationMessage;
 import com.jnu.ticketdomain.domains.council.exception.CouncilErrorCode;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
+@ExtendWith(DatabaseClearExtension.class)
 @Sql("classpath:db/teardown.sql")
 public class LoginCouncilTest {
     @Autowired
