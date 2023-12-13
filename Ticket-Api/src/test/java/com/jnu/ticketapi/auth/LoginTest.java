@@ -124,5 +124,29 @@ public class LoginTest {
                      jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_PASSWORD);
             log.info("responseBody : " + responseBody);
         }
+
+        @Test
+        @DisplayName("실패 : 로그인/회원가입(이메일이 이메일 형식에 맞지 않는경우)")
+        void loginTestFail3() throws Exception {
+
+            // given
+            LoginUserRequest request =
+                    LoginUserRequest.builder().email("ekrrrdj21jnu.ac.kr").pwd("Dlwlsgur@123").build();
+            String requestBody = om.writeValueAsString(request);
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            post("/v1/auth/login")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(requestBody));
+            // eye
+            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+            // then
+            resultActions.andExpectAll(
+                    status().is4xxClientError(),
+                    jsonPath("$.status").value(400));
+            jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_EMAIL);
+            log.info("responseBody : " + responseBody);
+        }
     }
 }

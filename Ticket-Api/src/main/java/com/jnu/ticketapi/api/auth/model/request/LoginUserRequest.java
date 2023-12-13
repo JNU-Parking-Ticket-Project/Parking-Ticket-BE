@@ -10,7 +10,7 @@ import lombok.Builder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Builder
-public record LoginUserRequest(@Email String email, @Password(message = ValidationMessage.IS_NOT_VALID_PASSWORD) String pwd) {
+public record LoginUserRequest(@Email(message = ValidationMessage.IS_NOT_VALID_EMAIL) String email, @Password(message = ValidationMessage.IS_NOT_VALID_PASSWORD) String pwd) {
     public User toEntity(LoginUserRequest loginUserRequest) {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         return User.builder()
