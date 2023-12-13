@@ -20,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @SecurityRequirement(name = "access-token")
 @RestController
 @RequestMapping("/v1")
@@ -43,7 +45,7 @@ public class AuthController {
     @PostMapping("/auth/reissue")
     @ApiErrorExceptionsExample(TokenReissueExceptionDocs.class)
     public ResponseEntity<ReissueTokenResponse> reIssue(
-            @RequestBody ReissueTokenRequest requestDto,
+            @RequestBody @Valid ReissueTokenRequest requestDto,
             @RequestHeader("Authorization") String bearerToken,
             @GetEmail String email) {
         String accessToken = authUseCase.extractToken(bearerToken);
