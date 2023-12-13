@@ -2,6 +2,8 @@ package com.jnu.ticketapi;
 
 
 import java.util.Arrays;
+import java.util.TimeZone;
+import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
@@ -17,6 +19,12 @@ import org.springframework.core.env.Environment;
 @Slf4j
 public class TicketApiApplication implements ApplicationListener<ApplicationReadyEvent> {
     private final Environment environment;
+
+    @PostConstruct
+    void started() {
+        // timezone UTC 셋팅
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(TicketApiApplication.class, args);

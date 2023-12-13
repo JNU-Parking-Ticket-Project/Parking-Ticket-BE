@@ -63,7 +63,8 @@ public class SecurityConfig {
 
         // 요청에 대한 권한 설정
         http.authorizeRequests()
-                .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
+                .requestMatchers(CorsUtils::isPreFlightRequest)
+                .permitAll()
                 .antMatchers(
                         "/swagger-resources/**",
                         "/swagger-ui/**",
