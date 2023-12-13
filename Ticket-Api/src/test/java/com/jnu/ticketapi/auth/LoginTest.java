@@ -2,6 +2,7 @@ package com.jnu.ticketapi.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
+import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.message.ValidationMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +50,7 @@ public class LoginTest {
     @Nested
     class loginTest {
         @Test
-        @DisplayName("성공 : 로그인")
+        @DisplayName("성공 : 로그인/회원가입")
         void loginTest() throws Exception {
 
             // given
@@ -77,7 +78,7 @@ public class LoginTest {
         }
 
         @Test
-        @DisplayName("실패 : 로그인(비밀번호 틀린 경우")
+        @DisplayName("실패 : 로그인/회원가입(비밀번호 틀린 경우)")
         void loginTestFail() throws Exception {
             // given
             LoginUserRequest request =
@@ -95,13 +96,13 @@ public class LoginTest {
             resultActions.andExpectAll(
                     status().is4xxClientError(),
                     jsonPath("$.status").value(400));
-                    jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_PASSWORD);
+                    jsonPath("$.reason").value(GlobalErrorCode.BAD_CREDENTIAL);
             log.info("responseBody : " + responseBody);
         }
 
 
         @Test
-        @DisplayName("실패 : 비밀번호가 정규식에 맞지 않는경우")
+        @DisplayName("실패 : 로그인/회원가입(비밀번호가 정규식에 맞지 않는경우)")
         void loginTestFail2() throws Exception {
 
             // given
