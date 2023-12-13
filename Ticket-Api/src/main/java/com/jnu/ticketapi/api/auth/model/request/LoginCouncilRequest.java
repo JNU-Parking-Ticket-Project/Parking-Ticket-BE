@@ -1,3 +1,10 @@
 package com.jnu.ticketapi.api.auth.model.request;
 
-public record LoginCouncilRequest(String email, String pwd) {}
+import com.jnu.ticketcommon.annotation.Password;
+import com.jnu.ticketcommon.message.ValidationMessage;
+import lombok.Builder;
+
+import javax.validation.constraints.Email;
+
+@Builder
+public record LoginCouncilRequest(@Email(message = ValidationMessage.IS_NOT_VALID_EMAIL) String email, @Password(message = ValidationMessage.IS_NOT_VALID_PASSWORD) String pwd) {}

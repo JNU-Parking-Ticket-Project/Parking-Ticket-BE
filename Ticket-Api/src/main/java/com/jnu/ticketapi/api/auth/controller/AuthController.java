@@ -66,7 +66,7 @@ public class AuthController {
     @PostMapping("/auth/login/council")
     @ApiErrorExceptionsExample(CouncilLoginExceptionDocs.class)
     public ResponseEntity<LoginCouncilResponse> logInCouncil(
-            @RequestBody LoginCouncilRequest loginCouncilRequest) {
+            @RequestBody @Valid LoginCouncilRequest loginCouncilRequest) {
         LoginCouncilResponse responseDto = authUseCase.loginCouncil(loginCouncilRequest);
         return ResponseEntity.ok(responseDto);
     }
