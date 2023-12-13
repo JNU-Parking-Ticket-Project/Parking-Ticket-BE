@@ -5,6 +5,7 @@ import com.jnu.ticketcommon.annotation.Validator;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
+@Validator
 public class PasswordValidator implements ConstraintValidator<Password, String> {
 
     @Override
@@ -12,6 +13,7 @@ public class PasswordValidator implements ConstraintValidator<Password, String> 
         if (value == null) {
             return false;
         }
-        return value.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$\n");
+        boolean yes = value.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$");
+        return yes;
     }
 }
