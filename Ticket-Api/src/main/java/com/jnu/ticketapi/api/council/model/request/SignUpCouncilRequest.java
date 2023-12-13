@@ -4,8 +4,9 @@ package com.jnu.ticketapi.api.council.model.request;
 import com.jnu.ticketdomain.domains.council.domain.Council;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
+import lombok.Builder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
+@Builder
 public record SignUpCouncilRequest(
         String email, String pwd, String name, String phoneNum, String studentNum) {
     public User toUserEntity(SignUpCouncilRequest signUpCouncilRequest) {
