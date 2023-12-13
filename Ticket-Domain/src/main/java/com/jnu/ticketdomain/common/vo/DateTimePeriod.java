@@ -33,6 +33,6 @@ public class DateTimePeriod {
 
     public boolean contains(LocalDateTime datetime) {
         return (datetime.isAfter(startAt) || datetime.equals(startAt))
-            && (datetime.isBefore(endAt) || datetime.equals(endAt));
+                && (datetime.isBefore(endAt) || datetime.equals(endAt));
     }
 }

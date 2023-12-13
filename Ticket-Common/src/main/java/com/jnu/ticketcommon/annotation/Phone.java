@@ -13,7 +13,7 @@ import javax.validation.Constraint;
 @Constraint(validatedBy = PhoneValidator.class)
 public @interface Phone {
 
-    String message() default "";
+    String message() default "올바른 형식(010-xxxx-xxxx)의 전화번호를 입력해주세요";
 
     Class[] groups() default {};
 
