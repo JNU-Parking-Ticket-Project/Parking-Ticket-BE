@@ -65,10 +65,9 @@ public class Sector {
 
     public void decreaseEventStock() {
         checkEventLeft();
-
-        if (sectorCapacity > 0) {
+        if (isSectorRemaining()) {
             decreaseCapacity();
-        } else if (reserve > 0) {
+        } else if (isSectorReserveRemaining()) {
             decreaseReserve();
         } else {
             throw NoEventStockLeftException.EXCEPTION;
@@ -89,6 +88,14 @@ public class Sector {
         if (remainingAmount < 1) { // 재고 없을 경우 에러 처리
             throw NoEventStockLeftException.EXCEPTION;
         }
+    }
+
+    public boolean isSectorRemaining() {
+        return remainingAmount > 0;
+    }
+
+    public boolean isSectorReserveRemaining() {
+        return reserve > 0;
     }
 
     public void update(Sector sector) {

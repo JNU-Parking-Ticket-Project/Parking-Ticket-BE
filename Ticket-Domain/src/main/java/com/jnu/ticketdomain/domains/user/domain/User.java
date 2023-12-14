@@ -60,7 +60,7 @@ public class User {
         this.sequence = -1;
     }
 
-    public void fail(String status, int sequence) {
+    public void fail() {
         this.status = "불합격";
         this.sequence = -2;
     }

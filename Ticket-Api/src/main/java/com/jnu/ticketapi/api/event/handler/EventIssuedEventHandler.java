@@ -5,6 +5,7 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
@@ -37,6 +38,18 @@ public class EventIssuedEventHandler {
     private void processEventData(Long userId) {
         Registration registration = registrationAdaptor.findByUserId(userId);
         Sector sector = registration.getSector();
+        User user = registration.getUser();
+
+        if (sector.isSectorRemaining()) {
+            user.success();
+        } else if (sector.isSectorReserveRemaining()) {
+            Long waitingOrder =
+                    waitingQueueService.getWaitingOrder(REDIS_EVENT_ISSUE_STORE, userId);
+            user.prepare(waitingOrder.intValue());
+        } else {
+            user.fail();
+        }
+
         sector.decreaseEventStock();
     }
 }
