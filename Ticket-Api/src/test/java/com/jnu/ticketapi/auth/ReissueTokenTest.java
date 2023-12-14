@@ -69,7 +69,7 @@ public class ReissueTokenTest {
     class reissueTokenTest {
         @Test
         @DisplayName("성공 : 토큰 재발급")
-        void reissueToken() throws Exception {
+        void success() throws Exception {
             // given
             String accessToken = generator.generateAccessToken(email, "USER");
             /*
@@ -105,7 +105,7 @@ public class ReissueTokenTest {
 
         @Test
         @DisplayName("실패 : 토큰 재발급(자신의 리프레시토큰이 아닐경우)")
-        void reissueTokenFailTest() throws Exception {
+        void fail() throws Exception {
             // given
             String accessToken = generator.generateAccessToken(email, "USER");
             String fakeEmail = "i'm faker";
@@ -138,7 +138,7 @@ public class ReissueTokenTest {
 
         @Test
         @DisplayName("실패 : 토큰 재발급(리프레시 토큰의 인증시간이 만료되었을 경)")
-        void reissueTokenFailTest2() throws Exception {
+        void fail2() throws Exception {
             // given
             String accessToken = generator.generateAccessToken(email, "USER");
             /*
@@ -171,7 +171,7 @@ public class ReissueTokenTest {
 
         @Test
         @DisplayName("실패 : 토큰 재발급(리프레시 토큰이 유효하지 않은 경우")
-        void reissueTokenFailTest3() throws Exception {
+        void fail3() throws Exception {
             // given
             String accessToken = generator.generateAccessToken(email, "USER");
             /*
@@ -203,7 +203,7 @@ public class ReissueTokenTest {
 
         @Test
         @DisplayName("실패 : 토큰 재발급(리프레시 토큰이 null 혹은 빈 값으로 들어올 경우")
-        void reissueTokenFailTest4() throws Exception {
+        void fail4() throws Exception {
             // given
             String accessToken = generator.generateAccessToken(email, "USER");
             /*

@@ -54,7 +54,7 @@ public class LoginTest {
     class loginTest {
         @Test
         @DisplayName("성공 : 로그인/회원가입")
-        void loginTest() throws Exception {
+        void success() throws Exception {
 
             // given
             LoginUserRequest request =
@@ -83,7 +83,7 @@ public class LoginTest {
 
         @Test
         @DisplayName("실패 : 로그인/회원가입(비밀번호 틀린 경우)")
-        void loginTestFail() throws Exception {
+        void fail() throws Exception {
             // given
             LoginUserRequest request =
                     LoginUserRequest.builder().email("ekrrrdj123@jnu.ac.kr").pwd("Qkrdudrb@123").build();
@@ -108,7 +108,7 @@ public class LoginTest {
 
         @Test
         @DisplayName("실패 : 로그인/회원가입(비밀번호가 정규식에 맞지 않는경우)")
-        void loginTestFail2() throws Exception {
+        void fail2() throws Exception {
 
             // given
             LoginUserRequest request =
@@ -133,7 +133,7 @@ public class LoginTest {
 
         @Test
         @DisplayName("실패 : 로그인/회원가입(이메일이 이메일 형식에 맞지 않는경우)")
-        void loginTestFail3() throws Exception {
+        void fail3() throws Exception {
 
             // given
             LoginUserRequest request =

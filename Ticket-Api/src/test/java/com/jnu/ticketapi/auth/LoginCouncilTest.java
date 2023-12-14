@@ -57,7 +57,7 @@ public class LoginCouncilTest {
     class loginCouncilTest {
         @Test
         @DisplayName("성공 : 학생회 로그인")
-        void councilLoginTest() throws Exception {
+        void success() throws Exception {
             // given
             LoginCouncilRequest request =
                     LoginCouncilRequest.builder().email("council@jnu.ac.kr").pwd("Council@123").build();
@@ -84,7 +84,7 @@ public class LoginCouncilTest {
 
         @Test
         @DisplayName("실패 : 학생회 로그인(권한이 학생이 이상이 아닐경우)")
-        void councilLoginTestFail() throws Exception {
+        void fail() throws Exception {
             // given
             LoginCouncilRequest request =
                     LoginCouncilRequest.builder().email("ekrrdj21@jnu.ac.kr").pwd("Dlwlsgur@123").build();
@@ -108,7 +108,7 @@ public class LoginCouncilTest {
 
         @Test
         @DisplayName("실패 : 학생회 로그인(비밀번호가 틀린 경우)")
-        void councilLoginTestFail2() throws Exception {
+        void fail2() throws Exception {
             // given
             LoginCouncilRequest request =
                     LoginCouncilRequest.builder().email("ekrrdj21@jnu.ac.kr").pwd("Qkrdudrb@123").build();
@@ -131,7 +131,7 @@ public class LoginCouncilTest {
 
         @Test
         @DisplayName("실패 : 학생회 로그인(비밀번호가 정규식에 맞지 않는경우)")
-        void councilLoginTestFail3() throws Exception {
+        void fail3() throws Exception {
 
             // given
             LoginCouncilRequest request =
@@ -156,7 +156,7 @@ public class LoginCouncilTest {
 
         @Test
         @DisplayName("실패 : 학생회 로그인(이메일이 이메일 형식에 맞지 않는경우)")
-        void councilLoginTestFail4() throws Exception {
+        void fail4() throws Exception {
 
             // given
             LoginCouncilRequest request =

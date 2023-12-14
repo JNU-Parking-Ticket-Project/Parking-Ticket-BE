@@ -39,7 +39,7 @@ public class GetRegistrationTest {
 
         @Test
         @DisplayName("성공 : 임시저장 조회(임시저장을 안했을 경우)")
-        void getRegistrationTest() throws Exception {
+        void success() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
@@ -65,7 +65,7 @@ public class GetRegistrationTest {
 
         @Test
         @DisplayName("성공 : 임시저장 조회(임시저장을 했을 경우)")
-        void getRegistrationTest2() throws Exception {
+        void success2() throws Exception {
             // given
             String email = "user@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "USER");

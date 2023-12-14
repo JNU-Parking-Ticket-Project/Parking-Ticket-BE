@@ -59,7 +59,7 @@ public class UpdateRoleTest {
     class updateRoleTest {
         @Test
         @DisplayName("성공 : 권한 변경")
-        void updateRoleTest() throws Exception {
+        void success() throws Exception {
             {
                 // given
                 Long userId = 1L;
@@ -87,7 +87,7 @@ public class UpdateRoleTest {
 
         @Test
         @DisplayName("실패 : 권한 변경(존재하지 않는 유저 ID 입력)")
-        void updateRoleFailTest() throws Exception {
+        void fail() throws Exception {
             {
                 // given
                 Long userId = 55L;
@@ -116,7 +116,7 @@ public class UpdateRoleTest {
 
         @Test
         @DisplayName("실패 : 권한 변경(존재하지 않는 권한 입력)")
-        void updateRoleFailTest2() throws Exception {
+        void fail2() throws Exception {
             {
                 // given
                 Long userId = 1L;

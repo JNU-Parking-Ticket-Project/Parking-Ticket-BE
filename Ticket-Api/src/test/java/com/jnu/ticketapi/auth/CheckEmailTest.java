@@ -39,7 +39,7 @@ public class CheckEmailTest {
     class checkEmailTest {
         @Test
         @DisplayName("성공 : 이메일 중복 체크")
-        void checkEmailTest() throws Exception {
+        void success() throws Exception {
 
             // given
             CheckEmailRequest request =
@@ -64,7 +64,7 @@ public class CheckEmailTest {
 
         @Test
         @DisplayName("실패 : 이메일 중복 체크(이메일이 이미 존재하는 경우)")
-        void checkEmailTestFail() throws Exception {
+        void fail() throws Exception {
 
             // given
             CheckEmailRequest request =
@@ -89,7 +89,7 @@ public class CheckEmailTest {
 
         @Test
         @DisplayName("실패 : 이메일 중복 체크(이메일이 이메일 형식에 맞지 않는경우)")
-        void loginTestFail3() throws Exception {
+        void fail2() throws Exception {
 
             // given
             CheckEmailRequest request =
