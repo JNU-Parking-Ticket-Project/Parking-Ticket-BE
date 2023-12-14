@@ -7,4 +7,4 @@ import lombok.Builder;
 
 @Builder
 public record ReissueTokenRequest(
-        @NotBlank(message = ValidationMessage.IS_NOT_BLANK) String refreshToken) {}
+        @NotBlank(message = ValidationMessage.MUST_NOT_BLANK) String refreshToken) {}

@@ -228,7 +228,7 @@ public class ReissueTokenTest {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value(ValidationMessage.IS_NOT_BLANK),
+                    jsonPath("$.reason").value(ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.status").value(400));
             log.info("responseBody : " + responseBody);
         }
