@@ -63,15 +63,32 @@ public class Sector {
         this.remainingAmount = this.issueAmount;
     }
 
-    public void checkEventLeft() {
-        if (remainingAmount < 1) { // 재고 없을 경우 에러 처리
+    public void decreaseEventStock() {
+        checkEventLeft();
+
+        if (sectorCapacity > 0) {
+            decreaseCapacity();
+        } else if (reserve > 0) {
+            decreaseReserve();
+        } else {
             throw NoEventStockLeftException.EXCEPTION;
         }
     }
 
-    public void decreaseEventStock() {
-        checkEventLeft();
-        this.remainingAmount = remainingAmount - 1;
+    private void decreaseCapacity() {
+        sectorCapacity--;
+        remainingAmount--;
+    }
+
+    private void decreaseReserve() {
+        reserve--;
+        remainingAmount--;
+    }
+
+    public void checkEventLeft() {
+        if (remainingAmount < 1) { // 재고 없을 경우 에러 처리
+            throw NoEventStockLeftException.EXCEPTION;
+        }
     }
 
     public void update(Sector sector) {

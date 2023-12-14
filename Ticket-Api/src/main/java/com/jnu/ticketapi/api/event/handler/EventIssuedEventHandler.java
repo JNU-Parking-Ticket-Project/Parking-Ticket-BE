@@ -4,6 +4,7 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
+import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
@@ -28,14 +29,14 @@ public class EventIssuedEventHandler {
             classes = EventIssuedEvent.class,
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handle(EventIssuedEvent EventIssuedEvent) {
-        processEventData(EventIssuedEvent.getCurrentUserId());
-        // 재고가 처리되야만 대기열에서 제거
+    public void handle(EventIssuedEvent eventIssuedEvent) {
+        processEventData(eventIssuedEvent.getCurrentUserId());
         waitingQueueService.popQueue(REDIS_EVENT_ISSUE_STORE, 1, ChatMessage.class);
     }
 
     private void processEventData(Long userId) {
-        Sector sector = registrationAdaptor.findByUserId(userId).getSector();
+        Registration registration = registrationAdaptor.findByUserId(userId);
+        Sector sector = registration.getSector();
         sector.decreaseEventStock();
     }
 }
