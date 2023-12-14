@@ -2,6 +2,8 @@ package com.jnu.ticketdomain.domains.registration.repository;
 
 
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,4 +17,5 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     Optional<Registration> findById(Long id);
 
     Optional<Registration> findByEmail(String email);
+    List<Registration> findByIsDeletedFalseAndIsSavedTrue();
 }

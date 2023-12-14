@@ -120,7 +120,7 @@ public class RegistrationUseCase {
 
     @Transactional(readOnly = true)
     public GetRegistrationsResponse getRegistrations() {
-        List<Registration> registrations = registrationAdaptor.findAll();
+        List<Registration> registrations = registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue();
         return GetRegistrationsResponse.of(registrations);
     }
 }
