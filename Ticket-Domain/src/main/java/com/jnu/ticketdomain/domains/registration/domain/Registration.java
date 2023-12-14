@@ -95,6 +95,10 @@ public class Registration {
         this.isSaved = isSaved;
     }
 
+    public void updateIsDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
     public void update(Registration registration) {
         this.email = registration.getEmail();
         this.name = registration.getName();
