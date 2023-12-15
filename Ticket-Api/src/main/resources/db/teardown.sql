@@ -28,7 +28,9 @@ VALUES (1, 'council@jnu.ac.kr', false, '$2a$10$iH6JVDTpjdq0azNVVjmluu5jHy3NG92zo
        (5, 'user3@jnu.ac.kr', false, '$$2a$10$S6jHnlYjhNDGeQd8HXbxjONA0U15TT.g.FjMwOCTok4YOxx6A8C7y', -2, '불합격',
         'USER');
 insert into council_tb(id, name, phone_num, student_num, user_id)
-VALUES (1, '학생회장', '010-1234-5678', '2019101234', 1);
+VALUES (1, '이진혁', '010-1234-5678', '2019101234', 1),
+       (2, '임채승', '010-2212-1321', '2019101234', 4),
+       (3, '김동완', '010-1231-2334', '2019101234', 5);
 update user_tb
 set role = 'COUNCIL'
 where user_id = 1;
