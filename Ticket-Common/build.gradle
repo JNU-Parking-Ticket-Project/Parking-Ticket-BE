@@ -1,3 +1,7 @@
+plugins {
+    id "org.asciidoctor.jvm.convert" version "3.3.2"
+}
+
 dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -7,6 +11,45 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
     api 'org.springframework.boot:spring-boot-starter-aop'
+}
+
+ext {
+    // snippetsDir : 테스트 실행시 생성되는 응답을 저장할 디렉토리 지정
+    set('snippetsDir', file("build/generated-snippets"))
+}
+
+// === ⭐ Spring Rest Docs ===
+tasks.named('test') {
+    systemProperty 'file.encoding', 'UTF-8'
+    outputs.dir snippetsDir
+    useJUnitPlatform()
+}
+
+// (7) asciidoctor를 사용하기 위해서 asciidoctor task에 asciidoctorExtensions 설정
+tasks.named('asciidoctor') {
+    configurations "asciidoctorExtensions"
+    inputs.dir snippetsDir
+    dependsOn test
+}
+
+// (8) asciidoctor task 실행시 생성된 html 파일을 src/main/resources/static/docs 디렉토리에 카피
+task copyDocument(type: Copy) {
+    dependsOn asciidoctor            // (8-1)
+    from file("${asciidoctor.outputDir}")   // (8-2)
+    into file("src/main/resources/static/docs")   // (8-3)
+}
+
+build {
+    dependsOn copyDocument  // (9) 빌드되기전 copyDocument task 실행
+}
+
+// (10)
+bootJar {
+    dependsOn copyDocument    // (10-1) bootJar 실행되기전 copyDocument task 실행
+    from("${asciidoctor.outputDir}") {  // (10-2) bootJar에 asciidoctor task에서 생성된 html 파일 추가
+        into 'static/docs'     // (10-3) bootJar에 추가될 경로
+    }
+
 }
 
 bootJar.enabled = false
