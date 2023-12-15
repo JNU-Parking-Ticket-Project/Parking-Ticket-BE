@@ -18,4 +18,6 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
     Optional<Registration> findByEmail(String email);
     List<Registration> findByIsDeletedFalseAndIsSavedTrue();
+
+    Optional<Registration> findByEmailAndIsSavedTrueAndIsDeletedFalse(String email);
 }

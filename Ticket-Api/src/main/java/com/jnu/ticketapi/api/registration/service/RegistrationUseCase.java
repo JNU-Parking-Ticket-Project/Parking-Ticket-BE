@@ -22,6 +22,7 @@ import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
+import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.service.MailService;
@@ -83,6 +84,7 @@ public class RegistrationUseCase {
 
     @Transactional
     public TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto, String email) {
+        checkDuplicateSave(email);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
@@ -101,6 +103,7 @@ public class RegistrationUseCase {
 
     @Transactional
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
+        checkDuplicateSave(email);
         Long captchaId = encryption.decrypt(requestDto.captchaCode());
         validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
         Long currentUserId = SecurityUtils.getCurrentUserId();
@@ -129,6 +132,13 @@ public class RegistrationUseCase {
         temporaryRegistration.updateIsSaved(true);
         Events.raise(RegistrationCreationEvent.of(registration));
         return FinalSaveResponse.from(temporaryRegistration);
+    }
+
+    private void checkDuplicateSave(String email) {
+        Optional<Registration> registration = registrationAdaptor.findByEmailAndIsSavedTrueAndIsDeletedFalse(email);
+        if(registration.isPresent()) {
+            throw AlreadyExistRegistrationException.EXCEPTION;
+        }
     }
 
     @Transactional(readOnly = true)
