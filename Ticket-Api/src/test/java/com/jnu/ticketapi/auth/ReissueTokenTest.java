@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
 import com.jnu.ticketapi.api.auth.model.request.ReissueTokenRequest;
 import com.jnu.ticketapi.config.DatabaseClearExtension;
@@ -21,19 +22,22 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
+@AutoConfigureRestDocs
 @ExtendWith(DatabaseClearExtension.class)
-public class ReissueTokenTest {
+public class ReissueTokenTest extends RestDocsConfig {
     @Autowired private MockMvc mvc;
 
     @Autowired private ObjectMapper om;
@@ -100,6 +104,7 @@ public class ReissueTokenTest {
                     */
                     jsonPath("$.accessToken").exists(),
                     jsonPath("$.refreshToken").exists());
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
 
@@ -133,6 +138,7 @@ public class ReissueTokenTest {
                     status().isForbidden(),
                     jsonPath("$.reason").value(GlobalErrorCode.NOT_EQUAL_PRINCIPAL.getReason()),
                     jsonPath("$.status").value(403));
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
 
@@ -166,6 +172,7 @@ public class ReissueTokenTest {
                     status().isForbidden(),
                     jsonPath("$.reason").value(GlobalErrorCode.REFRESH_TOKEN_EXPIRED.getReason()),
                     jsonPath("$.status").value(403));
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
 
@@ -198,6 +205,7 @@ public class ReissueTokenTest {
                     status().isForbidden(),
                     jsonPath("$.reason").value(GlobalErrorCode.REFRESH_TOKEN_NOT_VALID.getReason()),
                     jsonPath("$.status").value(403));
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
 
@@ -230,6 +238,7 @@ public class ReissueTokenTest {
                     status().is4xxClientError(),
                     jsonPath("$.reason").value(ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.status").value(400));
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
     }

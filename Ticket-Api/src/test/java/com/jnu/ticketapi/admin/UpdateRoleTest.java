@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.api.council.model.request.SignUpCouncilRequest;
 import com.jnu.ticketapi.config.DatabaseClearExtension;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -22,14 +24,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
+@AutoConfigureRestDocs
 @ExtendWith(DatabaseClearExtension.class)
 @WithMockUser(roles = "ADMIN")
-public class UpdateRoleTest {
+public class UpdateRoleTest extends RestDocsConfig {
     @Autowired private MockMvc mvc;
 
     @Autowired private ObjectMapper om;
@@ -82,6 +86,7 @@ public class UpdateRoleTest {
                         status().isOk(),
                         jsonPath("$.userId").value(1L),
                         jsonPath("$.role").value("COUNCIL"));
+                resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             }
         }
 
@@ -111,6 +116,7 @@ public class UpdateRoleTest {
                         jsonPath("$.success").value(false),
                         jsonPath("$.reason").value("존재하지 않는 유저 입니다."),
                         jsonPath("$.code").value("USER_404_1"));
+                resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             }
         }
 
@@ -140,6 +146,7 @@ public class UpdateRoleTest {
                         jsonPath("$.success").value(false),
                         jsonPath("$.reason").value("ROLE을 정확히 입력 해주세요."),
                         jsonPath("$.code").value("BAD_REQUEST"));
+                resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             }
         }
     }

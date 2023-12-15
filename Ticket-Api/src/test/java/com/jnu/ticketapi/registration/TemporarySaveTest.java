@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.registration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketcommon.message.ValidationMessage;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -18,6 +20,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -27,8 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
+@AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
-public class TemporarySaveTest {
+public class TemporarySaveTest extends RestDocsConfig {
     @Autowired
     private MockMvc mvc;
 
@@ -68,6 +73,7 @@ public class TemporarySaveTest {
                     status().isOk(),
                     jsonPath("$.email").value(email)
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
 
@@ -100,6 +106,7 @@ public class TemporarySaveTest {
                     jsonPath("$.reason").value(UserErrorCode.NOT_FOUND_USER.getReason()),
                     jsonPath("$.code").value(UserErrorCode.NOT_FOUND_USER.getCode())
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
 
@@ -132,6 +139,7 @@ public class TemporarySaveTest {
                     jsonPath("$.reason").value(SectorErrorCode.NOT_FOUND_SECTOR.getReason()),
                     jsonPath("$.code").value(SectorErrorCode.NOT_FOUND_SECTOR.getCode())
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
 
@@ -164,6 +172,7 @@ public class TemporarySaveTest {
                     jsonPath("$.reason").value("이름은 " + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST")
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
 
@@ -196,6 +205,7 @@ public class TemporarySaveTest {
                     jsonPath("$.reason").value("소속대학은 " + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST")
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
 
@@ -228,6 +238,7 @@ public class TemporarySaveTest {
                     jsonPath("$.reason").value("학번은 " + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST")
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
 
@@ -260,6 +271,7 @@ public class TemporarySaveTest {
                     jsonPath("$.reason").value("차량번호는 " + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST")
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
 
@@ -292,6 +304,7 @@ public class TemporarySaveTest {
                     jsonPath("$.reason").value("구간 ID는 " + ValidationMessage.MUST_POSITIVE_NUMBER),
                     jsonPath("$.code").value("BAD_REQUEST")
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
 
@@ -324,6 +337,7 @@ public class TemporarySaveTest {
                     jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_PHONE),
                     jsonPath("$.code").value("BAD_REQUEST")
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
 
@@ -359,6 +373,7 @@ public class TemporarySaveTest {
                     jsonPath("$.reason").value("경차 여부는 " + ValidationMessage.MUST_NOT_NULL),
                     jsonPath("$.code").value("BAD_REQUEST")
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
     }

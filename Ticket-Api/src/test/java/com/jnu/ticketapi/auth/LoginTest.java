@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
 import com.jnu.ticketapi.config.DatabaseClearExtension;
 import com.jnu.ticketcommon.exception.GlobalErrorCode;
@@ -12,12 +13,14 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -27,8 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
+@AutoConfigureRestDocs
 @ExtendWith(DatabaseClearExtension.class)
-public class LoginTest {
+public class LoginTest extends RestDocsConfig {
 
     @Autowired
     private MockMvc mvc;
@@ -77,6 +81,7 @@ public class LoginTest {
                     jsonPath("$.accessToken").exists(),
                     jsonPath("$.refreshToken").exists()
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
 
         }
@@ -102,6 +107,7 @@ public class LoginTest {
                     jsonPath("$.status").value(400),
                     jsonPath("$.reason").value(GlobalErrorCode.BAD_CREDENTIAL.getReason())
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
 
@@ -128,6 +134,7 @@ public class LoginTest {
                     jsonPath("$.status").value(400),
                      jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_PASSWORD)
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
 
@@ -153,6 +160,7 @@ public class LoginTest {
                     jsonPath("$.status").value(400),
             jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_EMAIL)
             );
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
     }
