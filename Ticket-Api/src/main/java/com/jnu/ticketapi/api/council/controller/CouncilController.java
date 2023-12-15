@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+
 @SecurityRequirement(name = "access-token")
 @RestController
 @RequestMapping("/v1")
@@ -28,7 +30,7 @@ public class CouncilController {
     @PostMapping("/council/signup")
     @ApiErrorExceptionsExample(CouncilSignUpExceptionDocs.class)
     public ResponseEntity<SignUpCouncilResponse> signUpCouncil(
-            @RequestBody SignUpCouncilRequest signUpCouncilRequest) {
+            @RequestBody @Valid SignUpCouncilRequest signUpCouncilRequest) {
         SignUpCouncilResponse responseDto = councilUseCase.signUp(signUpCouncilRequest);
         return ResponseEntity.ok(responseDto);
     }
