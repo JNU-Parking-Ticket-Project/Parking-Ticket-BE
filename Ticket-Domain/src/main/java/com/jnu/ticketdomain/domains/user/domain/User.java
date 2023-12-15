@@ -54,6 +54,21 @@ public class User {
         this.pwd = password;
     }
 
+    public void success() {
+        this.status = "합격";
+        this.sequence = -1;
+    }
+
+    public void fail() {
+        this.status = "불합격";
+        this.sequence = -2;
+    }
+
+    public void prepare(int sequence) {
+        this.status = "예비";
+        this.sequence = sequence;
+    }
+
     @Builder
     public User(String pwd, String email, UserRole userRole) {
         this.pwd = pwd;

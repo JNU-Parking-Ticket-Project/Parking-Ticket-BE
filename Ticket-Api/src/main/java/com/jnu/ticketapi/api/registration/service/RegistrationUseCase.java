@@ -13,11 +13,15 @@ import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
+import com.jnu.ticketcommon.utils.Result;
+import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.service.MailService;
@@ -36,7 +40,7 @@ public class RegistrationUseCase {
     private final SectorAdaptor sectorAdaptor;
     private final Converter converter;
     private final UserAdaptor userAdaptor;
-    private final EventWithDrawUseCase EventWithDrawUseCase;
+    private final EventWithDrawUseCase eventWithDrawUseCase;
     private final Encryption encryption;
     private final CaptchaAdaptor captchaAdaptor;
     private final ValidateCaptchaUseCase validateCaptchaUseCase;
@@ -48,6 +52,13 @@ public class RegistrationUseCase {
 
     public Optional<Registration> findByEmail(String email) {
         return registrationAdaptor.findByEmail(email);
+    }
+
+    public Result<Registration, Object> findResultByEmail(String email) {
+        Optional<Registration> registration = registrationAdaptor.findByEmail(email);
+        return registration
+                .map(Result::success)
+                .orElseGet(() -> Result.failure(NotFoundEventException.EXCEPTION));
     }
 
     public User findById(Long userId) {
@@ -76,46 +87,48 @@ public class RegistrationUseCase {
         User user = findById(currentUserId);
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
-        Optional<Registration> temporaryRegistration = findByEmail(email);
-        if (temporaryRegistration.isPresent()) {
-            temporaryRegistration.get().update(registration);
-            return TemporarySaveResponse.from(temporaryRegistration.get());
-        }
-        Registration jpaRegistration = save(registration);
-        return TemporarySaveResponse.from(jpaRegistration);
+        return findResultByEmail(email)
+                .fold(
+                        tempRegistration -> {
+                            tempRegistration.update(registration);
+                            return TemporarySaveResponse.from(tempRegistration);
+                        },
+                        emptyCase -> {
+                            Registration jpaRegistration = save(registration);
+                            return TemporarySaveResponse.from(jpaRegistration);
+                        });
     }
 
     @Transactional
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
-        Long captchaId = encryption.decrypt(requestDto.captchaCode());
-        validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
-        /*
-        임시저장을 했으면 isSave만 true로 변경
-         */
+        //        Long captchaId = encryption.decrypt(requestDto.captchaCode());
+        //        validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
 
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
-        Optional<Registration> temporaryRegistration = findByEmail(email);
-        if (temporaryRegistration.isPresent()) {
-            temporaryRegistration.get().update(registration);
-            temporaryRegistration.get().updateIsSaved(true);
-            mailService.sendRegistrationResultMail(
-                    registration.getEmail(),
-                    registration.getName(),
-                    registration.getUser().getStatus());
-            return FinalSaveResponse.from(temporaryRegistration.get());
-        }
-        Registration jpaRegistration = save(registration);
-        EventWithDrawUseCase.issueEvent(currentUserId);
+        return findResultByEmail(email)
+                .fold(
+                        tempRegistration ->
+                                updateRegistration(tempRegistration, registration, currentUserId),
+                        emptyCase -> saveRegistration(registration, currentUserId));
+    }
 
-        mailService.sendRegistrationResultMail(
-                registration.getEmail(),
-                registration.getName(),
-                registration.getUser().getStatus());
+    private FinalSaveResponse saveRegistration(Registration registration, Long currentUserId) {
+        eventWithDrawUseCase.issueEvent(currentUserId);
+        Events.raise(RegistrationCreationEvent.of(registration));
+        return FinalSaveResponse.from(save(registration));
+    }
 
-        return FinalSaveResponse.from(jpaRegistration);
+    private FinalSaveResponse updateRegistration(
+            Registration temporaryRegistration, Registration registration, Long currentUserId) {
+        // update
+        eventWithDrawUseCase.issueEvent(currentUserId);
+        temporaryRegistration.update(registration);
+        temporaryRegistration.updateIsSaved(true);
+        Events.raise(RegistrationCreationEvent.of(registration));
+        return FinalSaveResponse.from(temporaryRegistration);
     }
 
     @Transactional(readOnly = true)
