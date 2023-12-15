@@ -49,7 +49,7 @@ public class ReissueTokenTest extends RestDocsConfig {
     @Autowired private RedisService redisService;
 
     private final String email = "ekrrrdj21@jnu.ac.kr";
-    private final String pwd = "1234";
+    private final String pwd = "Dlwlsgur@123";
 
     @BeforeEach
     void setUp() throws Exception {
@@ -66,10 +66,6 @@ public class ReissueTokenTest extends RestDocsConfig {
 
     @Nested
     @DisplayName("토큰 재발급 테스트")
-    /*
-    로그인 할 때 redis에 저장되는
-     */
-    @Deprecated(since = "2023-12-10", forRemoval = true)
     class reissueTokenTest {
         @Test
         @DisplayName("성공 : 토큰 재발급")
@@ -236,7 +232,7 @@ public class ReissueTokenTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value(ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.reason").value("리프레시 토큰은 " + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.status").value(400));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
