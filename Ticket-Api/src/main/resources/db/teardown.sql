@@ -42,3 +42,8 @@ values (1, 40, '사회대 / 농대 / 수의대 / 치전원', 40, 0, 40, '1구간
 insert into registration_tb(id, affiliation, car_num, created_at, email, is_light, is_saved, name, student_num, phone_num, sector_id, user_id, is_deleted)
 values (1, '공과대학', '1234가1234', current_time, 'user@jnu.ac.kr', true, true, '이진혁', '215555', '010-000-0000', 4, 3, false),
        (2, '경영대학', '가1234', current_time, 'council@jnu.ac.kr', true, false, '박영규', '192155','010-000-0000', 4, 1, false);
+
+insert into captcha_tb(id, answer, image_name)
+values (1, '1234', '1234.png'),
+       (2, '5678', '5678.png');
+
