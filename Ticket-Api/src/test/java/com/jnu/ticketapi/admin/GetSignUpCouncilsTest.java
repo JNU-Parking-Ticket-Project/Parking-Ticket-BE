@@ -2,13 +2,10 @@ package com.jnu.ticketapi.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
-import com.jnu.ticketapi.config.DatabaseClearExtension;
-import com.jnu.ticketdomain.domains.events.exception.SectorErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureRestDocs
 @WithMockUser(roles = "ADMIN")
 @Sql("classpath:db/teardown.sql")
-public class GetSignUpCouncils extends RestDocsConfig {
+public class GetSignUpCouncilsTest extends RestDocsConfig {
     @Autowired
     private MockMvc mvc;
 
