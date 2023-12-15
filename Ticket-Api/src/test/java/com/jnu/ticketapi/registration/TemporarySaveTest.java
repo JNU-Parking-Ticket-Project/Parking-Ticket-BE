@@ -390,7 +390,7 @@ public class TemporarySaveTest extends RestDocsConfig {
         }
 
         @Test
-        @DisplayName("실패 : 임시저장(경차 여부가 null 혹은 공백인 아닌경우)")
+        @DisplayName("실패 : 임시저장(경차 여부가 null인 경우)")
         @Deprecated
         // 경차 여부는 default가 false이기 때문에 request로 null 혹은 공백이 와도 에러가 터지지않음.
         void fail9() throws Exception {
