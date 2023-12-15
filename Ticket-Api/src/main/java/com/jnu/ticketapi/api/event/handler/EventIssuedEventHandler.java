@@ -45,7 +45,7 @@ public class EventIssuedEventHandler {
         } else if (sector.isSectorReserveRemaining()) {
             Long waitingOrder =
                     waitingQueueService.getWaitingOrder(REDIS_EVENT_ISSUE_STORE, userId);
-            user.prepare(waitingOrder.intValue());
+            user.prepare(Integer.valueOf(waitingOrder.intValue()));
         } else {
             user.fail();
         }

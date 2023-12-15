@@ -64,7 +64,7 @@ public class User {
         this.sequence = -2;
     }
 
-    public void prepare(int sequence) {
+    public void prepare(Integer sequence) {
         this.status = "예비";
         this.sequence = sequence;
     }
