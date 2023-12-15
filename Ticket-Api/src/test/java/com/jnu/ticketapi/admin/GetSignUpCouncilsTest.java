@@ -1,5 +1,9 @@
 package com.jnu.ticketapi.admin;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
 import lombok.extern.slf4j.Slf4j;
@@ -18,11 +22,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
@@ -31,8 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(roles = "ADMIN")
 @Sql("classpath:db/teardown.sql")
 public class GetSignUpCouncilsTest extends RestDocsConfig {
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
     @Autowired private ObjectMapper om;
 
@@ -41,18 +39,16 @@ public class GetSignUpCouncilsTest extends RestDocsConfig {
         @Test
         @DisplayName("성공 : 학생회 회원가입 목록 조회")
         void success() throws Exception {
-            //given
+            // given
 
-            //when
+            // when
             ResultActions resultActions =
-                    mvc.perform(
-                            get("/v1/admin/councils")
-                                    .contentType(MediaType.APPLICATION_JSON));
+                    mvc.perform(get("/v1/admin/councils").contentType(MediaType.APPLICATION_JSON));
 
             // eye
             String responseBody = resultActions.andReturn().getResponse().getContentAsString();
 
-            //then
+            // then
             resultActions.andExpectAll(
                     status().isOk(),
                     jsonPath("$.users[1].name").value("임채승"),

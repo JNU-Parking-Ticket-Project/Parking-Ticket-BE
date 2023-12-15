@@ -7,11 +7,10 @@ import com.jnu.ticketcommon.message.ValidationMessage;
 import com.jnu.ticketdomain.domains.council.domain.Council;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
-import lombok.Builder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import lombok.Builder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Builder
 public record SignUpCouncilRequest(

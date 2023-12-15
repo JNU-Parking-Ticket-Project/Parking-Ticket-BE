@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.registration.exception;
 
+
 import com.jnu.ticketcommon.exception.TicketCodeException;
 
 public class AlreadyExistRegistrationException extends TicketCodeException {
