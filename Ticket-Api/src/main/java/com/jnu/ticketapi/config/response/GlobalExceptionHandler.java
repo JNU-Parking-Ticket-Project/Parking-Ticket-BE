@@ -86,7 +86,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             errorsToJsonString =
                     fieldAndErrorMessages.values().stream()
                             .map(Object::toString)
-                            .collect(Collectors.joining(", "));
+                            .findFirst()
+                            .orElse("메시지 없음");
         } catch (Exception e) {
             log.info("error: {}", e.getMessage());
             throw JsonSerializeFailedException.EXCEPTION;
