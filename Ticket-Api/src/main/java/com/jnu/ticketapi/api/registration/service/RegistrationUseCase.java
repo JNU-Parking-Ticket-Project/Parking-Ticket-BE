@@ -101,8 +101,8 @@ public class RegistrationUseCase {
 
     @Transactional
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
-        //        Long captchaId = encryption.decrypt(requestDto.captchaCode());
-        //        validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
+        Long captchaId = encryption.decrypt(requestDto.captchaCode());
+        validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
 
