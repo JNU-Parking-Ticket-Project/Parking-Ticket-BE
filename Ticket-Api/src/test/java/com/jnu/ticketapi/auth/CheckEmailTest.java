@@ -1,9 +1,12 @@
 package com.jnu.ticketapi.auth;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.api.auth.model.request.CheckEmailRequest;
-import com.jnu.ticketapi.api.auth.model.request.LoginUserRequest;
 import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketcommon.message.ValidationMessage;
 import com.jnu.ticketdomain.domains.council.exception.CouncilErrorCode;
@@ -22,10 +25,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
@@ -33,11 +32,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
 public class CheckEmailTest extends RestDocsConfig {
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
-    @Autowired
-    private ObjectMapper om;
+    @Autowired private ObjectMapper om;
 
     @Nested
     class checkEmailTest {
@@ -60,11 +57,9 @@ public class CheckEmailTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().isOk(),
-                    jsonPath("$.message").value(ResponseMessage.IS_POSSIBLE_EMAIL)
-            );
+                    jsonPath("$.message").value(ResponseMessage.IS_POSSIBLE_EMAIL));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
-
         }
 
         @Test
@@ -87,8 +82,7 @@ public class CheckEmailTest extends RestDocsConfig {
             resultActions.andExpectAll(
                     status().is4xxClientError(),
                     jsonPath("$.status").value(400),
-                    jsonPath("$.reason").value(CouncilErrorCode.ALREADY_EXIST_EMAIL.getReason())
-            );
+                    jsonPath("$.reason").value(CouncilErrorCode.ALREADY_EXIST_EMAIL.getReason()));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
@@ -113,8 +107,7 @@ public class CheckEmailTest extends RestDocsConfig {
             resultActions.andExpectAll(
                     status().is4xxClientError(),
                     jsonPath("$.status").value(400),
-                    jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_EMAIL)
-            );
+                    jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_EMAIL));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }

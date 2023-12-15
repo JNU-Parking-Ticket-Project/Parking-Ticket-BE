@@ -1,5 +1,9 @@
 package com.jnu.ticketapi.registration;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.security.JwtGenerator;
@@ -18,10 +22,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
@@ -29,14 +29,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
 public class GetRegistrationTest extends RestDocsConfig {
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
-    @Autowired
-    private ObjectMapper om;
+    @Autowired private ObjectMapper om;
 
-    @Autowired
-    JwtGenerator jwtGenerator;
+    @Autowired JwtGenerator jwtGenerator;
 
     @Nested
     class getRegistrationTest {
@@ -62,8 +59,7 @@ public class GetRegistrationTest extends RestDocsConfig {
                     status().isOk(),
                     jsonPath("$.email").value(email),
                     jsonPath("$.studentNum").isEmpty(),
-                    jsonPath("$.phoneNum").isEmpty()
-            );
+                    jsonPath("$.phoneNum").isEmpty());
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
@@ -89,8 +85,7 @@ public class GetRegistrationTest extends RestDocsConfig {
                     status().isOk(),
                     jsonPath("$.email").value(email),
                     jsonPath("$.name").value("이진혁"),
-                    jsonPath("$.studentNum").value("215555")
-            );
+                    jsonPath("$.studentNum").value("215555"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }

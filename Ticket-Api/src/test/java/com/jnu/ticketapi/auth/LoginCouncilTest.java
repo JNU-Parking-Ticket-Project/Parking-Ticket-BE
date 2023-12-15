@@ -1,10 +1,13 @@
 package com.jnu.ticketapi.auth;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.api.auth.model.request.LoginCouncilRequest;
 import com.jnu.ticketapi.api.council.model.request.SignUpCouncilRequest;
-import com.jnu.ticketapi.config.DatabaseClearExtension;
 import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.message.ValidationMessage;
 import com.jnu.ticketdomain.domains.council.exception.CouncilErrorCode;
@@ -13,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -25,10 +27,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
@@ -36,17 +34,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
 public class LoginCouncilTest extends RestDocsConfig {
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
-    @Autowired
-    private ObjectMapper om;
+    @Autowired private ObjectMapper om;
 
     @BeforeEach
     void setUp() throws Exception {
-        //given
+        // given
         SignUpCouncilRequest request =
-                SignUpCouncilRequest.builder().email("ekrrdj21@jnu.ac.kr").name("이진혁").pwd("Dlwlsgur@123").studentNum("21555").phoneNum("010-000-0000").build();
+                SignUpCouncilRequest.builder()
+                        .email("ekrrdj21@jnu.ac.kr")
+                        .name("이진혁")
+                        .pwd("Dlwlsgur@123")
+                        .studentNum("21555")
+                        .phoneNum("010-000-0000")
+                        .build();
 
         String requestBody = om.writeValueAsString(request);
 
@@ -54,7 +56,6 @@ public class LoginCouncilTest extends RestDocsConfig {
                 post("/v1/council/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody));
-
     }
 
     @Nested
@@ -64,7 +65,10 @@ public class LoginCouncilTest extends RestDocsConfig {
         void success() throws Exception {
             // given
             LoginCouncilRequest request =
-                    LoginCouncilRequest.builder().email("council@jnu.ac.kr").pwd("Council@123").build();
+                    LoginCouncilRequest.builder()
+                            .email("council@jnu.ac.kr")
+                            .pwd("Council@123")
+                            .build();
             String requestBody = om.writeValueAsString(request);
             // when
             ResultActions resultActions =
@@ -77,12 +81,11 @@ public class LoginCouncilTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().isOk(),
-                        /*
-                        accessToken, refreshToken 요청마다 새로 발급되서 예측을 할 수 없어서 exists()로 검사
-                        */
+                    /*
+                    accessToken, refreshToken 요청마다 새로 발급되서 예측을 할 수 없어서 exists()로 검사
+                    */
                     jsonPath("$.accessToken").exists(),
-            jsonPath("$.refreshToken").exists()
-            );
+                    jsonPath("$.refreshToken").exists());
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
@@ -92,7 +95,10 @@ public class LoginCouncilTest extends RestDocsConfig {
         void fail() throws Exception {
             // given
             LoginCouncilRequest request =
-                    LoginCouncilRequest.builder().email("ekrrdj21@jnu.ac.kr").pwd("Dlwlsgur@123").build();
+                    LoginCouncilRequest.builder()
+                            .email("ekrrdj21@jnu.ac.kr")
+                            .pwd("Dlwlsgur@123")
+                            .build();
             String requestBody = om.writeValueAsString(request);
             // when
             ResultActions resultActions =
@@ -106,8 +112,7 @@ public class LoginCouncilTest extends RestDocsConfig {
             resultActions.andExpectAll(
                     status().is4xxClientError(),
                     jsonPath("$.status").value(400),
-                    jsonPath("$.reason").value(CouncilErrorCode.IS_NOT_COUNCIL.getReason())
-            );
+                    jsonPath("$.reason").value(CouncilErrorCode.IS_NOT_COUNCIL.getReason()));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("GlobalError코드: " + GlobalErrorCode.BAD_CREDENTIAL.getReason());
         }
@@ -117,7 +122,10 @@ public class LoginCouncilTest extends RestDocsConfig {
         void fail2() throws Exception {
             // given
             LoginCouncilRequest request =
-                    LoginCouncilRequest.builder().email("ekrrdj21@jnu.ac.kr").pwd("Qkrdudrb@123").build();
+                    LoginCouncilRequest.builder()
+                            .email("ekrrdj21@jnu.ac.kr")
+                            .pwd("Qkrdudrb@123")
+                            .build();
             String requestBody = om.writeValueAsString(request);
             // when
             ResultActions resultActions =
@@ -131,8 +139,7 @@ public class LoginCouncilTest extends RestDocsConfig {
             resultActions.andExpectAll(
                     status().is4xxClientError(),
                     jsonPath("$.status").value(400),
-                    jsonPath("$.reason").value(GlobalErrorCode.BAD_CREDENTIAL.getReason())
-            );
+                    jsonPath("$.reason").value(GlobalErrorCode.BAD_CREDENTIAL.getReason()));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
         }
 
@@ -156,8 +163,7 @@ public class LoginCouncilTest extends RestDocsConfig {
             resultActions.andExpectAll(
                     status().is4xxClientError(),
                     jsonPath("$.status").value(400),
-                    jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_PASSWORD)
-            );
+                    jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_PASSWORD));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
@@ -168,7 +174,10 @@ public class LoginCouncilTest extends RestDocsConfig {
 
             // given
             LoginCouncilRequest request =
-                    LoginCouncilRequest.builder().email("ekrrrdj21jnu.ac.kr").pwd("Dlwlsgur@123").build();
+                    LoginCouncilRequest.builder()
+                            .email("ekrrrdj21jnu.ac.kr")
+                            .pwd("Dlwlsgur@123")
+                            .build();
             String requestBody = om.writeValueAsString(request);
             // when
             ResultActions resultActions =
@@ -182,8 +191,7 @@ public class LoginCouncilTest extends RestDocsConfig {
             resultActions.andExpectAll(
                     status().is4xxClientError(),
                     jsonPath("$.status").value(400),
-                    jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_EMAIL)
-            );
+                    jsonPath("$.reason").value(ValidationMessage.IS_NOT_VALID_EMAIL));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);
         }
