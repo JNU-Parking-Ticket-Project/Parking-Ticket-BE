@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
 @WithMockUser(roles = "COUNCIL")
-public class GetRegistrationListTest extends RestDocsConfig {
+public class GetRegistrationsTest extends RestDocsConfig {
     @Autowired
     private MockMvc mvc;
 
