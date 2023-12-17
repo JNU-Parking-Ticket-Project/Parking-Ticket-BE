@@ -34,7 +34,7 @@ public class EventWithDrawUseCase {
     public void issueEvent(Long userId) {
         // 재고 감소 로직 구현
         Event openEvent = eventAdaptor.findOpenEvent();
-        openEvent.validateIssuePeriod();
+        // openEvent.validateIssuePeriod();
         waitingQueueService.registerQueue(REDIS_EVENT_ISSUE_STORE, userId);
     }
 

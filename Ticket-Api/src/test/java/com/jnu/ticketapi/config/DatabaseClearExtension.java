@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.Announce.config;
+package com.jnu.ticketapi.config;
 
 
 import org.junit.jupiter.api.extension.BeforeEachCallback;

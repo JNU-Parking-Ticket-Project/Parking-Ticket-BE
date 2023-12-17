@@ -15,7 +15,7 @@ public class ErrorResponse {
 
     @JsonFormat(
             shape = JsonFormat.Shape.STRING,
-            pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS",
+            pattern = "yyyy-MM-dd'T'HH:mm:ss",
             timezone = "Asia/Seoul")
     private final LocalDateTime timeStamp;
 

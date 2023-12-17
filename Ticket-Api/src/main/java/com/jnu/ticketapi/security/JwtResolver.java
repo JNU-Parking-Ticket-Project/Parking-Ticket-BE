@@ -3,6 +3,7 @@ package com.jnu.ticketapi.security;
 
 import com.jnu.ticketapi.application.service.CustomUserDetailsService;
 import com.jnu.ticketcommon.exception.*;
+import com.jnu.ticketcommon.exception.UnsupportedJwtException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -58,6 +59,7 @@ public class JwtResolver {
             throw AccessTokenExpiredException.EXCEPTION;
         } catch (UnsupportedJwtException e) {
             log.info("Unsupported JWT Token", e);
+            throw UnsupportedJwtException.EXCEPTION;
         } catch (IllegalArgumentException e) {
             log.info("JWT claims string is empty.", e);
         }
@@ -76,6 +78,7 @@ public class JwtResolver {
             throw RefreshTokenExpiredException.EXCEPTION;
         } catch (UnsupportedJwtException e) {
             log.info("Unsupported JWT Token", e);
+            throw UnsupportedJwtException.EXCEPTION;
         } catch (IllegalArgumentException e) {
             log.info("JWT claims string is empty.", e);
         }
