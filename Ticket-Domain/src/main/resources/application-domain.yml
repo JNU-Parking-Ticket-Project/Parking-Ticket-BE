@@ -1,7 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/ticket?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
-#    url: ${DATASOURCE_URL:jdbc:h2:~/test;DB_CLOSE_DELAY=-1;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE}
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:ticket}?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
     username: ${DATASOURCE_USERNAME:root}
     password: ${DATASOURCE_PASSWORD:}
 #    driver-class-name: ${DATASOURCE_DRIVER:org.h2.Driver}
@@ -18,7 +17,7 @@ spring:
       hibernate:
         #        format_sql: ${FORMAT_SQL:true}
         default_batch_fetch_size: ${JPA_BATCH_FETCH_SIZE:100}
-
+  batch:
     sql:
       init:
         mode: always
@@ -27,6 +26,8 @@ spring:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     #     script 파일이 hibernate 초기화 이후 동작하게 하기 위한 옵션
     defer-datasource-initialization: false
+    jdbc:
+      initialize-schema: always
 
 logging:
   level:

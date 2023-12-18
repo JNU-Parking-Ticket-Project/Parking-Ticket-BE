@@ -10,10 +10,10 @@ import lombok.ToString;
 @Getter
 @Builder
 @ToString
-public class EventCreationEvent extends DomainEvent {
+public class EventUpdatedEvent extends DomainEvent {
     private final Event event;
 
-    public static EventCreationEvent of(Event event) {
-        return EventCreationEvent.builder().event(event).build();
+    public static EventUpdatedEvent of(Event event) {
+        return EventUpdatedEvent.builder().event(event).build();
     }
 }
