@@ -38,9 +38,14 @@ public class Sector {
     @Column(name = "sector_capacity", nullable = false)
     private Integer sectorCapacity;
 
+    @Column(name = "init_sector_capacity", nullable = false)
+    private Integer initSectorCapacity;
     // 예비 정원
     @Column(name = "reserve", nullable = false)
     private Integer reserve;
+
+    @Column(name = "init_reserve", nullable = false)
+    private Integer initReserve;
 
     // 총 정원
     @Column(name = "issue_amount", nullable = false)
@@ -58,13 +63,17 @@ public class Sector {
         this.sectorNumber = sectorNumber;
         this.name = name;
         this.sectorCapacity = sectorCapacity;
+        this.initSectorCapacity = sectorCapacity;
         this.reserve = reserve;
+        this.initReserve = reserve;
         this.issueAmount = sectorCapacity + reserve;
         this.remainingAmount = this.issueAmount;
     }
 
     public void resetAmount() {
         this.remainingAmount = this.issueAmount;
+        this.sectorCapacity = this.initSectorCapacity;
+        this.reserve = this.initReserve;
     }
 
     public void decreaseEventStock() {
