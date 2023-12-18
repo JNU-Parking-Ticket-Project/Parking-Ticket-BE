@@ -63,6 +63,10 @@ public class Sector {
         this.remainingAmount = this.issueAmount;
     }
 
+    public void resetAmount() {
+        this.remainingAmount = this.issueAmount;
+    }
+
     public void decreaseEventStock() {
         checkEventLeft();
         if (isSectorRemaining()) {
