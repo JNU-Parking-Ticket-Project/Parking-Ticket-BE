@@ -9,8 +9,12 @@ import com.jnu.ticketdomain.common.aop.redissonLock.RedissonLock;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
+import com.jnu.ticketdomain.domains.events.domain.EventStatus;
+import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.events.exception.NotReadyEventStatusException;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +56,20 @@ public class EventWithDrawUseCase {
                 },
                 (error) -> {
                     throw NotReadyEventStatusException.EXCEPTION;
+                });
+    }
+
+    public void resetEvent() {
+        Result<Event, Object> readyOrOpenEvent = eventAdaptor.findReadyOrOpenEvent();
+        readyOrOpenEvent.fold(
+                (event) -> {
+                    eventAdaptor.updateEventStatus(event, EventStatus.CLOSED);
+                    List<Sector> sector = event.getSector();
+                    sector.forEach(Sector::resetAmount);
+                    return null;
+                },
+                (error) -> {
+                    throw NotFoundEventException.EXCEPTION;
                 });
     }
 }
