@@ -2,6 +2,7 @@ package com.jnu.ticketdomain.domains.events.event;
 
 
 import com.jnu.ticketdomain.common.domainEvent.DomainEvent;
+import com.jnu.ticketdomain.domains.events.domain.Event;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -10,10 +11,9 @@ import lombok.ToString;
 @Builder
 @ToString
 public class EventCreationEvent extends DomainEvent {
-    private final String couponCode;
-    private final Long eventId;
+    private final Event event;
 
-    public static EventCreationEvent of(String couponCode, Long eventId) {
-        return EventCreationEvent.builder().couponCode(couponCode).eventId(eventId).build();
+    public static EventCreationEvent of(Event event) {
+        return EventCreationEvent.builder().event(event).build();
     }
 }

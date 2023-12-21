@@ -20,9 +20,9 @@ import lombok.RequiredArgsConstructor;
 public class EventAdaptor implements EventRecordPort, EventLoadPort {
     private final EventRepository eventRepository;
 
-    public Event findById(Long couponId) {
+    public Event findById(Long eventId) {
         return eventRepository
-                .findById(couponId)
+                .findById(eventId)
                 .orElseThrow(() -> NotFoundEventException.EXCEPTION);
     }
 
@@ -31,6 +31,15 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
                 // TODO 추 후에 완성되면 이걸로 변경         .findByCouponStatus(CouponStatus.OPEN)
                 .findByEventStatus(EventStatus.OPEN)
                 .orElseThrow(() -> NotFoundEventException.EXCEPTION);
+    }
+
+    public Result<Event, Object> findReadyOrOpenEvent() {
+        // READY 상태의 이벤트가 없으면 OPEN 상태의 이벤트를 가져온다.
+        Optional<Event> event = eventRepository.findByEventStatus(EventStatus.READY);
+        if (event.isPresent()) return Result.success(event.get());
+        event = eventRepository.findByEventStatus(EventStatus.OPEN);
+        return event.map(Result::success)
+                .orElseGet(() -> Result.failure(NotFoundEventException.EXCEPTION));
     }
 
     public Result<Event, Object> findReadyEvent() {

@@ -3,10 +3,7 @@ package com.jnu.ticketapi.api.auth.docs;
 
 import com.jnu.ticketcommon.annotation.ExceptionDoc;
 import com.jnu.ticketcommon.annotation.ExplainError;
-import com.jnu.ticketcommon.exception.InvalidTokenException;
-import com.jnu.ticketcommon.exception.NotEqualPrincipalException;
-import com.jnu.ticketcommon.exception.NotFoundRefreshTokenException;
-import com.jnu.ticketcommon.exception.TicketCodeException;
+import com.jnu.ticketcommon.exception.*;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 
 @ExceptionDoc
@@ -20,4 +17,10 @@ public class TokenReissueExceptionDocs implements SwaggerExampleExceptions {
 
     @ExplainError("요청으로 보낸 리프레시 토큰이 유효하지 않거나, redis에 저장된 값과 다를경우")
     public TicketCodeException 리프레시토큰이_유효하지_않습니다 = InvalidTokenException.EXCEPTION;
+
+    @ExplainError("요청으로 보낸 토쿤아 자원하지 않는 토큰일 경우")
+    public TicketCodeException 지원하지_않는_토큰입니다 = UnsupportedJwtException.EXCEPTION;
+
+    @ExplainError("요청으로 보낸 리프레시 토큰이 만료된 경우")
+    public TicketCodeException 리프레시토큰이_만료되었습니다 = RefreshTokenExpiredException.EXCEPTION;
 }

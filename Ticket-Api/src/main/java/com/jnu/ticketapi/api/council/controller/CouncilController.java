@@ -9,6 +9,7 @@ import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,7 @@ public class CouncilController {
     @PostMapping("/council/signup")
     @ApiErrorExceptionsExample(CouncilSignUpExceptionDocs.class)
     public ResponseEntity<SignUpCouncilResponse> signUpCouncil(
-            @RequestBody SignUpCouncilRequest signUpCouncilRequest) {
+            @RequestBody @Valid SignUpCouncilRequest signUpCouncilRequest) {
         SignUpCouncilResponse responseDto = councilUseCase.signUp(signUpCouncilRequest);
         return ResponseEntity.ok(responseDto);
     }

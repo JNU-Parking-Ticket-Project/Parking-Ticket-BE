@@ -1,8 +1,10 @@
 package com.jnu.ticketdomain.domains.user.domain;
 
 
+import com.jnu.ticketcommon.annotation.EnumClass;
 import lombok.Getter;
 
+@EnumClass
 @Getter
 public enum UserRole {
     /*

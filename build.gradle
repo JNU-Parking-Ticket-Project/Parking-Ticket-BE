@@ -60,6 +60,8 @@ subprojects {
             xml.required = false
             csv.required = false
             html.required = true
+            // xml 위치 조정
+            xml.destination file("${project.projectDir}/build/reports/jacoco.xml")
         }
 
         def Qdomains = []
@@ -81,6 +83,10 @@ subprojects {
                     })
             )
         }
+    }
+    test {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport
     }
 
     apply plugin: 'org.sonarqube'
@@ -105,10 +111,7 @@ subprojects {
         testAnnotationProcessor 'org.projectlombok:lombok'
     }
 
-    test {
-        useJUnitPlatform()
-        finalizedBy jacocoTestReport
-    }
+
 }
 
 spotless {

@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.Announce.config;
+package com.jnu.ticketapi.config;
 
 
 import java.util.ArrayList;

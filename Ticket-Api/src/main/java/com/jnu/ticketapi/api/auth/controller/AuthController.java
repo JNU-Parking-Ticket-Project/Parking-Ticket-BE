@@ -16,6 +16,7 @@ import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +33,7 @@ public class AuthController {
     @Operation(summary = "로그인/회원가입", description = "로그인을 하면 동시에 회원가입이 되면서 로그인 처리")
     @PostMapping("/auth/login")
     public ResponseEntity<LoginUserResponse> logInUser(
-            @RequestBody LoginUserRequest loginUserRequest) {
+            @RequestBody @Valid LoginUserRequest loginUserRequest) {
         LoginUserResponse responseDto = authUseCase.login(loginUserRequest);
         return ResponseEntity.ok(responseDto);
     }
@@ -43,7 +44,7 @@ public class AuthController {
     @PostMapping("/auth/reissue")
     @ApiErrorExceptionsExample(TokenReissueExceptionDocs.class)
     public ResponseEntity<ReissueTokenResponse> reIssue(
-            @RequestBody ReissueTokenRequest requestDto,
+            @RequestBody @Valid ReissueTokenRequest requestDto,
             @RequestHeader("Authorization") String bearerToken,
             @GetEmail String email) {
         String accessToken = authUseCase.extractToken(bearerToken);
@@ -65,7 +66,7 @@ public class AuthController {
     @PostMapping("/auth/login/council")
     @ApiErrorExceptionsExample(CouncilLoginExceptionDocs.class)
     public ResponseEntity<LoginCouncilResponse> logInCouncil(
-            @RequestBody LoginCouncilRequest loginCouncilRequest) {
+            @RequestBody @Valid LoginCouncilRequest loginCouncilRequest) {
         LoginCouncilResponse responseDto = authUseCase.loginCouncil(loginCouncilRequest);
         return ResponseEntity.ok(responseDto);
     }
@@ -74,7 +75,7 @@ public class AuthController {
     @PostMapping("/auth/check/email")
     @ApiErrorExceptionsExample(CheckEmailExceptionDocs.class)
     public ResponseEntity<CheckEmailResponse> checkEmail(
-            @RequestBody CheckEmailRequest checkEmailRequest) {
+            @RequestBody @Valid CheckEmailRequest checkEmailRequest) {
         CheckEmailResponse responseDto = authUseCase.checkEmail(checkEmailRequest);
         return ResponseEntity.ok(responseDto);
     }

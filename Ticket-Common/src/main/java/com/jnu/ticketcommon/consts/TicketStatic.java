@@ -19,6 +19,7 @@ public class TicketStatic {
     public static final int MILLI_TO_SECOND = 1000;
     public static final int OK_REQUEST = 200;
     public static final int BAD_REQUEST = 400;
+    public static final String BAD_REQUEST_CODE = "400";
     public static final int UNAUTHORIZED = 401;
     public static final int FORBIDDEN = 403;
 

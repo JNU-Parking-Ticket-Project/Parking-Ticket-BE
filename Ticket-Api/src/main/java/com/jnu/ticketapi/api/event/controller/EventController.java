@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.event.controller;
 
+import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_DELETE_MESSAGE;
 import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_OPEN_MESSAGE;
 import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_REGISTER_MESSAGE;
 import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_UPDATE_STATUS_MESSAGE;
@@ -21,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,6 +49,13 @@ public class EventController {
     public SuccessResponse setEvent(@RequestBody DateTimePeriod dateTimePeriod) {
         EventRegisterUseCase.registerEvent(dateTimePeriod);
         return new SuccessResponse(EVENT_SUCCESS_REGISTER_MESSAGE);
+    }
+
+    @Operation(summary = "주차권 리셋", description = "현재 활성화 및 대기중인 이벤트를")
+    @DeleteMapping("/events/reset")
+    public SuccessResponse resetEvent() {
+        EventWithDrawUseCase.resetEvent();
+        return new SuccessResponse(EVENT_SUCCESS_DELETE_MESSAGE);
     }
 
     @Operation(summary = "주차권 신청", description = "주차권 신청(주차권 신청시 잔고 감소)")

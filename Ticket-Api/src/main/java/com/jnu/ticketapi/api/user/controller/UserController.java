@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @SecurityRequirement(name = "access-token")
 @RestController
 @RequestMapping("/v1")
@@ -28,7 +30,7 @@ public class UserController {
     @Operation(summary = "비밀번호 찾기 메일 전송", description = "비밀번호 찾기 메일 전송")
     @PostMapping("/user/password/find")
     public ResponseEntity<FindPasswordResponse> sendMail(
-            @RequestBody FindPasswordRequest findPasswordRequest) {
+            @RequestBody @Valid FindPasswordRequest findPasswordRequest) {
         return ResponseEntity.ok(credentialCodeUseCase.sendMail(findPasswordRequest));
     }
 
@@ -36,7 +38,7 @@ public class UserController {
     @PostMapping("/user/update/password/{code}")
     @ApiErrorExceptionsExample(UpdatePasswordExceptionDocs.class)
     public ResponseEntity<UpdatePasswordResponse> updatePassword(
-            @PathVariable String code, @RequestBody UpdatePasswordRequest updatePasswordRequest) {
+            @PathVariable String code, @RequestBody @Valid UpdatePasswordRequest updatePasswordRequest) {
 
         return ResponseEntity.ok(updatePasswordUseCase.execute(code, updatePasswordRequest));
     }
