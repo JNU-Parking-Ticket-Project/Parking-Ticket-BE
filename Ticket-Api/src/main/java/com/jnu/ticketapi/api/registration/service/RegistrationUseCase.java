@@ -114,11 +114,13 @@ public class RegistrationUseCase {
         return findResultByEmail(email)
                 .fold(
                         tempRegistration ->
-                                updateRegistration(tempRegistration, registration, currentUserId, email),
+                                updateRegistration(
+                                        tempRegistration, registration, currentUserId, email),
                         emptyCase -> saveRegistration(registration, currentUserId, email));
     }
 
-    private FinalSaveResponse saveRegistration(Registration registration, Long currentUserId, String email) {
+    private FinalSaveResponse saveRegistration(
+            Registration registration, Long currentUserId, String email) {
         eventWithDrawUseCase.issueEvent(currentUserId);
         Events.raise(RegistrationCreationEvent.of(registration));
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
@@ -126,7 +128,10 @@ public class RegistrationUseCase {
     }
 
     private FinalSaveResponse updateRegistration(
-            Registration temporaryRegistration, Registration registration, Long currentUserId, String email) {
+            Registration temporaryRegistration,
+            Registration registration,
+            Long currentUserId,
+            String email) {
         // update
         eventWithDrawUseCase.issueEvent(currentUserId);
         temporaryRegistration.update(registration);
