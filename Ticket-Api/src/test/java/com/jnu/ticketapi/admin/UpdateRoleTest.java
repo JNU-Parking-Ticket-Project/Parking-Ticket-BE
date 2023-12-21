@@ -44,7 +44,7 @@ public class UpdateRoleTest extends RestDocsConfig {
         SignUpCouncilRequest request =
                 SignUpCouncilRequest.builder()
                         .email("ekrrdj07@naver.com")
-                        .pwd("1234")
+                        .pwd("Dlwlsgur@123")
                         .phoneNum("010-2293-5028")
                         .studentNum("215555")
                         .name("이진혁")
