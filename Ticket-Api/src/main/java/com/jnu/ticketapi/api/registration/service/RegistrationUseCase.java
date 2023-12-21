@@ -13,6 +13,7 @@ import com.jnu.ticketapi.application.helper.Converter;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
+import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
@@ -24,6 +25,7 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketinfrastructure.redis.RedisService;
 import com.jnu.ticketinfrastructure.service.MailService;
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +47,7 @@ public class RegistrationUseCase {
     private final CaptchaAdaptor captchaAdaptor;
     private final ValidateCaptchaUseCase validateCaptchaUseCase;
     private final MailService mailService;
+    private final RedisService redisService;
 
     public Registration save(Registration registration) {
         return registrationAdaptor.save(registration);
@@ -111,23 +114,25 @@ public class RegistrationUseCase {
         return findResultByEmail(email)
                 .fold(
                         tempRegistration ->
-                                updateRegistration(tempRegistration, registration, currentUserId),
-                        emptyCase -> saveRegistration(registration, currentUserId));
+                                updateRegistration(tempRegistration, registration, currentUserId, email),
+                        emptyCase -> saveRegistration(registration, currentUserId, email));
     }
 
-    private FinalSaveResponse saveRegistration(Registration registration, Long currentUserId) {
+    private FinalSaveResponse saveRegistration(Registration registration, Long currentUserId, String email) {
         eventWithDrawUseCase.issueEvent(currentUserId);
         Events.raise(RegistrationCreationEvent.of(registration));
+        redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
         return FinalSaveResponse.from(save(registration));
     }
 
     private FinalSaveResponse updateRegistration(
-            Registration temporaryRegistration, Registration registration, Long currentUserId) {
+            Registration temporaryRegistration, Registration registration, Long currentUserId, String email) {
         // update
         eventWithDrawUseCase.issueEvent(currentUserId);
         temporaryRegistration.update(registration);
         temporaryRegistration.updateIsSaved(true);
         Events.raise(RegistrationCreationEvent.of(registration));
+        redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
         return FinalSaveResponse.from(temporaryRegistration);
     }
 
