@@ -38,12 +38,12 @@ where user_id = 1;
 insert into event(event_id, event_code, event_status, end_at, start_at)
 values (1, '596575', 'OPEN', TIMESTAMPADD(MINUTE, 30, current_time), TIMESTAMPADD(MINUTE, -30, current_time));
 
-insert into sector(sector_id, issue_amount, name, remaining_amount, reserve, sector_capacity, sector_number, event_id)
-values (1, 40, '사회대 / 농대 / 수의대 / 치전원', 40, 0, 40, '1구간', 1),
-       (2, 15, '경영대 / 인문대', 15, 0, 15, '2구간', 1),
-       (3, 45, '사범대 / 예술대 / AI융합대 / 본부직할', 45, 0, 45, '3구간', 1),
-       (4, 70, '공대 / 간호-의대 1학년', 70, 0, 70, '4구간', 1),
-       (5, 30, '자연대 / 약대 / 생활대', 30, 0, 30, '5구간', 1);
+insert into sector(sector_id, issue_amount, name, remaining_amount, reserve, sector_capacity, sector_number, event_id, init_sector_capacity, init_reserve)
+values (1, 40, '사회대 / 농대 / 수의대 / 치전원', 40, 0, 40, '1구간', 1, 0, 0),
+       (2, 15, '경영대 / 인문대', 15, 0, 15, '2구간', 1, 0, 0),
+       (3, 45, '사범대 / 예술대 / AI융합대 / 본부직할', 45, 0, 45, '3구간', 1, 0, 0),
+       (4, 70, '공대 / 간호-의대 1학년', 70, 0, 70, '4구간', 1, 0, 0),
+       (5, 30, '자연대 / 약대 / 생활대', 30, 0, 30, '5구간', 1, 0, 0);
 
 insert into registration_tb(id, affiliation, car_num, created_at, email, is_light, is_saved, name, student_num,
                             phone_num, sector_id, user_id, is_deleted)
