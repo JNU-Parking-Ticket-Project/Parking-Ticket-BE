@@ -57,3 +57,7 @@ out/
 dump.rdb
 
 application-local.yml
+
+## stress test ##
+./test-script/result.json
+./test-script/summary.json
