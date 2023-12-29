@@ -37,7 +37,7 @@ public class EventWithDrawUseCase {
             timeUnit = TimeUnit.MILLISECONDS)
     public void issueEvent(Long userId) {
         // 재고 감소 로직 구현
-        Event openEvent = eventAdaptor.findOpenEvent();
+        //        Event openEvent = eventAdaptor.findOpenEvent();
         // openEvent.validateIssuePeriod();
         waitingQueueService.registerQueue(REDIS_EVENT_ISSUE_STORE, userId);
     }
@@ -49,7 +49,7 @@ public class EventWithDrawUseCase {
     }
 
     public DateTimePeriod getEventPeriod() {
-        Result<Event, Object> readyEvent = eventAdaptor.findReadyEvent();
+        Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
         return readyEvent.fold(
                 (event) -> {
                     return event.getDateTimePeriod();
