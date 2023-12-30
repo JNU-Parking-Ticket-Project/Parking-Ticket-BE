@@ -12,7 +12,7 @@ public class ValidationMessage {
 
     public static final String MUST_NOT_NULL = "null이 들어올 수 없습니다.";
 
-    public static final String IS_NOT_VALID_PHONE = "올바른 형식의 번호를 입력하세요";
+    public static final String IS_NOT_VALID_PHONE = "올바른 형식의 전화번호를 입력하세요.";
 
     public static final String MUST_POSITIVE_NUMBER = "양수만 입력 가능합니다.";
 
