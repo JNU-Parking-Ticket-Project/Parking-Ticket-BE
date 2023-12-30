@@ -18,7 +18,7 @@ public record SignUpCouncilRequest(
         @Password(message = ValidationMessage.IS_NOT_VALID_PASSWORD) String pwd,
         @NotBlank(message = "이름을 " + ValidationMessage.MUST_NOT_BLANK) String name,
         @Phone(message = ValidationMessage.IS_NOT_VALID_PHONE) String phoneNum,
-        @NotBlank(message = "학번은 " + ValidationMessage.MUST_NOT_BLANK) String studentNum) {
+        @NotBlank(message = "학번을 " + ValidationMessage.MUST_NOT_BLANK) String studentNum) {
     public User toUserEntity(SignUpCouncilRequest signUpCouncilRequest) {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         return User.builder()
