@@ -44,7 +44,7 @@ public class UserAdaptor implements UserLoadPort, UserRecordPort {
     }
 
     @Override
-    public boolean exsitsByUserRole(String userRole) {
-        return userRepository.exsitsByUserRole(userRole);
+    public boolean existsByUserRole(String userRole) {
+        return userRepository.existsByUserRole(userRole);
     }
 }

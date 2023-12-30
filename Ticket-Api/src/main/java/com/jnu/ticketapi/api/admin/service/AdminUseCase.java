@@ -26,7 +26,7 @@ public class AdminUseCase {
 
     @Transactional
     public UpdateRoleResponse updateRole(Long userId, String role) {
-        if(Objects.equals(role, "ADMIN") && (userAdaptor.exsitsByUserRole("ADMIN"))) {
+        if(Objects.equals(role, "ADMIN") && (userAdaptor.existsByUserRole("ADMIN"))) {
             throw AlreadyExistAdminException.EXCEPTION;
         }
         if(Objects.equals(userId, SecurityUtils.getCurrentUserId())) {

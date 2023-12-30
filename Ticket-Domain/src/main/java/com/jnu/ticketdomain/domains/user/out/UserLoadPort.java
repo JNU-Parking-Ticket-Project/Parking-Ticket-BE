@@ -11,5 +11,5 @@ public interface UserLoadPort {
 
     User findById(Long id);
 
-    boolean exsitsByUserRole(String userRole);
+    boolean existsByUserRole(String userRole);
 }
