@@ -42,4 +42,9 @@ public class UserAdaptor implements UserLoadPort, UserRecordPort {
         user.updatePassword(password);
         return user;
     }
+
+    @Override
+    public boolean exsitsByUserRole(String userRole) {
+        return userRepository.exsitsByUserRole(userRole);
+    }
 }
