@@ -27,6 +27,7 @@ public class UserController {
     private final UpdatePasswordUseCase updatePasswordUseCase;
 
     @Operation(summary = "비밀번호 찾기 메일 전송", description = "비밀번호 찾기 메일 전송")
+    @ApiErrorExceptionsExample(UpdatePasswordExceptionDocs.class)
     @PostMapping("/user/password/find")
     public ResponseEntity<FindPasswordResponse> sendMail(
             @RequestBody @Valid FindPasswordRequest findPasswordRequest) {
