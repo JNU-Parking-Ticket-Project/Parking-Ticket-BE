@@ -13,6 +13,6 @@ public class AnnounceContentValidator implements ConstraintValidator<AnnounceCon
         if (value == null) {
             return false;
         }
-        return value.matches(".{1,10000}");
+        return value.matches("(.|\\n){1,10000}");
     }
 }
