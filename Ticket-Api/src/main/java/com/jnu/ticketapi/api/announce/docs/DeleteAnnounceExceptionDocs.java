@@ -3,9 +3,9 @@ package com.jnu.ticketapi.api.announce.docs;
 
 import com.jnu.ticketcommon.annotation.ExceptionDoc;
 import com.jnu.ticketcommon.annotation.ExplainError;
-import com.jnu.ticketcommon.exception.AnnounceIdNotExistException;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
+import com.jnu.ticketdomain.domains.announce.exception.AnnounceIdNotExistException;
 
 @ExceptionDoc
 public class DeleteAnnounceExceptionDocs implements SwaggerExampleExceptions {

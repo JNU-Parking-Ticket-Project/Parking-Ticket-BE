@@ -50,12 +50,6 @@ public enum GlobalErrorCode implements BaseErrorCode {
 
     @ExplainError("객체 직렬화 오류 / 날짜 포맷이 잘못됐을 때 발생하는 오류입니다. ( ISO 8601 기준으로 요청을 넣어주세요 )")
     DATE_FORMAT_SERIALIZE_ERROR(BAD_REQUEST, "GLOBAL_500_3", "객체 직렬화 오류"),
-    @ExplainError("해당하는 공지사항 ID가 존재하지 않습니다.")
-    ANNOUNCE_ID_NOT_EXIST_ERROR(NOT_FOUND, "ANNOUNCE_404_1", "잘못된 공지사항 ID가 입력되었습니다."),
-    @ExplainError("작성된 공지사항이 존재하지 않습니다.")
-    ANNOUNCE_NOT_EXIST_ERROR(NOT_FOUND, "ANNOUNCE_404_2", "공지사항이 존재하지 않습니다."),
-    @ExplainError("작성된 안내사항이 존재하지 않습니다.")
-    NOTICE_NOT_EXIST_ERROR(NOT_FOUND, "NOTICE_404_1", "안내사항이 존재하지 않습니다."),
     @ExplainError("서버 내에서 PK 암호화에 오류가 생겼을 때 발생하는 오류입니다.")
     ENCRYPTION_ERROR(INTERNAL_SERVER, "ENCRYPTION_500_1", "암호화도중 오류가 발생했습니다."),
     @ExplainError("서버 내에서 PK 복호화에 오류가 생겼을 때 발생하는 오류입니다.")
