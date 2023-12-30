@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.admin.exception;
 
+
 import com.jnu.ticketcommon.exception.TicketCodeException;
 
 public class AlreadyExistAdminException extends TicketCodeException {

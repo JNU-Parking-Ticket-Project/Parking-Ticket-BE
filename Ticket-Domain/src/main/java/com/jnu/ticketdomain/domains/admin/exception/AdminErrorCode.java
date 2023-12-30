@@ -1,15 +1,14 @@
 package com.jnu.ticketdomain.domains.admin.exception;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.BAD_REQUEST;
+
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.BaseErrorCode;
 import com.jnu.ticketcommon.exception.ErrorReason;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 import java.lang.reflect.Field;
 import java.util.Objects;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.BAD_REQUEST;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
@@ -32,4 +31,3 @@ public enum AdminErrorCode implements BaseErrorCode {
         return Objects.nonNull(annotation) ? annotation.value() : this.getReason();
     }
 }
-

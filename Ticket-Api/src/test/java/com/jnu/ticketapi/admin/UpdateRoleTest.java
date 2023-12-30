@@ -1,5 +1,9 @@
 package com.jnu.ticketapi.admin;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.security.JwtGenerator;
@@ -19,10 +23,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
@@ -30,14 +30,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
 public class UpdateRoleTest extends RestDocsConfig {
-    @Autowired
-    private MockMvc mvc;
+    @Autowired private MockMvc mvc;
 
-    @Autowired
-    private ObjectMapper om;
+    @Autowired private ObjectMapper om;
 
-    @Autowired
-    private JwtGenerator jwtGenerator;
+    @Autowired private JwtGenerator jwtGenerator;
 
     @Nested
     class updateRoleTest {
@@ -194,8 +191,10 @@ public class UpdateRoleTest extends RestDocsConfig {
                 resultActions.andExpectAll(
                         status().isBadRequest(),
                         jsonPath("$.success").value(false),
-                        jsonPath("$.reason").value(AdminErrorCode.NOT_ALLOW_UPDATE_OWN_ROLE.getReason()),
-                        jsonPath("$.code").value(AdminErrorCode.NOT_ALLOW_UPDATE_OWN_ROLE.getCode()));
+                        jsonPath("$.reason")
+                                .value(AdminErrorCode.NOT_ALLOW_UPDATE_OWN_ROLE.getReason()),
+                        jsonPath("$.code")
+                                .value(AdminErrorCode.NOT_ALLOW_UPDATE_OWN_ROLE.getCode()));
                 resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             }
         }

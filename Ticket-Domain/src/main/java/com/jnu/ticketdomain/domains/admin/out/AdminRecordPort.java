@@ -1,4 +1,3 @@
 package com.jnu.ticketdomain.domains.admin.out;
 
-
-public interface AdminRecordPort { }
+public interface AdminRecordPort {}
