@@ -27,7 +27,7 @@ public class SecurityConfig {
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
     protected String[] councilAndAdminUrls = {
-        "/v1/announce/**", "/v1/notice/**", "/v1/registrations", "/v1/sectors/**", "/v1/sectors"
+        "/v1/announce/**", "/v1/notice/**", "/v1/registrations", "/v1/sectors/**", "/v1/events/**"
     };
 
     protected String[] adminUrls = {
@@ -74,6 +74,8 @@ public class SecurityConfig {
                         "/api-docs/**",
                         "/api-docs")
                 .permitAll()
+                .antMatchers(HttpMethod.GET, "/v1/sectors")
+                .authenticated()
                 .antMatchers(councilAndAdminUrls)
                 .hasAnyRole("COUNCIL", "ADMIN")
                 .antMatchers(adminUrls)
