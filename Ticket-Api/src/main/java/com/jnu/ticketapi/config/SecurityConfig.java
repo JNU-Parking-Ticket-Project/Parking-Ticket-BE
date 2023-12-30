@@ -57,6 +57,9 @@ public class SecurityConfig {
                 .and()
                 .cors()
                 .and()
+                .exceptionHandling()
+                .accessDeniedHandler(jwtAccessDeniedHandler)
+                .and()
                 .headers()
                 .frameOptions()
                 .sameOrigin();
