@@ -10,4 +10,6 @@ public interface UserLoadPort {
     Optional<User> findByEmail(String email);
 
     User findById(Long id);
+
+    boolean existsByUserRole(String userRole);
 }
