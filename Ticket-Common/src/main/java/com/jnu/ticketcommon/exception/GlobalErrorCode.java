@@ -42,7 +42,9 @@ public enum GlobalErrorCode implements BaseErrorCode {
     NOT_FOUND_REFRESH_TOKEN(FORBIDDEN, "AUTH_403_7", "리프레시 토큰을 찾을 수 없습니다."),
     UNSUPPORTED_JWT(FORBIDDEN, "AUTH_403_8", "지원하지 않는 JWT 토큰입니다."),
     @ExplainError("인증 토큰이 잘못됐을 때 발생하는 오류입니다.")
-    INVALID_TOKEN(FORBIDDEN, "AUTH_403_8", "잘못된 토큰입니다. 재 로그인 해주세요"),
+    INVALID_TOKEN(FORBIDDEN, "AUTH_403_9", "잘못된 토큰입니다. 재 로그인 해주세요"),
+    @ExplainError("토큰이 빈 값일 때 발생하는 오류입니다.")
+    TOKEN_MUST_NOT_BLANK(FORBIDDEN, "AUTH_403_10", "로그인 먼저 해주세요."),
     @ExplainError("XSS 공격이 의심되는 입력이 감지되었습니다. 정상적인 입력값을 넣어주세요.")
     XSS_SCRIPT_ATTACK(BAD_REQUEST, "GLOBAL_400_3", "XSS 공격이 의심되는 입력이 감지되었습니다. 정상적인 입력값을 넣어주세요."),
     @ExplainError("500번대 알수없는 오류입니다. 서버 관리자에게 문의 주세요")
