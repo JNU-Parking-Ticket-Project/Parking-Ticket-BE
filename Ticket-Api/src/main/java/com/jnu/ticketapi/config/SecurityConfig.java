@@ -106,7 +106,8 @@ public class SecurityConfig {
                         .antMatchers("/v1/auth/login/**")
                         .antMatchers("/v1/council/signup")
                         .antMatchers("/v1/auth/check/email/**")
-                        .antMatchers("/error").antMatchers(
+                        .antMatchers("/error")
+                        .antMatchers(
                                 "/swagger-resources/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
