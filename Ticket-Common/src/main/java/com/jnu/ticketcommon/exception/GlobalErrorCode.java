@@ -22,10 +22,10 @@ public enum GlobalErrorCode implements BaseErrorCode {
     @ExplainError("밸리데이션 (검증 과정 수행속 ) 발생하는 오류입니다.")
     ARGUMENT_NOT_VALID_ERROR(BAD_REQUEST, "GLOBAL_400_1", "검증 오류"),
     EMAIL_NOT_VALID(BAD_REQUEST, "GLOBAL_400_5", ValidationMessage.IS_NOT_VALID_EMAIL),
+    PASSWORD_NOT_VALID(BAD_REQUEST, "GLOBAL_400_6", ValidationMessage.IS_NOT_VALID_PASSWORD),
 
     @ExplainError("사용자가 비밀번호를 잘못 입력했을 때 발생하는 오류입니다.")
     BAD_CREDENTIAL(BAD_REQUEST, "AUTH_400_1", "비밀번호가 일치하지 않습니다."),
-    PASSWORD_NOT_VALID(BAD_REQUEST, "AUTH_400_3", ValidationMessage.IS_NOT_VALID_PASSWORD),
     @ExplainError("accessToken 만료시 발생하는 오류입니다.")
     ACCESS_TOKEN_EXPIRED(UNAUTHORIZED, "AUTH_401_1", "인증 시간이 만료되었습니다. 인증토큰을 재 발급 해주세요"),
     @ExplainError("인증되지 않은 사용자가 인증이 필요한 URL에 접근하려고 할 때 발생하는 오류입니다.")
