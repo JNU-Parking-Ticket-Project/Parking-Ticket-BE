@@ -40,6 +40,7 @@ public enum GlobalErrorCode implements BaseErrorCode {
     AUTHORITY_NOT_VALID(FORBIDDEN, "AUTH_403_5", "권한이 유효하지 않습니다."),
     NOT_EQUAL_PRINCIPAL(FORBIDDEN, "AUTH_403_6", "토큰의 principal이 일치하지 않습니다."),
     NOT_FOUND_REFRESH_TOKEN(FORBIDDEN, "AUTH_403_7", "리프레시 토큰을 찾을 수 없습니다."),
+    UNSUPPORTED_JWT(FORBIDDEN, "AUTH_403_8", "지원하지 않는 JWT 토큰입니다."),
     @ExplainError("인증 토큰이 잘못됐을 때 발생하는 오류입니다.")
     INVALID_TOKEN(FORBIDDEN, "AUTH_403_9", "잘못된 토큰입니다. 재 로그인 해주세요"),
     @ExplainError("토큰이 빈 값일 때 발생하는 오류입니다.")
