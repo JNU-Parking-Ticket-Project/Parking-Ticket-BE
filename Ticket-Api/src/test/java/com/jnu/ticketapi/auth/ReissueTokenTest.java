@@ -232,7 +232,7 @@ public class ReissueTokenTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("리프레시 토큰은 " + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.reason").value("리프레시 토큰을 " + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.status").value(400));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : " + responseBody);

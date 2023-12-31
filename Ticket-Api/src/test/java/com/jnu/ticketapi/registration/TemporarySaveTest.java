@@ -188,7 +188,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("이름은 " + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.reason").value("이름을 " + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
@@ -227,7 +227,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("소속대학은 " + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.reason").value("소속대학을 " + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
@@ -266,7 +266,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("학번은 " + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.reason").value("학번을 " + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
@@ -305,7 +305,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("차량번호는 " + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.reason").value("차량번호를 " + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);

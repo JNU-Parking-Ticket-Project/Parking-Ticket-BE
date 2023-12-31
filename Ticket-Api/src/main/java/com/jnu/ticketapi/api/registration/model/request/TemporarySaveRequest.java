@@ -15,19 +15,19 @@ import lombok.Builder;
 @Builder
 public record TemporarySaveRequest(
         @Schema(defaultValue = "홍길동", description = "이름")
-                @NotBlank(message = "이름은 " + ValidationMessage.MUST_NOT_BLANK)
+                @NotBlank(message = "이름을 " + ValidationMessage.MUST_NOT_BLANK)
                 String name,
         @Schema(defaultValue = "183027", description = "학번")
-                @NotBlank(message = "학번은 " + ValidationMessage.MUST_NOT_BLANK)
+                @NotBlank(message = "학번을 " + ValidationMessage.MUST_NOT_BLANK)
                 String studentNum,
         @Schema(defaultValue = "공과대학", description = "소속대학")
-                @NotBlank(message = "소속대학은 " + ValidationMessage.MUST_NOT_BLANK)
+                @NotBlank(message = "소속대학을 " + ValidationMessage.MUST_NOT_BLANK)
                 String affiliation,
         @Schema(defaultValue = "12가1234", description = "차량번호")
-                @NotBlank(message = "차량번호는 " + ValidationMessage.MUST_NOT_BLANK)
+                @NotBlank(message = "차량번호를 " + ValidationMessage.MUST_NOT_BLANK)
                 String carNum,
         @Schema(defaultValue = "true", description = "경차 여부")
-                @NotNull(message = "경차 여부는 " + ValidationMessage.MUST_NOT_NULL)
+                @NotNull(message = "경차 여부를 " + ValidationMessage.MUST_NOT_NULL)
                 Boolean isLight,
         @Schema(defaultValue = "010-1111-3333", description = "마스터 전화번호")
                 @Phone(message = ValidationMessage.IS_NOT_VALID_PHONE)
