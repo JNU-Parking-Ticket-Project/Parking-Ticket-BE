@@ -2,8 +2,8 @@ package com.jnu.ticketdomain.domains.notice.adaptor;
 
 
 import com.jnu.ticketcommon.annotation.Adaptor;
-import com.jnu.ticketcommon.exception.NoticeNotExistException;
 import com.jnu.ticketdomain.domains.notice.domain.Notice;
+import com.jnu.ticketdomain.domains.notice.exception.NoticeNotExistException;
 import com.jnu.ticketdomain.domains.notice.out.NoticeLoadPort;
 import com.jnu.ticketdomain.domains.notice.out.NoticeRecordPort;
 import com.jnu.ticketdomain.domains.notice.repository.NoticeRepository;

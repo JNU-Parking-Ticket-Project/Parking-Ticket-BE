@@ -7,6 +7,8 @@ import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.consts.MailTemplate;
 import com.jnu.ticketdomain.domains.CredentialCode.adaptor.CredentialCodeAdaptor;
 import com.jnu.ticketdomain.domains.CredentialCode.domain.CredentialCode;
+import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
+import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 import com.jnu.ticketinfrastructure.service.MailService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import org.thymeleaf.context.Context;
 public class CredentialCodeUseCase {
 
     private final CredentialCodeAdaptor credentialCodeAdaptor;
+    private final UserAdaptor userAdaptor;
     private final MailService mailService;
 
     /**
@@ -33,9 +36,13 @@ public class CredentialCodeUseCase {
      *
      * @param findPasswordRequest : 비밀번호 재설정을 위한 이메일 문자열이 들어있다.
      * @return FindPasswordResponse : boolean 값을 통해 메일이 전송되었는지 유무를 문자열로 반환한다.
+     * @throws NotFoundUserException : 메일을 전송할 사용자가 존재하지 않는 경우
      */
     @Transactional
     public FindPasswordResponse sendMail(FindPasswordRequest findPasswordRequest) {
+        userAdaptor
+                .findByEmail(findPasswordRequest.email())
+                .orElseThrow(() -> NotFoundUserException.EXCEPTION);
         CredentialCode credentialCode =
                 credentialCodeAdaptor.saveCode(
                         findPasswordRequest.toEntity(UUID.randomUUID().toString()));

@@ -2,9 +2,9 @@ package com.jnu.ticketdomain.domains.announce.adaptor;
 
 
 import com.jnu.ticketcommon.annotation.Adaptor;
-import com.jnu.ticketcommon.exception.AnnounceIdNotExistException;
-import com.jnu.ticketcommon.exception.AnnounceNotExistException;
 import com.jnu.ticketdomain.domains.announce.domain.Announce;
+import com.jnu.ticketdomain.domains.announce.exception.AnnounceIdNotExistException;
+import com.jnu.ticketdomain.domains.announce.exception.AnnounceNotExistException;
 import com.jnu.ticketdomain.domains.announce.out.AnnounceLoadPort;
 import com.jnu.ticketdomain.domains.announce.out.AnnounceRecordPort;
 import com.jnu.ticketdomain.domains.announce.repository.AnnounceRepository;

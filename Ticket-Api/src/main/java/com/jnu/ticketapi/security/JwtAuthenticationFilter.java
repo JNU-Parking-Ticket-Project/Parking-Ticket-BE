@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.security;
 
 
+import com.jnu.ticketcommon.exception.AuthenticationNotValidException;
 import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -26,12 +27,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader("Authorization");
         String accessToken = jwtResolver.extractToken(bearerToken);
         log.info("AccessToken : {}", accessToken);
-        if (accessToken != null && jwtResolver.accessTokenValidateToken(accessToken)) {
+        if (accessToken == null) {
+            throw AuthenticationNotValidException.EXCEPTION;
+        }
+        if (jwtResolver.accessTokenValidateToken(accessToken)) {
             Authentication authentication = jwtResolver.getAuthentication(accessToken);
             log.info("Authentication : {}", authentication.toString());
-            if (authentication != null) {
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);
     }

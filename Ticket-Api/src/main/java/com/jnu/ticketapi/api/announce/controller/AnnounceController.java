@@ -3,6 +3,7 @@ package com.jnu.ticketapi.api.announce.controller;
 
 import com.jnu.ticketapi.api.announce.docs.DeleteAnnounceExceptionDocs;
 import com.jnu.ticketapi.api.announce.docs.GetAnnounceExceptionDocs;
+import com.jnu.ticketapi.api.announce.docs.SaveAnnounceExceptionDocs;
 import com.jnu.ticketapi.api.announce.docs.UpdateAnnounceExceptionDocs;
 import com.jnu.ticketapi.api.announce.model.request.SaveAnnounceRequest;
 import com.jnu.ticketapi.api.announce.model.request.UpdateAnnounceRequest;
@@ -15,6 +16,7 @@ import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -46,9 +48,10 @@ public class AnnounceController {
 
     @PostMapping("/announce")
     @Operation(summary = "공지사항 작성", description = "공지사항 제목, 공지사항 내용")
+    @ApiErrorExceptionsExample(SaveAnnounceExceptionDocs.class)
     @SecurityRequirement(name = "access-token")
     public ResponseEntity<SaveAnnounceResponse> saveAnnounce(
-            @RequestBody SaveAnnounceRequest saveAnnounceRequest) {
+            @RequestBody @Valid SaveAnnounceRequest saveAnnounceRequest) {
         return ResponseEntity.ok(saveAnnounceUseCase.execute(saveAnnounceRequest));
     }
 
@@ -58,7 +61,7 @@ public class AnnounceController {
     @SecurityRequirement(name = "access-token")
     public ResponseEntity<UpdateAnnounceResponse> updateAnnounce(
             @PathVariable Long announceId,
-            @RequestBody UpdateAnnounceRequest updateAnnounceRequest) {
+            @RequestBody @Valid UpdateAnnounceRequest updateAnnounceRequest) {
         return ResponseEntity.ok(updateAnnounceUseCase.execute(announceId, updateAnnounceRequest));
     }
 

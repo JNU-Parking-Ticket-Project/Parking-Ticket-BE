@@ -68,16 +68,7 @@ public class SecurityConfig {
         http.authorizeRequests()
                 .requestMatchers(CorsUtils::isPreFlightRequest)
                 .permitAll()
-                .antMatchers(
-                        "/swagger-resources/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/v3/api-docs/**",
-                        "/v3/api-docs",
-                        "/api-docs/**",
-                        "/api-docs")
-                .permitAll()
-                .antMatchers(HttpMethod.GET, "/v1/sectors")
+                .antMatchers(HttpMethod.GET, "/v1/sectors", "/v1/events/period")
                 .authenticated()
                 .antMatchers(councilAndAdminUrls)
                 .hasAnyRole("COUNCIL", "ADMIN")
@@ -116,6 +107,14 @@ public class SecurityConfig {
                         .antMatchers("/v1/council/signup")
                         .antMatchers("/v1/auth/check/email/**")
                         .antMatchers("/error")
+                        .antMatchers(
+                                "/swagger-resources/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs",
+                                "/api-docs/**",
+                                "/api-docs")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 }

@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.api.notice.controller;
 
 
+import com.jnu.ticketapi.api.announce.docs.UpdateAnnounceExceptionDocs;
 import com.jnu.ticketapi.api.notice.docs.GetNoticeExceptionDocs;
 import com.jnu.ticketapi.api.notice.model.request.UpdateNoticeRequest;
 import com.jnu.ticketapi.api.notice.model.response.NoticeResponse;
@@ -11,6 +12,7 @@ import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -38,8 +40,9 @@ public class NoticeController {
     @PutMapping("/notice")
     @Operation(summary = "안내사항 수정")
     @SecurityRequirement(name = "access-token")
+    @ApiErrorExceptionsExample(UpdateAnnounceExceptionDocs.class)
     public ResponseEntity<UpdateNoticeResponse> updateNotice(
-            @RequestBody UpdateNoticeRequest updateNoticeRequest) {
+            @RequestBody @Valid UpdateNoticeRequest updateNoticeRequest) {
         return ResponseEntity.ok(updateNoticeUseCase.updateNotice(updateNoticeRequest));
     }
 }

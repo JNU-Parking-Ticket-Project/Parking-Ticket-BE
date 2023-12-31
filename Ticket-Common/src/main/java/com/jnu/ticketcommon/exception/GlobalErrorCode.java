@@ -1,14 +1,13 @@
 package com.jnu.ticketcommon.exception;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.*;
-
 import com.jnu.ticketcommon.annotation.ExplainError;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import com.jnu.ticketcommon.message.ValidationMessage;
 import java.lang.reflect.Field;
 import java.util.Objects;
 
-import com.jnu.ticketcommon.message.ValidationMessage;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import static com.jnu.ticketcommon.consts.TicketStatic.*;
 
 /**
  * 글로벌 관련 예외 코드들이 나온 곳입니다. 인증 , global, aop 종류등 도메인 제외한 exception 코드들이 모이는 곳입니다. 도메인 관련 Exception
@@ -30,11 +29,11 @@ public enum GlobalErrorCode implements BaseErrorCode {
     @ExplainError("accessToken 만료시 발생하는 오류입니다.")
     ACCESS_TOKEN_EXPIRED(UNAUTHORIZED, "AUTH_401_1", "인증 시간이 만료되었습니다. 인증토큰을 재 발급 해주세요"),
     @ExplainError("인증되지 않은 사용자가 인증이 필요한 URL에 접근하려고 할 때 발생하는 오류입니다.")
-    AUTHENTICATION_NOT_VALID(UNAUTHORIZED, "AUTH_401_2", "인증되지 않은 사용자입니다."),
+    AUTHENTICATION_NOT_VALID(UNAUTHORIZED, "AUTH_401_2", "인증되지 않은 사용자입니다 재 로그인 해주세요."),
+    @ExplainError("헤더에 올바른 accessToken을 담지않았을 때 발생하는 오류(형식 불일치 등)")
+    ACCESS_TOKEN_NOT_VALID(UNAUTHORIZED, "AUTH_401_3", "알맞은 accessToken을 넣어주세요."),
     @ExplainError("refreshToken 만료시 발생하는 오류입니다.")
     REFRESH_TOKEN_EXPIRED(FORBIDDEN, "AUTH_403_1", "인증 시간이 만료되었습니다. 재 로그인 해주세요."),
-    @ExplainError("헤더에 올바른 accessToken을 담지않았을 때 발생하는 오류(형식 불일치 등)")
-    ACCESS_TOKEN_NOT_VALID(FORBIDDEN, "AUTH_403_2", "알맞은 accessToken을 넣어주세요."),
     @ExplainError("헤더에 올바른 refreshToken을 담지않았을 때 발생하는 오류(형식 불일치 등)")
     REFRESH_TOKEN_NOT_VALID(FORBIDDEN, "AUTH_403_3", "알맞은 refreshToken을 넣어주세요."),
     @ExplainError("토큰에 이메일 정보가 없을 때 발생하는 오류입니다.")
@@ -45,7 +44,9 @@ public enum GlobalErrorCode implements BaseErrorCode {
     NOT_FOUND_REFRESH_TOKEN(FORBIDDEN, "AUTH_403_7", "리프레시 토큰을 찾을 수 없습니다."),
     UNSUPPORTED_JWT(FORBIDDEN, "AUTH_403_8", "지원하지 않는 JWT 토큰입니다."),
     @ExplainError("인증 토큰이 잘못됐을 때 발생하는 오류입니다.")
-    INVALID_TOKEN(FORBIDDEN, "AUTH_403_8", "잘못된 토큰입니다. 재 로그인 해주세요"),
+    INVALID_TOKEN(FORBIDDEN, "AUTH_403_9", "잘못된 토큰입니다. 재 로그인 해주세요"),
+    @ExplainError("토큰이 빈 값일 때 발생하는 오류입니다.")
+    TOKEN_MUST_NOT_BLANK(FORBIDDEN, "AUTH_403_10", "로그인 먼저 해주세요."),
     @ExplainError("XSS 공격이 의심되는 입력이 감지되었습니다. 정상적인 입력값을 넣어주세요.")
     XSS_SCRIPT_ATTACK(BAD_REQUEST, "GLOBAL_400_3", "XSS 공격이 의심되는 입력이 감지되었습니다. 정상적인 입력값을 넣어주세요."),
     @ExplainError("500번대 알수없는 오류입니다. 서버 관리자에게 문의 주세요")
@@ -53,12 +54,6 @@ public enum GlobalErrorCode implements BaseErrorCode {
 
     @ExplainError("객체 직렬화 오류 / 날짜 포맷이 잘못됐을 때 발생하는 오류입니다. ( ISO 8601 기준으로 요청을 넣어주세요 )")
     DATE_FORMAT_SERIALIZE_ERROR(BAD_REQUEST, "GLOBAL_500_3", "객체 직렬화 오류"),
-    @ExplainError("해당하는 공지사항 ID가 존재하지 않습니다.")
-    ANNOUNCE_ID_NOT_EXIST_ERROR(NOT_FOUND, "ANNOUNCE_404_1", "잘못된 공지사항 ID가 입력되었습니다."),
-    @ExplainError("작성된 공지사항이 존재하지 않습니다.")
-    ANNOUNCE_NOT_EXIST_ERROR(NOT_FOUND, "ANNOUNCE_404_2", "공지사항이 존재하지 않습니다."),
-    @ExplainError("작성된 안내사항이 존재하지 않습니다.")
-    NOTICE_NOT_EXIST_ERROR(NOT_FOUND, "NOTICE_404_1", "안내사항이 존재하지 않습니다."),
     @ExplainError("서버 내에서 PK 암호화에 오류가 생겼을 때 발생하는 오류입니다.")
     ENCRYPTION_ERROR(INTERNAL_SERVER, "ENCRYPTION_500_1", "암호화도중 오류가 발생했습니다."),
     @ExplainError("서버 내에서 PK 복호화에 오류가 생겼을 때 발생하는 오류입니다.")
