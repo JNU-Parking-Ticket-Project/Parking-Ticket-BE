@@ -1,12 +1,13 @@
 package com.jnu.ticketcommon.exception;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.*;
-
 import com.jnu.ticketcommon.annotation.ExplainError;
-import java.lang.reflect.Field;
-import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.lang.reflect.Field;
+import java.util.Objects;
+
+import static com.jnu.ticketcommon.consts.TicketStatic.*;
 
 /**
  * 글로벌 관련 예외 코드들이 나온 곳입니다. 인증 , global, aop 종류등 도메인 제외한 exception 코드들이 모이는 곳입니다. 도메인 관련 Exception
@@ -28,10 +29,10 @@ public enum GlobalErrorCode implements BaseErrorCode {
     ACCESS_TOKEN_EXPIRED(UNAUTHORIZED, "AUTH_401_1", "인증 시간이 만료되었습니다. 인증토큰을 재 발급 해주세요"),
     @ExplainError("인증되지 않은 사용자가 인증이 필요한 URL에 접근하려고 할 때 발생하는 오류입니다.")
     AUTHENTICATION_NOT_VALID(UNAUTHORIZED, "AUTH_401_2", "인증되지 않은 사용자입니다 재 로그인 해주세요."),
+    @ExplainError("헤더에 올바른 accessToken을 담지않았을 때 발생하는 오류(형식 불일치 등)")
+    ACCESS_TOKEN_NOT_VALID(UNAUTHORIZED, "AUTH_401_3", "알맞은 accessToken을 넣어주세요."),
     @ExplainError("refreshToken 만료시 발생하는 오류입니다.")
     REFRESH_TOKEN_EXPIRED(FORBIDDEN, "AUTH_403_1", "인증 시간이 만료되었습니다. 재 로그인 해주세요."),
-    @ExplainError("헤더에 올바른 accessToken을 담지않았을 때 발생하는 오류(형식 불일치 등)")
-    ACCESS_TOKEN_NOT_VALID(FORBIDDEN, "AUTH_403_2", "알맞은 accessToken을 넣어주세요."),
     @ExplainError("헤더에 올바른 refreshToken을 담지않았을 때 발생하는 오류(형식 불일치 등)")
     REFRESH_TOKEN_NOT_VALID(FORBIDDEN, "AUTH_403_3", "알맞은 refreshToken을 넣어주세요."),
     @ExplainError("토큰에 이메일 정보가 없을 때 발생하는 오류입니다.")
