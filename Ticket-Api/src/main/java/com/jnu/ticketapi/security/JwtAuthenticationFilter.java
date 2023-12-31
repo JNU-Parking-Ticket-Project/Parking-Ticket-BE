@@ -7,7 +7,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.jnu.ticketcommon.exception.TokenMustNotBlankException;
+import com.jnu.ticketcommon.exception.AuthenticationNotValidException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String accessToken = jwtResolver.extractToken(bearerToken);
         log.info("AccessToken : {}", accessToken);
         if (accessToken == null) {
-            throw TokenMustNotBlankException.EXCEPTION;
+            throw AuthenticationNotValidException.EXCEPTION;
         }
         if (jwtResolver.accessTokenValidateToken(accessToken)) {
             Authentication authentication = jwtResolver.getAuthentication(accessToken);
