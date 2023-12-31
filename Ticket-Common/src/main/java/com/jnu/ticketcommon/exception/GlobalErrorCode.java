@@ -23,6 +23,9 @@ public enum GlobalErrorCode implements BaseErrorCode {
     ARGUMENT_NOT_VALID_ERROR(BAD_REQUEST, "GLOBAL_400_1", "검증 오류"),
     EMAIL_NOT_VALID(BAD_REQUEST, "GLOBAL_400_5", ValidationMessage.IS_NOT_VALID_EMAIL),
     PASSWORD_NOT_VALID(BAD_REQUEST, "GLOBAL_400_6", ValidationMessage.IS_NOT_VALID_PASSWORD),
+    PHONE_NUMBER_NOT_VALID(BAD_REQUEST, "GLOBAL_400_7", ValidationMessage.IS_NOT_VALID_PHONE),
+    STUDENT_NUMBER_MUST_NOT_BLANK(BAD_REQUEST, "GLOBAL_400_8", "학번을 " + ValidationMessage.MUST_NOT_BLANK),
+    NAME_MUST_NOT_BLANK(BAD_REQUEST, "GLOBAL_400_9", "이름을 " + ValidationMessage.MUST_NOT_BLANK),
 
     @ExplainError("사용자가 비밀번호를 잘못 입력했을 때 발생하는 오류입니다.")
     BAD_CREDENTIAL(BAD_REQUEST, "AUTH_400_1", "비밀번호가 일치하지 않습니다."),
