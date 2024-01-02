@@ -10,7 +10,7 @@ public class ValidationMessage {
 
     public static final String IS_NOT_VALID_EMAIL = "이메일 형식이 올바르지 않습니다.";
 
-    public static final String MUST_NOT_NULL = "null이 들어올 수 없습니다.";
+    public static final String MUST_NOT_NULL = "입력/선택 해주세요.";
 
     public static final String IS_NOT_VALID_PHONE = "올바른 형식의 전화번호를 입력하세요.";
 
