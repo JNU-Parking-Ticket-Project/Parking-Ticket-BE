@@ -121,10 +121,10 @@ public class RegistrationUseCase {
 
     private FinalSaveResponse saveRegistration(
             Registration registration, Long currentUserId, String email) {
+        Registration saveReg = save(registration);
         eventWithDrawUseCase.issueEvent(currentUserId);
-        Events.raise(RegistrationCreationEvent.of(registration));
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
-        return FinalSaveResponse.from(save(registration));
+        return FinalSaveResponse.from(saveReg);
     }
 
     private FinalSaveResponse updateRegistration(
@@ -136,7 +136,6 @@ public class RegistrationUseCase {
         eventWithDrawUseCase.issueEvent(currentUserId);
         temporaryRegistration.update(registration);
         temporaryRegistration.updateIsSaved(true);
-        Events.raise(RegistrationCreationEvent.of(registration));
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
         return FinalSaveResponse.from(temporaryRegistration);
     }
