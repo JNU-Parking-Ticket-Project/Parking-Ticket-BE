@@ -2,9 +2,11 @@ package com.jnu.ticketapi.api.event.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
+import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
@@ -35,6 +37,12 @@ public class EventIssuedEventHandler {
         waitingQueueService.popQueue(REDIS_EVENT_ISSUE_STORE, 1, ChatMessage.class);
     }
 
+    /**
+     * 1차신청에 대한 유저의 신청 결과 상태 정보를 변경하는 로직
+     * 1차신청에 대한 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
+     * @param userId
+     * @author : cookie, blackbean
+     */
     private void processEventData(Long userId) {
         Registration registration = registrationAdaptor.findByUserId(userId);
         Sector sector = registration.getSector();
@@ -49,7 +57,7 @@ public class EventIssuedEventHandler {
         } else {
             user.fail();
         }
-
+        Events.raise(RegistrationCreationEvent.of(registration, user.getStatus()));
         sector.decreaseEventStock();
     }
 }
