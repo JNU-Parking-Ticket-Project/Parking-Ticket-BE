@@ -9,8 +9,8 @@ spring:
       maxLifetime: 580000
       maximum-pool-size: 20
   jpa:
-    hibernate:
-      ddl-auto: create-drop
+#    hibernate:
+#      ddl-auto: create-drop
     generate-ddl: true
     show-sql: ${SHOW_SQL:true}
     properties:

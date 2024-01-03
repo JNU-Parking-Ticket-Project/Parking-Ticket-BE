@@ -39,6 +39,7 @@ public class Registration {
     // 신청자 차량번호
     @Column(name = "car_num", nullable = false)
     private String carNum;
+
     // 차량 경차여부
     @Column(name = "is_light", nullable = false)
     private boolean isLight;
