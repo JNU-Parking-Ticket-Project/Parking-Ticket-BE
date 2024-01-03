@@ -15,7 +15,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum EventErrorCode implements BaseErrorCode {
     DUPLICATE_EVENT_CODE(BAD_REQUEST, "EVENT_400_1", "동일한 이벤트 코드가 이미 존재합니다."),
-    NO_EVENT_STOCK_LEFT(BAD_REQUEST, "EVENT_400_2", "이벤트가 모두 소진됐습니다."),
+    NO_EVENT_STOCK_LEFT(BAD_REQUEST, "EVENT_400_2", "재고의 잔량이 존재하지 않습니다."),
     NOT_EVENT_ISSUING_PERIOD(BAD_REQUEST, "EVENT_400_3", "이벤트 발급 가능 시각이 아닙니다."),
     NOT_EVENT_OPENING_PERIOD(BAD_REQUEST, "EVENT_400_4", "오픈된 이벤트가 없습니다."),
     NOT_MY_EVENT(BAD_REQUEST, "EVENT_400_5", "내 이벤트가 아닙니다."),

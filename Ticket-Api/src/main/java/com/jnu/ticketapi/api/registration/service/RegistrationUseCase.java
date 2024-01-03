@@ -15,14 +15,13 @@ import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketcommon.utils.Result;
-import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
@@ -44,9 +43,7 @@ public class RegistrationUseCase {
     private final UserAdaptor userAdaptor;
     private final EventWithDrawUseCase eventWithDrawUseCase;
     private final Encryption encryption;
-    private final CaptchaAdaptor captchaAdaptor;
     private final ValidateCaptchaUseCase validateCaptchaUseCase;
-    private final MailService mailService;
     private final RedisService redisService;
 
     public Registration save(Registration registration) {
@@ -110,17 +107,47 @@ public class RegistrationUseCase {
         User user = findById(currentUserId);
 
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
+
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
         return findResultByEmail(email)
                 .fold(
                         tempRegistration ->
-                                updateRegistration(
-                                        tempRegistration, registration, currentUserId, email),
-                        emptyCase -> saveRegistration(registration, currentUserId, email));
+                            reFinalRegister(tempRegistration, registration, sector, user, email),
+                        emptyCase -> saveRegistration(registration, sector, currentUserId, email));
+    }
+
+    private FinalSaveResponse reFinalRegister(Registration tempRegistration, Registration registration,
+        Sector sector, User user, String email) {
+        // 예비 번호가 있거나 합격인 경우
+        if(!sector.isSectorRemaining()) {
+            if(!sector.isSectorReserveRemaining()) {
+                throw NoEventStockLeftException.EXCEPTION;
+            }
+        }
+        reFinalRegisterProcess(tempRegistration, registration, user, email);
+        return FinalSaveResponse.from(tempRegistration);
+    }
+
+    private void reFinalRegisterProcess(Registration tempRegistration, Registration registration, User user,
+        String email) {
+        tempRegistration.update(registration);
+        tempRegistration.updateIsSaved(false);
+        eventWithDrawUseCase.issueEvent(user.getId());
+        redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
     }
 
     private FinalSaveResponse saveRegistration(
-            Registration registration, Long currentUserId, String email) {
+            Registration registration, Sector sector, Long currentUserId, String email) {
+        if(!sector.isSectorRemaining()) {
+            if(!sector.isSectorReserveRemaining()) {
+                throw NoEventStockLeftException.EXCEPTION;
+            }
+        }
+        return saveRegistrationProcess(registration, currentUserId, email);
+    }
+
+    private FinalSaveResponse saveRegistrationProcess(Registration registration, Long currentUserId,
+        String email) {
         Registration saveReg = save(registration);
         eventWithDrawUseCase.issueEvent(currentUserId);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
