@@ -8,6 +8,7 @@ import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
+import com.jnu.ticketdomain.domains.events.exception.EventErrorCode;
 import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
@@ -76,4 +77,16 @@ public class FinalSaveExceptionDocs implements SwaggerExampleExceptions {
     @ExplainError("캡챠답변에 null 혹은 빈칸인 경우")
     public TicketCodeException 캡챠답변에_null_혹은_빈칸인_경우 =
             new TicketCodeException(RegistrationErrorCode.CAPTCHA_ANSWER_MUST_NOT_BLANK);
+
+    @ExplainError("Event가 Open 상태가 아닌 경우")
+    public TicketCodeException Event가_Open_상태가_아닌_경우 =
+            new TicketCodeException(EventErrorCode.NOT_EVENT_OPEN_STATUS);
+
+    @ExplainError("Event가 Ready 상태가 아닌 경우")
+    public TicketCodeException Event가_Ready_상태가_아닌_경우 =
+            new TicketCodeException(EventErrorCode.NOT_EVENT_READY_STATUS);
+
+    @ExplainError("Sector 재고가 없는 경우")
+    public TicketCodeException Sector_재고가_없는_경우 =
+            new TicketCodeException(EventErrorCode.NO_EVENT_STOCK_LEFT);
 }
