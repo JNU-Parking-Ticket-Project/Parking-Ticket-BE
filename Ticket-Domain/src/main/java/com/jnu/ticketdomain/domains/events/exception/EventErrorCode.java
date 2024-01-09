@@ -30,6 +30,7 @@ public enum EventErrorCode implements BaseErrorCode {
     NOT_FOUND_EVENT(NOT_FOUND, "EVENT_404_5", "존재하지 않는 이벤트입니다."),
     USE_OTHER_API(BAD_REQUEST, "Event_400_0", "잘못된 접근입니다."),
     NOT_EVENT_READY_STATUS(BAD_REQUEST, "Event_400_14", "이벤트가 READY상태 여야 합니다."),
+    NOT_EVENT_OPEN_STATUS(BAD_REQUEST, "Event_400_15", "이벤트가 OPEN상태가 아닙니다."),
     ;
     private final Integer status;
     private final String code;

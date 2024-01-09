@@ -22,6 +22,7 @@ public class RegistrationCreationEvent extends DomainEvent {
                 .status(registration.getUser().getStatus())
                 .build();
     }
+
     public static RegistrationCreationEvent of(Registration registration, String status) {
         return RegistrationCreationEvent.builder()
                 .email(registration.getEmail())

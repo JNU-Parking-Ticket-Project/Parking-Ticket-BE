@@ -1,60 +1,124 @@
 package com.jnu.ticketdomain.common.aop.redissonLock;
 
 
+import com.jnu.ticketcommon.exception.BadLockIdentifierException;
+import com.jnu.ticketcommon.exception.NotAvailableRedissonLockException;
+import com.jnu.ticketcommon.exception.TicketCodeException;
+import com.jnu.ticketcommon.exception.TicketDynamicException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionTimedOutException;
+import org.springframework.util.StringUtils;
 
 @Aspect
 @RequiredArgsConstructor
+@Component
+@Slf4j
+@ConditionalOnExpression("${ableRedissonLock:true}")
 public class RedissonLockAop {
 
-    private final Logger log = LoggerFactory.getLogger(RedissonLock.class);
-
     private final RedissonClient redissonClient;
+    private final CallTransactionFactory callTransactionFactory;
 
-    @Around("@annotation(RedissonLock)")
-    public Object lock(ProceedingJoinPoint joinPoint) throws Throwable {
-        RedissonLock distributedLock =
-                ((MethodSignature) joinPoint.getSignature())
-                        .getMethod()
-                        .getAnnotation(RedissonLock.class);
-        log.debug(
-                joinPoint.getSignature().getName()
-                        + " 에서 LOCK("
-                        + distributedLock.LockName()
-                        + ") 획득 시도");
-        RLock lock = redissonClient.getLock(distributedLock.LockName());
-        boolean isLocked =
-                lock.tryLock(
-                        distributedLock.waitTime(),
-                        distributedLock.leaseTime(),
-                        distributedLock.timeUnit());
+    @Around(value = "@annotation(com.jnu.ticketdomain.common.aop.redissonLock.RedissonLock)")
+    public Object lock(final ProceedingJoinPoint joinPoint) throws Throwable {
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        Method method = signature.getMethod();
+
+        RedissonLock redissonLock = method.getAnnotation(RedissonLock.class);
+        String baseKey = redissonLock.LockName();
+
+        String dynamicKey =
+                generateDynamicKey(
+                        redissonLock.identifier(),
+                        joinPoint.getArgs(),
+                        redissonLock.paramClassType(),
+                        signature.getParameterNames());
+
+        RLock rLock = redissonClient.getLock(baseKey + ":" + dynamicKey);
+
+        log.info("redisson 키 설정" + baseKey + ":" + dynamicKey);
+
+        long waitTime = redissonLock.waitTime();
+        long leaseTime = redissonLock.leaseTime();
+        TimeUnit timeUnit = redissonLock.timeUnit();
         try {
-            if (!isLocked) {
-                throw new IllegalStateException("[" + distributedLock.LockName() + "] lock 획득 실패");
+            boolean available = rLock.tryLock(waitTime, leaseTime, timeUnit);
+            if (!available) {
+                throw NotAvailableRedissonLockException.EXCEPTION;
             }
-            log.debug(
-                    joinPoint.getSignature().getName()
-                            + " 에서 LOCK("
-                            + distributedLock.LockName()
-                            + ") 획득");
-            return joinPoint.proceed();
+            log.info(
+                    "redisson 락 안으로 진입 "
+                            + baseKey
+                            + ":"
+                            + dynamicKey
+                            + "쓰레드 아이디"
+                            + Thread.currentThread().getId());
+            return callTransactionFactory
+                    .getCallTransaction(redissonLock.needSameTransaction())
+                    .proceed(joinPoint);
+        } catch (TicketCodeException | TicketDynamicException | TransactionTimedOutException e) {
+            throw e;
         } finally {
-            if (lock.isLocked() && lock.isHeldByCurrentThread()) {
-                lock.unlock();
+            try {
+                rLock.unlock();
+            } catch (IllegalMonitorStateException e) {
+                log.error(e + baseKey + dynamicKey);
+                throw e;
             }
-            log.debug(
-                    joinPoint.getSignature().getName()
-                            + " 에서 LOCK("
-                            + distributedLock.LockName()
-                            + ") 반납");
         }
+    }
+
+    public String generateDynamicKey(
+            String identifier, Object[] args, Class<?> paramClassType, String[] parameterNames) {
+        try {
+            String dynamicKey;
+            if (paramClassType.equals(Object.class)) {
+                dynamicKey = createDynamicKeyFromPrimitive(parameterNames, args, identifier);
+            } else {
+                dynamicKey = createDynamicKeyFromObject(args, paramClassType, identifier);
+            }
+            return dynamicKey;
+        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException error) {
+            log.error(error.getMessage());
+            throw BadLockIdentifierException.EXCEPTION;
+        }
+    }
+
+    public String createDynamicKeyFromPrimitive(
+            String[] methodParameterNames, Object[] args, String paramName) {
+        for (int i = 0; i < methodParameterNames.length; i++) {
+            if (methodParameterNames[i].equals(paramName)) {
+                return String.valueOf(args[i]);
+            }
+        }
+        throw BadLockIdentifierException.EXCEPTION;
+    }
+
+    public String createDynamicKeyFromObject(
+            Object[] args, Class<?> paramClassType, String identifier)
+            throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        String paramClassName = paramClassType.getSimpleName();
+        for (int i = 0; i < args.length; i++) {
+            String argsClassName = args[i].getClass().getSimpleName();
+            if (argsClassName.startsWith(paramClassName)) {
+                Class<?> aClass = args[i].getClass();
+                String capitalize = StringUtils.capitalize(identifier);
+                Object result = aClass.getMethod("get" + capitalize).invoke(args[i]);
+                return String.valueOf(result);
+            }
+        }
+        throw BadLockIdentifierException.EXCEPTION;
     }
 }

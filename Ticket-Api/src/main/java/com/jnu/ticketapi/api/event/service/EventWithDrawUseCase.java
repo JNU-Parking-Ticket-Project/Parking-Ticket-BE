@@ -12,6 +12,7 @@ import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
+import com.jnu.ticketdomain.domains.events.exception.NotOpenEventStatusException;
 import com.jnu.ticketdomain.domains.events.exception.NotReadyEventStatusException;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.List;
@@ -32,13 +33,23 @@ public class EventWithDrawUseCase {
     @Transactional
     @RedissonLock(
             LockName = "주차권_발급",
+            identifier = "userId",
             waitTime = 3000,
             leaseTime = 3000,
             timeUnit = TimeUnit.MILLISECONDS)
     public void issueEvent(Long userId) {
         // 재고 감소 로직 구현
-        //        Event openEvent = eventAdaptor.findOpenEvent();
-        // openEvent.validateIssuePeriod();
+        Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
+        readyEvent.fold(
+                (event) -> {
+                    if (event.getEventStatus().equals(EventStatus.READY))
+                        throw NotOpenEventStatusException.EXCEPTION;
+                    event.validateIssuePeriod();
+                    return null;
+                },
+                (error) -> {
+                    throw NotReadyEventStatusException.EXCEPTION;
+                });
         waitingQueueService.registerQueue(REDIS_EVENT_ISSUE_STORE, userId);
     }
 

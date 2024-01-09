@@ -1,13 +1,13 @@
 package com.jnu.ticketcommon.exception;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.*;
+
 import com.jnu.ticketcommon.annotation.ExplainError;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import com.jnu.ticketcommon.message.ValidationMessage;
 import java.lang.reflect.Field;
 import java.util.Objects;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
  * 글로벌 관련 예외 코드들이 나온 곳입니다. 인증 , global, aop 종류등 도메인 제외한 exception 코드들이 모이는 곳입니다. 도메인 관련 Exception
@@ -24,7 +24,8 @@ public enum GlobalErrorCode implements BaseErrorCode {
     EMAIL_NOT_VALID(BAD_REQUEST, "BAD_REQUEST", ValidationMessage.IS_NOT_VALID_EMAIL),
     PASSWORD_NOT_VALID(BAD_REQUEST, "BAD_REQUEST", ValidationMessage.IS_NOT_VALID_PASSWORD),
     PHONE_NUMBER_NOT_VALID(BAD_REQUEST, "BAD_REQUEST", ValidationMessage.IS_NOT_VALID_PHONE),
-    STUDENT_NUMBER_MUST_NOT_BLANK(BAD_REQUEST, "BAD_REQUEST", "학번을 " + ValidationMessage.MUST_NOT_BLANK),
+    STUDENT_NUMBER_MUST_NOT_BLANK(
+            BAD_REQUEST, "BAD_REQUEST", "학번을 " + ValidationMessage.MUST_NOT_BLANK),
     NAME_MUST_NOT_BLANK(BAD_REQUEST, "BAD_REQUEST", "이름을 " + ValidationMessage.MUST_NOT_BLANK),
 
     @ExplainError("사용자가 비밀번호를 잘못 입력했을 때 발생하는 오류입니다.")
