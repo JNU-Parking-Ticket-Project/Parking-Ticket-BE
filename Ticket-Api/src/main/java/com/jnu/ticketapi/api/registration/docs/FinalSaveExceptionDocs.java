@@ -8,6 +8,7 @@ import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
+import com.jnu.ticketdomain.domains.events.exception.EventErrorCode;
 import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
@@ -42,29 +43,50 @@ public class FinalSaveExceptionDocs implements SwaggerExampleExceptions {
     public TicketCodeException 쿠폰_검증_미발급_쿠폰_조회 = NotFoundEventException.EXCEPTION;
 
     @ExplainError("이름에 null 혹은 빈칸인 경우")
-    public TicketCodeException 이름에_null_혹은_빈칸인_경우 = new TicketCodeException(GlobalErrorCode.NAME_MUST_NOT_BLANK);
+    public TicketCodeException 이름에_null_혹은_빈칸인_경우 =
+            new TicketCodeException(GlobalErrorCode.NAME_MUST_NOT_BLANK);
 
     @ExplainError("학번에 null 혹은 빈칸인 경우")
-    public TicketCodeException 학번에_null_혹은_빈칸인_경우 = new TicketCodeException(GlobalErrorCode.STUDENT_NUMBER_MUST_NOT_BLANK);
+    public TicketCodeException 학번에_null_혹은_빈칸인_경우 =
+            new TicketCodeException(GlobalErrorCode.STUDENT_NUMBER_MUST_NOT_BLANK);
 
     @ExplainError("소속대학에 null 혹은 빈칸인 경우")
-    public TicketCodeException 소속대학에_null_혹은_빈칸인_경우 = new TicketCodeException(RegistrationErrorCode.AFFILIATION_MUST_NOT_BLANK);
+    public TicketCodeException 소속대학에_null_혹은_빈칸인_경우 =
+            new TicketCodeException(RegistrationErrorCode.AFFILIATION_MUST_NOT_BLANK);
 
     @ExplainError("차량번호에 null 혹은 빈칸인 경우")
-    public TicketCodeException 차량번호에_null_혹은_빈칸인_경우 = new TicketCodeException(RegistrationErrorCode.CAR_NUMBER_MUST_NOT_BLANK);
+    public TicketCodeException 차량번호에_null_혹은_빈칸인_경우 =
+            new TicketCodeException(RegistrationErrorCode.CAR_NUMBER_MUST_NOT_BLANK);
 
     @ExplainError("경차여부에 null인 경우")
-    public TicketCodeException 경차여부에_null인_경우 = new TicketCodeException(RegistrationErrorCode.CAR_LIGHT_MUST_NOT_NULL);
+    public TicketCodeException 경차여부에_null인_경우 =
+            new TicketCodeException(RegistrationErrorCode.CAR_LIGHT_MUST_NOT_NULL);
 
     @ExplainError("전화번호 형식이 올바르지 않는 경우")
-    public TicketCodeException 전화번호_형식이_올바르지_않는_경우 = new TicketCodeException(GlobalErrorCode.PHONE_NUMBER_NOT_VALID);
+    public TicketCodeException 전화번호_형식이_올바르지_않는_경우 =
+            new TicketCodeException(GlobalErrorCode.PHONE_NUMBER_NOT_VALID);
 
     @ExplainError("선택 구간 id가 음수인 경우")
-    public TicketCodeException 선택_구간_id가_음수인_경우 = new TicketCodeException(RegistrationErrorCode.SELECT_SECTORID_MUST_POSITIVE_NUMBER);
+    public TicketCodeException 선택_구간_id가_음수인_경우 =
+            new TicketCodeException(RegistrationErrorCode.SELECT_SECTORID_MUST_POSITIVE_NUMBER);
 
     @ExplainError("캡챠코드에 null 혹은 빈칸인 경우")
-    public TicketCodeException 캡챠코드에_null_혹은_빈칸인_경우 = new TicketCodeException(RegistrationErrorCode.CAPTCHA_CODE_MUST_NOT_BLANK);
+    public TicketCodeException 캡챠코드에_null_혹은_빈칸인_경우 =
+            new TicketCodeException(RegistrationErrorCode.CAPTCHA_CODE_MUST_NOT_BLANK);
 
     @ExplainError("캡챠답변에 null 혹은 빈칸인 경우")
-    public TicketCodeException 캡챠답변에_null_혹은_빈칸인_경우 = new TicketCodeException(RegistrationErrorCode.CAPTCHA_ANSWER_MUST_NOT_BLANK);
+    public TicketCodeException 캡챠답변에_null_혹은_빈칸인_경우 =
+            new TicketCodeException(RegistrationErrorCode.CAPTCHA_ANSWER_MUST_NOT_BLANK);
+
+    @ExplainError("Event가 Open 상태가 아닌 경우")
+    public TicketCodeException Event가_Open_상태가_아닌_경우 =
+            new TicketCodeException(EventErrorCode.NOT_EVENT_OPEN_STATUS);
+
+    @ExplainError("Event가 Ready 상태가 아닌 경우")
+    public TicketCodeException Event가_Ready_상태가_아닌_경우 =
+            new TicketCodeException(EventErrorCode.NOT_EVENT_READY_STATUS);
+
+    @ExplainError("Sector 재고가 없는 경우")
+    public TicketCodeException Sector_재고가_없는_경우 =
+            new TicketCodeException(EventErrorCode.NO_EVENT_STOCK_LEFT);
 }

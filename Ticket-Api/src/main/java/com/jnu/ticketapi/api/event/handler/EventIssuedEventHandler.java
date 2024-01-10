@@ -38,8 +38,8 @@ public class EventIssuedEventHandler {
     }
 
     /**
-     * 1차신청에 대한 유저의 신청 결과 상태 정보를 변경하는 로직
-     * 1차신청에 대한 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
+     * 1차신청에 대한 유저의 신청 결과 상태 정보를 변경하는 로직 1차신청에 대한 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
+     *
      * @param userId
      * @author : cookie, blackbean
      */
