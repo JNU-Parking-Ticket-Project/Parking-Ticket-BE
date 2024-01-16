@@ -24,9 +24,9 @@ public record SectorReadResponse(
                                         sector.getId(),
                                         sector.getSectorNumber(),
                                         sector.getName(),
-                                        sector.getSectorCapacity(),
-                                        sector.getReserve(),
-                                        sector.getIssueAmount()))
+                                        sector.getInitSectorCapacity(),
+                                        sector.getInitReserve(),
+                                        sector.getInitSectorCapacity() + sector.getInitReserve()))
                 .toList();
     }
 }
