@@ -117,6 +117,8 @@ public class Sector {
         this.sectorCapacity = sector.sectorCapacity;
         this.reserve = sector.reserve;
         this.issueAmount = sector.sectorCapacity + sector.reserve;
+        this.initReserve = sector.reserve;
+        this.initSectorCapacity = sector.sectorCapacity;
         this.remainingAmount = issueAmount;
     }
 
