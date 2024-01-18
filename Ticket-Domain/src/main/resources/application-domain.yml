@@ -36,7 +36,7 @@ logging:
     org.springframework.orm.jpa: DEBUG
     org.springframework.transaction: DEBUG
     org.springframework.aop: DEBUG
-
+ableEventLock: true
 ---
 
 spring:

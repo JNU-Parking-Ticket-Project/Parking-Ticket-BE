@@ -4,7 +4,10 @@ package com.jnu.ticketapi.api.sector.service;
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
 import com.jnu.ticketapi.api.sector.model.response.SectorReadResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
+import com.jnu.ticketdomain.common.aop.event.EventTypeCheck;
+import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.out.EventLoadPort;
 import com.jnu.ticketdomain.domains.events.out.SectorLoadPort;
 import com.jnu.ticketdomain.domains.events.out.SectorRecordPort;
 import java.util.List;
@@ -19,6 +22,7 @@ public class SectorRegisterUseCase {
 
     private final SectorRecordPort sectorRecordPort;
     private final SectorLoadPort sectorLoadPort;
+    private final EventLoadPort eventLoadPort;
 
     @Transactional
     public void execute(List<SectorRegisterRequest> sectors) {
@@ -37,8 +41,8 @@ public class SectorRegisterUseCase {
     }
 
     @Transactional
+    @EventTypeCheck(eventType = EventStatus.OPEN)
     public void update(List<SectorRegisterRequest> sectors) {
-        // to Sector List
         List<Sector> prevSector = sectorLoadPort.findAll();
         List<Sector> sectorList =
                 sectors.stream()

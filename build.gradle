@@ -109,6 +109,7 @@ subprojects {
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testCompileOnly 'org.projectlombok:lombok'
         testAnnotationProcessor 'org.projectlombok:lombok'
+        implementation 'io.vavr:vavr:0.10.3'
     }
 
 
