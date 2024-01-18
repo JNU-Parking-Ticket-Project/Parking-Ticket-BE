@@ -168,6 +168,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.valueOf(BAD_REQUEST)).body(errorResponse);
     }
 
+    @ExceptionHandler(MultiException.class)
+    protected ResponseEntity<ErrorResponse> multoExceptionHandler(
+            MultiException e, HttpServletRequest request) {
+        String url =
+                UriComponentsBuilder.fromHttpRequest(new ServletServerHttpRequest(request))
+                        .build()
+                        .toUriString();
+        String errorMessage =
+                e.getCauses()
+                        .map(TicketCodeException::getErrorReason)
+                        .map(ErrorReason::getReason)
+                        .collect(Collectors.joining("\\n"));
+        GlobalErrorCode multiException = GlobalErrorCode.MULTI_EXCEPTION;
+        ErrorResponse errorResponse =
+                new ErrorResponse(
+                        multiException.getStatus(), multiException.getCode(), errorMessage, url);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ErrorResponse> handleException(
             Exception e, HttpServletRequest request) {
