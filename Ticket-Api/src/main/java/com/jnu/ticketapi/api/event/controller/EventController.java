@@ -101,6 +101,12 @@ public class EventController {
         return ResponseEntity.ok(EventWithDrawUseCase.getEventPeriod());
     }
 
+    @Operation(summary = "event별 주차권 신청 기간 조회", description = "event별 주차권 신청 기간 조회")
+    @ApiErrorExceptionsExample(ReadEventPeriodExceptionDocs.class)
+    @GetMapping("/events/{event-id}/period")
+    public ResponseEntity<DateTimePeriod> getEventPeriod(@PathVariable("event-id") Long eventId) {
+        return ResponseEntity.ok(EventWithDrawUseCase.getEventPeriodByEventId(eventId));
+    }
     @Operation(
             summary = "이벤트 목록 조회",
             description = "이벤트 목록 조회. 제목, 상태, 기간을 response한다. 페이지네이션(페이지 번호, 페이지 개수, 정렬)")

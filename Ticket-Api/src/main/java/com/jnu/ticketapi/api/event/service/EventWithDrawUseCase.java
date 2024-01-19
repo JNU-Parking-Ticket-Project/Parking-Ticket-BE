@@ -83,4 +83,9 @@ public class EventWithDrawUseCase {
                     throw NotFoundEventException.EXCEPTION;
                 });
     }
+
+    @Transactional(readOnly = true)
+    public DateTimePeriod getEventPeriodByEventId(Long eventId) {
+        return eventAdaptor.findById(eventId).getDateTimePeriod();
+    }
 }
