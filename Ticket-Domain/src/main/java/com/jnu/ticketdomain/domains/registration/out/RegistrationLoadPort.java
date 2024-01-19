@@ -16,5 +16,5 @@ public interface RegistrationLoadPort {
 
     Optional<Registration> findByEmail(String email);
 
-    List<Registration> findByIsDeletedFalseAndIsSavedTrue();
+    List<Registration> findByIsDeletedFalseAndIsSavedTrue(Long eventId);
 }

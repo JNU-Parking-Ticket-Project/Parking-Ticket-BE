@@ -18,7 +18,9 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
     Optional<Registration> findByEmail(String email);
 
-    List<Registration> findByIsDeletedFalseAndIsSavedTrue();
+    @Query(
+            "select r from Registration r where r.isDeleted = false and r.isSaved = true and r.sector.event.id = :eventId")
+    List<Registration> findByIsDeletedFalseAndIsSavedTrue(@Param("eventId") Long eventId);
 
     @Query("DELETE FROM Registration r WHERE r.sector.id = :id")
     @Modifying
