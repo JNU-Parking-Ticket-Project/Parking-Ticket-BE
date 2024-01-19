@@ -43,7 +43,10 @@ public class SectorController {
         return sectorRegisterUseCase.findAll();
     }
 
-    @Operation(summary = "구간 추가", description = "구간 설정(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
+    @Operation(
+            summary = "구간 추가",
+            description =
+                    "구간 설정(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원)) \\n 구간 생성시 재고는 0 이상, 중복 구간명 생성이 불가합니다. 예외를 확인해주세요.")
     @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
     @PostMapping("/sectors")
     public SuccessResponse setEvent(@RequestBody List<@Valid SectorRegisterRequest> sectors) {
