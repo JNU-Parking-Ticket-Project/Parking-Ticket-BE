@@ -29,4 +29,14 @@ public record SectorReadResponse(
                                         sector.getInitSectorCapacity() + sector.getInitReserve()))
                 .toList();
     }
+
+    public static SectorReadResponse toSectorReadResponse(Sector sector) {
+        return new SectorReadResponse(
+                sector.getId(),
+                sector.getSectorNumber(),
+                sector.getName(),
+                sector.getInitSectorCapacity(),
+                sector.getInitReserve(),
+                sector.getInitSectorCapacity() + sector.getInitReserve());
+    }
 }

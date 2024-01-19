@@ -2,6 +2,7 @@ package com.jnu.ticketdomain.domains.events.adaptor;
 
 
 import com.jnu.ticketcommon.annotation.Adaptor;
+import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 import com.jnu.ticketdomain.domains.events.out.SectorLoadPort;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
     private final SectorRepository couponRepository;
+    private final EventAdaptor eventAdaptor;
 
     public Sector findById(Long couponId) {
         return couponRepository
@@ -25,6 +27,18 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
     @Override
     public List<Sector> findAll() {
         return couponRepository.findAll();
+    }
+
+    @Override
+    public List<Sector> findByEventId(Long eventId) {
+        return couponRepository.findByEventId(eventId);
+    }
+
+    @Override
+    public List<Sector> findRecentSector() {
+        Event recentEvent = eventAdaptor.findRecentEvent();
+        if (recentEvent == null) throw NotFoundSectorException.EXCEPTION;
+        return couponRepository.findByEventId(recentEvent.getId());
     }
 
     @Override

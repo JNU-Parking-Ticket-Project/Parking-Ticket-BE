@@ -10,4 +10,8 @@ public interface SectorLoadPort {
     Sector findById(Long sectorId);
 
     List<Sector> findAll();
+
+    List<Sector> findByEventId(Long eventId);
+
+    List<Sector> findRecentSector();
 }
