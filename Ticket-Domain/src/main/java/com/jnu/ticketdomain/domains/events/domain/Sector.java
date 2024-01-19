@@ -4,6 +4,7 @@ package com.jnu.ticketdomain.domains.events.domain;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -54,7 +55,7 @@ public class Sector {
     @Column(name = "remaining_amount")
     private Integer remainingAmount;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
 

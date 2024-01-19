@@ -44,12 +44,22 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
                         .map(
                                 prev ->
                                         CompletableFuture.runAsync(
-                                                () ->
-                                                        prev.update(
-                                                                sectorList.get(
-                                                                        prevSector.indexOf(prev)))))
+                                                () -> {
+                                                    Sector updatedSector =
+                                                            findMatchingSector(prev, sectorList);
+                                                    if (updatedSector != null) {
+                                                        prev.update(updatedSector);
+                                                    }
+                                                }))
                         .toList();
         CompletableFuture.allOf(updateFutures.toArray(new CompletableFuture[0])).join();
+    }
+
+    private static Sector findMatchingSector(Sector prevSector, List<Sector> newSectors) {
+        return newSectors.stream()
+                .filter(newSector -> newSector.getName().equals(prevSector.getName()))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override

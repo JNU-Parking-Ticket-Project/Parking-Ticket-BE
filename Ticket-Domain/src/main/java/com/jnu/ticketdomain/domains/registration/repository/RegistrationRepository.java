@@ -5,6 +5,7 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -18,4 +19,8 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     Optional<Registration> findByEmail(String email);
 
     List<Registration> findByIsDeletedFalseAndIsSavedTrue();
+
+    @Query("DELETE FROM Registration r WHERE r.sector.id = :id")
+    @Modifying
+    void deleteBySectorId(Long id);
 }
