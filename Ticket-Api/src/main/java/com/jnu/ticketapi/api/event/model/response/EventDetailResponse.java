@@ -1,15 +1,18 @@
 package com.jnu.ticketapi.api.event.model.response;
 
+
 import com.jnu.ticketapi.api.sector.model.response.SectorReadResponse;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.domain.Event;
+import java.util.List;
 import lombok.Builder;
 
-import java.util.List;
-
-
 @Builder
-public record EventDetailResponse(List<SectorReadResponse> sectors, String eventTitle, String eventStatus, DateTimePeriod dateTimePeriod) {
+public record EventDetailResponse(
+        List<SectorReadResponse> sectors,
+        String eventTitle,
+        String eventStatus,
+        DateTimePeriod dateTimePeriod) {
 
     public static EventDetailResponse from(List<SectorReadResponse> sectors, Event event) {
         return EventDetailResponse.builder()

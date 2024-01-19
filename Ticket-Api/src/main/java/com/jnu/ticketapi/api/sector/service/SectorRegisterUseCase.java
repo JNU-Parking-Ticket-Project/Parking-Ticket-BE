@@ -5,6 +5,7 @@ import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.exception.MultiException;
 import com.jnu.ticketcommon.exception.TicketCodeException;
+import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.common.aop.event.EventTypeCheck;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
@@ -88,6 +89,12 @@ public class SectorRegisterUseCase {
     @EventTypeCheck(eventType = EventStatus.READY)
     public void update(List<SectorRegisterRequest> sectors) {
         List<Sector> prevSector = sectorLoadPort.findAll();
+        Result<Event, Object> readyOrOpenEvent = eventLoadPort.findReadyOrOpenEvent();
+        Event event = readyOrOpenEvent.getOrThrow();
+        List<Sector> sectorStream =
+                prevSector.stream()
+                        .filter(sector -> sector.getEvent().getId() == event.getId())
+                        .toList();
         List<Sector> sectorList =
                 sectors.stream()
                         .map(
@@ -98,6 +105,6 @@ public class SectorRegisterUseCase {
                                                 sectorRegisterRequest.sectorCapacity(),
                                                 sectorRegisterRequest.reserve()))
                         .toList();
-        sectorRecordPort.updateAll(prevSector, sectorList);
+        sectorRecordPort.updateAll(sectorStream, sectorList);
     }
 }
