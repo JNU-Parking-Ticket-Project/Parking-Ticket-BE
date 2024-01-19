@@ -1,15 +1,11 @@
 package com.jnu.ticketapi.api.event.controller;
 
-import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_DELETE_MESSAGE;
-import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_OPEN_MESSAGE;
-import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_REGISTER_MESSAGE;
-import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_UPDATE_STATUS_MESSAGE;
-
 import com.jnu.ticketapi.api.event.docs.CreateEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventPeriodExceptionDocs;
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventStatusRequest;
+import com.jnu.ticketapi.api.event.model.response.EventDetailResponse;
 import com.jnu.ticketapi.api.event.model.response.EventsPagingResponse;
 import com.jnu.ticketapi.api.event.service.*;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
@@ -18,20 +14,16 @@ import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+
+import static com.jnu.ticketcommon.message.ResponseMessage.*;
 
 @RestController
 @Tag(name = "2. [쿠폰]")
@@ -44,7 +36,7 @@ public class EventController {
     private final EventWithDrawUseCase EventWithDrawUseCase;
     private final UpdateEventStatusUseCase updateEventStatusUseCase;
     private final OpenEventUseCase openEventUseCase;
-
+    private final GetEventDetailUseCase getEventDetailUseCase;
     private final GetEventsUseCase getEventsUseCase;
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
@@ -118,5 +110,11 @@ public class EventController {
                             direction = Sort.Direction.DESC)
                     Pageable pageable) {
         return ResponseEntity.ok(getEventsUseCase.execute(pageable));
+    }
+
+    @Operation(summary = "이벤트 상세 조회", description = "이벤트 상세 조회 -> 구간, 이벤트 제목, 이벤트 상태, 이벤트 기간 응답을 한다,")
+    @GetMapping("/events/{event-id}")
+    public ResponseEntity<EventDetailResponse> getEventDetail(@PathVariable("event-id") Long eventId) {
+        return ResponseEntity.ok(getEventDetailUseCase.execute(eventId));
     }
 }

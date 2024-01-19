@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -13,5 +14,5 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     Optional<Sector> findById(Long sectorId);
 
     @Query("select s from Sector s where s.event.id = :eventId")
-    List<Sector> findByEventId(Long eventId);
+    List<Sector> findByEventId(@Param("eventId") Long eventId);
 }
