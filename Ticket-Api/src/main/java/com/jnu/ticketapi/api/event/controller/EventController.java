@@ -10,10 +10,8 @@ import com.jnu.ticketapi.api.event.docs.ReadEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventPeriodExceptionDocs;
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventStatusRequest;
-import com.jnu.ticketapi.api.event.service.EventRegisterUseCase;
-import com.jnu.ticketapi.api.event.service.EventWithDrawUseCase;
-import com.jnu.ticketapi.api.event.service.OpenEventUseCase;
-import com.jnu.ticketapi.api.event.service.UpdateEventStatusUseCase;
+import com.jnu.ticketapi.api.event.model.response.EventsPagingResponse;
+import com.jnu.ticketapi.api.event.service.*;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import com.jnu.ticketcommon.dto.SuccessResponse;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
@@ -22,6 +20,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +44,8 @@ public class EventController {
     private final EventWithDrawUseCase EventWithDrawUseCase;
     private final UpdateEventStatusUseCase updateEventStatusUseCase;
     private final OpenEventUseCase openEventUseCase;
+
+    private final GetEventsUseCase getEventsUseCase;
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
@@ -103,5 +106,16 @@ public class EventController {
     @GetMapping("/events/{event-id}/period")
     public ResponseEntity<DateTimePeriod> getEventPeriod(@PathVariable("event-id") Long eventId) {
         return ResponseEntity.ok(EventWithDrawUseCase.getEventPeriodByEventId(eventId));
+    }
+    @Operation(
+            summary = "이벤트 목록 조회",
+            description = "이벤트 목록 조회. 제목, 상태, 기간을 response한다. 페이지네이션(페이지 번호, 페이지 개수, 정렬)")
+    @GetMapping("/events")
+    public ResponseEntity<EventsPagingResponse> getAnnounces(
+            @PageableDefault(
+                            sort = {"createdAt"},
+                            direction = Sort.Direction.DESC)
+                    Pageable pageable) {
+        return ResponseEntity.ok(getEventsUseCase.execute(pageable));
     }
 }
