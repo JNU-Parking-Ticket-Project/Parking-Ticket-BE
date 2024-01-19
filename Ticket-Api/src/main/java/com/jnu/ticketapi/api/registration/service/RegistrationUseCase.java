@@ -172,8 +172,10 @@ public class RegistrationUseCase {
     }
 
     @Transactional(readOnly = true)
-    public GetRegistrationsResponse getRegistrations() {
-        List<Registration> registrations = registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue();
+    public GetRegistrationsResponse getRegistrations(Long eventId) {
+        List<Registration> registrations =
+                registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(eventId);
+
         return GetRegistrationsResponse.of(registrations);
     }
 }
