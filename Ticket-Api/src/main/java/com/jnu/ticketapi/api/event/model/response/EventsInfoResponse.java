@@ -3,6 +3,7 @@ package com.jnu.ticketapi.api.event.model.response;
 
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.domain.Event;
+import java.time.format.DateTimeFormatter;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -23,8 +24,10 @@ public record EventsInfoResponse(
     }
 
     private static String toString(DateTimePeriod dateTimePeriod) {
-        return dateTimePeriod.getStartAt().toString()
+        return dateTimePeriod.getStartAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
                 + " - "
-                + dateTimePeriod.getEndAt().toString();
+                + dateTimePeriod
+                        .getEndAt()
+                        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }
 }
