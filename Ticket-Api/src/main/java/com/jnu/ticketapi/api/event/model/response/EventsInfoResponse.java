@@ -1,0 +1,30 @@
+package com.jnu.ticketapi.api.event.model.response;
+
+
+import com.jnu.ticketdomain.common.vo.DateTimePeriod;
+import com.jnu.ticketdomain.domains.events.domain.Event;
+import javax.validation.constraints.NotNull;
+import lombok.AccessLevel;
+import lombok.Builder;
+
+public record EventsInfoResponse(
+        Long eventId, String eventTitle, String eventStatus, String dateTimePeriod) {
+
+    @Builder(access = AccessLevel.PACKAGE)
+    public EventsInfoResponse {}
+
+    public static EventsInfoResponse from(@NotNull Event event) {
+        return EventsInfoResponse.builder()
+                .eventId(event.getId())
+                .eventTitle(event.getTitle())
+                .eventStatus(event.getEventStatus().toString())
+                .dateTimePeriod(EventsInfoResponse.toString(event.getDateTimePeriod()))
+                .build();
+    }
+
+    private static String toString(DateTimePeriod dateTimePeriod) {
+        return dateTimePeriod.getStartAt().toString()
+                + " - "
+                + dateTimePeriod.getEndAt().toString();
+    }
+}
