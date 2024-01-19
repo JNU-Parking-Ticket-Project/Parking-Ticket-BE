@@ -26,8 +26,6 @@ public record EventsInfoResponse(
     private static String toString(DateTimePeriod dateTimePeriod) {
         return dateTimePeriod.getStartAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
                 + " - "
-                + dateTimePeriod
-                        .getEndAt()
-                        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                + dateTimePeriod.getEndAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }
 }
