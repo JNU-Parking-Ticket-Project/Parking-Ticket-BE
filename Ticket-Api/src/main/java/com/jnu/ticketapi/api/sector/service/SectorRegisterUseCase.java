@@ -52,6 +52,7 @@ public class SectorRegisterUseCase {
                                                             sectorRegisterRequest.reserve()))
                                     .toList();
                     sectorList.forEach(sector -> sector.setEvent(recentEvent));
+                    recentEvent.setSector(sectorList);
                     sectorRecordPort.saveAll(sectorList);
                     return null;
                 });

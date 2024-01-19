@@ -37,6 +37,9 @@ public class Event {
     @Column(name = "event_id")
     private Long id;
 
+    @Column(name = "title")
+    private String title;
+
     // 쿠폰 pubsub을 위한 일련번호 -> UUID String 6자리
     @Column(name = "event_code")
     private String eventCode;
@@ -49,7 +52,7 @@ public class Event {
 
     // 구간별 정보
     //    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @OneToMany(mappedBy = "event", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     //    @JoinColumn(name = "sector_id")
     private List<Sector> sector = new ArrayList<>();
 
@@ -58,6 +61,15 @@ public class Event {
         this.eventCode = UUID.randomUUID().toString().substring(0, 6);
         this.dateTimePeriod = dateTimePeriod;
         this.sector = sector;
+        this.eventStatus = EventStatus.READY;
+    }
+
+    @Builder
+    public Event(DateTimePeriod dateTimePeriod, List<Sector> sector, String title) {
+        this.eventCode = UUID.randomUUID().toString().substring(0, 6);
+        this.dateTimePeriod = dateTimePeriod;
+        this.sector = sector;
+        this.title = title;
         this.eventStatus = EventStatus.READY;
     }
 
@@ -72,6 +84,10 @@ public class Event {
 
     public void validateNotOpenStatus() {
         if (eventStatus != OPEN) throw NotOpenEventPeriodException.EXCEPTION;
+    }
+
+    public void setSector(List<Sector> sector) {
+        this.sector = sector;
     }
 
     public void validateIssuePeriod() {
