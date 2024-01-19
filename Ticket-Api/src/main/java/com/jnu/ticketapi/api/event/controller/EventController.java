@@ -8,8 +8,10 @@ import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_UPDATE_
 import com.jnu.ticketapi.api.event.docs.CreateEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventPeriodExceptionDocs;
+import com.jnu.ticketapi.api.event.docs.ReadPartsOfEventExceptionDocs;
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventStatusRequest;
+import com.jnu.ticketapi.api.event.model.response.EventPartsResponse;
 import com.jnu.ticketapi.api.event.model.response.EventsPagingResponse;
 import com.jnu.ticketapi.api.event.service.*;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
@@ -112,11 +114,18 @@ public class EventController {
             summary = "이벤트 목록 조회",
             description = "이벤트 목록 조회. 제목, 상태, 기간을 response한다. 페이지네이션(페이지 번호, 페이지 개수, 정렬)")
     @GetMapping("/events")
-    public ResponseEntity<EventsPagingResponse> getAnnounces(
+    public ResponseEntity<EventsPagingResponse> getEvents(
             @PageableDefault(
                             sort = {"id"},
                             direction = Sort.Direction.DESC)
                     Pageable pageable) {
         return ResponseEntity.ok(getEventsUseCase.execute(pageable));
+    }
+
+    @Operation(summary = "이벤트 정보 일부 조회", description = "이벤트 정보 일부 조회. title, status 조회")
+    @ApiErrorExceptionsExample(ReadPartsOfEventExceptionDocs.class)
+    @GetMapping("/events/{eventId}")
+    public ResponseEntity<EventPartsResponse> getPartOfEvent(@PathVariable Long eventId) {
+        return ResponseEntity.ok(getEventsUseCase.getParts(eventId));
     }
 }
