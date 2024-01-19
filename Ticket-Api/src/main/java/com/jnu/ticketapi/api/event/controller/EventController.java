@@ -113,7 +113,7 @@ public class EventController {
     @GetMapping("/events")
     public ResponseEntity<EventsPagingResponse> getAnnounces(
             @PageableDefault(
-                            sort = {"createdAt"},
+                            sort = {"id"},
                             direction = Sort.Direction.DESC)
                     Pageable pageable) {
         return ResponseEntity.ok(getEventsUseCase.execute(pageable));
