@@ -8,6 +8,7 @@ import static com.jnu.ticketcommon.message.ResponseMessage.EVENT_SUCCESS_UPDATE_
 import com.jnu.ticketapi.api.event.docs.CreateEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventPeriodExceptionDocs;
+import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventStatusRequest;
 import com.jnu.ticketapi.api.event.service.EventRegisterUseCase;
 import com.jnu.ticketapi.api.event.service.EventWithDrawUseCase;
@@ -46,8 +47,8 @@ public class EventController {
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
     @PostMapping("/events")
-    public SuccessResponse setEvent(@RequestBody DateTimePeriod dateTimePeriod) {
-        EventRegisterUseCase.registerEvent(dateTimePeriod);
+    public SuccessResponse setEvent(@RequestBody EventRegisterRequest eventRegisterRequest) {
+        EventRegisterUseCase.registerEvent(eventRegisterRequest);
         return new SuccessResponse(EVENT_SUCCESS_REGISTER_MESSAGE);
     }
 

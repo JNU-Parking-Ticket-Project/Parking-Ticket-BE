@@ -14,4 +14,6 @@ public interface EventLoadPort {
     Event findOpenEvent();
 
     Result<Event, Object> findReadyOrOpenEvent();
+
+    Event findRecentEvent();
 }

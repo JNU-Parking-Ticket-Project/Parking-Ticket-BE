@@ -5,9 +5,11 @@ import static com.jnu.ticketcommon.message.ResponseMessage.SECTOR_SUCCESS_REGIST
 import static com.jnu.ticketcommon.message.ResponseMessage.SECTOR_SUCCESS_UPDATE_MESSAGE;
 
 import com.jnu.ticketapi.api.sector.docs.CreateSectorExceptionDocs;
+import com.jnu.ticketapi.api.sector.docs.ReadSectorExceptionDocs;
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
 import com.jnu.ticketapi.api.sector.model.response.SectorReadResponse;
 import com.jnu.ticketapi.api.sector.service.SectorDeleteUseCase;
+import com.jnu.ticketapi.api.sector.service.SectorReadUseCase;
 import com.jnu.ticketapi.api.sector.service.SectorRegisterUseCase;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import com.jnu.ticketcommon.dto.SuccessResponse;
@@ -35,12 +37,31 @@ public class SectorController {
 
     private final SectorRegisterUseCase sectorRegisterUseCase;
     private final SectorDeleteUseCase sectorDeleteUseCase;
+    private final SectorReadUseCase sectorReadUseCase;
 
     @Operation(summary = "구간 조회", description = "구간 조회(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
-    @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
+    @ApiErrorExceptionsExample(ReadSectorExceptionDocs.class)
     @GetMapping("/sectors")
     public List<SectorReadResponse> getEvent() {
-        return sectorRegisterUseCase.findAll();
+        return sectorReadUseCase.findAll();
+    }
+
+    @Operation(
+            summary = "eventId로 구간 조회",
+            description = "eventId로 구간 조회(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
+    @ApiErrorExceptionsExample(ReadSectorExceptionDocs.class)
+    @GetMapping("/events/{event-id}/sectors")
+    public List<SectorReadResponse> getEvent(@PathVariable("event-id") Long eventId) {
+        return sectorReadUseCase.findByEventId(eventId);
+    }
+
+    @Operation(
+            summary = "최근 활성화된 Sector 조회",
+            description = "최근 활성화된 Sector 조회(구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
+    @ApiErrorExceptionsExample(ReadSectorExceptionDocs.class)
+    @GetMapping("/sectors/recent")
+    public List<SectorReadResponse> getRecentSector() {
+        return sectorReadUseCase.findRecentSector();
     }
 
     @Operation(
