@@ -97,4 +97,11 @@ public class EventController {
     public ResponseEntity<DateTimePeriod> getEventPeriod() {
         return ResponseEntity.ok(EventWithDrawUseCase.getEventPeriod());
     }
+
+    @Operation(summary = "event별 주차권 신청 기간 조회", description = "event별 주차권 신청 기간 조회")
+    @ApiErrorExceptionsExample(ReadEventPeriodExceptionDocs.class)
+    @GetMapping("/events/{event-id}/period")
+    public ResponseEntity<DateTimePeriod> getEventPeriod(@PathVariable("event-id") Long eventId) {
+        return ResponseEntity.ok(EventWithDrawUseCase.getEventPeriodByEventId(eventId));
+    }
 }
