@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Adaptor
 @RequiredArgsConstructor
@@ -43,6 +45,29 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
         event = eventRepository.findByEventStatus(EventStatus.OPEN);
         return event.map(Result::success)
                 .orElseGet(() -> Result.failure(NotFoundEventException.EXCEPTION));
+    }
+
+    @Override
+    public Event findRecentEvent() {
+        Event event =
+                findReadyOrOpenEvent()
+                        .fold(
+                                Result::success,
+                                error -> {
+                                    Pageable pageRequest = PageRequest.of(0, 1);
+                                    Event event1 =
+                                            eventRepository
+                                                    .findClosestClosedEvent(
+                                                            LocalDateTime.now(), pageRequest)
+                                                    .get(0);
+                                    return Result.success(event1);
+                                })
+                        .getOrThrow();
+
+        if (event == null) {
+            throw NotFoundEventException.EXCEPTION;
+        }
+        return event;
     }
 
     @Override

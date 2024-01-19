@@ -7,10 +7,12 @@ import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.exception.MultiException;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketdomain.common.aop.event.EventTypeCheck;
+import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.DuplicateSectorNameException;
 import com.jnu.ticketdomain.domains.events.exception.InvalidSectorCapacityAndRemainException;
+import com.jnu.ticketdomain.domains.events.out.EventLoadPort;
 import com.jnu.ticketdomain.domains.events.out.SectorLoadPort;
 import com.jnu.ticketdomain.domains.events.out.SectorRecordPort;
 import io.vavr.collection.Seq;
@@ -28,13 +30,13 @@ public class SectorRegisterUseCase {
 
     private final SectorRecordPort sectorRecordPort;
     private final SectorLoadPort sectorLoadPort;
+    private final EventLoadPort eventLoadPort;
 
     @Transactional
     public void execute(List<SectorRegisterRequest> sectors) {
-        // Check for duplicate sector names
         Validation<Seq<TicketCodeException>, List<SectorRegisterRequest>> result =
                 validateRegistrationSector(sectors);
-
+        Event recentEvent = eventLoadPort.findRecentEvent();
         result.fold(
                 errors -> {
                     throw new MultiException(errors);
@@ -50,6 +52,7 @@ public class SectorRegisterUseCase {
                                                             sectorRegisterRequest.sectorCapacity(),
                                                             sectorRegisterRequest.reserve()))
                                     .toList();
+                    sectorList.forEach(sector -> sector.setEvent(recentEvent));
                     sectorRecordPort.saveAll(sectorList);
                     return null;
                 });
