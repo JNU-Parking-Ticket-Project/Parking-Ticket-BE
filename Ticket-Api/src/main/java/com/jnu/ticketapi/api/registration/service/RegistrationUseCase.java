@@ -100,6 +100,10 @@ public class RegistrationUseCase {
 
     @Transactional
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
+        if (registrationAdaptor.existsByEmail(email)
+                || registrationAdaptor.existsByStudentNum(requestDto.studentNum())) {
+            throw new RuntimeException("이미 신청이 완료된 신청자 입니다.");
+        }
         Long captchaId = encryption.decrypt(requestDto.captchaCode());
         validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
         Long currentUserId = SecurityUtils.getCurrentUserId();
