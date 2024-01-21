@@ -21,6 +21,7 @@ import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
@@ -102,7 +103,7 @@ public class RegistrationUseCase {
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
         if (registrationAdaptor.existsByEmail(email)
                 || registrationAdaptor.existsByStudentNum(requestDto.studentNum())) {
-            throw new RuntimeException("이미 신청이 완료된 신청자 입니다.");
+            throw AlreadyExistRegistrationException.EXCEPTION;
         }
         Long captchaId = encryption.decrypt(requestDto.captchaCode());
         validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
