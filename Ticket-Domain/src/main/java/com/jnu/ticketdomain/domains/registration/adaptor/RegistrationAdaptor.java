@@ -60,12 +60,12 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     }
 
     @Override
-    public Boolean existsByEmail(String email) {
-        return registrationRepository.existsByEmail(email);
+    public Boolean existsByEmailAndIsSavedTrue(String email) {
+        return registrationRepository.existsByEmailAndIsSavedTrue(email);
     }
 
     @Override
-    public Boolean existsByStudentNum(String studentNum) {
-        return registrationRepository.existsByStudentNum(studentNum);
+    public Boolean existsByStudentNumAndIsSavedTrue(String studentNum) {
+        return registrationRepository.existsByStudentNumAndIsSavedTrue(studentNum);
     }
 }
