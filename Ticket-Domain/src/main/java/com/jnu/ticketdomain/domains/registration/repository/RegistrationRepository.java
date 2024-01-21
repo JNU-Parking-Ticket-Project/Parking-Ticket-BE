@@ -25,4 +25,8 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     @Query("DELETE FROM Registration r WHERE r.sector.id = :id")
     @Modifying
     void deleteBySectorId(Long id);
+
+    Boolean existsByEmail(String email);
+
+    Boolean existsByStudentNum(String studentNum);
 }

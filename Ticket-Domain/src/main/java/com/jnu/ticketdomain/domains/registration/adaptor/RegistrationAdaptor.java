@@ -58,4 +58,14 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     public List<Registration> findByIsDeletedFalseAndIsSavedTrue(Long eventId) {
         return registrationRepository.findByIsDeletedFalseAndIsSavedTrue(eventId);
     }
+
+    @Override
+    public Boolean existsByEmail(String email) {
+        return registrationRepository.existsByEmail(email);
+    }
+
+    @Override
+    public Boolean existsByStudentNum(String studentNum) {
+        return registrationRepository.existsByStudentNum(studentNum);
+    }
 }
