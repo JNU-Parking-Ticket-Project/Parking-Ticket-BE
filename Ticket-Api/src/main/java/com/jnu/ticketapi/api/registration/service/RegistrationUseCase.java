@@ -101,8 +101,8 @@ public class RegistrationUseCase {
 
     @Transactional
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
-        if (registrationAdaptor.existsByEmail(email)
-                || registrationAdaptor.existsByStudentNum(requestDto.studentNum())) {
+        if (registrationAdaptor.existsByEmailAndIsSavedTrue(email)
+                || registrationAdaptor.existsByStudentNumAndIsSavedTrue(requestDto.studentNum())) {
             throw AlreadyExistRegistrationException.EXCEPTION;
         }
         Long captchaId = encryption.decrypt(requestDto.captchaCode());

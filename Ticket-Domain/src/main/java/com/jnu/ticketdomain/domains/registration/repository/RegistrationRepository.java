@@ -26,7 +26,7 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     @Modifying
     void deleteBySectorId(Long id);
 
-    Boolean existsByEmail(String email);
+    Boolean existsByEmailAndIsSavedTrue(String email);
 
-    Boolean existsByStudentNum(String studentNum);
+    Boolean existsByStudentNumAndIsSavedTrue(String studentNum);
 }
