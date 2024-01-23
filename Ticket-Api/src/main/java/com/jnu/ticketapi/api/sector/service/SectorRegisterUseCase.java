@@ -107,5 +107,4 @@ public class SectorRegisterUseCase {
                         .toList();
         sectorRecordPort.updateAll(sectorStream, sectorList);
     }
-
 }

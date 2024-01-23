@@ -66,12 +66,13 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
         CompletableFuture.allOf(updateFutures.toArray(new CompletableFuture[0])).join();
     }
 
-//    private static boolean findMatchingSector(Sector prevSector, List<Sector> newSectors) {
-//        return newSectors.stream()
-//                .filter(newSector -> newSector.getSectorNumber().equals(prevSector.getSectorNumber()))
-//                .findFirst()
-//                .isPresent();
-//    }
+    //    private static boolean findMatchingSector(Sector prevSector, List<Sector> newSectors) {
+    //        return newSectors.stream()
+    //                .filter(newSector ->
+    // newSector.getSectorNumber().equals(prevSector.getSectorNumber()))
+    //                .findFirst()
+    //                .isPresent();
+    //    }
 
     @Override
     public void delete(Sector sector) {
