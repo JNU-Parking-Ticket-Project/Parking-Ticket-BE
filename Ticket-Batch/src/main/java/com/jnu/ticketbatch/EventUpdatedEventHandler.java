@@ -1,6 +1,7 @@
 package com.jnu.ticketbatch;
 
 
+import com.jnu.ticketbatch.job.EventRegisterJob;
 import com.jnu.ticketbatch.job.EventUpdateJob;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.event.EventUpdatedEvent;
@@ -19,6 +20,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 public class EventUpdatedEventHandler {
     private final EventUpdateJob eventUpdateJob;
+    private final EventRegisterJob eventRegisterJob;
 
     @SneakyThrows
     @Async
@@ -30,5 +32,6 @@ public class EventUpdatedEventHandler {
         // 예약 스케줄링
         Event event = eventCreationEvent.getEvent();
         eventUpdateJob.reRegisterJob(event.getId(), event.getDateTimePeriod().getStartAt());
+        eventRegisterJob.expiredJob(event.getId(), event.getDateTimePeriod().getEndAt());
     }
 }
