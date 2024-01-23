@@ -31,6 +31,7 @@ public class EventCreationEventHandler {
         Event event = eventCreationEvent.getEvent();
         //        try {
         eventRegisterJob.registerJob(event.getId(), event.getDateTimePeriod().getStartAt());
+        eventRegisterJob.expiredJob(event.getId(), event.getDateTimePeriod().getEndAt());
         //        } catch (Exception e) {
         //            log.info("스케줄링 실패 : " + e.getMessage());
         //            throw EventCretionRegisterBatchException.EXCEPTION;
