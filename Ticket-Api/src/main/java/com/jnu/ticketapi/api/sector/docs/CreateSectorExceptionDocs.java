@@ -5,7 +5,7 @@ import com.jnu.ticketcommon.annotation.ExceptionDoc;
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
-import com.jnu.ticketdomain.domains.events.exception.DuplicateSectorNameException;
+import com.jnu.ticketdomain.domains.events.exception.DuplicateSectorNumException;
 import com.jnu.ticketdomain.domains.events.exception.InvalidSectorCapacityAndRemainException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 
@@ -20,5 +20,5 @@ public class CreateSectorExceptionDocs implements SwaggerExampleExceptions {
     public TicketCodeException 구간_생성_검증_실패 = InvalidSectorCapacityAndRemainException.EXCEPTION;
 
     @ExplainError("Sector 생성 검증 기준을 만족하지 못합니다. 2) 구간명이 중복됩니다.")
-    public TicketCodeException 구간명_중복_생성 = DuplicateSectorNameException.EXCEPTION;
+    public TicketCodeException 구간명_중복_생성 = DuplicateSectorNumException.EXCEPTION;
 }

@@ -10,7 +10,7 @@ import com.jnu.ticketdomain.common.aop.event.EventTypeCheck;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
-import com.jnu.ticketdomain.domains.events.exception.DuplicateSectorNameException;
+import com.jnu.ticketdomain.domains.events.exception.DuplicateSectorNumException;
 import com.jnu.ticketdomain.domains.events.exception.InvalidSectorCapacityAndRemainException;
 import com.jnu.ticketdomain.domains.events.out.EventLoadPort;
 import com.jnu.ticketdomain.domains.events.out.SectorLoadPort;
@@ -74,7 +74,7 @@ public class SectorRegisterUseCase {
 
         return sectorNumbers.stream().distinct().count() == sectorNumbers.size()
                 ? Validation.valid(io.vavr.collection.List.ofAll(sectorNumbers))
-                : Validation.invalid(DuplicateSectorNameException.EXCEPTION);
+                : Validation.invalid(DuplicateSectorNumException.EXCEPTION);
     }
 
     private Validation<TicketCodeException, io.vavr.collection.List<SectorRegisterRequest>>
@@ -107,4 +107,5 @@ public class SectorRegisterUseCase {
                         .toList();
         sectorRecordPort.updateAll(sectorStream, sectorList);
     }
+
 }
