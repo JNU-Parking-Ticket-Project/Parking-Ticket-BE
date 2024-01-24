@@ -1,5 +1,8 @@
 package com.jnu.ticketapi.api.sector.service;
 
+import static io.vavr.API.$;
+import static io.vavr.API.Case;
+import static io.vavr.API.Match;
 
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
 import com.jnu.ticketcommon.annotation.UseCase;
@@ -34,9 +37,11 @@ public class SectorRegisterUseCase {
 
     @Transactional
     public void execute(List<SectorRegisterRequest> sectors) {
-        Validation<Seq<TicketCodeException>, List<SectorRegisterRequest>> result =
-                validateRegistrationSector(sectors);
+
         Event recentEvent = eventLoadPort.findRecentEvent();
+        List<Sector> prevSector = sectorLoadPort.findByEventId(recentEvent.getId());
+        Validation<Seq<TicketCodeException>, List<SectorRegisterRequest>> result =
+                validateRegistrationSector(sectors, prevSector);
         result.fold(
                 errors -> {
                     throw new MultiException(errors);
@@ -60,11 +65,51 @@ public class SectorRegisterUseCase {
     }
 
     private Validation<Seq<TicketCodeException>, List<SectorRegisterRequest>>
-            validateRegistrationSector(List<SectorRegisterRequest> sectors) {
+            validateRegistrationSector(
+                    List<SectorRegisterRequest> sectors, List<Sector> prevSector) {
+        return Validation.combine(
+                        validateUniqueSectorNumbers(sectors),
+                        validatePlusSectorCapacityAndReserve(sectors),
+                        validateDuplicateSectorNum(sectors, prevSector))
+                .ap(
+                        (uniqueSectorNumbers, plusSectorCapacityAndReserve, duplicatedSector) ->
+                                sectors);
+    }
+
+    private Validation<Seq<TicketCodeException>, List<SectorRegisterRequest>> validateUpdateSector(
+            List<SectorRegisterRequest> sectors) {
         return Validation.combine(
                         validateUniqueSectorNumbers(sectors),
                         validatePlusSectorCapacityAndReserve(sectors))
                 .ap((uniqueSectorNumbers, plusSectorCapacityAndReserve) -> sectors);
+    }
+
+    /** 단, emptyList는 valid로 처리한다. */
+    private Validation<TicketCodeException, List<SectorRegisterRequest>> validateDuplicateSectorNum(
+            List<SectorRegisterRequest> sectors, List<Sector> prevSector) {
+        return Match(sectors)
+                .of(
+                        Case(
+                                $(),
+                                sectorList -> {
+                                    boolean hasDuplicate =
+                                            sectorList.stream()
+                                                    .anyMatch(
+                                                            sector ->
+                                                                    prevSector.stream()
+                                                                            .anyMatch(
+                                                                                    prev ->
+                                                                                            prev.getSectorNumber()
+                                                                                                    .equals(
+                                                                                                            sector
+                                                                                                                    .sectorNumber())));
+
+                                    return hasDuplicate
+                                            ? Validation.invalid(
+                                                    DuplicateSectorNameException.EXCEPTION)
+                                            : Validation.valid(sectorList);
+                                }),
+                        Case($(), Validation::valid));
     }
 
     private Validation<TicketCodeException, io.vavr.collection.List<String>>
@@ -88,24 +133,32 @@ public class SectorRegisterUseCase {
     @Transactional
     @EventTypeCheck(eventType = EventStatus.READY)
     public void update(List<SectorRegisterRequest> sectors) {
-        validateRegistrationSector(sectors);
-        List<Sector> prevSector = sectorLoadPort.findAll();
-        Result<Event, Object> readyOrOpenEvent = eventLoadPort.findReadyOrOpenEvent();
-        Event event = readyOrOpenEvent.getOrThrow();
-        List<Sector> sectorStream =
-                prevSector.stream()
-                        .filter(sector -> sector.getEvent().getId() == event.getId())
-                        .toList();
-        List<Sector> sectorList =
-                sectors.stream()
-                        .map(
-                                sectorRegisterRequest ->
-                                        new Sector(
-                                                sectorRegisterRequest.sectorNumber(),
-                                                sectorRegisterRequest.name(),
-                                                sectorRegisterRequest.sectorCapacity(),
-                                                sectorRegisterRequest.reserve()))
-                        .toList();
-        sectorRecordPort.updateAll(sectorStream, sectorList);
+        Validation<Seq<TicketCodeException>, List<SectorRegisterRequest>> result =
+                validateUpdateSector(sectors);
+        result.fold(
+                errors -> {
+                    throw new MultiException(errors);
+                },
+                validSectors -> {
+                    List<Sector> prevSector = sectorLoadPort.findAll();
+                    Result<Event, Object> readyOrOpenEvent = eventLoadPort.findReadyOrOpenEvent();
+                    Event event = readyOrOpenEvent.getOrThrow();
+                    List<Sector> sectorStream =
+                            prevSector.stream()
+                                    .filter(sector -> sector.getEvent().getId() == event.getId())
+                                    .toList();
+                    List<Sector> sectorList =
+                            sectors.stream()
+                                    .map(
+                                            sectorRegisterRequest ->
+                                                    new Sector(
+                                                            sectorRegisterRequest.sectorNumber(),
+                                                            sectorRegisterRequest.name(),
+                                                            sectorRegisterRequest.sectorCapacity(),
+                                                            sectorRegisterRequest.reserve()))
+                                    .toList();
+                    sectorRecordPort.updateAll(sectorStream, sectorList);
+                    return null;
+                });
     }
 }
