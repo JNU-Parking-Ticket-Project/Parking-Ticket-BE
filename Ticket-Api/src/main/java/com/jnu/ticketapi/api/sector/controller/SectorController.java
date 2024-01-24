@@ -6,6 +6,7 @@ import static com.jnu.ticketcommon.message.ResponseMessage.SECTOR_SUCCESS_UPDATE
 
 import com.jnu.ticketapi.api.sector.docs.CreateSectorExceptionDocs;
 import com.jnu.ticketapi.api.sector.docs.ReadSectorExceptionDocs;
+import com.jnu.ticketapi.api.sector.docs.UpdateSectorExceptionDocs;
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
 import com.jnu.ticketapi.api.sector.model.response.SectorReadResponse;
 import com.jnu.ticketapi.api.sector.service.SectorDeleteUseCase;
@@ -77,8 +78,8 @@ public class SectorController {
 
     @Operation(
             summary = "구간 수정",
-            description = "구간 수정 -> 수정하면 기존 리스트 다 날아가고 새로 생성됩니다 (구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
-    @ApiErrorExceptionsExample(CreateSectorExceptionDocs.class)
+            description = "구간 수정 -> 변경된 구간만 변경이 됩니다. (구간 번호, 구간 이름, 구간별 수용인원, 잔여 인원))")
+    @ApiErrorExceptionsExample(UpdateSectorExceptionDocs.class)
     @PutMapping("/sectors")
     public SuccessResponse updateEvent(@RequestBody List<@Valid SectorRegisterRequest> sectors) {
         sectorRegisterUseCase.update(sectors);
