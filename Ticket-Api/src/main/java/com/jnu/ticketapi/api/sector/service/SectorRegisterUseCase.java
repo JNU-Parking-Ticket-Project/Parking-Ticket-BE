@@ -53,8 +53,8 @@ public class SectorRegisterUseCase {
                                                             sectorRegisterRequest.reserve()))
                                     .toList();
                     sectorList.forEach(sector -> sector.setEvent(recentEvent));
-                    recentEvent.setSector(sectorList);
-                    sectorRecordPort.saveAll(sectorList);
+                    List<Sector> savedSectors = sectorRecordPort.saveAll(sectorList);
+                    recentEvent.setSector(savedSectors);
                     return null;
                 });
     }
@@ -88,6 +88,7 @@ public class SectorRegisterUseCase {
     @Transactional
     @EventTypeCheck(eventType = EventStatus.READY)
     public void update(List<SectorRegisterRequest> sectors) {
+        validateRegistrationSector(sectors);
         List<Sector> prevSector = sectorLoadPort.findAll();
         Result<Event, Object> readyOrOpenEvent = eventLoadPort.findReadyOrOpenEvent();
         Event event = readyOrOpenEvent.getOrThrow();

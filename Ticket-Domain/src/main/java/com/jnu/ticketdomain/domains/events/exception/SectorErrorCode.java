@@ -20,7 +20,9 @@ public enum SectorErrorCode implements BaseErrorCode {
     NOT_FOUND_SECTOR(NOT_FOUND, "Sector_404_2", "존재하지 않는 구간 입니다."),
     NOT_MY_SECTOR(BAD_REQUEST, "Sector_400_7", "내 구간이 아닙니다."),
     DUPLICATE_SECTOR_NUMBER(BAD_REQUEST, "Sector_400_8", "동일한 구간 번호(1구간, 2구간 ..)가 이미 존재합니다."),
-    INVALID_SECTOR_CAPACITY_AND_REMAIN(BAD_REQUEST, "Sector_400_9", "구간의 재고는 0 이상이여야 합니다.");
+    INVALID_SECTOR_CAPACITY_AND_REMAIN(BAD_REQUEST, "Sector_400_9", "구간의 재고는 0 이상이여야 합니다."),
+    INVALID_UPDATE_SECTOR_SIZE(BAD_REQUEST, "Sector_400_10", "구간의 개수가 일치해야 합니다."),
+    ;
     private final Integer status;
     private final String code;
     private final String reason;
