@@ -14,4 +14,6 @@ public interface SectorLoadPort {
     List<Sector> findByEventId(Long eventId);
 
     List<Sector> findRecentSector();
+
+    List<Sector> findAllByEventStatus();
 }

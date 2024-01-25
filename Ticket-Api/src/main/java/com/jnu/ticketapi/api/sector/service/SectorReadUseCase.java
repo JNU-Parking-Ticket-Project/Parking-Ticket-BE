@@ -15,8 +15,8 @@ public class SectorReadUseCase {
     private final SectorLoadPort sectorLoadPort;
 
     @Transactional(readOnly = true)
-    public List<SectorReadResponse> findAll() {
-        List<Sector> all = sectorLoadPort.findAll();
+    public List<SectorReadResponse> findAllByEventStatus() {
+        List<Sector> all = sectorLoadPort.findAllByEventStatus();
         return SectorReadResponse.toSectorReadResponses(all);
     }
 
