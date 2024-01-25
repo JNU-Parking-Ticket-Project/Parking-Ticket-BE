@@ -44,7 +44,7 @@ public class SectorController {
     @ApiErrorExceptionsExample(ReadSectorExceptionDocs.class)
     @GetMapping("/sectors")
     public List<SectorReadResponse> getEvent() {
-        return sectorReadUseCase.findAll();
+        return sectorReadUseCase.findAllByEventStatus();
     }
 
     @Operation(
