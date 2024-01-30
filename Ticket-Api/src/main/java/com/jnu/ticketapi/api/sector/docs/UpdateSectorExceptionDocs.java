@@ -23,5 +23,6 @@ public class UpdateSectorExceptionDocs implements SwaggerExampleExceptions {
     @ExplainError("Sector 생성 검증 기준을 만족하지 못합니다. 2) 구간명(sectorNum)이 중복됩니다.")
     public TicketCodeException 구간명_중복_생성 = DuplicateSectorNameException.EXCEPTION;
 
-    @ExplainError public TicketCodeException 수정_구간_크기_불일치 = InvalidSizeSectorException.EXCEPTION;
+    @ExplainError("Sector 생성 검증 기준을 만족하지 못합니다. 3) 구간 크기가 일치하지 않습니다. 수정할 Sector 크기와 일치해야합니다.")
+    public TicketCodeException 수정_구간_크기_불일치 = InvalidSizeSectorException.EXCEPTION;
 }

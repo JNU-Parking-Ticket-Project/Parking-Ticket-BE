@@ -45,8 +45,7 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
 
     @Override
     public List<Sector> findAllByEventStatus() {
-        return couponRepository
-                .findAllByEventStatus();
+        return couponRepository.findAllByEventStatus();
     }
 
     @Override

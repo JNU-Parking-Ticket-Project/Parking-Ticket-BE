@@ -1,8 +1,5 @@
 package com.jnu.ticketapi.api.sector.service;
 
-import static io.vavr.API.$;
-import static io.vavr.API.Case;
-import static io.vavr.API.Match;
 
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
 import com.jnu.ticketcommon.annotation.UseCase;
@@ -87,47 +84,77 @@ public class SectorRegisterUseCase {
     /** 단, emptyList는 valid로 처리한다. */
     private Validation<TicketCodeException, List<SectorRegisterRequest>> validateDuplicateSectorNum(
             List<SectorRegisterRequest> sectors, List<Sector> prevSector) {
-        return Match(sectors)
-                .of(
-                        Case(
-                                $(),
-                                sectorList -> {
-                                    boolean hasDuplicate =
-                                            sectorList.stream()
-                                                    .anyMatch(
-                                                            sector ->
-                                                                    prevSector.stream()
-                                                                            .anyMatch(
-                                                                                    prev ->
-                                                                                            prev.getSectorNumber()
-                                                                                                    .equals(
-                                                                                                            sector
-                                                                                                                    .sectorNumber())));
+        if (sectors.isEmpty()) {
+            return Validation.valid(sectors);
+        }
+        // 기존 DB에 저장된 sector와 중복되는 sector가 있는지 확인한다.
+        boolean hasDuplicate =
+                sectors.stream()
+                        .anyMatch(
+                                sector ->
+                                        prevSector.stream()
+                                                .anyMatch(
+                                                        prev ->
+                                                                prev.getSectorNumber()
+                                                                        .equals(
+                                                                                sector
+                                                                                        .sectorNumber())));
+        if (hasDuplicate) {
+            throw DuplicateSectorNameException.EXCEPTION;
+        }
+        return Validation.valid(sectors);
+        /*        return Match(sectors)
+        .of(
+                Case(
+                        $(),
+                        sectorList -> {
+                            boolean hasDuplicate =
+                                    sectorList.stream()
+                                            .anyMatch(
+                                                    sector ->
+                                                            prevSector.stream()
+                                                                    .anyMatch(
+                                                                            prev ->
+                                                                                    prev.getSectorNumber()
+                                                                                            .equals(
+                                                                                                    sector
+                                                                                                            .sectorNumber())));
 
-                                    return hasDuplicate
-                                            ? Validation.invalid(
-                                                    DuplicateSectorNameException.EXCEPTION)
-                                            : Validation.valid(sectorList);
-                                }),
-                        Case($(), Validation::valid));
+                            return hasDuplicate
+                                    ? Validation.invalid(
+                                            DuplicateSectorNameException.EXCEPTION)
+                                    : Validation.valid(sectorList);
+                        }),
+                Case($(), Validation::valid));*/
     }
 
     private Validation<TicketCodeException, io.vavr.collection.List<String>>
             validateUniqueSectorNumbers(java.util.List<SectorRegisterRequest> sectors) {
         java.util.List<String> sectorNumbers = new LinkedList<>();
         sectors.forEach(sector -> sectorNumbers.add(sector.sectorNumber()));
-
-        return sectorNumbers.stream().distinct().count() == sectorNumbers.size()
-                ? Validation.valid(io.vavr.collection.List.ofAll(sectorNumbers))
-                : Validation.invalid(DuplicateSectorNameException.EXCEPTION);
+        if (sectorNumbers.stream().distinct().count() == sectorNumbers.size()) {
+            return Validation.valid(io.vavr.collection.List.ofAll(sectorNumbers));
+        } else {
+            throw DuplicateSectorNameException.EXCEPTION;
+        }
+        /*return sectorNumbers.stream().distinct().count() == sectorNumbers.size()
+        ? Validation.valid(io.vavr.collection.List.ofAll(sectorNumbers))
+        : Validation.invalid(DuplicateSectorNameException.EXCEPTION);*/
     }
 
     private Validation<TicketCodeException, io.vavr.collection.List<SectorRegisterRequest>>
             validatePlusSectorCapacityAndReserve(java.util.List<SectorRegisterRequest> sectors) {
-        return sectors.stream()
-                        .allMatch(sector -> sector.sectorCapacity() >= 0 && sector.reserve() >= 0)
-                ? Validation.valid(io.vavr.collection.List.ofAll(sectors))
-                : Validation.invalid(InvalidSectorCapacityAndRemainException.EXCEPTION);
+        sectors.forEach(
+                sector -> {
+                    if (sector.sectorCapacity() < 0 || sector.reserve() < 0) {
+                        throw InvalidSectorCapacityAndRemainException.EXCEPTION;
+                    }
+                });
+        return Validation.valid(io.vavr.collection.List.ofAll(sectors));
+        /*        return sectors.stream()
+                .allMatch(sector -> sector.sectorCapacity() >= 0 && sector.reserve() >= 0)
+        ? Validation.valid(io.vavr.collection.List.ofAll(sectors))
+        : Validation.invalid(InvalidSectorCapacityAndRemainException.EXCEPTION);*/
     }
 
     @Transactional
