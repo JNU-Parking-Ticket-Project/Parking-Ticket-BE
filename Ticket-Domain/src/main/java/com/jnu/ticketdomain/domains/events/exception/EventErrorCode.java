@@ -29,7 +29,7 @@ public enum EventErrorCode implements BaseErrorCode {
     CANNOT_MODIFY_OPEN_EVENT(BAD_REQUEST, "EVENT_400_13", "오픈된 이벤트은 수정할 수 없습니다."),
     NOT_FOUND_EVENT(NOT_FOUND, "EVENT_404_5", "존재하지 않는 이벤트입니다."),
     USE_OTHER_API(BAD_REQUEST, "Event_400_0", "잘못된 접근입니다."),
-    NOT_EVENT_READY_STATUS(BAD_REQUEST, "Event_400_14", "이벤트가 READY상태 여야 합니다."),
+    NOT_EVENT_READY_STATUS(BAD_REQUEST, "Event_400_14", "신청기간이 아닙니다."),
     NOT_EVENT_OPEN_STATUS(BAD_REQUEST, "Event_400_15", "신청기간이 아닙니다."),
     ;
     private final Integer status;
