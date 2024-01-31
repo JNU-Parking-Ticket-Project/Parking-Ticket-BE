@@ -56,12 +56,16 @@ public class Event {
     //    @JoinColumn(name = "sector_id")
     private List<Sector> sector = new ArrayList<>();
 
+    @Column(name = "publish")
+    private Boolean publish;
+
     @Builder
     public Event(DateTimePeriod dateTimePeriod, List<Sector> sector) {
         this.eventCode = UUID.randomUUID().toString().substring(0, 6);
         this.dateTimePeriod = dateTimePeriod;
         this.sector = sector;
         this.eventStatus = EventStatus.READY;
+        this.publish = false;
     }
 
     @Builder
@@ -71,6 +75,7 @@ public class Event {
         this.sector = sector;
         this.title = title;
         this.eventStatus = EventStatus.READY;
+        this.publish = false;
     }
 
     @PostPersist
