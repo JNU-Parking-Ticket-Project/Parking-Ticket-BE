@@ -19,4 +19,7 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     @Query(
             "select s from Sector s join fetch s.event where s.event.eventStatus = 'OPEN' or s.event.eventStatus = 'READY'")
     List<Sector> findAllByEventStatus();
+
+    @Query("select s from Sector s where s.id = :sectorId and s.event.publish = false")
+    Optional<Sector> findByIdWhereEventPublishIdFalse(Long sectorId);
 }

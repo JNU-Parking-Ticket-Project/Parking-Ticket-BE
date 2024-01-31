@@ -21,7 +21,7 @@ public class SectorDeleteUseCase {
     @Transactional
     public void execute(Long sectorId) {
         // to Sector List
-        Sector sector = sectorLoadPort.findById(sectorId);
+        Sector sector = sectorLoadPort.findByIdWherePublishIsFalse(sectorId);
         registrationRecordPort.deleteBySector(sector);
         sectorRecordPort.delete(sector);
     }
