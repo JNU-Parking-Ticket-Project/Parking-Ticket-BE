@@ -1,9 +1,8 @@
 package com.jnu.ticketapi.config;
 
+
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class BaseUnitTest {
-
-}
+public class BaseUnitTest {}

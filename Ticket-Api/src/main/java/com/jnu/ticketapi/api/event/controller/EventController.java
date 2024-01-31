@@ -124,12 +124,10 @@ public class EventController {
 
     @Operation(
             summary = "이벤트의 PUBLISH 상태 조회",
-            description = "이벤트의 PUBLISH 상태를 조회한다. path variable 은 Long타입인 event-id를 받는다."
-    )
+            description = "이벤트의 PUBLISH 상태를 조회한다. path variable 은 Long타입인 event-id를 받는다.")
     @GetMapping("/events/publish/{event-id}")
     public ResponseEntity<PublishStatusResponse> getPublish(
             @PathVariable("event-id") Long eventId) {
         return ResponseEntity.ok(getPublishStatusUseCase.execute(eventId));
-
     }
 }

@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.config;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,10 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ExtendWith(DatabaseClearExtension.class)
 public class BaseIntegrationTest {
 
-    @Autowired
-    protected MockMvc mockMvc;
+    @Autowired protected MockMvc mockMvc;
 
-    @Autowired
-    protected ObjectMapper om;
-
+    @Autowired protected ObjectMapper om;
 }
