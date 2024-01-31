@@ -49,7 +49,7 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
     }
 
     @Override
-    public Result<Event, Object> findReadyOrOpenAndNotPublishEvent(){
+    public Result<Event, Object> findReadyOrOpenAndNotPublishEvent() {
         // READY 상태의 이벤트가 없으면 OPEN 상태의 이벤트를 가져온다.
         Optional<Event> event = eventRepository.findByEventStatus(EventStatus.READY);
         if (event.isPresent() & !event.get().getPublish()) return Result.success(event.get());

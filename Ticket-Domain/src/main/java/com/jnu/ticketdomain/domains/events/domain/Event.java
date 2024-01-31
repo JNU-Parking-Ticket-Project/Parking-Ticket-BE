@@ -11,7 +11,6 @@ import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.event.CouponExpiredEvent;
 import com.jnu.ticketdomain.domains.events.event.EventStatusChangeEvent;
 import com.jnu.ticketdomain.domains.events.exception.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -100,8 +99,8 @@ public class Event {
         }
     }
 
-    public void validationPublishStatus(){
-        if(this.publish){
+    public void validationPublishStatus() {
+        if (this.publish) {
             throw PublishStatusTrueException.EXCEPTION;
         }
     }

@@ -27,7 +27,7 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
     }
 
     @Override
-    public Sector findByIdWherePublishIsFalse(Long sectorId){
+    public Sector findByIdWherePublishIsFalse(Long sectorId) {
         return couponRepository
                 .findByIdWhereEventPublishIdFalse(sectorId)
                 .orElseThrow(() -> NotFoundSectorException.EXCEPTION);

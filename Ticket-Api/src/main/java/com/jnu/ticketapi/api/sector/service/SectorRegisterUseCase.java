@@ -168,7 +168,8 @@ public class SectorRegisterUseCase {
                 },
                 validSectors -> {
                     List<Sector> prevSector = sectorLoadPort.findAll();
-                    Result<Event, Object> readyOrOpenEvent = eventLoadPort.findReadyOrOpenAndNotPublishEvent();
+                    Result<Event, Object> readyOrOpenEvent =
+                            eventLoadPort.findReadyOrOpenAndNotPublishEvent();
                     Event event = readyOrOpenEvent.getOrThrow();
                     List<Sector> sectorStream =
                             prevSector.stream()
