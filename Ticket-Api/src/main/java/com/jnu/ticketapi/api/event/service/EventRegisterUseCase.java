@@ -36,10 +36,12 @@ public class EventRegisterUseCase {
     }
 
     /**
+     * 이벤트의 PUBLISH 상태가 TRUE인 경우는 수정이 불가능하다.
      * 기존 이벤트가 존재한 경우 단, (과거, 과거)는 수정이 불가하다. (과거, 미래) -> (과거, 미래 or 과거)로 수정한 경우 (과거, 미래) -> (과거,
      * 과거)로 수정한 경우
      */
     private void saveEventIfPresent(EventRegisterRequest eventRegisterRequest, Event event) {
+        event.validationPublishStatus();
         event.validateIssuePeriod();
         LocalDateTime now = LocalDateTime.now();
         Option.of(eventRegisterRequest.dateTimePeriod().getStartAt().isBefore(now))

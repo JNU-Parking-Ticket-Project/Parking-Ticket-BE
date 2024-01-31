@@ -10,13 +10,8 @@ import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.event.CouponExpiredEvent;
 import com.jnu.ticketdomain.domains.events.event.EventStatusChangeEvent;
-import com.jnu.ticketdomain.domains.events.exception.AlreadyCalculatingStatusException;
-import com.jnu.ticketdomain.domains.events.exception.AlreadyCloseStatusException;
-import com.jnu.ticketdomain.domains.events.exception.AlreadyOpenStatusException;
-import com.jnu.ticketdomain.domains.events.exception.AlreadyReadyStatusException;
-import com.jnu.ticketdomain.domains.events.exception.CannotModifyOpenEventException;
-import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
-import com.jnu.ticketdomain.domains.events.exception.NotOpenEventPeriodException;
+import com.jnu.ticketdomain.domains.events.exception.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +97,12 @@ public class Event {
         if (dateTimePeriod.getEndAt().isBefore(nowTime)
                 || dateTimePeriod.getEndAt().isBefore(dateTimePeriod.getStartAt())) {
             throw InvalidPeriodEventException.EXCEPTION;
+        }
+    }
+
+    public void validationPublishStatus(){
+        if(this.publish){
+            throw PublishStatusTrueException.EXCEPTION;
         }
     }
 
