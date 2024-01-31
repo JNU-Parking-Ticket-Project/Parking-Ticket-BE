@@ -72,7 +72,6 @@ public class SectorRegisterUseCase {
                         (uniqueSectorNumbers, plusSectorCapacityAndReserve, duplicatedSector) ->
                                 sectors);
     }
-
     private Validation<Seq<TicketCodeException>, List<SectorRegisterRequest>> validateUpdateSector(
             List<SectorRegisterRequest> sectors) {
         return Validation.combine(
