@@ -28,7 +28,8 @@ public enum GlobalErrorCode implements BaseErrorCode {
     STUDENT_NUMBER_MUST_NOT_BLANK(
             BAD_REQUEST, "BAD_REQUEST", "학번을 " + ValidationMessage.MUST_NOT_BLANK),
     NAME_MUST_NOT_BLANK(BAD_REQUEST, "BAD_REQUEST", "이름을 " + ValidationMessage.MUST_NOT_BLANK),
-
+    TITLE_MUST_NOT_BLANK(BAD_REQUEST, "BAD_REQUEST", "제목을 " + ValidationMessage.MUST_NOT_BLANK),
+    DATE_MUST_NOT_NULL(BAD_REQUEST, "BAD_REQUEST", "날짜를 " + ValidationMessage.MUST_NOT_NULL),
     @ExplainError("사용자가 비밀번호를 잘못 입력했을 때 발생하는 오류입니다.")
     BAD_CREDENTIAL(BAD_REQUEST, "AUTH_400_1", "비밀번호가 일치하지 않습니다."),
     @ExplainError("accessToken 만료시 발생하는 오류입니다.")

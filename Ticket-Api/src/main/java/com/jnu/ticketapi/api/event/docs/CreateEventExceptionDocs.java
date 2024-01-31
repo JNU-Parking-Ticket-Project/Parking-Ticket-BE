@@ -3,6 +3,7 @@ package com.jnu.ticketapi.api.event.docs;
 
 import com.jnu.ticketcommon.annotation.ExceptionDoc;
 import com.jnu.ticketcommon.annotation.ExplainError;
+import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
@@ -19,4 +20,10 @@ public class CreateEventExceptionDocs implements SwaggerExampleExceptions {
 
     @ExplainError("시작 시간이 종료 시간보다 늦을 때 발급한 경우")
     public TicketCodeException 시작시간_종료시간_이후 = NotIssuingEventPeriodException.EXCEPTION;
+
+    @ExplainError("제목이 빈칸인 경우")
+    public TicketCodeException 제목이_빈칸일_때 = new TicketCodeException(GlobalErrorCode.TITLE_MUST_NOT_BLANK);
+
+    @ExplainError("날짜가 null인 경우")
+    public TicketCodeException 날짜가_null일_때 = new TicketCodeException(GlobalErrorCode.DATE_MUST_NOT_NULL);
 }
