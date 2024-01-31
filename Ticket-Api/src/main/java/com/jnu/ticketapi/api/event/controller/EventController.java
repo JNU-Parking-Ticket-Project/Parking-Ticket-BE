@@ -134,12 +134,9 @@ public class EventController {
 
     @Operation(
             summary = "이벤트의 PUBLISH 상태 변경",
-            description = "이벤트의 PUBLISH 상태를 미게시에서 게시로 변경한다. path variable은 Long타입인 event-id를 받는다."
-    )
+            description = "이벤트의 PUBLISH 상태를 미게시에서 게시로 변경한다. path variable은 Long타입인 event-id를 받는다.")
     @PostMapping("/events/publish/{event-id}")
-    public SuccessResponse setPublish(
-            @PathVariable("event-id") Long eventId
-    ){
+    public SuccessResponse setPublish(@PathVariable("event-id") Long eventId) {
         updatePublishStatusUseCase.execute(eventId);
         return new SuccessResponse(PUBLISH_SUCCESS_TRUE_MESSAGE);
     }

@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.event.service;
 
+
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,7 @@ public class UpdatePublishStatusUseCase {
     private final EventAdaptor eventAdaptor;
 
     @Transactional
-    public void execute(Long eventId){
+    public void execute(Long eventId) {
         eventAdaptor.findById(eventId).updatePublishStatus(true);
     }
 }

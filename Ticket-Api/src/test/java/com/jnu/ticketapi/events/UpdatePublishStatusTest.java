@@ -1,5 +1,9 @@
 package com.jnu.ticketapi.events;
 
+import static com.jnu.ticketcommon.message.ResponseMessage.PUBLISH_SUCCESS_TRUE_MESSAGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jnu.ticketapi.config.BaseIntegrationTest;
 import com.jnu.ticketapi.security.JwtGenerator;
@@ -9,6 +13,10 @@ import com.jnu.ticketdomain.domains.events.repository.EventRepository;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,21 +25,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-
-import static com.jnu.ticketcommon.message.ResponseMessage.PUBLISH_SUCCESS_TRUE_MESSAGE;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @Slf4j
 public class UpdatePublishStatusTest extends BaseIntegrationTest {
 
-    @Autowired
-    private EventRepository eventRepository;
+    @Autowired private EventRepository eventRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private JwtGenerator jwtGenerator;
 
@@ -58,7 +55,7 @@ public class UpdatePublishStatusTest extends BaseIntegrationTest {
 
     @DisplayName("PUBLISH 상태 변경 성공 테스트")
     @Test
-    public void update_publish_status_test() throws Exception{
+    public void update_publish_status_test() throws Exception {
         // given
         String accessToken = jwtGenerator.generateAccessToken("admin@jnu.ac.kr", "ADMIN");
 
@@ -77,8 +74,8 @@ public class UpdatePublishStatusTest extends BaseIntegrationTest {
 
         // then
 
-        resultActions.andExpectAll(status().is2xxSuccessful(), jsonPath("$.message").value(PUBLISH_SUCCESS_TRUE_MESSAGE));
-
-
+        resultActions.andExpectAll(
+                status().is2xxSuccessful(),
+                jsonPath("$.message").value(PUBLISH_SUCCESS_TRUE_MESSAGE));
     }
 }
