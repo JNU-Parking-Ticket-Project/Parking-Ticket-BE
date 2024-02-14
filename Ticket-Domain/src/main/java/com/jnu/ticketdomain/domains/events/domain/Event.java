@@ -111,7 +111,7 @@ public class Event {
         Events.raise(EventStatusChangeEvent.of(this));
     }
 
-    public void updatePublishStatus(Boolean publish) {
+    public void isPublish(Boolean publish) {
         this.publish = publish;
     }
 

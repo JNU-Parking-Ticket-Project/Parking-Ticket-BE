@@ -14,6 +14,6 @@ public class UpdatePublishStatusUseCase {
 
     @Transactional
     public void execute(Long eventId) {
-        eventAdaptor.findById(eventId).updatePublishStatus(true);
+        eventAdaptor.findById(eventId).isPublish(true);
     }
 }
