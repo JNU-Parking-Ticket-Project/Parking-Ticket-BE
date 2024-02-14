@@ -8,9 +8,6 @@ on:
       image-tag:
         required: true
         type: string
-      spring-profile-active:
-        required: true
-        type: string
     secrets:
       DOCKER_USERNAME:
         required: true
@@ -19,7 +16,6 @@ on:
 
 env:
   IMAGE_TAG: ${{ inputs.image-tag || 'latest' }}
-  ACTIVE_PROFILE: ${{ inputs.spring-profile-active || 'local' }}
   IMAGE_NAME: ${{ inputs.image-name }}
 
 jobs:
@@ -47,20 +43,9 @@ jobs:
       - name: 이미지 빌드하고 푸쉬하기
         id: build-image
         env:
-          IMAGE_NAME: ${{ inputs.image-name }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
-          MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
-          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
-          MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          AWS_SES_ACCESS_KEY: ${{secrets.AWS_SES_ACCESS_KEY }}
-          AWS_SES_SECRET_KEY: ${{secrets.AWS_SES_SECRET_KEY }}
-          AWS_SES_REGION: ${{secrets.AWS_SES_REGION }}
-          AWS_SES_SEND_MAIL_ADDRESS: ${{secrets.AWS_SES_SEND_MAIL_ADDRESS }}
         run: |
-          echo "IMAGE_TAG=$IMAGE_TAG, ACTIVE_PROFILE=$ACTIVE_PROFILE, IMAGE_NAME=$IMAGE_NAME" &&
+          echo "IMAGE_TAG=$IMAGE_TAG, IMAGE_NAME=$IMAGE_NAME" &&
           chmod +x ./gradlew &&
           ./gradlew jib

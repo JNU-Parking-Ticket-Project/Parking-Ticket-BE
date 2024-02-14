@@ -71,18 +71,6 @@ jib {
                 '-XX:+DisableExplicitGC',
                 '-server'
         ]
-        environment = [
-                'MYSQL_HOST'    : System.getenv("MYSQL_HOST"),
-                'MYSQL_PORT'    : System.getenv("MYSQL_PORT"),
-                'MYSQL_DATABASE': System.getenv("MYSQL_DATABASE"),
-                'MYSQL_USERNAME': System.getenv("MYSQL_USERNAME"),
-                'MYSQL_PASSWORD': System.getenv("MYSQL_PASSWORD"),
-                'JWT_SECRET'    : System.getenv("JWT_SECRET"),
-                'AWS_SES_ACCESS_KEY': System.getenv("AWS_SES_ACCESS_KEY"),
-                'AWS_SES_SECRET_KEY': System.getenv("AWS_SES_SECRET_KEY"),
-                'AWS_SES_REGION': System.getenv("AWS_SES_REGION"),
-                'AWS_SES_SEND_MAIL_ADDRESS': System.getenv("AWS_SES_SEND_MAIL_ADDRESS")
-        ]
         ports = ['8080']
     }
 

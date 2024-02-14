@@ -39,6 +39,7 @@ public class EventController {
     private final GetEventDetailUseCase getEventDetailUseCase;
     private final GetEventsUseCase getEventsUseCase;
     private final GetPublishStatusUseCase getPublishStatusUseCase;
+    private final UpdatePublishStatusUseCase updatePublishStatusUseCase;
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
@@ -129,5 +130,14 @@ public class EventController {
     public ResponseEntity<PublishStatusResponse> getPublish(
             @PathVariable("event-id") Long eventId) {
         return ResponseEntity.ok(getPublishStatusUseCase.execute(eventId));
+    }
+
+    @Operation(
+            summary = "이벤트의 PUBLISH 상태 변경",
+            description = "이벤트의 PUBLISH 상태를 미게시에서 게시로 변경한다. path variable은 Long타입인 event-id를 받는다.")
+    @PostMapping("/events/publish/{event-id}")
+    public SuccessResponse setPublish(@PathVariable("event-id") Long eventId) {
+        updatePublishStatusUseCase.execute(eventId);
+        return new SuccessResponse(PUBLISH_SUCCESS_TRUE_MESSAGE);
     }
 }
