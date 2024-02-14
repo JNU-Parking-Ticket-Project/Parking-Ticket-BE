@@ -52,7 +52,7 @@ jobs:
           key: ${{ secrets.PROD_SSH_KEY }}
           port: ${{ secrets.PROD_SSH_PORT }}
           script: |
-            docker service update --image ${{ inputs.image-name }}:${{ inputs.image-tag }} ${{ inputs.service-name }}
+            sudo docker service update --image ${{ inputs.image-name }}:${{ inputs.image-tag }} ${{ inputs.service-name }}
 
       - name: 배포 완료 슬랙 알림 보내기
         uses: 8398a7/action-slack@v3
