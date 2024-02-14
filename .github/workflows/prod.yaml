@@ -25,6 +25,7 @@ jobs:
       - name: Github에서 레포 받아오기
         uses: actions/checkout@v3
       - name: 변수 출력하기
+        id: setup-env
         run: |
           echo "image-name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "image-tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
