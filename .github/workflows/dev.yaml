@@ -1,16 +1,16 @@
-name: 라이브 서버 워크플로우
+name: 개발 서버 워크플로우
 on:
   push:
     branches:
-      - main
+      - dev
 
 env:
-  ENVIRONMENT: production
-  IMAGE_NAME: jnuparking/jnu-parking-prod
-  SERVICE_NAME: jnu-parking-prod-was
+  ENVIRONMENT: development
+  IMAGE_NAME: jnuparking/jnu-parking-dev
+  SERVICE_NAME: jnu-parking-dev-was
 
 concurrency:
-  group: production
+  group: development
 
 jobs:
   prepare-variables:
@@ -40,11 +40,11 @@ jobs:
       id-token: write
       contents: read
     with:
-      image-tag: ${{ needs.prepare-variables.outputs.image-tag }}
-      image-name: ${{ needs.prepare-variables.outputs.image-name }}
+        image-tag: ${{ needs.prepare-variables.outputs.image-tag }}
+        image-name: ${{ needs.prepare-variables.outputs.image-name }}
     secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   call-deploy-workflow:
     if: github.event_name == 'push'
