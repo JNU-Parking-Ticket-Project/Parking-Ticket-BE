@@ -2,13 +2,13 @@ name: 라이브 서비스 배포
 on:
   workflow_call:
     secrets:
-      SSH_HOST:
+      PROD_SSH_HOST:
         required: true
-      SSH_USERNAME:
+      PROD_SSH_USERNAME:
         required: true
-      SSH_KEY:
+      PROD_SSH_KEY:
         required: true
-      SSH_PORT:
+      PROD_SSH_PORT:
         required: true
       SLACK_WEBHOOK_URL:
         required: true
