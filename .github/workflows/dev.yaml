@@ -50,7 +50,7 @@ jobs:
     if: github.event_name == 'push'
     needs: [ prepare-variables, call-build-workflow ]
     name: 서비스 배포
-    uses: ./.github/workflows/prod-prod-deploy.yaml
+    uses: ./.github/workflows/dev-deploy.yaml
     permissions:
       id-token: write
       contents: read
