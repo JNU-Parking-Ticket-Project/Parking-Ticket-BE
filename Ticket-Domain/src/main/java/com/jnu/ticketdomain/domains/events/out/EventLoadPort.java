@@ -20,4 +20,6 @@ public interface EventLoadPort {
     Event findRecentEvent();
 
     Page<Event> findAllByOrderByIdDesc(Pageable pageable);
+
+    Result<Event, Object> findReadyOrOpenAndNotPublishEvent();
 }

@@ -7,6 +7,7 @@ import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
 import com.jnu.ticketdomain.domains.events.exception.NotIssuingEventPeriodException;
+import com.jnu.ticketdomain.domains.events.exception.PublishStatusTrueException;
 
 @ExceptionDoc
 public class CreateEventExceptionDocs implements SwaggerExampleExceptions {
@@ -19,4 +20,7 @@ public class CreateEventExceptionDocs implements SwaggerExampleExceptions {
 
     @ExplainError("시작 시간이 종료 시간보다 늦을 때 발급한 경우")
     public TicketCodeException 시작시간_종료시간_이후 = NotIssuingEventPeriodException.EXCEPTION;
+
+    @ExplainError("수정할 이벤트가 이미 PUBLISH된 경우")
+    public TicketCodeException 이벤트가_PUBLISH_TURE_상태 = PublishStatusTrueException.EXCEPTION;
 }
