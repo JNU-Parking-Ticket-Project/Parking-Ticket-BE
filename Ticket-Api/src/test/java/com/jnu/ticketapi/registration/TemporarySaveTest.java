@@ -161,6 +161,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // given
             String email = "admin@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+            String target = "이름을 ";
 
             TemporarySaveRequest request =
                     TemporarySaveRequest.builder()
@@ -188,7 +189,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("이름을 " + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.reason").value(target + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
@@ -200,6 +201,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // given
             String email = "admin@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+            String target = "소속대학을 ";
 
             TemporarySaveRequest request =
                     TemporarySaveRequest.builder()
@@ -227,7 +229,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("소속대학을 " + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.reason").value(target + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
@@ -239,6 +241,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // given
             String email = "admin@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+            String target = "학번을 ";
 
             TemporarySaveRequest request =
                     TemporarySaveRequest.builder()
@@ -266,7 +269,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("학번을 " + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.reason").value(target + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
@@ -278,6 +281,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // given
             String email = "admin@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+            String target = "차량번호를 ";
 
             TemporarySaveRequest request =
                     TemporarySaveRequest.builder()
@@ -305,7 +309,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("차량번호를 " + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.reason").value(target + ValidationMessage.MUST_NOT_BLANK),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
@@ -317,6 +321,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // given
             String email = "admin@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+            String target = "구간 ID는 ";
 
             TemporarySaveRequest request =
                     TemporarySaveRequest.builder()
@@ -344,7 +349,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("구간 ID는 " + ValidationMessage.MUST_POSITIVE_NUMBER),
+                    jsonPath("$.reason").value(target + ValidationMessage.MUST_POSITIVE_NUMBER),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
@@ -397,6 +402,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // given
             String email = "admin@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+            String target = "경차 여부를 ";
 
             TemporarySaveRequest request =
                     TemporarySaveRequest.builder()
@@ -425,7 +431,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("경차 여부를 " + ValidationMessage.MUST_NOT_NULL),
+                    jsonPath("$.reason").value(target + ValidationMessage.MUST_NOT_NULL),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
