@@ -425,7 +425,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
-                    jsonPath("$.reason").value("경차 여부는 " + ValidationMessage.MUST_NOT_NULL),
+                    jsonPath("$.reason").value("경차 여부를 " + ValidationMessage.MUST_NOT_NULL),
                     jsonPath("$.code").value("BAD_REQUEST"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);

@@ -42,7 +42,7 @@ public class GetRegistrationTest extends RestDocsConfig {
         @DisplayName("성공 : 임시저장 조회(임시저장을 안했을 경우)")
         void success() throws Exception {
             // given
-            String email = "admin@jnu.ac.kr";
+            String email = "user4@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
             // when
