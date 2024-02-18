@@ -3,6 +3,7 @@ package com.jnu.ticketapi.api.event.docs;
 
 import com.jnu.ticketcommon.annotation.ExceptionDoc;
 import com.jnu.ticketcommon.annotation.ExplainError;
+import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
@@ -23,4 +24,12 @@ public class CreateEventExceptionDocs implements SwaggerExampleExceptions {
 
     @ExplainError("수정할 이벤트가 이미 PUBLISH된 경우")
     public TicketCodeException 이벤트가_PUBLISH_TURE_상태 = PublishStatusTrueException.EXCEPTION;
+
+    @ExplainError("제목이 빈칸인 경우")
+    public TicketCodeException 제목이_빈칸일_때 =
+            new TicketCodeException(GlobalErrorCode.TITLE_MUST_NOT_BLANK);
+
+    @ExplainError("날짜가 null인 경우")
+    public TicketCodeException 날짜가_null일_때 =
+            new TicketCodeException(GlobalErrorCode.DATE_MUST_NOT_NULL);
 }

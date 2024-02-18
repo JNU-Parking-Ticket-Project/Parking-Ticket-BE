@@ -16,5 +16,9 @@ public class ValidationMessage {
 
     public static final String MUST_POSITIVE_NUMBER = "양수만 입력 가능 합니다.";
 
+    public static final String TITLE_MUST_NOT_BLANK = "제목을 " + MUST_NOT_BLANK;
+
+    public static final String DATE_MUST_NOT_NULL = "날짜를 " + MUST_NOT_NULL;
+
     private ValidationMessage() {}
 }
