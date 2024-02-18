@@ -9,6 +9,7 @@ import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventStatusRequest;
 import com.jnu.ticketapi.api.event.model.response.EventDetailResponse;
 import com.jnu.ticketapi.api.event.model.response.EventsPagingResponse;
+import com.jnu.ticketapi.api.event.model.response.PublishStatusResponse;
 import com.jnu.ticketapi.api.event.service.*;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import com.jnu.ticketcommon.dto.SuccessResponse;
@@ -37,6 +38,8 @@ public class EventController {
     private final OpenEventUseCase openEventUseCase;
     private final GetEventDetailUseCase getEventDetailUseCase;
     private final GetEventsUseCase getEventsUseCase;
+    private final GetPublishStatusUseCase getPublishStatusUseCase;
+    private final UpdatePublishStatusUseCase updatePublishStatusUseCase;
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
@@ -103,7 +106,7 @@ public class EventController {
             summary = "이벤트 목록 조회",
             description = "이벤트 목록 조회. 제목, 상태, 기간을 response한다. 페이지네이션(페이지 번호, 페이지 개수, 정렬)")
     @GetMapping("/events")
-    public ResponseEntity<EventsPagingResponse> getAnnounces(
+    public ResponseEntity<EventsPagingResponse> getEvents(
             @PageableDefault(
                             sort = {"id"},
                             direction = Sort.Direction.DESC)
@@ -118,5 +121,23 @@ public class EventController {
     public ResponseEntity<EventDetailResponse> getEventDetail(
             @PathVariable("event-id") Long eventId) {
         return ResponseEntity.ok(getEventDetailUseCase.execute(eventId));
+    }
+
+    @Operation(
+            summary = "이벤트의 PUBLISH 상태 조회",
+            description = "이벤트의 PUBLISH 상태를 조회한다. path variable 은 Long타입인 event-id를 받는다.")
+    @GetMapping("/events/publish/{event-id}")
+    public ResponseEntity<PublishStatusResponse> getPublish(
+            @PathVariable("event-id") Long eventId) {
+        return ResponseEntity.ok(getPublishStatusUseCase.execute(eventId));
+    }
+
+    @Operation(
+            summary = "이벤트의 PUBLISH 상태 변경",
+            description = "이벤트의 PUBLISH 상태를 미게시에서 게시로 변경한다. path variable은 Long타입인 event-id를 받는다.")
+    @PostMapping("/events/publish/{event-id}")
+    public SuccessResponse setPublish(@PathVariable("event-id") Long eventId) {
+        updatePublishStatusUseCase.execute(eventId);
+        return new SuccessResponse(PUBLISH_SUCCESS_TRUE_MESSAGE);
     }
 }

@@ -31,6 +31,7 @@ public enum EventErrorCode implements BaseErrorCode {
     USE_OTHER_API(BAD_REQUEST, "Event_400_0", "잘못된 접근입니다."),
     NOT_EVENT_READY_STATUS(BAD_REQUEST, "Event_400_14", "이벤트가 READY상태 여야 합니다."),
     NOT_EVENT_OPEN_STATUS(BAD_REQUEST, "Event_400_15", "신청기간이 아닙니다."),
+    NOT_PUBLISH_FALSE_STATUS(BAD_REQUEST, "EVENT_400_16", "게시된 이벤트는 수정할 수 없습니다."),
     ;
     private final Integer status;
     private final String code;

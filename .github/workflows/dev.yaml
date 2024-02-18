@@ -1,16 +1,16 @@
-name: 라이브 서버 워크플로우
+name: 개발 서버 워크플로우
 on:
   push:
     branches:
-      - main
+      - dev
 
 env:
-  ENVIRONMENT: production
-  IMAGE_NAME: jnuparking/jnu-parking-prod
-  SERVICE_NAME: jnu-parking-prod-was
+  ENVIRONMENT: development
+  IMAGE_NAME: jnuparking/jnu-parking-dev
+  SERVICE_NAME: jnu-parking-dev-was
 
 concurrency:
-  group: production
+  group: development
 
 jobs:
   prepare-variables:
@@ -25,7 +25,6 @@ jobs:
       - name: Github에서 레포 받아오기
         uses: actions/checkout@v3
       - name: 변수 출력하기
-        id: setup-env
         run: |
           echo "image-name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "image-tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -41,25 +40,25 @@ jobs:
       id-token: write
       contents: read
     with:
-      image-tag: ${{ needs.prepare-variables.outputs.image-tag }}
-      image-name: ${{ needs.prepare-variables.outputs.image-name }}
+        image-tag: ${{ needs.prepare-variables.outputs.image-tag }}
+        image-name: ${{ needs.prepare-variables.outputs.image-name }}
     secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   call-deploy-workflow:
     if: github.event_name == 'push'
     needs: [ prepare-variables, call-build-workflow ]
     name: 서비스 배포
-    uses: ./.github/workflows/prod-deploy.yaml
+    uses: ./.github/workflows/dev-deploy.yaml
     permissions:
       id-token: write
       contents: read
     secrets:
-      PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
-      PROD_SSH_USERNAME: ${{ secrets.PROD_SSH_USERNAME }}
-      PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
-      PROD_SSH_PORT: ${{ secrets.PROD_SSH_PORT }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     with:
       image-name: ${{ needs.prepare-variables.outputs.image-name }}

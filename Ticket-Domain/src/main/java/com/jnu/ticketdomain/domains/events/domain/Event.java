@@ -10,13 +10,7 @@ import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.event.CouponExpiredEvent;
 import com.jnu.ticketdomain.domains.events.event.EventStatusChangeEvent;
-import com.jnu.ticketdomain.domains.events.exception.AlreadyCalculatingStatusException;
-import com.jnu.ticketdomain.domains.events.exception.AlreadyCloseStatusException;
-import com.jnu.ticketdomain.domains.events.exception.AlreadyOpenStatusException;
-import com.jnu.ticketdomain.domains.events.exception.AlreadyReadyStatusException;
-import com.jnu.ticketdomain.domains.events.exception.CannotModifyOpenEventException;
-import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
-import com.jnu.ticketdomain.domains.events.exception.NotOpenEventPeriodException;
+import com.jnu.ticketdomain.domains.events.exception.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,12 +50,16 @@ public class Event {
     //    @JoinColumn(name = "sector_id")
     private List<Sector> sector = new ArrayList<>();
 
+    @Column(name = "publish")
+    private Boolean publish;
+
     @Builder
     public Event(DateTimePeriod dateTimePeriod, List<Sector> sector) {
         this.eventCode = UUID.randomUUID().toString().substring(0, 6);
         this.dateTimePeriod = dateTimePeriod;
         this.sector = sector;
         this.eventStatus = EventStatus.READY;
+        this.publish = false;
     }
 
     @Builder
@@ -71,6 +69,7 @@ public class Event {
         this.sector = sector;
         this.title = title;
         this.eventStatus = EventStatus.READY;
+        this.publish = false;
     }
 
     @PostPersist
@@ -100,10 +99,20 @@ public class Event {
         }
     }
 
+    public void validationPublishStatus() {
+        if (this.publish) {
+            throw PublishStatusTrueException.EXCEPTION;
+        }
+    }
+
     private void updateStatus(EventStatus status, TicketCodeException exception) {
         //        if (this.eventStatus == status) throw exception;
         this.eventStatus = status;
         Events.raise(EventStatusChangeEvent.of(this));
+    }
+
+    public void isPublish(Boolean publish) {
+        this.publish = publish;
     }
 
     public void open() {
