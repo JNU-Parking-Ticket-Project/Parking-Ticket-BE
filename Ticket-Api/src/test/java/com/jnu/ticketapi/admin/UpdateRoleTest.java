@@ -127,7 +127,7 @@ public class UpdateRoleTest extends RestDocsConfig {
                 resultActions.andExpectAll(
                         status().isBadRequest(),
                         jsonPath("$.success").value(false),
-                        jsonPath("$.reason").value("ROLE을 정확히 입력 해주세요."),
+                        jsonPath("$.reason").value("ROLE을 정확히 입력해 주세요."),
                         jsonPath("$.code").value("BAD_REQUEST"));
                 resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             }

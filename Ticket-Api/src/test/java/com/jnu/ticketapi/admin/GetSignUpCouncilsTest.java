@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
+import com.jnu.ticketapi.security.JwtGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -32,6 +33,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 public class GetSignUpCouncilsTest extends RestDocsConfig {
     @Autowired private MockMvc mvc;
 
+    @Autowired JwtGenerator jwtGenerator;
+
     @Autowired private ObjectMapper om;
 
     @Nested
@@ -40,10 +43,13 @@ public class GetSignUpCouncilsTest extends RestDocsConfig {
         @DisplayName("성공 : 학생회 회원가입 목록 조회")
         void success() throws Exception {
             // given
-
+            String accessToken = jwtGenerator.generateAccessToken("admin@jnu.ac.kr", "ADMIN");
             // when
             ResultActions resultActions =
-                    mvc.perform(get("/v1/admin/councils").contentType(MediaType.APPLICATION_JSON));
+                    mvc.perform(
+                            get("/v1/admin/councils")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken));
 
             // eye
             String responseBody = resultActions.andReturn().getResponse().getContentAsString();

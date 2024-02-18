@@ -27,7 +27,7 @@ public record FinalSaveRequest(
                 @NotBlank(message = "차량번호를 " + ValidationMessage.MUST_NOT_BLANK)
                 String carNum,
         @Schema(defaultValue = "true", description = "경차 여부")
-                @NotNull(message = "경차 여부는 " + ValidationMessage.MUST_NOT_NULL)
+                @NotNull(message = "경차 여부를 " + ValidationMessage.MUST_NOT_NULL)
                 Boolean isLight,
         @Schema(defaultValue = "010-1111-3333", description = "마스터 전화번호")
                 @Phone(message = ValidationMessage.IS_NOT_VALID_PHONE)

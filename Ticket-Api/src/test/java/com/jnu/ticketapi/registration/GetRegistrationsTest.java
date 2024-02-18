@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
+import com.jnu.ticketapi.security.JwtGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,7 +16,6 @@ import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDoc
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,10 +28,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
-@WithMockUser(roles = "COUNCIL")
 public class GetRegistrationsTest extends RestDocsConfig {
     @Autowired private MockMvc mvc;
-
+    @Autowired private JwtGenerator jwtGenerator;
     @Autowired private ObjectMapper om;
 
     @Nested
@@ -40,10 +39,14 @@ public class GetRegistrationsTest extends RestDocsConfig {
         @DisplayName("성공 : 신청 목록 조회")
         void success() throws Exception {
             // given
-
+            Long eventId = 1L;
+            String accessToken = jwtGenerator.generateAccessToken("council@jnu.ac.kr", "COUNCIxL");
             // when
             ResultActions resultActions =
-                    mvc.perform(get("/v1/registrations").contentType(MediaType.APPLICATION_JSON));
+                    mvc.perform(
+                            get("/v1/registrations/" + eventId)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken));
 
             // eye
             String responseBody = resultActions.andReturn().getResponse().getContentAsString();
