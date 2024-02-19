@@ -3,6 +3,7 @@ package com.jnu.ticketapi.api.event.controller;
 import static com.jnu.ticketcommon.message.ResponseMessage.*;
 
 import com.jnu.ticketapi.api.event.docs.CreateEventExceptionDocs;
+import com.jnu.ticketapi.api.event.docs.DeleteEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventPeriodExceptionDocs;
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
@@ -144,6 +145,7 @@ public class EventController {
             summary = "이벤트 삭제",
             description = "이벤트를 삭제한다. path variable은 Long타입인 event-id를 받는다."
     )
+    @ApiErrorExceptionsExample(DeleteEventExceptionDocs.class)
     @DeleteMapping("/events/{event-id}")
     public SuccessResponse deleteEvent(@PathVariable("event-id") Long eventId) {
         EventRegisterUseCase.deleteEvent(eventId);
