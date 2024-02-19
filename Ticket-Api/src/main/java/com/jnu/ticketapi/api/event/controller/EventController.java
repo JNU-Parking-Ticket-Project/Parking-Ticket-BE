@@ -140,4 +140,13 @@ public class EventController {
         updatePublishStatusUseCase.execute(eventId);
         return new SuccessResponse(PUBLISH_SUCCESS_TRUE_MESSAGE);
     }
+    @Operation(
+            summary = "이벤트 삭제",
+            description = "이벤트를 삭제한다. path variable은 Long타입인 event-id를 받는다."
+    )
+    @DeleteMapping("/events/{event-id}")
+    public SuccessResponse deleteEvent(@PathVariable("event-id") Long eventId) {
+        EventRegisterUseCase.deleteEvent(eventId);
+        return new SuccessResponse(EVENT_SUCCESS_DELETE_MESSAGE);
+    }
 }

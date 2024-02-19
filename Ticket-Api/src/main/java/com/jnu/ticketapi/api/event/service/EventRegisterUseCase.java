@@ -9,6 +9,7 @@ import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.event.EventCreationEvent;
 import com.jnu.ticketdomain.domains.events.event.EventUpdatedEvent;
+import com.jnu.ticketdomain.domains.events.out.EventRecordPort;
 import io.vavr.control.Option;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -112,5 +113,9 @@ public class EventRegisterUseCase {
                             // 이벤트 상태 변경 Batch 스케줄링 (READY -> OPEN) - 이벤트
                             Events.raise(EventCreationEvent.of(savedEvent));
                         });
+    }
+    @Transactional
+    public void deleteEvent(Long eventId) {
+        eventAdaptor.findById(eventId).deleteEvent();
     }
 }
