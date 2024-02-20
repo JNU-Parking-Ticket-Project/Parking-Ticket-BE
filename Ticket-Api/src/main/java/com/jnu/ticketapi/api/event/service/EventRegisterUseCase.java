@@ -9,6 +9,7 @@ import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.event.EventCreationEvent;
 import com.jnu.ticketdomain.domains.events.event.EventUpdatedEvent;
+import com.jnu.ticketdomain.domains.events.out.EventRecordPort;
 import io.vavr.control.Option;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;

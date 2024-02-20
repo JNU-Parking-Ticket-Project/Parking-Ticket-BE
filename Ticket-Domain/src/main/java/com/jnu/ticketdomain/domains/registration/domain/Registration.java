@@ -58,11 +58,11 @@ public class Registration {
     @ColumnDefault("false")
     private boolean isDeleted;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sectorId", nullable = false)
     private Sector sector;
 
