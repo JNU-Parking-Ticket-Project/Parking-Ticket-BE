@@ -41,6 +41,7 @@ public class EventController {
     private final GetEventsUseCase getEventsUseCase;
     private final GetPublishStatusUseCase getPublishStatusUseCase;
     private final UpdatePublishStatusUseCase updatePublishStatusUseCase;
+    private final EventDeleteUseCase eventDeleteUseCase;
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
@@ -148,7 +149,7 @@ public class EventController {
     @ApiErrorExceptionsExample(DeleteEventExceptionDocs.class)
     @DeleteMapping("/events/{event-id}")
     public SuccessResponse deleteEvent(@PathVariable("event-id") Long eventId) {
-        EventRegisterUseCase.deleteEvent(eventId);
+        eventDeleteUseCase.deleteEvent(eventId);
         return new SuccessResponse(EVENT_SUCCESS_DELETE_MESSAGE);
     }
 }

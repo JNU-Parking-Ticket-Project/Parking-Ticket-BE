@@ -114,8 +114,4 @@ public class EventRegisterUseCase {
                             Events.raise(EventCreationEvent.of(savedEvent));
                         });
     }
-    @Transactional
-    public void deleteEvent(Long eventId) {
-        eventAdaptor.findById(eventId).deleteEvent();
-    }
 }
