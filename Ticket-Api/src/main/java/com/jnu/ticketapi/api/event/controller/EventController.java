@@ -3,6 +3,7 @@ package com.jnu.ticketapi.api.event.controller;
 import static com.jnu.ticketcommon.message.ResponseMessage.*;
 
 import com.jnu.ticketapi.api.event.docs.CreateEventExceptionDocs;
+import com.jnu.ticketapi.api.event.docs.DeleteEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventPeriodExceptionDocs;
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
@@ -40,6 +41,7 @@ public class EventController {
     private final GetEventsUseCase getEventsUseCase;
     private final GetPublishStatusUseCase getPublishStatusUseCase;
     private final UpdatePublishStatusUseCase updatePublishStatusUseCase;
+    private final EventDeleteUseCase eventDeleteUseCase;
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
@@ -139,5 +141,15 @@ public class EventController {
     public SuccessResponse setPublish(@PathVariable("event-id") Long eventId) {
         updatePublishStatusUseCase.execute(eventId);
         return new SuccessResponse(PUBLISH_SUCCESS_TRUE_MESSAGE);
+    }
+    @Operation(
+            summary = "이벤트 삭제",
+            description = "이벤트를 삭제한다. path variable은 Long타입인 event-id를 받는다."
+    )
+    @ApiErrorExceptionsExample(DeleteEventExceptionDocs.class)
+    @DeleteMapping("/events/{event-id}")
+    public SuccessResponse deleteEvent(@PathVariable("event-id") Long eventId) {
+        eventDeleteUseCase.deleteEvent(eventId);
+        return new SuccessResponse(EVENT_SUCCESS_DELETE_MESSAGE);
     }
 }
