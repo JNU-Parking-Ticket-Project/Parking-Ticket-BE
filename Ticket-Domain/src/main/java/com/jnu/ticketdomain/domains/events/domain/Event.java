@@ -20,13 +20,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Where;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-@Where(clause = "is_deleted = false")
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,8 +53,6 @@ public class Event {
     @Column(name = "publish")
     private Boolean publish;
 
-    @Column(name = "is_deleted")
-    private boolean isDeleted;
     @Builder
     public Event(DateTimePeriod dateTimePeriod, List<Sector> sector) {
         this.eventCode = UUID.randomUUID().toString().substring(0, 6);
@@ -64,7 +60,6 @@ public class Event {
         this.sector = sector;
         this.eventStatus = EventStatus.READY;
         this.publish = false;
-        this.isDeleted = false;
     }
 
     @Builder
@@ -75,7 +70,6 @@ public class Event {
         this.title = title;
         this.eventStatus = EventStatus.READY;
         this.publish = false;
-        this.isDeleted = false;
     }
 
     @PostPersist
@@ -140,9 +134,5 @@ public class Event {
 
     public void updateDateTimePeriod(DateTimePeriod dateTimePeriod) {
         this.dateTimePeriod = dateTimePeriod;
-    }
-
-    public void deleteEvent() {
-        this.isDeleted = true;
     }
 }
