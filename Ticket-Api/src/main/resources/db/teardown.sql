@@ -37,8 +37,8 @@ update user_tb
 set role = 'COUNCIL'
 where user_id = 1;
 
-insert into event(event_id, event_code, event_status, end_at, start_at, is_deleted, publish)
-values (1, '596575', 'OPEN', TIMESTAMPADD(MINUTE, 30, current_time), TIMESTAMPADD(MINUTE, -30, current_time), false, false);
+insert into event(event_id, event_code, event_status, end_at, start_at)
+values (1, '596575', 'OPEN', TIMESTAMPADD(MINUTE, 30, current_time), TIMESTAMPADD(MINUTE, -30, current_time));
 
 insert into sector(sector_id, issue_amount, name, remaining_amount, reserve, sector_capacity, sector_number, event_id, init_sector_capacity, init_reserve)
 values (1, 40, '사회대 / 농대 / 수의대 / 치전원', 40, 0, 40, '1구간', 1, 0, 0),
