@@ -1,7 +1,6 @@
 package com.jnu.ticketapi.events;
 
 import static com.jnu.ticketcommon.message.ResponseMessage.PUBLISH_SUCCESS_TRUE_MESSAGE;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;

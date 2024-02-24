@@ -139,13 +139,13 @@ public class EventController {
             summary = "이벤트의 PUBLISH 상태 변경",
             description = "이벤트의 PUBLISH 상태를 미게시에서 게시로 변경한다. path variable은 Long타입인 event-id를 받는다.")
     @PutMapping("/events/publish/{event-id}")
-    public SuccessResponse setPublish(@PathVariable("event-id") Long eventId, @RequestBody UpdateEventPublishRequest request) {
-         return updatePublishStatusUseCase.execute(eventId, request.publish());
+    public SuccessResponse setPublish(
+            @PathVariable("event-id") Long eventId,
+            @RequestBody UpdateEventPublishRequest request) {
+        return updatePublishStatusUseCase.execute(eventId, request.publish());
     }
-    @Operation(
-            summary = "이벤트 삭제",
-            description = "이벤트를 삭제한다. path variable은 Long타입인 event-id를 받는다."
-    )
+
+    @Operation(summary = "이벤트 삭제", description = "이벤트를 삭제한다. path variable은 Long타입인 event-id를 받는다.")
     @ApiErrorExceptionsExample(DeleteEventExceptionDocs.class)
     @DeleteMapping("/events/{event-id}")
     public SuccessResponse deleteEvent(@PathVariable("event-id") Long eventId) {

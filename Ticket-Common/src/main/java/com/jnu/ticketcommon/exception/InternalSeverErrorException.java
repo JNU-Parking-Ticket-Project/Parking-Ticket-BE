@@ -1,4 +1,3 @@
 package com.jnu.ticketcommon.exception;
 
-public class InternalSeverErrorException extends RuntimeException{
-}
+public class InternalSeverErrorException extends RuntimeException {}

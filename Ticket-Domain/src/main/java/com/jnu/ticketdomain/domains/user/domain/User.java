@@ -1,17 +1,14 @@
 package com.jnu.ticketdomain.domains.user.domain;
 
 
-import javax.persistence.*;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -50,8 +47,8 @@ public class User {
     @ColumnDefault("false")
     private boolean emailConfirmed;
 
-      @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-      private Registration registration;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Registration registration;
 
     public void updateRole(UserRole userRole) {
         this.userRole = userRole;

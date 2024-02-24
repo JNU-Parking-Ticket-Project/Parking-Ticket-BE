@@ -2,18 +2,15 @@ package com.jnu.ticketdomain.domains.events.domain;
 
 
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
-
-import javax.persistence.*;
-
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import java.util.ArrayList;
+import java.util.List;
+import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

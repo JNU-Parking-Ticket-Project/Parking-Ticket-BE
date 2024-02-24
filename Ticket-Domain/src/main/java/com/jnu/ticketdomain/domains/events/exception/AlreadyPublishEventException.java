@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.events.exception;
 
+
 import com.jnu.ticketcommon.exception.TicketCodeException;
 
 public class AlreadyPublishEventException extends TicketCodeException {
