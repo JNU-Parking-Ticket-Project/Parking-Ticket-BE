@@ -9,7 +9,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 
 public record EventsInfoResponse(
-        Long eventId, String eventTitle, String eventStatus, String dateTimePeriod) {
+        Long eventId, String eventTitle, String eventStatus, String dateTimePeriod, boolean publish) {
 
     @Builder(access = AccessLevel.PACKAGE)
     public EventsInfoResponse {}
@@ -20,6 +20,7 @@ public record EventsInfoResponse(
                 .eventTitle(event.getTitle())
                 .eventStatus(event.getEventStatus().toString())
                 .dateTimePeriod(EventsInfoResponse.toString(event.getDateTimePeriod()))
+                .publish(event.getPublish())
                 .build();
     }
 
