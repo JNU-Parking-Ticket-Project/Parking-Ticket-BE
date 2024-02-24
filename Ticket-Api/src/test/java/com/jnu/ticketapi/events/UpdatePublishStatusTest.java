@@ -2,6 +2,7 @@ package com.jnu.ticketapi.events;
 
 import static com.jnu.ticketcommon.message.ResponseMessage.PUBLISH_SUCCESS_TRUE_MESSAGE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,7 +54,7 @@ public class UpdatePublishStatusTest extends BaseIntegrationTest {
         eventRepository.saveAndFlush(event);
     }
 
-    @DisplayName("PUBLISH 상태 변경 성공 테스트")
+    @DisplayName("성공 : 이벤트 게시")
     @Test
     public void update_publish_status_test() throws Exception {
         // given
@@ -62,7 +63,7 @@ public class UpdatePublishStatusTest extends BaseIntegrationTest {
         // when
         ResultActions resultActions =
                 mockMvc.perform(
-                        post("/v1/events/publish/1")
+                        put("/v1/events/publish/1")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header("Authorization", "Bearer " + accessToken)
                                 .characterEncoding(StandardCharsets.UTF_8));

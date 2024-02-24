@@ -22,4 +22,6 @@ public interface EventLoadPort {
     Page<Event> findAllByOrderByIdDesc(Pageable pageable);
 
     Result<Event, Object> findReadyOrOpenAndNotPublishEvent();
+
+    Boolean existsByPublishTrue();
 }

@@ -1,6 +1,10 @@
 package com.jnu.ticketcommon.utils;
 
 
+import com.jnu.ticketcommon.exception.InternalSeverErrorException;
+import com.jnu.ticketcommon.exception.OtherServerInternalSeverErrorException;
+import com.jnu.ticketcommon.exception.TicketCodeException;
+
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -66,7 +70,7 @@ public abstract class Result<T, E> {
         }
     }
 
-    private static class Failure<T, E> extends Result<T, E> {
+    private static class Failure<T,E> extends Result<T, E> {
         private final E error;
 
         private Failure(E error) {
@@ -90,7 +94,7 @@ public abstract class Result<T, E> {
 
         @Override
         public T getOrThrow() {
-            throw new IllegalStateException("Cannot get value from a failed result");
+            throw error instanceof RuntimeException ? (RuntimeException)error : new InternalSeverErrorException();
         }
 
         @Override

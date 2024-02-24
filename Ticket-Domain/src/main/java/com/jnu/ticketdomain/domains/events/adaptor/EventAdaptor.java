@@ -126,4 +126,9 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
     public Page<Event> findAllByOrderByIdDesc(Pageable pageable) {
         return eventRepository.findAllByOrderByIdDesc(pageable);
     }
+
+    @Override
+    public Boolean existsByPublishTrue() {
+        return eventRepository.existsByPublishTrue();
+    }
 }

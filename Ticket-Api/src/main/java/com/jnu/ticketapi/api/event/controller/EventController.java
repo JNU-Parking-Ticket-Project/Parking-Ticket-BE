@@ -7,6 +7,7 @@ import com.jnu.ticketapi.api.event.docs.DeleteEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventExceptionDocs;
 import com.jnu.ticketapi.api.event.docs.ReadEventPeriodExceptionDocs;
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
+import com.jnu.ticketapi.api.event.model.request.UpdateEventPublishRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventStatusRequest;
 import com.jnu.ticketapi.api.event.model.response.EventDetailResponse;
 import com.jnu.ticketapi.api.event.model.response.EventsPagingResponse;
@@ -137,10 +138,9 @@ public class EventController {
     @Operation(
             summary = "이벤트의 PUBLISH 상태 변경",
             description = "이벤트의 PUBLISH 상태를 미게시에서 게시로 변경한다. path variable은 Long타입인 event-id를 받는다.")
-    @PostMapping("/events/publish/{event-id}")
-    public SuccessResponse setPublish(@PathVariable("event-id") Long eventId) {
-        updatePublishStatusUseCase.execute(eventId);
-        return new SuccessResponse(PUBLISH_SUCCESS_TRUE_MESSAGE);
+    @PutMapping("/events/publish/{event-id}")
+    public SuccessResponse setPublish(@PathVariable("event-id") Long eventId, @RequestBody UpdateEventPublishRequest request) {
+         return updatePublishStatusUseCase.execute(eventId, request.publish());
     }
     @Operation(
             summary = "이벤트 삭제",

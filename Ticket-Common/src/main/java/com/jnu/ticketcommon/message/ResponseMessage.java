@@ -17,5 +17,7 @@ public class ResponseMessage {
     public static final String IS_POSSIBLE_EMAIL = "사용 가능한 이메일 입니다.";
     public static final String PUBLISH_SUCCESS_TRUE_MESSAGE = "성공적으로 게시 되었습니다.";
 
+    public static final String UNPUBLISH_SUCCESS_TRUE_MESSAGE = "성공적으로 게시 해제 되었습니다.";
+
     private ResponseMessage() {}
 }

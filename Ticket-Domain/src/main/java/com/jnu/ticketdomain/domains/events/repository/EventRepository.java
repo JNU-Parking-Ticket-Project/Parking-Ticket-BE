@@ -33,4 +33,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     //    Optional<Event> findClosestClosedEvent(@Param("time") LocalDateTime time);
 
     Page<Event> findAllByOrderByIdDesc(Pageable pageable);
+
+    Boolean existsByPublishTrue();
 }
