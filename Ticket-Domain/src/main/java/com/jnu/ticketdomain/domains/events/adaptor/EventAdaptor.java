@@ -49,8 +49,8 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
     }
 
     /**
-     * 이벤트가 존재하면서, 이벤트의 Publish상태가 false라면 이벤트를 반환한다.
-     * 위의 조건을 만족하지 못한다면, OPEN인 상태이면서 Publish상태가 false인 이벤트를 불러와 반환한다.
+     * 이벤트가 존재하면서, 이벤트의 Publish상태가 false라면 이벤트를 반환한다. 위의 조건을 만족하지 못한다면, OPEN인 상태이면서 Publish상태가
+     * false인 이벤트를 불러와 반환한다.
      *
      * @author Cookie
      * @return {@link Result} 타입의 결과 반환. Result 객체는 Event와 예외타입을 담는다.
@@ -125,5 +125,10 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
     @Override
     public Page<Event> findAllByOrderByIdDesc(Pageable pageable) {
         return eventRepository.findAllByOrderByIdDesc(pageable);
+    }
+
+    @Override
+    public Boolean existsByPublishTrue() {
+        return eventRepository.existsByPublishTrue();
     }
 }

@@ -1,6 +1,7 @@
 package com.jnu.ticketcommon.utils;
 
 
+import com.jnu.ticketcommon.exception.InternalSeverErrorException;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -90,7 +91,9 @@ public abstract class Result<T, E> {
 
         @Override
         public T getOrThrow() {
-            throw new IllegalStateException("Cannot get value from a failed result");
+            throw error instanceof RuntimeException
+                    ? (RuntimeException) error
+                    : new InternalSeverErrorException();
         }
 
         @Override
