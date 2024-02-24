@@ -2,10 +2,7 @@ package com.jnu.ticketapi.api.event.controller;
 
 import static com.jnu.ticketcommon.message.ResponseMessage.*;
 
-import com.jnu.ticketapi.api.event.docs.CreateEventExceptionDocs;
-import com.jnu.ticketapi.api.event.docs.DeleteEventExceptionDocs;
-import com.jnu.ticketapi.api.event.docs.ReadEventExceptionDocs;
-import com.jnu.ticketapi.api.event.docs.ReadEventPeriodExceptionDocs;
+import com.jnu.ticketapi.api.event.docs.*;
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventPublishRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventStatusRequest;
@@ -137,7 +134,8 @@ public class EventController {
 
     @Operation(
             summary = "이벤트의 PUBLISH 상태 변경",
-            description = "이벤트의 PUBLISH 상태를 미게시에서 게시로 변경한다. path variable은 Long타입인 event-id를 받는다.")
+            description = "이벤트의 PUBLISH 상태를 변경한다. path variable은 Long타입인 event-id를 받고 body에는 publish를 받는다.")
+    @ApiErrorExceptionsExample(UpdatePublishStatusExceptionDocs.class)
     @PutMapping("/events/publish/{event-id}")
     public SuccessResponse setPublish(
             @PathVariable("event-id") Long eventId,
