@@ -8,7 +8,6 @@ import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
 import com.jnu.ticketdomain.domains.events.exception.NotIssuingEventPeriodException;
-import com.jnu.ticketdomain.domains.events.exception.CannotUpdatePublishEventException;
 
 @ExceptionDoc
 public class CreateEventExceptionDocs implements SwaggerExampleExceptions {

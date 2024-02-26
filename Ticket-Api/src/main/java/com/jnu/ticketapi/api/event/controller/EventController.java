@@ -54,7 +54,9 @@ public class EventController {
     @Operation(summary = "주차권 수정", description = "주차권 행사 세부 수정(시작일, 종료일, 제목)")
     @ApiErrorExceptionsExample(UpdateEventExceptionDocs.class)
     @PutMapping("/events/{event-id}")
-    public SuccessResponse updateEvent(@RequestBody @Valid EventUpdateRequest eventUpdateRequest, @PathVariable("event-id") Long eventId) {
+    public SuccessResponse updateEvent(
+            @RequestBody @Valid EventUpdateRequest eventUpdateRequest,
+            @PathVariable("event-id") Long eventId) {
         eventUpdateUseCase.updateEvent(eventUpdateRequest, eventId);
         return new SuccessResponse(EVENT_SUCCESS_UPDATE_MESSAGE);
     }
@@ -144,7 +146,8 @@ public class EventController {
 
     @Operation(
             summary = "이벤트의 PUBLISH 상태 변경",
-            description = "이벤트의 PUBLISH 상태를 변경한다. path variable은 Long타입인 event-id를 받고 body에는 publish를 받는다.")
+            description =
+                    "이벤트의 PUBLISH 상태를 변경한다. path variable은 Long타입인 event-id를 받고 body에는 publish를 받는다.")
     @ApiErrorExceptionsExample(UpdatePublishStatusExceptionDocs.class)
     @PutMapping("/events/publish/{event-id}")
     public SuccessResponse setPublish(

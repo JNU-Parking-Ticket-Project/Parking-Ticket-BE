@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.event.service;
 
+
 import com.jnu.ticketapi.api.event.model.request.EventUpdateRequest;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.exception.TicketCodeException;
@@ -11,16 +12,14 @@ import com.jnu.ticketdomain.domains.events.exception.CannotUpdatePublishEventExc
 import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @UseCase
 @RequiredArgsConstructor
 public class EventUpdateUseCase {
     private final EventAdaptor eventAdaptor;
-
 
     @Transactional
     public void updateEvent(EventUpdateRequest eventUpdateRequest, Long eventId) {
@@ -37,12 +36,9 @@ public class EventUpdateUseCase {
 
     Validation<Seq<TicketCodeException>, Event> validateUpdateEvent(Event event) {
         return Validation.combine(
-                        validateEventStatusIsClosed(event),
-                        validateEventPublishIsTrue(event))
-                .ap(
-                        (eventStatus, eventPublish) -> event);
+                        validateEventStatusIsClosed(event), validateEventPublishIsTrue(event))
+                .ap((eventStatus, eventPublish) -> event);
     }
-
 
     private Validation<TicketCodeException, Event> validateEventStatusIsClosed(Event event) {
         if (event.getEventStatus().equals(EventStatus.CLOSED))
@@ -59,7 +55,9 @@ public class EventUpdateUseCase {
     private void validateEventIssuePeriod(EventUpdateRequest request) {
         LocalDateTime nowTime = LocalDateTime.now();
         if (request.dateTimePeriod().getEndAt().isBefore(nowTime)
-                || request.dateTimePeriod().getEndAt().isBefore(request.dateTimePeriod().getStartAt())) {
+                || request.dateTimePeriod()
+                        .getEndAt()
+                        .isBefore(request.dateTimePeriod().getStartAt())) {
             throw InvalidPeriodEventException.EXCEPTION;
         }
     }
