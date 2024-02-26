@@ -3,7 +3,6 @@ package com.jnu.ticketapi.api.event.service;
 
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
 import com.jnu.ticketcommon.annotation.UseCase;
-import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
@@ -23,16 +22,7 @@ public class EventRegisterUseCase {
 
     @Transactional
     public void registerEvent(EventRegisterRequest eventRegisterRequest) {
-        Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
-        readyEvent.fold(
-                event -> {
-                    saveEventIfPresent(eventRegisterRequest, event);
-                    return null;
-                },
-                error -> {
-                    firstSaveEvent(eventRegisterRequest);
-                    return null;
-                });
+        firstSaveEvent(eventRegisterRequest);
     }
 
     /**
