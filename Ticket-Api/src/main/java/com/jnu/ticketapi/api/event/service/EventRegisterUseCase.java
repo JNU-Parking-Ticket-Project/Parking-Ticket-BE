@@ -3,17 +3,17 @@ package com.jnu.ticketapi.api.event.service;
 
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
 import com.jnu.ticketcommon.annotation.UseCase;
-import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.event.EventCreationEvent;
 import com.jnu.ticketdomain.domains.events.event.EventUpdatedEvent;
 import io.vavr.control.Option;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @UseCase
 @RequiredArgsConstructor
@@ -23,16 +23,7 @@ public class EventRegisterUseCase {
 
     @Transactional
     public void registerEvent(EventRegisterRequest eventRegisterRequest) {
-        Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
-        readyEvent.fold(
-                event -> {
-                    saveEventIfPresent(eventRegisterRequest, event);
-                    return null;
-                },
-                error -> {
-                    firstSaveEvent(eventRegisterRequest);
-                    return null;
-                });
+        firstSaveEvent(eventRegisterRequest);
     }
 
     /**
@@ -49,9 +40,9 @@ public class EventRegisterUseCase {
                             // (과거, 미래) -> (미래, 미래)로 수정한 경우
                             if (eventRegisterRequest.dateTimePeriod().getStartAt().isAfter(now)
                                     && eventRegisterRequest
-                                            .dateTimePeriod()
-                                            .getEndAt()
-                                            .isAfter(now)) {
+                                    .dateTimePeriod()
+                                    .getEndAt()
+                                    .isAfter(now)) {
                                 event.ready();
                             } else {
                                 // (과거, 미래) -> 과거, 미래)로 수정한 경우
@@ -87,7 +78,9 @@ public class EventRegisterUseCase {
         event.updateDateTimePeriod(eventRegisterRequest.dateTimePeriod());
     }
 
-    /** 기존 이벤트가 존재하지 않는 경우 단, (과거, 과거)는 생성이 불가하다. (과거, 미래), (미래, 미래)로 생성한 경우 */
+    /**
+     * 기존 이벤트가 존재하지 않는 경우 단, (과거, 과거)는 생성이 불가하다. (과거, 미래), (미래, 미래)로 생성한 경우
+     */
     private void firstSaveEvent(EventRegisterRequest eventRegisterRequest) {
         //        List<Sector> sectors = sectorAdaptor.findAll();
         Event event =

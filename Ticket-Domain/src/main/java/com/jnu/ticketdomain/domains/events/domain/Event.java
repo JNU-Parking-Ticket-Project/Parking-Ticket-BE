@@ -108,7 +108,7 @@ public class Event {
 
     public void validationPublishStatus() {
         if (this.publish) {
-            throw PublishStatusTrueException.EXCEPTION;
+            throw CannotUpdatePublishEventException.EXCEPTION;
         }
     }
 
@@ -145,5 +145,10 @@ public class Event {
 
     public void deleteEvent() {
         this.isDeleted = true;
+    }
+
+    public void update(String title, DateTimePeriod dateTimePeriod) {
+        this.title = title;
+        this.dateTimePeriod = dateTimePeriod;
     }
 }

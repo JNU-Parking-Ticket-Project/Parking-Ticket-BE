@@ -4,6 +4,7 @@ import static com.jnu.ticketcommon.message.ResponseMessage.*;
 
 import com.jnu.ticketapi.api.event.docs.*;
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
+import com.jnu.ticketapi.api.event.model.request.EventUpdateRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventPublishRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventStatusRequest;
 import com.jnu.ticketapi.api.event.model.response.EventDetailResponse;
@@ -40,6 +41,7 @@ public class EventController {
     private final GetPublishStatusUseCase getPublishStatusUseCase;
     private final UpdatePublishStatusUseCase updatePublishStatusUseCase;
     private final EventDeleteUseCase eventDeleteUseCase;
+    private final EventUpdateUseCase eventUpdateUseCase;
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
@@ -47,6 +49,14 @@ public class EventController {
     public SuccessResponse setEvent(@RequestBody @Valid EventRegisterRequest eventRegisterRequest) {
         EventRegisterUseCase.registerEvent(eventRegisterRequest);
         return new SuccessResponse(EVENT_SUCCESS_REGISTER_MESSAGE);
+    }
+
+    @Operation(summary = "주차권 수정", description = "주차권 행사 세부 수정(시작일, 종료일, 제목)")
+    @ApiErrorExceptionsExample(UpdateEventExceptionDocs.class)
+    @PutMapping("/events/{event-id}")
+    public SuccessResponse updateEvent(@RequestBody @Valid EventUpdateRequest eventUpdateRequest, @PathVariable("event-id") Long eventId) {
+        eventUpdateUseCase.updateEvent(eventUpdateRequest, eventId);
+        return new SuccessResponse(EVENT_SUCCESS_UPDATE_MESSAGE);
     }
 
     @Operation(summary = "주차권 리셋", description = "현재 활성화 및 대기중인 이벤트를")
