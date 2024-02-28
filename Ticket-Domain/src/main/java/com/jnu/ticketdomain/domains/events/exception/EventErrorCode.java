@@ -23,7 +23,7 @@ public enum EventErrorCode implements BaseErrorCode {
     ALREADY_USED_EVENT(BAD_REQUEST, "EVENT_400_7", "이미 사용한 이벤트입니다."),
     ALREADY_OPEN_STATUS(BAD_REQUEST, "Event_400_8", "이미 오픈 중인 이벤트입니다."),
     ALREADY_CALCULATING_STATUS(BAD_REQUEST, "Event_400_9", "이미 정산중인 이벤트입니다."),
-    ALREADY_CLOSE_STATUS(BAD_REQUEST, "Event_400_10", "이미 닫은 이벤트입니다."),
+    ALREADY_CLOSE_STATUS(BAD_REQUEST, "Event_400_10", "이미 닫힌 이벤트입니다."),
     ALREADY_PREPARING_STATUS(BAD_REQUEST, "Event_400_11", "이미 준비중인 이벤트입니다."),
     ALREADY_DELETED_STATUS(BAD_REQUEST, "Event_400_12", "이미 삭제된 이벤트입니다."),
     CANNOT_MODIFY_OPEN_EVENT(BAD_REQUEST, "EVENT_400_13", "오픈된 이벤트은 수정할 수 없습니다."),
@@ -37,6 +37,7 @@ public enum EventErrorCode implements BaseErrorCode {
     ALREADY_PUBLISH_EVENT(BAD_REQUEST, "EVENT_400_19", "이미 게시된 이벤트입니다."),
     CANNOT_PUBLSIH_CLOSED_EVENT(BAD_REQUEST, "EVENT_400_20", "종료된 이벤트는 게시할 수 없습니다."),
     CANNOT_UPDATE_CLOSED_EVENT(BAD_REQUEST, "EVENT_400_21", "종료된 이벤트는 수정할 수 없습니다."),
+    ALREADY_PUBLISHED_EVENT(BAD_REQUEST, "EVENT_400_22", "이미 게시된 이벤트입니다."),
     ;
     private final Integer status;
     private final String code;
