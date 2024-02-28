@@ -67,7 +67,7 @@ public class RegistrationUseCase {
     @Transactional(readOnly = true)
     public GetRegistrationResponse getRegistration(String email) {
         Optional<Registration> registration = findByEmail(email);
-        List<Sector> sectorList = sectorAdaptor.findAllByEventStatus();
+        List<Sector> sectorList = sectorAdaptor.findAllByEventStatusAndPublishAndIsDeleted();
         // 신청자가 임시저장을 하지 않았을 경우
         if (registration.isEmpty()) {
             return GetRegistrationResponse.builder()
