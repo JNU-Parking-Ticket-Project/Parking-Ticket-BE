@@ -22,8 +22,8 @@ public class UpdateEventExceptionDocs implements SwaggerExampleExceptions {
     @ExplainError("시작 시간이 종료 시간보다 늦을 때 발급한 경우")
     public TicketCodeException 시작시간_종료시간_이후 = NotIssuingEventPeriodException.EXCEPTION;
 
-    @ExplainError("제목이 빈칸인 경우")
-    public TicketCodeException 이벤트가_PUBLISH_TURE_상태 = CannotUpdatePublishEventException.EXCEPTION;
+    @ExplainError("이벤트가 게시된 경우")
+    public TicketCodeException 이벤트가_게시된_경우 = CannotUpdatePublishEventException.EXCEPTION;
 
     @ExplainError("제목이 빈칸인 경우")
     public TicketCodeException 제목이_빈칸일_때 =
