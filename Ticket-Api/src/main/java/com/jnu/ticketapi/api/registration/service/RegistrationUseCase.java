@@ -134,8 +134,7 @@ public class RegistrationUseCase {
             String email) {
         // 예비 번호가 있거나 합격인 경우
         if (!sector.isSectorRemaining() && (!sector.isSectorReserveRemaining())) {
-                throw NoEventStockLeftException.EXCEPTION;
-
+            throw NoEventStockLeftException.EXCEPTION;
         }
         reFinalRegisterProcess(tempRegistration, registration, user, email);
         return FinalSaveResponse.from(tempRegistration);
@@ -152,8 +151,7 @@ public class RegistrationUseCase {
     private FinalSaveResponse saveRegistration(
             Registration registration, Sector sector, Long currentUserId, String email) {
         if (!sector.isSectorRemaining() && (!sector.isSectorReserveRemaining())) {
-                throw NoEventStockLeftException.EXCEPTION;
-
+            throw NoEventStockLeftException.EXCEPTION;
         }
         return saveRegistrationProcess(registration, currentUserId, email);
     }
@@ -180,13 +178,13 @@ public class RegistrationUseCase {
     }
 
     private void validateEventPublishIsTrue(Sector sector) {
-        if(Boolean.FALSE.equals(sector.getEvent().getPublish())){
+        if (Boolean.FALSE.equals(sector.getEvent().getPublish())) {
             throw AlreadyPublishedEventException.EXCEPTION;
         }
     }
 
     private void validateEventStatusIsClosed(Sector sector) {
-        if(sector.getEvent().getEventStatus().equals(EventStatus.CLOSED)){
+        if (sector.getEvent().getEventStatus().equals(EventStatus.CLOSED)) {
             throw AlreadyCloseStatusException.EXCEPTION;
         }
     }
