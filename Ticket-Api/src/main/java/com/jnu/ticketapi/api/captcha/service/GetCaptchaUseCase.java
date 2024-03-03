@@ -19,7 +19,7 @@ public class GetCaptchaUseCase {
     private final CaptchaAdaptor captchaAdaptor;
     private final Encryption encryption;
 
-    @Value("${aws.cloudfront.url}")
+    @Value("${captcha.domain}")
     private String cloudfrontUrl;
     private static final String IMAGE_POSTFIX = ".png";
 

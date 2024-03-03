@@ -39,6 +39,10 @@ logging:
       SQL: INFO
       type.descriptor.sql.BasicBinder: INFO
     org.springframework.transaction: INFO
+
+captcha:
+  domain: ${CLOUD_FRONT_URL}
+
 ---
 spring:
   config:
@@ -53,6 +57,3 @@ server:
 encryption:
   algorithm: ${ENCRYPTION_ALGORITHM:AES}
   secret: ${ENCRYPTION_SECRET:jnu-parking-fighting}
-aws:
-  cloudfront:
-    url: ${CLOUD_FRONT_URL}
