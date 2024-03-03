@@ -8,6 +8,7 @@ import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -18,10 +19,14 @@ public class GetCaptchaUseCase {
     private final CaptchaAdaptor captchaAdaptor;
     private final Encryption encryption;
 
+    @Value("${aws.cloudfront.url}")
+    private String cloudfrontUrl;
+    private static final String IMAGE_POSTFIX = ".png";
+
     @Transactional
     public CaptchaResponse execute() {
         Captcha captcha = captchaAdaptor.findByRandom();
         String code = encryption.encrypt(captcha.getId());
-        return CaptchaResponse.of(code, captcha);
+        return CaptchaResponse.of(cloudfrontUrl, IMAGE_POSTFIX, code, captcha);
     }
 }

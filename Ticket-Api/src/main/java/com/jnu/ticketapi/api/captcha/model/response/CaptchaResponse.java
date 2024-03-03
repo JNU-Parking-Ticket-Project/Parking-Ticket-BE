@@ -13,14 +13,10 @@ public record CaptchaResponse(
     @Builder
     public CaptchaResponse {}
 
-    @Value("${aws.cloudfront.url}")
-    private static String couldFrontUrl;
-    private static final String IMAGE_POSTFIX = ".png";
-
-    public static CaptchaResponse of(String code, Captcha captcha) {
+    public static CaptchaResponse of(String cloudFrontUrl, String imagePostfix, String code, Captcha captcha) {
         return CaptchaResponse.builder()
                 .captchaCode(code)
-                .captchaImageUrl(couldFrontUrl + "/" + captcha.getImageName() + IMAGE_POSTFIX)
+                .captchaImageUrl(cloudFrontUrl + "/" + captcha.getImageName() + imagePostfix)
                 .build();
     }
 }
