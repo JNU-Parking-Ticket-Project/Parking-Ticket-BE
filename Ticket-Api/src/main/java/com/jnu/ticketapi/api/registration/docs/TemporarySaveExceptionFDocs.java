@@ -6,6 +6,8 @@ import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
+import com.jnu.ticketdomain.domains.events.exception.AlreadyCloseStatusException;
+import com.jnu.ticketdomain.domains.events.exception.AlreadyPublishedEventException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 import com.jnu.ticketdomain.domains.registration.exception.RegistrationErrorCode;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
@@ -45,4 +47,10 @@ public class TemporarySaveExceptionFDocs implements SwaggerExampleExceptions {
     @ExplainError("선택 구간 id가 음수인 경우")
     public TicketCodeException 선택_구간_id가_음수인_경우 =
             new TicketCodeException(RegistrationErrorCode.SELECT_SECTORID_MUST_POSITIVE_NUMBER);
+
+    @ExplainError("이벤트가 종료된 상태인 경우")
+    public TicketCodeException 이벤트가_종료된_상태 = AlreadyCloseStatusException.EXCEPTION;
+
+    @ExplainError("이벤트가 게시된 경우")
+    public TicketCodeException 이벤트가_게시된_경우 = AlreadyPublishedEventException.EXCEPTION;
 }

@@ -16,7 +16,7 @@ public class SectorReadUseCase {
 
     @Transactional(readOnly = true)
     public List<SectorReadResponse> findAllByEventStatus() {
-        List<Sector> all = sectorLoadPort.findAllByEventStatus();
+        List<Sector> all = sectorLoadPort.findAllByEventStatusAndPublishAndIsDeleted();
         return SectorReadResponse.toSectorReadResponses(all);
     }
 

@@ -8,11 +8,7 @@ import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
-import com.jnu.ticketdomain.domains.events.exception.EventErrorCode;
-import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
-import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
-import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
-import com.jnu.ticketdomain.domains.events.exception.NotIssuingEventPeriodException;
+import com.jnu.ticketdomain.domains.events.exception.*;
 import com.jnu.ticketdomain.domains.registration.exception.RegistrationErrorCode;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
 
@@ -89,4 +85,10 @@ public class FinalSaveExceptionDocs implements SwaggerExampleExceptions {
     @ExplainError("Sector 재고가 없는 경우")
     public TicketCodeException Sector_재고가_없는_경우 =
             new TicketCodeException(EventErrorCode.NO_EVENT_STOCK_LEFT);
+
+    @ExplainError("이벤트가 종료된 상태인 경우")
+    public TicketCodeException 이벤트가_종료된_상태 = AlreadyCloseStatusException.EXCEPTION;
+
+    @ExplainError("이벤트가 게시된 경우")
+    public TicketCodeException 이벤트가_게시된_경우 = AlreadyPublishedEventException.EXCEPTION;
 }

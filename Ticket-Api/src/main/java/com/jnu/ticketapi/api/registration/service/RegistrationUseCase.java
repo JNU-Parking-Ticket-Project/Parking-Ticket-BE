@@ -16,7 +16,10 @@ import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
+import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.AlreadyCloseStatusException;
+import com.jnu.ticketdomain.domains.events.exception.AlreadyPublishedEventException;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
@@ -67,7 +70,7 @@ public class RegistrationUseCase {
     @Transactional(readOnly = true)
     public GetRegistrationResponse getRegistration(String email) {
         Optional<Registration> registration = findByEmail(email);
-        List<Sector> sectorList = sectorAdaptor.findAllByEventStatus();
+        List<Sector> sectorList = sectorAdaptor.findAllByEventStatusAndPublishAndIsDeleted();
         // 신청자가 임시저장을 하지 않았을 경우
         if (registration.isEmpty()) {
             return GetRegistrationResponse.builder()
@@ -82,10 +85,11 @@ public class RegistrationUseCase {
 
     @Transactional
     public TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto, String email) {
-
+        Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
+        validateEventPublishIsTrue(sector);
+        validateEventStatusIsClosed(sector);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
-        Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
         return findResultByEmail(email)
                 .fold(
@@ -101,6 +105,9 @@ public class RegistrationUseCase {
 
     @Transactional
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
+        Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
+        validateEventPublishIsTrue(sector);
+        validateEventStatusIsClosed(sector);
         if (registrationAdaptor.existsByEmailAndIsSavedTrue(email)
                 || registrationAdaptor.existsByStudentNumAndIsSavedTrue(requestDto.studentNum())) {
             throw AlreadyExistRegistrationException.EXCEPTION;
@@ -109,8 +116,6 @@ public class RegistrationUseCase {
         validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
-
-        Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
 
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
         return findResultByEmail(email)
@@ -128,10 +133,8 @@ public class RegistrationUseCase {
             User user,
             String email) {
         // 예비 번호가 있거나 합격인 경우
-        if (!sector.isSectorRemaining()) {
-            if (!sector.isSectorReserveRemaining()) {
-                throw NoEventStockLeftException.EXCEPTION;
-            }
+        if (!sector.isSectorRemaining() && (!sector.isSectorReserveRemaining())) {
+            throw NoEventStockLeftException.EXCEPTION;
         }
         reFinalRegisterProcess(tempRegistration, registration, user, email);
         return FinalSaveResponse.from(tempRegistration);
@@ -147,10 +150,8 @@ public class RegistrationUseCase {
 
     private FinalSaveResponse saveRegistration(
             Registration registration, Sector sector, Long currentUserId, String email) {
-        if (!sector.isSectorRemaining()) {
-            if (!sector.isSectorReserveRemaining()) {
-                throw NoEventStockLeftException.EXCEPTION;
-            }
+        if (!sector.isSectorRemaining() && (!sector.isSectorReserveRemaining())) {
+            throw NoEventStockLeftException.EXCEPTION;
         }
         return saveRegistrationProcess(registration, currentUserId, email);
     }
@@ -174,6 +175,18 @@ public class RegistrationUseCase {
         temporaryRegistration.updateIsSaved(true);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
         return FinalSaveResponse.from(temporaryRegistration);
+    }
+
+    private void validateEventPublishIsTrue(Sector sector) {
+        if (Boolean.FALSE.equals(sector.getEvent().getPublish())) {
+            throw AlreadyPublishedEventException.EXCEPTION;
+        }
+    }
+
+    private void validateEventStatusIsClosed(Sector sector) {
+        if (sector.getEvent().getEventStatus().equals(EventStatus.CLOSED)) {
+            throw AlreadyCloseStatusException.EXCEPTION;
+        }
     }
 
     @Transactional(readOnly = true)
