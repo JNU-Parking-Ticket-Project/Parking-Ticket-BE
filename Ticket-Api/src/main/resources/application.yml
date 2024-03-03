@@ -53,3 +53,6 @@ server:
 encryption:
   algorithm: ${ENCRYPTION_ALGORITHM:AES}
   secret: ${ENCRYPTION_SECRET:jnu-parking-fighting}
+aws:
+  cloudfront:
+    url: ${CLOUD_FRONT_URL}
