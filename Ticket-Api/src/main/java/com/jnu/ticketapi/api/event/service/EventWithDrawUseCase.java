@@ -11,9 +11,7 @@ import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
-import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
-import com.jnu.ticketdomain.domains.events.exception.NotOpenEventStatusException;
-import com.jnu.ticketdomain.domains.events.exception.NotReadyEventStatusException;
+import com.jnu.ticketdomain.domains.events.exception.*;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -63,10 +61,12 @@ public class EventWithDrawUseCase {
         Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
         return readyEvent.fold(
                 (event) -> {
+                    if(event.getPublish().equals(false))
+                        throw NotPublishEventException.EXCEPTION;
                     return event.getDateTimePeriod();
                 },
                 (error) -> {
-                    throw NotReadyEventStatusException.EXCEPTION;
+                    throw AlreadyCloseStatusException.EXCEPTION;
                 });
     }
 
