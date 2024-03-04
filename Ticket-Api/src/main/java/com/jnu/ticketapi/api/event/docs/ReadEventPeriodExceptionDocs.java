@@ -7,7 +7,6 @@ import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketcommon.interfaces.SwaggerExampleExceptions;
 import com.jnu.ticketdomain.domains.events.exception.AlreadyCloseStatusException;
 import com.jnu.ticketdomain.domains.events.exception.NotPublishEventException;
-import com.jnu.ticketdomain.domains.events.exception.NotReadyEventStatusException;
 
 @ExceptionDoc
 public class ReadEventPeriodExceptionDocs implements SwaggerExampleExceptions {

@@ -21,6 +21,7 @@ public class GetCaptchaUseCase {
 
     @Value("${captcha.domain}")
     private String cloudfrontUrl;
+
     private static final String IMAGE_POSTFIX = ".png";
 
     @Transactional
