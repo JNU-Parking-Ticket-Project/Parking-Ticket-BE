@@ -10,9 +10,9 @@ import io.vavr.control.Validation;
 import java.lang.reflect.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
@@ -25,27 +25,18 @@ import org.springframework.stereotype.Component;
 public class EventTypeCheckAop {
     private final EventLoadPort eventLoadPort;
 
-    @Around(value = "@annotation(com.jnu.ticketdomain.common.aop.event.EventTypeCheck)")
-    public Object eventTypeCheck(final ProceedingJoinPoint joinPoint) throws Throwable {
+    @Before(value = "@annotation(com.jnu.ticketdomain.common.aop.event.EventTypeCheck)")
+    public void eventTypeCheck(JoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         EventTypeCheck eventTypeCheck = method.getAnnotation(EventTypeCheck.class);
 
-        return validateEventType(eventTypeCheck.eventType())
+        validateEventType(eventTypeCheck.eventType())
                 .fold(
                         throwable -> {
                             throw throwable;
                         },
-                        validatedEventType -> {
-                            try {
-                                return joinPoint.proceed();
-                            } catch (Throwable throwable) {
-                                log.error(
-                                        "Error during method execution: {}",
-                                        throwable.getMessage());
-                                return null;
-                            }
-                        });
+                        validatedEventType -> null);
     }
 
     Validation<TicketCodeException, Object> validateEventType(EventStatus eventType) {
