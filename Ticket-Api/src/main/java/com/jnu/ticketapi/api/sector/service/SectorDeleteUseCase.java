@@ -23,7 +23,7 @@ public class SectorDeleteUseCase {
     public void execute(Long sectorId) {
         // to Sector List
         Sector sector = sectorLoadPort.findById(sectorId);
-        if(Boolean.TRUE.equals(sector.getEvent().getPublish()))
+        if (Boolean.TRUE.equals(sector.getEvent().getPublish()))
             throw CannotUpdatePublishEventException.EXCEPTION;
         registrationRecordPort.deleteBySector(sector);
         sectorRecordPort.delete(sector);
