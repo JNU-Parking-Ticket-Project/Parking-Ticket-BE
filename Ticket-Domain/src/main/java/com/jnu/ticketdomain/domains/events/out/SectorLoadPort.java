@@ -16,6 +16,4 @@ public interface SectorLoadPort {
     List<Sector> findRecentSector();
 
     List<Sector> findAllByEventStatusAndPublishAndIsDeleted();
-
-    Sector findByIdAndPublishIsFalse(Long sectorId);
 }
