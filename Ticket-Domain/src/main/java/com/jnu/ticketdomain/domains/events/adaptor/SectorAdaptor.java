@@ -9,10 +9,11 @@ import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 import com.jnu.ticketdomain.domains.events.out.SectorLoadPort;
 import com.jnu.ticketdomain.domains.events.out.SectorRecordPort;
 import com.jnu.ticketdomain.domains.events.repository.SectorRepository;
+import lombok.RequiredArgsConstructor;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
-import lombok.RequiredArgsConstructor;
 
 @Adaptor
 @RequiredArgsConstructor
@@ -52,7 +53,10 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
 
     @Override
     public List<Sector> findAllByEventStatusAndPublishAndIsDeleted() {
-        return couponRepository.findAllByEventStatusAndPublishTrueAndIsDeletedFalse();
+        List<Sector> sectors = couponRepository.findAllByEventStatus();
+        return sectors.stream()
+                .filter(sector -> sector.getEvent().getPublish() && !sector.getEvent().isDeleted())
+                .toList();
     }
 
     @Override
