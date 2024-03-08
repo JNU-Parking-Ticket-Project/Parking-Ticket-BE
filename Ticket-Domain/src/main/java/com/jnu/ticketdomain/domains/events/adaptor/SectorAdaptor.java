@@ -9,11 +9,10 @@ import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 import com.jnu.ticketdomain.domains.events.out.SectorLoadPort;
 import com.jnu.ticketdomain.domains.events.out.SectorRecordPort;
 import com.jnu.ticketdomain.domains.events.repository.SectorRepository;
-import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
+import lombok.RequiredArgsConstructor;
 
 @Adaptor
 @RequiredArgsConstructor
