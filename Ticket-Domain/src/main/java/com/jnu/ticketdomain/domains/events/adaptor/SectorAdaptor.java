@@ -52,7 +52,10 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
 
     @Override
     public List<Sector> findAllByEventStatusAndPublishAndIsDeleted() {
-        return couponRepository.findAllByEventStatusAndPublishTrueAndIsDeletedFalse();
+        List<Sector> sectors = couponRepository.findAllByEventStatus();
+        return sectors.stream()
+                .filter(sector -> sector.getEvent().getPublish() && !sector.getEvent().isDeleted())
+                .toList();
     }
 
     @Override
