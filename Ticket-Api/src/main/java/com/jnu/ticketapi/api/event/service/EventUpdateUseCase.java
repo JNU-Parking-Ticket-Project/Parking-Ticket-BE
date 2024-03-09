@@ -4,10 +4,12 @@ package com.jnu.ticketapi.api.event.service;
 import com.jnu.ticketapi.api.event.model.request.EventUpdateRequest;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.exception.TicketCodeException;
+import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
+import com.jnu.ticketdomain.domains.events.event.EventUpdatedEvent;
 import com.jnu.ticketdomain.domains.events.exception.CannotUpdateClosedEventException;
 import com.jnu.ticketdomain.domains.events.exception.CannotUpdatePublishEventException;
 import io.vavr.collection.Seq;
@@ -28,6 +30,8 @@ public class EventUpdateUseCase {
         result.fold(
                 errors -> null,
                 validEvent -> {
+                    Events.raise(
+                            EventUpdatedEvent.of(validEvent, eventUpdateRequest.dateTimePeriod()));
                     event.update(eventUpdateRequest.title(), eventUpdateRequest.dateTimePeriod());
                     return null;
                 });

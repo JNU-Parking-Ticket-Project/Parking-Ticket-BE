@@ -7,6 +7,7 @@ import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
+import com.jnu.ticketdomain.domains.events.event.EventBeforeCreationEvent;
 import com.jnu.ticketdomain.domains.events.event.EventCreationEvent;
 import com.jnu.ticketdomain.domains.events.event.EventUpdatedEvent;
 import io.vavr.control.Option;
@@ -66,14 +67,18 @@ public class EventRegisterUseCase {
                                 event.close();
                             } else {
                                 // (미래, 미래) -> (과거, 미래)로 수정한 경우
-                                Events.raise(EventUpdatedEvent.of(event));
+                                Events.raise(
+                                        EventUpdatedEvent.of(
+                                                event, eventRegisterRequest.dateTimePeriod()));
                                 event.open();
                             }
                         })
                 // (미래, 미래) -> (미래, 미래)로 수정한 경우
                 .onEmpty(
                         () -> {
-                            Events.raise(EventUpdatedEvent.of(event));
+                            Events.raise(
+                                    EventUpdatedEvent.of(
+                                            event, eventRegisterRequest.dateTimePeriod()));
                             event.ready();
                         });
         event.updateDateTimePeriod(eventRegisterRequest.dateTimePeriod());
@@ -88,19 +93,19 @@ public class EventRegisterUseCase {
         event.validateIssuePeriod();
         LocalDateTime now = LocalDateTime.now();
         Option.of(eventRegisterRequest.dateTimePeriod().getStartAt().isBefore(now))
+                // 과거 시간으로 생성하게 된다면
                 .filter(b -> now.isAfter(eventRegisterRequest.dateTimePeriod().getStartAt()))
                 .peek(
                         b -> {
                             event.open();
                             Event savedEvent = eventAdaptor.save(event);
-                            //                            sectors.forEach(sector ->
-                            // sector.setEvent(savedEvent));
+                            // 이벤트 상태 변경 Batch 스케줄링 (OPEN -> CLOSED) - 이벤트
+                            Events.raise(EventBeforeCreationEvent.of(event));
                         })
+                // 정상 (미래, 미래)시간으로 생성한다면
                 .onEmpty(
                         () -> {
                             Event savedEvent = eventAdaptor.save(event);
-                            //                            sectors.forEach(sector ->
-                            // sector.setEvent(savedEvent));
                             // 이벤트 상태 변경 Batch 스케줄링 (READY -> OPEN) - 이벤트
                             Events.raise(EventCreationEvent.of(savedEvent));
                         });
