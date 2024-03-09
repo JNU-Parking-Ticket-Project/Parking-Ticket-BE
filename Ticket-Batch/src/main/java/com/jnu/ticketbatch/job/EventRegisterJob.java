@@ -64,7 +64,7 @@ public class EventRegisterJob implements Job {
         jobDataMap.put("eventId", eventId);
         JobDetail reserveEventQuartzJob =
                 newJob(QuartzJobLauncher.class)
-                        .withIdentity("RESERVATION_JOB", "group1")
+                        .withIdentity("RESERVATION_JOB" + eventId, "group1")
                         .usingJobData("eventId", eventId) // Pass eventId as job data
                         .setJobData(jobDataMap)
                         .build();
@@ -96,7 +96,7 @@ public class EventRegisterJob implements Job {
         jobDataMap.put("jobLauncher", jobLauncher);
         JobDetail expiredEventQuartzJob =
                 newJob(BatchQuartzJob.class)
-                        .withIdentity("EXPIRED_JOB", "group1")
+                        .withIdentity("EXPIRED_JOB" + eventId, "group1")
                         .usingJobData("eventId", eventId)
                         //                .usingJobData("endAt", endAt.toString())
                         .setJobData(jobDataMap)

@@ -2,9 +2,8 @@ package com.jnu.ticketbatch;
 
 
 import com.jnu.ticketbatch.job.EventRegisterJob;
-import com.jnu.ticketbatch.job.EventUpdateJob;
 import com.jnu.ticketdomain.domains.events.domain.Event;
-import com.jnu.ticketdomain.domains.events.event.EventUpdatedEvent;
+import com.jnu.ticketdomain.domains.events.event.EventBeforeCreationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,23 +17,17 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EventUpdatedEventHandler {
-
-    private final EventUpdateJob eventUpdateJob;
+public class EventBeforeCreationEventHandler {
     private final EventRegisterJob eventRegisterJob;
 
     @SneakyThrows
     @Async
     @TransactionalEventListener(
-            classes = EventUpdatedEvent.class,
+            classes = EventBeforeCreationEvent.class,
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handle(EventUpdatedEvent eventUpdateEvent) {
-        Event event = eventUpdateEvent.getCurrentEvent();
-        eventUpdateJob.cancelScheduledJob(event.getId());
-        // 새로운 EXPIREDJOB 등록
-        eventRegisterJob.registerJob(
-                event.getId(), eventUpdateEvent.getDateTimePeriod().getStartAt());
-        eventRegisterJob.expiredJob(event.getId(), eventUpdateEvent.getDateTimePeriod().getEndAt());
+    public void handle(EventBeforeCreationEvent eventCreationEvent) {
+        Event event = eventCreationEvent.getEvent();
+        eventRegisterJob.expiredJob(event.getId(), event.getDateTimePeriod().getEndAt());
     }
 }
