@@ -13,14 +13,14 @@ import com.jnu.ticketdomain.domains.events.exception.NotIssuingEventPeriodExcept
 
 @ExceptionDoc
 public class UpdateEventExceptionDocs implements SwaggerExampleExceptions {
-    @ExplainError("설정한 시간이 현재를 포함하고 있을 경우")
-    public TicketCodeException 시작종료시간_현재를_포함 = InvalidPeriodEventException.EXCEPTION;
+    @ExplainError("설정한 시작 시간이 현재시간보다 과거인 경우")
+    public TicketCodeException 시작시간_현재시간보다_과거 = InvalidPeriodEventException.EXCEPTION;
 
-    @ExplainError("설정한 시간이 이미 지났을 때 발급한 경우")
-    public TicketCodeException 종료시간_지남 = NotIssuingEventPeriodException.EXCEPTION;
+    @ExplainError("설정한 종료 시간이 현재시간보다 과거인 경우")
+    public TicketCodeException 종료시간_현재시간보다_과거 = InvalidPeriodEventException.EXCEPTION;
 
-    @ExplainError("시작 시간이 종료 시간보다 늦을 때 발급한 경우")
-    public TicketCodeException 시작시간_종료시간_이후 = NotIssuingEventPeriodException.EXCEPTION;
+    @ExplainError("시작 시간이 종료 시간보다 미래로 설정한 경우")
+    public TicketCodeException 시작시간이_종료시간_이후 = NotIssuingEventPeriodException.EXCEPTION;
 
     @ExplainError("이벤트가 게시된 경우")
     public TicketCodeException 이벤트가_게시된_경우 = CannotUpdatePublishEventException.EXCEPTION;

@@ -4,15 +4,14 @@ package com.jnu.ticketapi.api.event.service;
 import com.jnu.ticketapi.api.event.model.request.EventUpdateRequest;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.exception.TicketCodeException;
+import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.exception.CannotUpdateClosedEventException;
 import com.jnu.ticketdomain.domains.events.exception.CannotUpdatePublishEventException;
-import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
 import io.vavr.collection.Seq;
 import io.vavr.control.Validation;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +22,7 @@ public class EventUpdateUseCase {
 
     @Transactional
     public void updateEvent(EventUpdateRequest eventUpdateRequest, Long eventId) {
-        validateEventIssuePeriod(eventUpdateRequest);
+        DateTimePeriod.validateEventIssuePeriod(eventUpdateRequest.dateTimePeriod());
         Event event = eventAdaptor.findById(eventId);
         Validation<Seq<TicketCodeException>, Event> result = validateUpdateEvent(event);
         result.fold(
@@ -50,15 +49,5 @@ public class EventUpdateUseCase {
         if (Boolean.TRUE.equals(event.getPublish()))
             throw CannotUpdatePublishEventException.EXCEPTION;
         return Validation.valid(event);
-    }
-
-    private void validateEventIssuePeriod(EventUpdateRequest request) {
-        LocalDateTime nowTime = LocalDateTime.now();
-        if (request.dateTimePeriod().getEndAt().isBefore(nowTime)
-                || request.dateTimePeriod()
-                        .getEndAt()
-                        .isBefore(request.dateTimePeriod().getStartAt())) {
-            throw InvalidPeriodEventException.EXCEPTION;
-        }
     }
 }

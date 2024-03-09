@@ -2,6 +2,7 @@ package com.jnu.ticketdomain.common.vo;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import javax.persistence.Embeddable;
@@ -29,6 +30,15 @@ public class DateTimePeriod {
 
     public static DateTimePeriod between(LocalDateTime startAt, LocalDateTime endAt) {
         return new DateTimePeriod(startAt, endAt);
+    }
+
+    public static void validateEventIssuePeriod(DateTimePeriod dateTimePeriod) {
+        LocalDateTime nowTime = LocalDateTime.now();
+        if (dateTimePeriod.getEndAt().isBefore(nowTime)
+                || dateTimePeriod.getStartAt().isBefore(nowTime)
+                || dateTimePeriod.getEndAt().isBefore(dateTimePeriod.getStartAt())) {
+            throw InvalidPeriodEventException.EXCEPTION;
+        }
     }
 
     public boolean contains(LocalDateTime datetime) {
