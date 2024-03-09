@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import javax.persistence.Embeddable;
+
+import com.jnu.ticketdomain.domains.events.exception.CannotBeModifiedPastTimeException;
+import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +34,13 @@ public class DateTimePeriod {
         return new DateTimePeriod(startAt, endAt);
     }
 
+    public static void validateEventIssuePeriod(DateTimePeriod dateTimePeriod) {
+        LocalDateTime nowTime = LocalDateTime.now();
+        if (dateTimePeriod.getEndAt().isBefore(nowTime) || dateTimePeriod.getStartAt().isBefore(nowTime)
+                || dateTimePeriod.getEndAt().isBefore(dateTimePeriod.getStartAt())) {
+            throw InvalidPeriodEventException.EXCEPTION;
+        }
+    }
     public boolean contains(LocalDateTime datetime) {
         return (datetime.isAfter(startAt) || datetime.equals(startAt))
                 && (datetime.isBefore(endAt) || datetime.equals(endAt));
