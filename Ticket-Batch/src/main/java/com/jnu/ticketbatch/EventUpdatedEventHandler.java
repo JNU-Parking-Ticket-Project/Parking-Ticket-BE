@@ -31,10 +31,15 @@ public class EventUpdatedEventHandler {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventUpdatedEvent eventUpdateEvent) {
         Event event = eventUpdateEvent.getCurrentEvent();
-        eventUpdateJob.cancelScheduledJob(event.getId());
-        // 새로운 EXPIREDJOB 등록
-        eventRegisterJob.registerJob(
-                event.getId(), eventUpdateEvent.getDateTimePeriod().getStartAt());
-        eventRegisterJob.expiredJob(event.getId(), eventUpdateEvent.getDateTimePeriod().getEndAt());
+        try {
+            eventUpdateJob.cancelScheduledJob(event.getId());
+            // 새로운 EXPIREDJOB 등록
+            eventRegisterJob.registerJob(
+                    event.getId(), eventUpdateEvent.getDateTimePeriod().getStartAt());
+            eventRegisterJob.expiredJob(
+                    event.getId(), eventUpdateEvent.getDateTimePeriod().getEndAt());
+        } catch (Exception e) {
+            log.info("스케줄링 실패 : " + e.getMessage());
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.jnu.ticketbatch;
 
 
 import com.jnu.ticketbatch.job.EventRegisterJob;
+import com.jnu.ticketbatch.job.EventUpdateJob;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.event.EventCreationEvent;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +18,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EventCreationEventHandler {
+public class EventDeletedEventHandler {
     private final EventRegisterJob eventRegisterJob;
+    private final EventUpdateJob eventUpdateJob;
 
     @SneakyThrows
     @Async
@@ -30,11 +32,10 @@ public class EventCreationEventHandler {
         // 예약 스케줄링
         Event event = eventCreationEvent.getEvent();
         try {
-            eventRegisterJob.registerJob(event.getId(), event.getDateTimePeriod().getStartAt());
-            eventRegisterJob.expiredJob(event.getId(), event.getDateTimePeriod().getEndAt());
+            eventUpdateJob.cancelScheduledJob(event.getId());
         } catch (Exception e) {
             log.info("스케줄링 실패 : " + e.getMessage());
-            throw new RuntimeException("스케줄링 실패");
+            throw
         }
     }
 }
