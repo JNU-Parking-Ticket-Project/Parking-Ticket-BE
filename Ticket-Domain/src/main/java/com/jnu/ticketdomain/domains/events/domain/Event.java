@@ -112,7 +112,7 @@ public class Event {
         }
     }
 
-    private void updateStatus(EventStatus status, TicketCodeException exception) {
+    public void updateStatus(EventStatus status, TicketCodeException exception) {
         //        if (this.eventStatus == status) throw exception;
         this.eventStatus = status;
         Events.raise(EventStatusChangeEvent.of(this));

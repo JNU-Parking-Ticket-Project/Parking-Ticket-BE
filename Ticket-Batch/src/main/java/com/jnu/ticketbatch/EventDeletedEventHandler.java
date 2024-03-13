@@ -4,7 +4,7 @@ package com.jnu.ticketbatch;
 import com.jnu.ticketbatch.job.EventRegisterJob;
 import com.jnu.ticketbatch.job.EventUpdateJob;
 import com.jnu.ticketdomain.domains.events.domain.Event;
-import com.jnu.ticketdomain.domains.events.event.EventCreationEvent;
+import com.jnu.ticketdomain.domains.events.event.EventDeletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,12 +25,12 @@ public class EventDeletedEventHandler {
     @SneakyThrows
     @Async
     @TransactionalEventListener(
-            classes = EventCreationEvent.class,
+            classes = EventDeletedEvent.class,
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handle(EventCreationEvent eventCreationEvent) {
+    public void handle(EventDeletedEvent eventDeletedEvent) {
         // 예약 스케줄링
-        Event event = eventCreationEvent.getEvent();
+        Event event = eventDeletedEvent.getEvent();
         try {
             eventUpdateJob.cancelScheduledJob(event.getId());
         } catch (Exception e) {
