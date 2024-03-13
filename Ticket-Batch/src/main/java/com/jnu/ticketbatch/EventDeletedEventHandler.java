@@ -35,7 +35,7 @@ public class EventDeletedEventHandler {
             eventUpdateJob.cancelScheduledJob(event.getId());
         } catch (Exception e) {
             log.info("스케줄링 실패 : " + e.getMessage());
-            throw
+            throw e;
         }
     }
 }
