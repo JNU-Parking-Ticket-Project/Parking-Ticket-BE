@@ -57,9 +57,9 @@ public class EventUpdateJob implements Job {
             Scheduler sched = schedFact.getScheduler();
 
             // JobKey 생성
-            JobKey jobKey1 = JobKey.jobKey("RESERVATION_JOB" + eventId, "group1");
+            JobKey jobKey1 = JobKey.jobKey("RESERVATION_JOB", "group1");
             log.info(">>>>> 예약 생성 작업 스케줄러에서 삭제");
-            JobKey jobKey2 = JobKey.jobKey("EXPIRED_JOB" + eventId, "group1");
+            JobKey jobKey2 = JobKey.jobKey("EXPIRED_JOB", "group1");
             log.info(">>>>> 만료 작업 스케줄러에서 삭제");
             // 스케줄러에서 작업 삭제
             if (sched.checkExists(jobKey1)) { // 해당 JobKey로 등록된 작업이 존재하는지 확인
@@ -85,7 +85,7 @@ public class EventUpdateJob implements Job {
 
         JobDetail reserveEventQuartzJob =
                 newJob(QuartzJobLauncher.class)
-                        .withIdentity("RESERVATION_JOB" + eventId, "group1")
+                        .withIdentity("RESERVATION_JOB", "group1")
                         .usingJobData("eventId", eventId) // Pass eventId as job data
                         .setJobData(jobDataMap)
                         .build();
