@@ -5,7 +5,6 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -28,6 +27,7 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     Boolean existsByEmailAndIsSavedTrue(String email);
 
     Boolean existsByStudentNumAndIsSavedTrue(String studentNum);
+
     @Query("update Registration r SET  r.isDeleted = true where r.sector.event.id = :eventId")
     void deleteByEventId(Long eventId);
 }

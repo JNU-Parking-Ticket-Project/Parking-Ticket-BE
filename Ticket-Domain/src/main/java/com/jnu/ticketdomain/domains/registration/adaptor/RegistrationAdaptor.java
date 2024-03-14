@@ -2,7 +2,6 @@ package com.jnu.ticketdomain.domains.registration.adaptor;
 
 
 import com.jnu.ticketcommon.annotation.Adaptor;
-import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationException;
 import com.jnu.ticketdomain.domains.registration.out.RegistrationLoadPort;

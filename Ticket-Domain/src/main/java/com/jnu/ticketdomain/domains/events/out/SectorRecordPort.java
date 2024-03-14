@@ -2,7 +2,6 @@ package com.jnu.ticketdomain.domains.events.out;
 
 
 import com.jnu.ticketcommon.annotation.Port;
-import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import java.util.List;
 
