@@ -33,8 +33,13 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     }
 
     @Override
-    public void deleteBySector(Sector sector) {
-        registrationRepository.deleteBySectorId(sector.getId());
+    public void deleteBySector(Long sectorId) {
+        registrationRepository.deleteBySectorId(sectorId);
+    }
+
+    @Override
+    public void deleteByEvent(Long eventId) {
+        registrationRepository.deleteByEventId(eventId);
     }
 
     @Override

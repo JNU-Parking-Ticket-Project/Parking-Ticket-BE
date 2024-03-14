@@ -2,12 +2,13 @@ package com.jnu.ticketdomain.domains.events.repository;
 
 
 import com.jnu.ticketdomain.domains.events.domain.Sector;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SectorRepository extends JpaRepository<Sector, Long> {
@@ -22,4 +23,9 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
 
     @Query("select s from Sector s where s.id = :sectorId and s.event.publish = false")
     Optional<Sector> findByIdWhereEventPublishIdFalse(Long sectorId);
+    @Query("update Sector s SET s.isDeleted = true where s.event.id = :eventId")
+    void deleteByEventId(Long eventId);
+
+    @Query("update Sector s SET s.isDeleted = true where s.id = :sectorId")
+    void delete(Long sectorId);
 }

@@ -9,5 +9,7 @@ public interface RegistrationRecordPort {
 
     void delete(Registration registration);
 
-    void deleteBySector(Sector sector);
+    void deleteBySector(Long sectorId);
+
+    void deleteByEvent(Long eventId);
 }

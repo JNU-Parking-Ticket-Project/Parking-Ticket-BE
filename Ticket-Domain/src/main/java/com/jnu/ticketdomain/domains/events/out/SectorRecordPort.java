@@ -2,6 +2,7 @@ package com.jnu.ticketdomain.domains.events.out;
 
 
 import com.jnu.ticketcommon.annotation.Port;
+import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import java.util.List;
 
@@ -13,5 +14,7 @@ public interface SectorRecordPort {
 
     void updateAll(List<Sector> prevSector, List<Sector> sectorList);
 
-    void delete(Sector sector);
+    void delete(Long sectorId);
+
+    void deleteByEvent(Long eventId);
 }
