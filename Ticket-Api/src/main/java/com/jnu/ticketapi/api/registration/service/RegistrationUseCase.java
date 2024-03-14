@@ -143,7 +143,7 @@ public class RegistrationUseCase {
     private void reFinalRegisterProcess(
             Registration tempRegistration, Registration registration, User user, String email) {
         tempRegistration.update(registration);
-        tempRegistration.updateIsSaved(false);
+        tempRegistration.updateIsSaved(true);
         eventWithDrawUseCase.issueEvent(user.getId());
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
     }
