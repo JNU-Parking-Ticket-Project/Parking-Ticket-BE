@@ -72,8 +72,8 @@ public class RedisRepository {
         return redisTemplate.opsForSet().add(key, value);
     }
 
-    public Long sRem(String key, Object value) {
-        return redisTemplate.opsForSet().remove(key, value);
+    public Long sRem(String key) {
+        return redisTemplate.opsForSet().remove(key);
     }
 
     public Long sCard(String key) {

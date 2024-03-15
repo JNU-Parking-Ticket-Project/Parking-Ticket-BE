@@ -2,7 +2,6 @@ package com.jnu.ticketdomain.domains.registration.adaptor;
 
 
 import com.jnu.ticketcommon.annotation.Adaptor;
-import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationException;
 import com.jnu.ticketdomain.domains.registration.out.RegistrationLoadPort;
@@ -33,8 +32,13 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     }
 
     @Override
-    public void deleteBySector(Sector sector) {
-        registrationRepository.deleteBySectorId(sector.getId());
+    public void deleteBySector(Long sectorId) {
+        registrationRepository.deleteBySectorId(sectorId);
+    }
+
+    @Override
+    public void deleteByEvent(Long eventId) {
+        registrationRepository.deleteByEventId(eventId);
     }
 
     @Override

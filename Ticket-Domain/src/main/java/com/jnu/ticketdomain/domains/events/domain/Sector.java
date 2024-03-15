@@ -11,12 +11,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Where;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @Getter
+@Where(clause = "is_deleted = false")
 public class Sector {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,6 +53,9 @@ public class Sector {
     @Column(name = "remaining_amount")
     private Integer remainingAmount;
 
+    @Column(name = "is_deleted")
+    private boolean isDeleted;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
@@ -68,6 +73,7 @@ public class Sector {
         this.initReserve = reserve;
         this.issueAmount = sectorCapacity + reserve;
         this.remainingAmount = this.issueAmount;
+        this.isDeleted = false;
     }
 
     public void resetAmount() {
@@ -120,6 +126,7 @@ public class Sector {
         this.initReserve = sector.reserve;
         this.initSectorCapacity = sector.sectorCapacity;
         this.remainingAmount = issueAmount;
+        this.isDeleted = sector.isDeleted;
     }
 
     public void setEvent(Event savedEvent) {

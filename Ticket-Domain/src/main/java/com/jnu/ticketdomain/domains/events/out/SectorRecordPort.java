@@ -13,5 +13,7 @@ public interface SectorRecordPort {
 
     void updateAll(List<Sector> prevSector, List<Sector> sectorList);
 
-    void delete(Sector sector);
+    void delete(Long sectorId);
+
+    void deleteByEvent(Long eventId);
 }
