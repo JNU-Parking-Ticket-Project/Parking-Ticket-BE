@@ -8,11 +8,14 @@ import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
+import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.event.EventDeletedEvent;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @UseCase
 @RequiredArgsConstructor
@@ -25,10 +28,11 @@ public class EventDeleteUseCase {
     @Transactional
     public void deleteEvent(Long eventId) {
         Event event = eventAdaptor.findById(eventId);
+        List<Sector> sector = event.getSector();
         Events.raise(EventDeletedEvent.of(event));
         event.deleteEvent();
         event.updateStatus(EventStatus.CLOSED, null);
-        redisRepository.sRem(TicketStatic.REDIS_EVENT_ISSUE_STORE);
+        redisRepository.delete(TicketStatic.REDIS_EVENT_ISSUE_STORE);
         sectorAdaptor.deleteByEvent(eventId);
         registrationAdaptor.deleteByEvent(eventId);
     }

@@ -21,4 +21,6 @@ public interface RegistrationLoadPort {
     Boolean existsByEmailAndIsSavedTrue(String email);
 
     Boolean existsByStudentNumAndIsSavedTrue(String studentNum);
+
+    Optional<Registration> findByEmailAndIsSaved(String email, boolean flag, Long eventId);
 }

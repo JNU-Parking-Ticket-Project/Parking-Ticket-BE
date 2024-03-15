@@ -18,13 +18,11 @@ import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
-import com.jnu.ticketdomain.domains.events.exception.AlreadyCloseStatusException;
-import com.jnu.ticketdomain.domains.events.exception.AlreadyPublishedEventException;
-import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
-import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
+import com.jnu.ticketdomain.domains.events.exception.*;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
+import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationException;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
@@ -52,15 +50,12 @@ public class RegistrationUseCase {
         return registrationAdaptor.save(registration);
     }
 
-    public Optional<Registration> findByEmail(String email) {
-        return registrationAdaptor.findByEmail(email);
-    }
 
-    public Result<Registration, Object> findResultByEmail(String email) {
-        Optional<Registration> registration = registrationAdaptor.findByEmail(email);
+    public Result<Registration, Object> findResultByEmail(String email, boolean flag, Long eventId) {
+        Optional<Registration> registration = registrationAdaptor.findByEmailAndIsSaved(email,flag,eventId);
         return registration
                 .map(Result::success)
-                .orElseGet(() -> Result.failure(NotFoundEventException.EXCEPTION));
+                .orElseGet(() -> Result.failure(NotFoundRegistrationException.EXCEPTION));
     }
 
     public User findById(Long userId) {
@@ -68,8 +63,8 @@ public class RegistrationUseCase {
     }
 
     @Transactional(readOnly = true)
-    public GetRegistrationResponse getRegistration(String email) {
-        Optional<Registration> registration = findByEmail(email);
+    public GetRegistrationResponse getRegistration(String email, Long eventId) {
+        Optional<Registration> registration = registrationAdaptor.findByEmailAndIsSaved(email,false,eventId);
         List<Sector> sectorList = sectorAdaptor.findAllByEventStatusAndPublishAndIsDeleted();
         // 신청자가 임시저장을 하지 않았을 경우
         if (registration.isEmpty()) {
@@ -84,14 +79,14 @@ public class RegistrationUseCase {
     }
 
     @Transactional
-    public TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto, String email) {
+    public TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto, String email, Long eventId) {
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
-        validateEventPublishIsTrue(sector);
+        validateEventPublish(sector);
         validateEventStatusIsClosed(sector);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
-        return findResultByEmail(email)
+        return findResultByEmail(email, false,eventId)
                 .fold(
                         tempRegistration -> {
                             tempRegistration.update(registration);
@@ -104,9 +99,9 @@ public class RegistrationUseCase {
     }
 
     @Transactional
-    public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email) {
+    public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email, Long eventId) {
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
-        validateEventPublishIsTrue(sector);
+        validateEventPublish(sector);
         validateEventStatusIsClosed(sector);
         if (registrationAdaptor.existsByEmailAndIsSavedTrue(email)
                 || registrationAdaptor.existsByStudentNumAndIsSavedTrue(requestDto.studentNum())) {
@@ -118,7 +113,7 @@ public class RegistrationUseCase {
         User user = findById(currentUserId);
 
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
-        return findResultByEmail(email)
+        return findResultByEmail(email,false,eventId)
                 .fold(
                         tempRegistration ->
                                 reFinalRegister(
@@ -177,9 +172,9 @@ public class RegistrationUseCase {
         return FinalSaveResponse.from(temporaryRegistration);
     }
 
-    private void validateEventPublishIsTrue(Sector sector) {
+    private void validateEventPublish(Sector sector) {
         if (Boolean.FALSE.equals(sector.getEvent().getPublish())) {
-            throw AlreadyPublishedEventException.EXCEPTION;
+            throw NotPublishEventException.EXCEPTION;
         }
     }
 

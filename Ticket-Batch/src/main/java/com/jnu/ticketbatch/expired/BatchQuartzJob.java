@@ -43,7 +43,7 @@ public class BatchQuartzJob extends QuartzJobBean {
         Long eventId = (Long) context.getJobDetail().getJobDataMap().get("eventId");
         Event event = eventAdaptor.findById(eventId);
         event.deleteEvent();
-        redisRepository.sRem(TicketStatic.REDIS_EVENT_ISSUE_STORE);
+        redisRepository.delete(TicketStatic.REDIS_EVENT_ISSUE_STORE);
         eventAdaptor.updateEventStatus(event, EventStatus.CLOSED);
 
         JobParameters jobParameters =

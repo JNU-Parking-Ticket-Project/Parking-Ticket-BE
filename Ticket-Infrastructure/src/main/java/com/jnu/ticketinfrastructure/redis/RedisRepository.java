@@ -83,4 +83,9 @@ public class RedisRepository {
     public void converAndSend(String channel, ChatMessage chatMessage) {
         redisTemplate.convertAndSend(channel, chatMessage);
     }
+
+    public void delete(String key) {
+        redisTemplate.delete(key);
+    }
+
 }

@@ -56,7 +56,7 @@ public class Sector {
     @Column(name = "is_deleted")
     private boolean isDeleted;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "event_id")
     private Event event;
 

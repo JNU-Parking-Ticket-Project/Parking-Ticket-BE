@@ -9,6 +9,7 @@ import com.jnu.ticketapi.api.event.model.request.UpdateEventPublishRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventStatusRequest;
 import com.jnu.ticketapi.api.event.model.response.EventDetailResponse;
 import com.jnu.ticketapi.api.event.model.response.EventsPagingResponse;
+import com.jnu.ticketapi.api.event.model.response.GetEventPeriodResponse;
 import com.jnu.ticketapi.api.event.model.response.PublishStatusResponse;
 import com.jnu.ticketapi.api.event.service.*;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
@@ -103,7 +104,7 @@ public class EventController {
     @Operation(summary = "주차권 신청 기간 조회", description = "주차권 신청 기간 조회")
     @ApiErrorExceptionsExample(ReadEventPeriodExceptionDocs.class)
     @GetMapping("/events/period")
-    public ResponseEntity<DateTimePeriod> getEventPeriod() {
+    public ResponseEntity<GetEventPeriodResponse> getEventPeriod() {
         return ResponseEntity.ok(EventWithDrawUseCase.getEventPeriod());
     }
 

@@ -69,20 +69,7 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
 
     @Override
     public Event findRecentEvent() {
-        Event event =
-                findReadyOrOpenAndNotPublishEvent()
-                        .fold(
-                                Result::success,
-                                error -> {
-                                    Pageable pageRequest = PageRequest.of(0, 1);
-                                    Event event1 =
-                                            eventRepository
-                                                    .findClosestClosedEvent(
-                                                            LocalDateTime.now(), pageRequest)
-                                                    .get(0);
-                                    return Result.success(event1);
-                                })
-                        .getOrThrow();
+        Event event = findReadyOrOpenAndNotPublishEvent().getOrThrow();
 
         if (event == null) {
             throw NotFoundEventException.EXCEPTION;

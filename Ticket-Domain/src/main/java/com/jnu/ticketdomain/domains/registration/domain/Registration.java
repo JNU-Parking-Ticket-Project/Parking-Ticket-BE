@@ -25,7 +25,7 @@ public class Registration {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     // 신청자 이메일
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false)
     private String email;
     // 신청자 이름
     @Column(name = "name", nullable = false)

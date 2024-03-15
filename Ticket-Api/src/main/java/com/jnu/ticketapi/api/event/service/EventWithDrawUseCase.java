@@ -2,6 +2,7 @@ package com.jnu.ticketapi.api.event.service;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
+import com.jnu.ticketapi.api.event.model.response.GetEventPeriodResponse;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.utils.Result;
@@ -57,12 +58,12 @@ public class EventWithDrawUseCase {
         return waitingQueueService.getWaitingOrder(REDIS_EVENT_ISSUE_STORE, currentUserId);
     }
 
-    public DateTimePeriod getEventPeriod() {
+    public GetEventPeriodResponse getEventPeriod() {
         Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
         return readyEvent.fold(
                 (event) -> {
                     if (event.getPublish().equals(false)) throw NotPublishEventException.EXCEPTION;
-                    return event.getDateTimePeriod();
+                    return GetEventPeriodResponse.of(event.getDateTimePeriod(), event.getId());
                 },
                 (error) -> {
                     throw AlreadyCloseStatusException.EXCEPTION;
