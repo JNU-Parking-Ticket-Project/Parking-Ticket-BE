@@ -28,7 +28,6 @@ public class EventDeleteUseCase {
     @Transactional
     public void deleteEvent(Long eventId) {
         Event event = eventAdaptor.findById(eventId);
-        List<Sector> sector = event.getSector();
         Events.raise(EventDeletedEvent.of(event));
         event.deleteEvent();
         event.updateStatus(EventStatus.CLOSED, null);

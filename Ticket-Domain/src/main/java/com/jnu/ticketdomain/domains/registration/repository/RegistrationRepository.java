@@ -30,7 +30,8 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
     Boolean existsByStudentNumAndIsSavedTrue(String studentNum);
 
-    @Query("update Registration r SET  r.isDeleted = true where r.sector.event.id = :eventId")
+    @Query(value = "update registration_tb r join sector s on r.sector_id = s.sector_id set r.is_deleted = 1" +
+            " where s.event_id = :eventId",nativeQuery = true)
     @Modifying(clearAutomatically = true)
     void deleteByEventId(@Param("eventId") Long eventId);
     @Query("select r from Registration r where r.isSaved = :flag and r.email = :email")
