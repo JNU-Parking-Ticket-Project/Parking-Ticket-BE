@@ -60,7 +60,9 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
 
     @Override
     public Optional<Registration> findByEmailAndIsSaved(String email, boolean flag, Long eventId) {
-        return registrationRepository.findByEmailAndIsSaved(email, flag).filter(r -> r.getSector().getEvent().getId().equals(eventId));
+        return registrationRepository
+                .findByEmailAndIsSaved(email, flag)
+                .filter(r -> r.getSector().getEvent().getId().equals(eventId));
     }
 
     @Override

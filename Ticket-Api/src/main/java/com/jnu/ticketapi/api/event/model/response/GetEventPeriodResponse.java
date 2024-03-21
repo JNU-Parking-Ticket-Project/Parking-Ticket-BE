@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.event.model.response;
 
+
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import lombok.Builder;
 

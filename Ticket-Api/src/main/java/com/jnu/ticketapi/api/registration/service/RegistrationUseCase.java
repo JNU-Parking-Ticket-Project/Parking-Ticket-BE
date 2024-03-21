@@ -50,9 +50,10 @@ public class RegistrationUseCase {
         return registrationAdaptor.save(registration);
     }
 
-
-    public Result<Registration, Object> findResultByEmail(String email, boolean flag, Long eventId) {
-        Optional<Registration> registration = registrationAdaptor.findByEmailAndIsSaved(email,flag,eventId);
+    public Result<Registration, Object> findResultByEmail(
+            String email, boolean flag, Long eventId) {
+        Optional<Registration> registration =
+                registrationAdaptor.findByEmailAndIsSaved(email, flag, eventId);
         return registration
                 .map(Result::success)
                 .orElseGet(() -> Result.failure(NotFoundRegistrationException.EXCEPTION));
@@ -64,7 +65,8 @@ public class RegistrationUseCase {
 
     @Transactional(readOnly = true)
     public GetRegistrationResponse getRegistration(String email, Long eventId) {
-        Optional<Registration> registration = registrationAdaptor.findByEmailAndIsSaved(email,false,eventId);
+        Optional<Registration> registration =
+                registrationAdaptor.findByEmailAndIsSaved(email, false, eventId);
         List<Sector> sectorList = sectorAdaptor.findAllByEventStatusAndPublishAndIsDeleted();
         // 신청자가 임시저장을 하지 않았을 경우
         if (registration.isEmpty()) {
@@ -79,14 +81,15 @@ public class RegistrationUseCase {
     }
 
     @Transactional
-    public TemporarySaveResponse temporarySave(TemporarySaveRequest requestDto, String email, Long eventId) {
+    public TemporarySaveResponse temporarySave(
+            TemporarySaveRequest requestDto, String email, Long eventId) {
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
         validateEventPublish(sector);
         validateEventStatusIsClosed(sector);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
-        return findResultByEmail(email, false,eventId)
+        return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration -> {
                             tempRegistration.update(registration);
@@ -113,7 +116,7 @@ public class RegistrationUseCase {
         User user = findById(currentUserId);
 
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
-        return findResultByEmail(email,false,eventId)
+        return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration ->
                                 reFinalRegister(
