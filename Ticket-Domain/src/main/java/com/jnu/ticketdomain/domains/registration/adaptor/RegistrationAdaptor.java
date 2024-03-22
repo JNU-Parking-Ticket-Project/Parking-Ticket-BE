@@ -7,10 +7,9 @@ import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationE
 import com.jnu.ticketdomain.domains.registration.out.RegistrationLoadPort;
 import com.jnu.ticketdomain.domains.registration.out.RegistrationRecordPort;
 import com.jnu.ticketdomain.domains.registration.repository.RegistrationRepository;
-import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Adaptor
@@ -61,7 +60,8 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
 
     @Override
     public Optional<Registration> findByEmailAndIsSaved(String email, boolean flag, Long eventId) {
-        Optional<Registration> registration = registrationRepository.findByEmailAndIsSaved(email, flag);
+        Optional<Registration> registration =
+                registrationRepository.findByEmailAndIsSaved(email, flag);
         return registration;
     }
 

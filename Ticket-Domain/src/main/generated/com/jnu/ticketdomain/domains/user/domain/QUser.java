@@ -2,17 +2,13 @@ package com.jnu.ticketdomain.domains.user.domain;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.querydsl.core.types.dsl.*;
-
-import com.querydsl.core.types.PathMetadata;
-import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.core.types.dsl.PathInits;
+import javax.annotation.processing.Generated;
 
-
-/**
- * QUser is a Querydsl query type for User
- */
+/** QUser is a Querydsl query type for User */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QUser extends EntityPathBase<User> {
 
@@ -56,8 +52,10 @@ public class QUser extends EntityPathBase<User> {
 
     public QUser(Class<? extends User> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.registration = inits.isInitialized("registration") ? new com.jnu.ticketdomain.domains.registration.domain.QRegistration(forProperty("registration"), inits.get("registration")) : null;
+        this.registration =
+                inits.isInitialized("registration")
+                        ? new com.jnu.ticketdomain.domains.registration.domain.QRegistration(
+                                forProperty("registration"), inits.get("registration"))
+                        : null;
     }
-
 }
-

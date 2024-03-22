@@ -27,7 +27,6 @@ public interface RegistrationRepository
     @Modifying(clearAutomatically = true)
     void deleteBySectorId(@Param("sectorId") Long sectorId);
 
-
     @Query(
             value =
                     "update registration_tb r join sector s on r.sector_id = s.sector_id set r.is_deleted = 1"

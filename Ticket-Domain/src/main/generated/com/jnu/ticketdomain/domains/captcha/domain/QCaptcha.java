@@ -2,16 +2,12 @@ package com.jnu.ticketdomain.domains.captcha.domain;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.querydsl.core.types.dsl.*;
-
-import com.querydsl.core.types.PathMetadata;
-import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.*;
+import javax.annotation.processing.Generated;
 
-
-/**
- * QCaptcha is a Querydsl query type for Captcha
- */
+/** QCaptcha is a Querydsl query type for Captcha */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QCaptcha extends EntityPathBase<Captcha> {
 
@@ -36,6 +32,4 @@ public class QCaptcha extends EntityPathBase<Captcha> {
     public QCaptcha(PathMetadata metadata) {
         super(Captcha.class, metadata);
     }
-
 }
-

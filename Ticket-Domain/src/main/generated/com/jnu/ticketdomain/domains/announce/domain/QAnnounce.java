@@ -2,16 +2,12 @@ package com.jnu.ticketdomain.domains.announce.domain;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.querydsl.core.types.dsl.*;
-
-import com.querydsl.core.types.PathMetadata;
-import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.*;
+import javax.annotation.processing.Generated;
 
-
-/**
- * QAnnounce is a Querydsl query type for Announce
- */
+/** QAnnounce is a Querydsl query type for Announce */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QAnnounce extends EntityPathBase<Announce> {
 
@@ -25,7 +21,8 @@ public class QAnnounce extends EntityPathBase<Announce> {
 
     public final StringPath announceTitle = createString("announceTitle");
 
-    public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
+    public final DateTimePath<java.time.LocalDateTime> createdAt =
+            createDateTime("createdAt", java.time.LocalDateTime.class);
 
     public QAnnounce(String variable) {
         super(Announce.class, forVariable(variable));
@@ -38,6 +35,4 @@ public class QAnnounce extends EntityPathBase<Announce> {
     public QAnnounce(PathMetadata metadata) {
         super(Announce.class, metadata);
     }
-
 }
-

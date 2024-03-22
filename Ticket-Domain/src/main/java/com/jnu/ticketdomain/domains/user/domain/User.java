@@ -2,6 +2,8 @@ package com.jnu.ticketdomain.domains.user.domain;
 
 
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -9,9 +11,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -50,7 +49,11 @@ public class User {
     @ColumnDefault("false")
     private boolean emailConfirmed;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     private List<Registration> registrations = new ArrayList<>();
 
     public void updateRole(UserRole userRole) {

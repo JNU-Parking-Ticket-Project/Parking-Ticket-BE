@@ -2,17 +2,13 @@ package com.jnu.ticketdomain.domains.events.domain;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.querydsl.core.types.dsl.*;
-
-import com.querydsl.core.types.PathMetadata;
-import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.core.types.dsl.PathInits;
+import javax.annotation.processing.Generated;
 
-
-/**
- * QSector is a Querydsl query type for Sector
- */
+/** QSector is a Querydsl query type for Sector */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QSector extends EntityPathBase<Sector> {
 
@@ -28,7 +24,8 @@ public class QSector extends EntityPathBase<Sector> {
 
     public final NumberPath<Integer> initReserve = createNumber("initReserve", Integer.class);
 
-    public final NumberPath<Integer> initSectorCapacity = createNumber("initSectorCapacity", Integer.class);
+    public final NumberPath<Integer> initSectorCapacity =
+            createNumber("initSectorCapacity", Integer.class);
 
     public final BooleanPath isDeleted = createBoolean("isDeleted");
 
@@ -36,9 +33,23 @@ public class QSector extends EntityPathBase<Sector> {
 
     public final StringPath name = createString("name");
 
-    public final ListPath<com.jnu.ticketdomain.domains.registration.domain.Registration, com.jnu.ticketdomain.domains.registration.domain.QRegistration> registrations = this.<com.jnu.ticketdomain.domains.registration.domain.Registration, com.jnu.ticketdomain.domains.registration.domain.QRegistration>createList("registrations", com.jnu.ticketdomain.domains.registration.domain.Registration.class, com.jnu.ticketdomain.domains.registration.domain.QRegistration.class, PathInits.DIRECT2);
+    public final ListPath<
+                    com.jnu.ticketdomain.domains.registration.domain.Registration,
+                    com.jnu.ticketdomain.domains.registration.domain.QRegistration>
+            registrations =
+                    this
+                            .<com.jnu.ticketdomain.domains.registration.domain.Registration,
+                                    com.jnu.ticketdomain.domains.registration.domain.QRegistration>
+                                    createList(
+                                            "registrations",
+                                            com.jnu.ticketdomain.domains.registration.domain
+                                                    .Registration.class,
+                                            com.jnu.ticketdomain.domains.registration.domain
+                                                    .QRegistration.class,
+                                            PathInits.DIRECT2);
 
-    public final NumberPath<Integer> remainingAmount = createNumber("remainingAmount", Integer.class);
+    public final NumberPath<Integer> remainingAmount =
+            createNumber("remainingAmount", Integer.class);
 
     public final NumberPath<Integer> reserve = createNumber("reserve", Integer.class);
 
@@ -64,8 +75,9 @@ public class QSector extends EntityPathBase<Sector> {
 
     public QSector(Class<? extends Sector> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.event = inits.isInitialized("event") ? new QEvent(forProperty("event"), inits.get("event")) : null;
+        this.event =
+                inits.isInitialized("event")
+                        ? new QEvent(forProperty("event"), inits.get("event"))
+                        : null;
     }
-
 }
-

@@ -2,16 +2,12 @@ package com.jnu.ticketdomain.common.vo;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.querydsl.core.types.dsl.*;
-
-import com.querydsl.core.types.PathMetadata;
-import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.*;
+import javax.annotation.processing.Generated;
 
-
-/**
- * QPhoneNumberVo is a Querydsl query type for PhoneNumberVo
- */
+/** QPhoneNumberVo is a Querydsl query type for PhoneNumberVo */
 @Generated("com.querydsl.codegen.DefaultEmbeddableSerializer")
 public class QPhoneNumberVo extends BeanPath<PhoneNumberVo> {
 
@@ -38,6 +34,4 @@ public class QPhoneNumberVo extends BeanPath<PhoneNumberVo> {
     public QPhoneNumberVo(PathMetadata metadata) {
         super(PhoneNumberVo.class, metadata);
     }
-
 }
-

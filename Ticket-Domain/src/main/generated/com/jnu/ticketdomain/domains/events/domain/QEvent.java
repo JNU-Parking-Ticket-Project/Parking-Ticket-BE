@@ -2,17 +2,13 @@ package com.jnu.ticketdomain.domains.events.domain;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.querydsl.core.types.dsl.*;
-
-import com.querydsl.core.types.PathMetadata;
-import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.core.types.dsl.PathInits;
+import javax.annotation.processing.Generated;
 
-
-/**
- * QEvent is a Querydsl query type for Event
- */
+/** QEvent is a Querydsl query type for Event */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QEvent extends EntityPathBase<Event> {
 
@@ -34,7 +30,9 @@ public class QEvent extends EntityPathBase<Event> {
 
     public final BooleanPath publish = createBoolean("publish");
 
-    public final ListPath<Sector, QSector> sector = this.<Sector, QSector>createList("sector", Sector.class, QSector.class, PathInits.DIRECT2);
+    public final ListPath<Sector, QSector> sector =
+            this.<Sector, QSector>createList(
+                    "sector", Sector.class, QSector.class, PathInits.DIRECT2);
 
     public final StringPath title = createString("title");
 
@@ -56,8 +54,10 @@ public class QEvent extends EntityPathBase<Event> {
 
     public QEvent(Class<? extends Event> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.dateTimePeriod = inits.isInitialized("dateTimePeriod") ? new com.jnu.ticketdomain.common.vo.QDateTimePeriod(forProperty("dateTimePeriod")) : null;
+        this.dateTimePeriod =
+                inits.isInitialized("dateTimePeriod")
+                        ? new com.jnu.ticketdomain.common.vo.QDateTimePeriod(
+                                forProperty("dateTimePeriod"))
+                        : null;
     }
-
 }
-

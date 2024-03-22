@@ -2,16 +2,12 @@ package com.jnu.ticketdomain.domains.CredentialCode.domain;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.querydsl.core.types.dsl.*;
-
-import com.querydsl.core.types.PathMetadata;
-import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.*;
+import javax.annotation.processing.Generated;
 
-
-/**
- * QCredentialCode is a Querydsl query type for CredentialCode
- */
+/** QCredentialCode is a Querydsl query type for CredentialCode */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QCredentialCode extends EntityPathBase<CredentialCode> {
 
@@ -36,6 +32,4 @@ public class QCredentialCode extends EntityPathBase<CredentialCode> {
     public QCredentialCode(PathMetadata metadata) {
         super(CredentialCode.class, metadata);
     }
-
 }
-

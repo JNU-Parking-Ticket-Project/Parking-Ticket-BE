@@ -108,7 +108,8 @@ public class RegistrationUseCase {
         validateEventPublish(sector);
         validateEventStatusIsClosed(sector);
         if (registrationAdaptor.existsByEmailAndIsSavedTrue(email, eventId)
-                || registrationAdaptor.existsByStudentNumAndIsSavedTrue(requestDto.studentNum(), eventId)) {
+                || registrationAdaptor.existsByStudentNumAndIsSavedTrue(
+                        requestDto.studentNum(), eventId)) {
             throw AlreadyExistRegistrationException.EXCEPTION;
         }
         Long captchaId = encryption.decrypt(requestDto.captchaCode());

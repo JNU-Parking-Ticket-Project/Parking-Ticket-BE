@@ -2,17 +2,13 @@ package com.jnu.ticketdomain.domains.council.domain;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.querydsl.core.types.dsl.*;
-
-import com.querydsl.core.types.PathMetadata;
-import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.core.types.dsl.PathInits;
+import javax.annotation.processing.Generated;
 
-
-/**
- * QCouncil is a Querydsl query type for Council
- */
+/** QCouncil is a Querydsl query type for Council */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QCouncil extends EntityPathBase<Council> {
 
@@ -50,8 +46,10 @@ public class QCouncil extends EntityPathBase<Council> {
 
     public QCouncil(Class<? extends Council> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.user = inits.isInitialized("user") ? new com.jnu.ticketdomain.domains.user.domain.QUser(forProperty("user"), inits.get("user")) : null;
+        this.user =
+                inits.isInitialized("user")
+                        ? new com.jnu.ticketdomain.domains.user.domain.QUser(
+                                forProperty("user"), inits.get("user"))
+                        : null;
     }
-
 }
-

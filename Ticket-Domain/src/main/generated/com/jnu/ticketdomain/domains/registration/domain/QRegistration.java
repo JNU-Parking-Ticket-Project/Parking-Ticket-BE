@@ -2,17 +2,13 @@ package com.jnu.ticketdomain.domains.registration.domain;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.querydsl.core.types.dsl.*;
-
-import com.querydsl.core.types.PathMetadata;
-import javax.annotation.processing.Generated;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.core.types.dsl.PathInits;
+import javax.annotation.processing.Generated;
 
-
-/**
- * QRegistration is a Querydsl query type for Registration
- */
+/** QRegistration is a Querydsl query type for Registration */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QRegistration extends EntityPathBase<Registration> {
 
@@ -26,7 +22,8 @@ public class QRegistration extends EntityPathBase<Registration> {
 
     public final StringPath carNum = createString("carNum");
 
-    public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
+    public final DateTimePath<java.time.LocalDateTime> createdAt =
+            createDateTime("createdAt", java.time.LocalDateTime.class);
 
     public final StringPath email = createString("email");
 
@@ -64,11 +61,18 @@ public class QRegistration extends EntityPathBase<Registration> {
         this(Registration.class, metadata, inits);
     }
 
-    public QRegistration(Class<? extends Registration> type, PathMetadata metadata, PathInits inits) {
+    public QRegistration(
+            Class<? extends Registration> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.sector = inits.isInitialized("sector") ? new com.jnu.ticketdomain.domains.events.domain.QSector(forProperty("sector"), inits.get("sector")) : null;
-        this.user = inits.isInitialized("user") ? new com.jnu.ticketdomain.domains.user.domain.QUser(forProperty("user"), inits.get("user")) : null;
+        this.sector =
+                inits.isInitialized("sector")
+                        ? new com.jnu.ticketdomain.domains.events.domain.QSector(
+                                forProperty("sector"), inits.get("sector"))
+                        : null;
+        this.user =
+                inits.isInitialized("user")
+                        ? new com.jnu.ticketdomain.domains.user.domain.QUser(
+                                forProperty("user"), inits.get("user"))
+                        : null;
     }
-
 }
-
