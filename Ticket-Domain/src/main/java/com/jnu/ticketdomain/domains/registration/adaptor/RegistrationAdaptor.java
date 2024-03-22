@@ -7,9 +7,10 @@ import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationE
 import com.jnu.ticketdomain.domains.registration.out.RegistrationLoadPort;
 import com.jnu.ticketdomain.domains.registration.out.RegistrationRecordPort;
 import com.jnu.ticketdomain.domains.registration.repository.RegistrationRepository;
+import lombok.RequiredArgsConstructor;
+
 import java.util.List;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Adaptor
@@ -60,9 +61,8 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
 
     @Override
     public Optional<Registration> findByEmailAndIsSaved(String email, boolean flag, Long eventId) {
-        return registrationRepository
-                .findByEmailAndIsSaved(email, flag)
-                .filter(r -> r.getSector().getEvent().getId().equals(eventId));
+        Optional<Registration> registration = registrationRepository.findByEmailAndIsSaved(email, flag);
+        return registration;
     }
 
     @Override
@@ -71,12 +71,12 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     }
 
     @Override
-    public Boolean existsByEmailAndIsSavedTrue(String email) {
-        return registrationRepository.existsByEmailAndIsSavedTrue(email);
+    public Boolean existsByEmailAndIsSavedTrue(String email, Long eventId) {
+        return registrationRepository.existsByEmailAndIsSavedTrueAndEvent(email, eventId);
     }
 
     @Override
-    public Boolean existsByStudentNumAndIsSavedTrue(String studentNum) {
-        return registrationRepository.existsByStudentNumAndIsSavedTrue(studentNum);
+    public Boolean existsByStudentNumAndIsSavedTrue(String studentNum, Long eventId) {
+        return registrationRepository.existsByStudentNumAndIsSavedTrue(studentNum, eventId);
     }
 }

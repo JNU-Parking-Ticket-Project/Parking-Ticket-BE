@@ -24,11 +24,11 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     @Query("select s from Sector s where s.id = :sectorId and s.event.publish = false")
     Optional<Sector> findByIdWhereEventPublishIdFalse(Long sectorId);
 
-    @Query("UPDATE Sector s SET s.isDeleted = true WHERE s.event.id = ?1")
-    @Modifying(clearAutomatically = true)
-    void deleteByEventId(Long eventId);
+    @Query("UPDATE Sector s SET s.isDeleted = true WHERE s.event.id = :eventId")
+    @Modifying()
+    void deleteByEventId(@Param("eventId") Long eventId);
 
     @Query("update Sector s SET s.isDeleted = true where s.id = :sectorId")
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     void delete(Long sectorId);
 }

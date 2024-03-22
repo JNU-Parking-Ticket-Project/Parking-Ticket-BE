@@ -33,7 +33,8 @@ public class RegistrationController {
             summary = "임시 저장 조회",
             description = "임시 저장 했던 정보를 조회(임시 저장을 하지 않은 유저는 Email, Sector 빼고 null 반환)")
     @GetMapping("/registration/{event-id}")
-    public ResponseEntity<GetRegistrationResponse> getRegistration(@GetEmail String email, @PathVariable("event-id") Long eventId) {
+    public ResponseEntity<GetRegistrationResponse> getRegistration(
+            @GetEmail String email, @PathVariable("event-id") Long eventId) {
         GetRegistrationResponse responseDto = registrationUseCase.getRegistration(email, eventId);
         return ResponseEntity.ok(responseDto);
     }
@@ -42,8 +43,11 @@ public class RegistrationController {
     @PostMapping("/registration/temporary/{event-id}")
     @ApiErrorExceptionsExample(TemporarySaveExceptionFDocs.class)
     public ResponseEntity<TemporarySaveResponse> temporarySave(
-            @RequestBody @Valid TemporarySaveRequest requestDto, @GetEmail String email, @PathVariable("event-id") Long eventId) {
-        TemporarySaveResponse responseDto = registrationUseCase.temporarySave(requestDto, email, eventId);
+            @RequestBody @Valid TemporarySaveRequest requestDto,
+            @GetEmail String email,
+            @PathVariable("event-id") Long eventId) {
+        TemporarySaveResponse responseDto =
+                registrationUseCase.temporarySave(requestDto, email, eventId);
         return ResponseEntity.ok(responseDto);
     }
 
@@ -51,7 +55,9 @@ public class RegistrationController {
     @PostMapping("/registration/{event-id}")
     @ApiErrorExceptionsExample(FinalSaveExceptionDocs.class)
     public ResponseEntity<FinalSaveResponse> finalSave(
-            @RequestBody @Valid FinalSaveRequest requestDto, @GetEmail String email, @PathVariable("event-id") Long eventId) {
+            @RequestBody @Valid FinalSaveRequest requestDto,
+            @GetEmail String email,
+            @PathVariable("event-id") Long eventId) {
         FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto, email, eventId);
         return ResponseEntity.ok(responseDto);
     }

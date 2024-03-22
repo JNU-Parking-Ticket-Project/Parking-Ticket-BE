@@ -55,6 +55,7 @@ public class RegistrationUseCase {
         Optional<Registration> registration =
                 registrationAdaptor.findByEmailAndIsSaved(email, flag, eventId);
         return registration
+                .filter(r -> r.getSector().getEvent().getId().equals(eventId))
                 .map(Result::success)
                 .orElseGet(() -> Result.failure(NotFoundRegistrationException.EXCEPTION));
     }
@@ -106,8 +107,8 @@ public class RegistrationUseCase {
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
         validateEventPublish(sector);
         validateEventStatusIsClosed(sector);
-        if (registrationAdaptor.existsByEmailAndIsSavedTrue(email)
-                || registrationAdaptor.existsByStudentNumAndIsSavedTrue(requestDto.studentNum())) {
+        if (registrationAdaptor.existsByEmailAndIsSavedTrue(email, eventId)
+                || registrationAdaptor.existsByStudentNumAndIsSavedTrue(requestDto.studentNum(), eventId)) {
             throw AlreadyExistRegistrationException.EXCEPTION;
         }
         Long captchaId = encryption.decrypt(requestDto.captchaCode());

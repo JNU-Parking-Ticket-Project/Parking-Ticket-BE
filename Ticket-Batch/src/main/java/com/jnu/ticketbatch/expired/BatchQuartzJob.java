@@ -42,7 +42,6 @@ public class BatchQuartzJob extends QuartzJobBean {
         // JobDataMap에서 eventId를 가져옵니다.
         Long eventId = (Long) context.getJobDetail().getJobDataMap().get("eventId");
         Event event = eventAdaptor.findById(eventId);
-        event.deleteEvent();
         redisRepository.delete(TicketStatic.REDIS_EVENT_ISSUE_STORE);
         eventAdaptor.updateEventStatus(event, EventStatus.CLOSED);
 
