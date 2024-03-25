@@ -48,8 +48,7 @@ public class Event {
 
     // 구간별 정보
     //    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
-    //    @JoinColumn(name = "sector_id")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "event", cascade = CascadeType.ALL)
     private List<Sector> sector = new ArrayList<>();
 
     @Column(name = "publish")

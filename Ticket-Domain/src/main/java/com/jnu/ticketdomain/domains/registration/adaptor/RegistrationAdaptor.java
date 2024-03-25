@@ -59,17 +59,24 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     }
 
     @Override
+    public Optional<Registration> findByEmailAndIsSaved(String email, boolean flag, Long eventId) {
+        Optional<Registration> registration =
+                registrationRepository.findByEmailAndIsSaved(email, flag);
+        return registration;
+    }
+
+    @Override
     public List<Registration> findByIsDeletedFalseAndIsSavedTrue(Long eventId) {
         return registrationRepository.findByIsDeletedFalseAndIsSavedTrue(eventId);
     }
 
     @Override
-    public Boolean existsByEmailAndIsSavedTrue(String email) {
-        return registrationRepository.existsByEmailAndIsSavedTrue(email);
+    public Boolean existsByEmailAndIsSavedTrue(String email, Long eventId) {
+        return registrationRepository.existsByEmailAndIsSavedTrueAndEvent(email, eventId);
     }
 
     @Override
-    public Boolean existsByStudentNumAndIsSavedTrue(String studentNum) {
-        return registrationRepository.existsByStudentNumAndIsSavedTrue(studentNum);
+    public Boolean existsByStudentNumAndIsSavedTrue(String studentNum, Long eventId) {
+        return registrationRepository.existsByStudentNumAndIsSavedTrue(studentNum, eventId);
     }
 }

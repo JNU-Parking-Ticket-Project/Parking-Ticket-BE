@@ -2,6 +2,8 @@ package com.jnu.ticketdomain.domains.user.domain;
 
 
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -47,8 +49,12 @@ public class User {
     @ColumnDefault("false")
     private boolean emailConfirmed;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Registration registration;
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    private List<Registration> registrations = new ArrayList<>();
 
     public void updateRole(UserRole userRole) {
         this.userRole = userRole;

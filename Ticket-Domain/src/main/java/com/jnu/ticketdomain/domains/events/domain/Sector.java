@@ -60,7 +60,7 @@ public class Sector {
     @JoinColumn(name = "event_id")
     private Event event;
 
-    @OneToMany(mappedBy = "sector", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "sector", cascade = CascadeType.ALL)
     private List<Registration> registrations = new ArrayList<>();
 
     @Builder

@@ -28,7 +28,7 @@ public class EventDeleteUseCase {
         Events.raise(EventDeletedEvent.of(event));
         event.deleteEvent();
         event.updateStatus(EventStatus.CLOSED, null);
-        redisRepository.sRem(TicketStatic.REDIS_EVENT_ISSUE_STORE);
+        redisRepository.delete(TicketStatic.REDIS_EVENT_ISSUE_STORE);
         sectorAdaptor.deleteByEvent(eventId);
         registrationAdaptor.deleteByEvent(eventId);
     }

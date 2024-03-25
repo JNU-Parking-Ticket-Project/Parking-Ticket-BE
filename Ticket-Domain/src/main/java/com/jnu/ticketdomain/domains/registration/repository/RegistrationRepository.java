@@ -5,10 +5,12 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface RegistrationRepository extends JpaRepository<Registration, Long> {
+public interface RegistrationRepository
+        extends JpaRepository<Registration, Long>, RegistrationRepositoryCustom {
     // 신청, 구간 한꺼번에 조회
     @Query("SELECT r FROM Registration r  join fetch r.sector WHERE r.user.id = :userId")
     Optional<Registration> findByUserId(@Param("userId") Long userId);
@@ -22,12 +24,18 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
     List<Registration> findByIsDeletedFalseAndIsSavedTrue(@Param("eventId") Long eventId);
 
     @Query("UPDATE Registration r SET r.isDeleted = true WHERE r.sector.id = :sectorId")
-    void deleteBySectorId(Long sectorId);
+    @Modifying(clearAutomatically = true)
+    void deleteBySectorId(@Param("sectorId") Long sectorId);
 
-    Boolean existsByEmailAndIsSavedTrue(String email);
+    @Query(
+            value =
+                    "update registration_tb r join sector s on r.sector_id = s.sector_id set r.is_deleted = 1"
+                            + " where s.event_id = :eventId",
+            nativeQuery = true)
+    @Modifying()
+    void deleteByEventId(@Param("eventId") Long eventId);
 
-    Boolean existsByStudentNumAndIsSavedTrue(String studentNum);
-
-    @Query("update Registration r SET  r.isDeleted = true where r.sector.event.id = :eventId")
-    void deleteByEventId(Long eventId);
+    @Query("select r from Registration r where r.isSaved = :flag and r.email = :email")
+    Optional<Registration> findByEmailAndIsSaved(
+            @Param("email") String email, @Param("flag") boolean flag);
 }
