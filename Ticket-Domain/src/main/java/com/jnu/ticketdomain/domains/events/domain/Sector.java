@@ -84,7 +84,7 @@ public class Sector {
 
     public void decreaseEventStock() {
         checkEventLeft();
-        if (isSectorRemaining()) {
+        if (isSectorCapacityRemaining()) {
             decreaseCapacity();
         } else if (isSectorReserveRemaining()) {
             decreaseReserve();
@@ -109,8 +109,8 @@ public class Sector {
         }
     }
 
-    public boolean isSectorRemaining() {
-        return remainingAmount > 0;
+    public boolean isSectorCapacityRemaining() {
+        return sectorCapacity > 0;
     }
 
     public boolean isSectorReserveRemaining() {

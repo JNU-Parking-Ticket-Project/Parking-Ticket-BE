@@ -48,7 +48,7 @@ public class EventIssuedEventHandler {
         Sector sector = registration.getSector();
         User user = registration.getUser();
 
-        if (sector.isSectorRemaining()) {
+        if (sector.isSectorCapacityRemaining()) {
             user.success();
         } else if (sector.isSectorReserveRemaining()) {
             Long waitingOrder =
