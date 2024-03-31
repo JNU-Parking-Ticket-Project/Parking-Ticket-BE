@@ -133,9 +133,7 @@ public class RegistrationUseCase {
             User user,
             String email) {
         // 예비 번호가 있거나 합격인 경우
-        if (!sector.isSectorRemaining() && (!sector.isSectorReserveRemaining())) {
-            throw NoEventStockLeftException.EXCEPTION;
-        }
+        sector.checkEventLeft();
         reFinalRegisterProcess(tempRegistration, registration, user, email);
         return FinalSaveResponse.from(tempRegistration);
     }
@@ -150,9 +148,7 @@ public class RegistrationUseCase {
 
     private FinalSaveResponse saveRegistration(
             Registration registration, Sector sector, Long currentUserId, String email) {
-        if (!sector.isSectorRemaining() && (!sector.isSectorReserveRemaining())) {
-            throw NoEventStockLeftException.EXCEPTION;
-        }
+        sector.checkEventLeft();
         return saveRegistrationProcess(registration, currentUserId, email);
     }
 
