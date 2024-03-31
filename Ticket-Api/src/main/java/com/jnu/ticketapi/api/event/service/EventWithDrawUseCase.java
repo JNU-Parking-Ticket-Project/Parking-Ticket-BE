@@ -33,8 +33,8 @@ public class EventWithDrawUseCase {
     @RedissonLock(
             LockName = "주차권_발급",
             identifier = "userId",
-            waitTime = 3000,
-            leaseTime = 3000,
+            waitTime = 5000,
+            leaseTime = 10000,
             timeUnit = TimeUnit.MILLISECONDS)
     public void issueEvent(Long userId) {
         // 재고 감소 로직 구현
