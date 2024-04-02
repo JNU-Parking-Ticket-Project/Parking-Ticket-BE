@@ -48,7 +48,7 @@ public class EventIssuedEventHandler {
     private void processEventData(Long userId, Long eventId) {
         Registration registration = registrationAdaptor.findByUserIdAndEventId(userId, eventId);
         Sector sector = registration.getSector();
-        User user = registration.getUser();
+        User user = userAdaptor.findById(userId);
 
         if (sector.isSectorCapacityRemaining()) {
             user.success();
