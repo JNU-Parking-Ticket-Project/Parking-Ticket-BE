@@ -122,8 +122,8 @@ public class RegistrationUseCase {
                 .fold(
                         tempRegistration ->
                                 reFinalRegister(
-                                        tempRegistration, registration, sector, user, email),
-                        emptyCase -> saveRegistration(registration, sector, currentUserId, email));
+                                        tempRegistration, registration, sector, user, email, eventId),
+                        emptyCase -> saveRegistration(registration, sector, currentUserId, email, eventId));
     }
 
     private FinalSaveResponse reFinalRegister(
@@ -131,31 +131,32 @@ public class RegistrationUseCase {
             Registration registration,
             Sector sector,
             User user,
-            String email) {
+            String email,
+            Long eventId) {
         // 예비 번호가 있거나 합격인 경우
         sector.checkEventLeft();
-        reFinalRegisterProcess(tempRegistration, registration, user, email);
+        reFinalRegisterProcess(tempRegistration, registration, user, email, eventId);
         return FinalSaveResponse.from(tempRegistration);
     }
 
     private void reFinalRegisterProcess(
-            Registration tempRegistration, Registration registration, User user, String email) {
+            Registration tempRegistration, Registration registration, User user, String email, Long eventId) {
         tempRegistration.update(registration);
         tempRegistration.updateIsSaved(true);
-        eventWithDrawUseCase.issueEvent(user.getId());
+        eventWithDrawUseCase.issueEvent(user.getId(), eventId);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
     }
 
     private FinalSaveResponse saveRegistration(
-            Registration registration, Sector sector, Long currentUserId, String email) {
+            Registration registration, Sector sector, Long currentUserId, String email, Long eventId) {
         sector.checkEventLeft();
-        return saveRegistrationProcess(registration, currentUserId, email);
+        return saveRegistrationProcess(registration, currentUserId, email, eventId);
     }
 
     private FinalSaveResponse saveRegistrationProcess(
-            Registration registration, Long currentUserId, String email) {
+            Registration registration, Long currentUserId, String email, Long eventId) {
         Registration saveReg = saveAndFlush(registration);
-        eventWithDrawUseCase.issueEvent(currentUserId);
+        eventWithDrawUseCase.issueEvent(currentUserId, eventId);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
         return FinalSaveResponse.from(saveReg);
     }
@@ -164,9 +165,10 @@ public class RegistrationUseCase {
             Registration temporaryRegistration,
             Registration registration,
             Long currentUserId,
-            String email) {
+            String email,
+            Long eventId) {
         // update
-        eventWithDrawUseCase.issueEvent(currentUserId);
+        eventWithDrawUseCase.issueEvent(currentUserId, eventId);
         temporaryRegistration.update(registration);
         temporaryRegistration.updateIsSaved(true);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);

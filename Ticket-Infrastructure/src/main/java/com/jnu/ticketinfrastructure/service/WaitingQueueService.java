@@ -18,12 +18,13 @@ public class WaitingQueueService {
         this.redisRepository = redisRepository;
     }
 
-    public Boolean registerQueue(String key, Long userId) {
+    public Boolean registerQueue(String key, Long userId, Long eventId) {
         Double score = (double) System.currentTimeMillis();
-        boolean isPresent = redisRepository.zAddIfAbsent(key, userId, score);
+        ChatMessage message = new ChatMessage(userId,eventId);
+        boolean isPresent = redisRepository.zAddIfAbsent(key, message, score);
         // 재고가 있어야 처리
         if (isPresent) {
-            publishMessage(new ChatMessage(userId));
+            publishMessage(message);
         }
         return true;
     }

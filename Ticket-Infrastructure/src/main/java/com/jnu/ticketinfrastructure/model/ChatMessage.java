@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ChatMessage {
     private Long userId;
+    private Long eventId;
 }

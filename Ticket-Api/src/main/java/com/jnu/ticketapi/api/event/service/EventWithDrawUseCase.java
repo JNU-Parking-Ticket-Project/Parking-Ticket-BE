@@ -36,7 +36,7 @@ public class EventWithDrawUseCase {
             waitTime = 5000,
             leaseTime = 10000,
             timeUnit = TimeUnit.MILLISECONDS)
-    public void issueEvent(Long userId) {
+    public void issueEvent(Long userId, Long eventId) {
         // 재고 감소 로직 구현
         Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
         readyEvent.fold(
@@ -49,7 +49,7 @@ public class EventWithDrawUseCase {
                 (error) -> {
                     throw NotReadyEventStatusException.EXCEPTION;
                 });
-        waitingQueueService.registerQueue(REDIS_EVENT_ISSUE_STORE, userId);
+        waitingQueueService.registerQueue(REDIS_EVENT_ISSUE_STORE, userId, eventId);
     }
 
     @Transactional(readOnly = true)
