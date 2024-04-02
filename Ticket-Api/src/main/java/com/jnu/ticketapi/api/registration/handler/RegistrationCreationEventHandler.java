@@ -25,6 +25,6 @@ public class RegistrationCreationEventHandler {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(RegistrationCreationEvent event) {
         mailService.sendRegistrationResultMail(
-                event.getEmail(), event.getName(), event.getStatus());
+                event.getEmail(), event.getName(), event.getStatus(), event.getSequence());
     }
 }

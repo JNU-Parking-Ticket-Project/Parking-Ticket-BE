@@ -23,7 +23,7 @@ import software.amazon.awssdk.services.ses.model.*;
 @Slf4j
 public class MailService {
 
-    @Value("${aws.ses.mail-address}")
+    @Value("${aws.ses.mail-address:centerofjnu@jnu-parking.com}")
     private String mailAddress;
 
     private final SesAsyncClient sesAsyncClient;
@@ -61,9 +61,10 @@ public class MailService {
                 .build();
     }
 
-    public boolean sendRegistrationResultMail(String email, String name, String status) {
+    public boolean sendRegistrationResultMail(
+            String email, String name, String status, Integer sequence) {
         try {
-            Context context = newRegistrationContext(name, status);
+            Context context = newRegistrationContext(name, createMailStatus(status, sequence));
             boolean result =
                     sendMail(
                             email,
@@ -84,5 +85,20 @@ public class MailService {
         context.setVariable(MailTemplate.REGISTRATION_PASS_CONTEXT, pass);
 
         return context;
+    }
+
+    /**
+     * Sequence 의 값을 보고 판단해, 예비인 경우 "예비 1번"과 같이 문자열을 출력한다. 기존과 같이 불합격, 합격인 경우는 동일하게 "불합격"/"합격"으로
+     * 출력한다. Sequence == -1 : 합격 Sequence == -2 : 불합격 그 외 : 예비 n번
+     *
+     * @param status 유저 합/불/예비 여부
+     * @param sequence 합/불/예비에 따른 정수
+     * @return String type 의 결과 상태.
+     */
+    private String createMailStatus(String status, Integer sequence) {
+        if (sequence >= 0) {
+            return status + " " + sequence + "번";
+        }
+        return status;
     }
 }
