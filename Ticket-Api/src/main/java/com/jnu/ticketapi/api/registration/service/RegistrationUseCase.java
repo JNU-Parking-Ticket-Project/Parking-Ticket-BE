@@ -46,8 +46,8 @@ public class RegistrationUseCase {
     private final ValidateCaptchaUseCase validateCaptchaUseCase;
     private final RedisService redisService;
 
-    public Registration save(Registration registration) {
-        return registrationAdaptor.save(registration);
+    public Registration saveAndFlush(Registration registration) {
+        return registrationAdaptor.saveAndFlush(registration);
     }
 
     public Result<Registration, Object> findResultByEmail(
@@ -97,7 +97,7 @@ public class RegistrationUseCase {
                             return TemporarySaveResponse.from(tempRegistration);
                         },
                         emptyCase -> {
-                            Registration jpaRegistration = save(registration);
+                            Registration jpaRegistration = saveAndFlush(registration);
                             return TemporarySaveResponse.from(jpaRegistration);
                         });
     }
@@ -154,7 +154,7 @@ public class RegistrationUseCase {
 
     private FinalSaveResponse saveRegistrationProcess(
             Registration registration, Long currentUserId, String email) {
-        Registration saveReg = save(registration);
+        Registration saveReg = saveAndFlush(registration);
         eventWithDrawUseCase.issueEvent(currentUserId);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
         return FinalSaveResponse.from(saveReg);

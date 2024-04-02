@@ -22,8 +22,8 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     }
 
     @Override
-    public Registration save(Registration registration) {
-        return registrationRepository.save(registration);
+    public Registration saveAndFlush(Registration registration) {
+        return registrationRepository.saveAndFlush(registration);
     }
 
     @Override
