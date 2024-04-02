@@ -24,11 +24,12 @@ public class MailServiceTest {
     public void send_email_test() {
         // given
         String email = "pon05114@naver.com";
-        String name = "쿠키팍";
-        String status = "1차합격";
+        String name = "홍길동";
+        String status = "합격";
+        Integer sequence = -1;
 
         // when
-        boolean result = mailService.sendRegistrationResultMail(email, name, status);
+        boolean result = mailService.sendRegistrationResultMail(email, name, status, sequence);
 
         // then
         Assertions.assertTrue(result);
