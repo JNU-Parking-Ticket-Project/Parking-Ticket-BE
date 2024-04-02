@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @Port
 public interface RegistrationLoadPort {
-    Registration findByUserId(Long userId);
+    Registration findByUserIdAndEventId(Long userId, Long eventId);
 
     Registration findById(Long id);
 

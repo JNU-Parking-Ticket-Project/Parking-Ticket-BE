@@ -7,6 +7,7 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
+import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
@@ -25,6 +26,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 public class EventIssuedEventHandler {
     private final RegistrationAdaptor registrationAdaptor;
+    private final UserAdaptor userAdaptor;
     private final WaitingQueueService waitingQueueService;
 
     @Async
@@ -33,7 +35,7 @@ public class EventIssuedEventHandler {
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
-        processEventData(eventIssuedEvent.getCurrentUserId());
+        processEventData(eventIssuedEvent.getCurrentUserId(), eventIssuedEvent.getEventId());
         waitingQueueService.popQueue(REDIS_EVENT_ISSUE_STORE, 1, ChatMessage.class);
     }
 
@@ -43,8 +45,8 @@ public class EventIssuedEventHandler {
      * @param userId
      * @author : cookie, blackbean
      */
-    private void processEventData(Long userId) {
-        Registration registration = registrationAdaptor.findByUserId(userId);
+    private void processEventData(Long userId, Long eventId) {
+        Registration registration = registrationAdaptor.findByUserIdAndEventId(userId, eventId);
         Sector sector = registration.getSector();
         User user = registration.getUser();
 
