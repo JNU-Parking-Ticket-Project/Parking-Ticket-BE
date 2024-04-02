@@ -30,22 +30,24 @@ public class EventSubscribeService implements MessageListener {
         String channel = new String(message.getChannel());
         Long userId = null;
         Long eventId = null;
+        Long sectorId = null;
         try {
             JsonNode jsonNode = objectMapper.readTree(message.getBody());
             userId = jsonNode.get("userId").asLong();
             eventId = jsonNode.get("eventId").asLong();
+            sectorId = jsonNode.get("sectorId").asLong();
         } catch (Exception e) {
             e.printStackTrace();
         }
         // "userId" 키의 값을 추출
         if (REDIS_EVENT_CHANNEL.equals(channel)) {
-            handleReceivedUserId(userId, eventId);
+            handleReceivedUserId(userId, eventId, sectorId);
         } else {
             log.error("Received message from unknown channel: {}", channel);
         }
     }
 
-    public void handleReceivedUserId(Long userId, Long eventId) {
-        eventPublisher.publishEvent(EventIssuedEvent.from(userId, eventId));
+    public void handleReceivedUserId(Long userId, Long eventId, Long sectorId) {
+        eventPublisher.publishEvent(EventIssuedEvent.from(userId, eventId, sectorId));
     }
 }

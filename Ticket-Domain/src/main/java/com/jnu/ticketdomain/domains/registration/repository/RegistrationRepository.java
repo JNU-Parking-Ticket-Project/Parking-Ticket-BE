@@ -2,6 +2,7 @@ package com.jnu.ticketdomain.domains.registration.repository;
 
 
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,8 +13,17 @@ import org.springframework.data.repository.query.Param;
 public interface RegistrationRepository
         extends JpaRepository<Registration, Long>, RegistrationRepositoryCustom {
     // 신청, 구간 한꺼번에 조회
+    //    @Query(
+    //            "SELECT r FROM Registration r  join fetch r.sector s join fetch s.event e WHERE
+    // r.user.id = :userId AND r.sector.event.id = :eventId")
+    //    Optional<Registration> findByUserIdAndEventId(
+    //            @Param("userId") Long userId, @Param("eventId") Long eventId);
     @Query(
-            "SELECT r FROM Registration r  join fetch r.sector s join fetch s.event e WHERE r.user.id = :userId AND r.sector.event.id = :eventId")
+            "SELECT r FROM Registration r "
+                    + "INNER JOIN r.sector s "
+                    + "INNER JOIN s.event e "
+                    + "WHERE r.user.id = :userId "
+                    + "AND e.id = :eventId")
     Optional<Registration> findByUserIdAndEventId(
             @Param("userId") Long userId, @Param("eventId") Long eventId);
 
@@ -40,4 +50,9 @@ public interface RegistrationRepository
     @Query("select r from Registration r where r.isSaved = :flag and r.email = :email")
     Optional<Registration> findByEmailAndIsSaved(
             @Param("email") String email, @Param("flag") boolean flag);
+
+    @Query("select r from Registration r where r.user.id = :userId")
+    List<Registration> findByUserId(@Param("userId") Long userId);
+
+    List<Registration> findByUser(User user);
 }
