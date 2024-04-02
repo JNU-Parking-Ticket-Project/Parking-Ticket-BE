@@ -87,7 +87,6 @@ public class RedisConfig {
         return new MessageListenerAdapter(eventSubscribeService);
     }
 
-
     // pub/sub 토픽 설정
     @Bean
     ChannelTopic topic() {

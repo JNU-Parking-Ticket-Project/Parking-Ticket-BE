@@ -12,8 +12,10 @@ import org.springframework.data.repository.query.Param;
 public interface RegistrationRepository
         extends JpaRepository<Registration, Long>, RegistrationRepositoryCustom {
     // 신청, 구간 한꺼번에 조회
-    @Query("SELECT r FROM Registration r  join fetch r.sector s join fetch s.event e WHERE r.user.id = :userId AND r.sector.event.id = :eventId")
-    Optional<Registration> findByUserIdAndEventId(@Param("userId") Long userId, @Param("eventId") Long eventId);
+    @Query(
+            "SELECT r FROM Registration r  join fetch r.sector s join fetch s.event e WHERE r.user.id = :userId AND r.sector.event.id = :eventId")
+    Optional<Registration> findByUserIdAndEventId(
+            @Param("userId") Long userId, @Param("eventId") Long eventId);
 
     Optional<Registration> findById(Long id);
 

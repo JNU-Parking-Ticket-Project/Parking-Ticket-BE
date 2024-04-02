@@ -122,8 +122,15 @@ public class RegistrationUseCase {
                 .fold(
                         tempRegistration ->
                                 reFinalRegister(
-                                        tempRegistration, registration, sector, user, email, eventId),
-                        emptyCase -> saveRegistration(registration, sector, currentUserId, email, eventId));
+                                        tempRegistration,
+                                        registration,
+                                        sector,
+                                        user,
+                                        email,
+                                        eventId),
+                        emptyCase ->
+                                saveRegistration(
+                                        registration, sector, currentUserId, email, eventId));
     }
 
     private FinalSaveResponse reFinalRegister(
@@ -140,7 +147,11 @@ public class RegistrationUseCase {
     }
 
     private void reFinalRegisterProcess(
-            Registration tempRegistration, Registration registration, User user, String email, Long eventId) {
+            Registration tempRegistration,
+            Registration registration,
+            User user,
+            String email,
+            Long eventId) {
         tempRegistration.update(registration);
         tempRegistration.updateIsSaved(true);
         eventWithDrawUseCase.issueEvent(user.getId(), eventId);
@@ -148,7 +159,11 @@ public class RegistrationUseCase {
     }
 
     private FinalSaveResponse saveRegistration(
-            Registration registration, Sector sector, Long currentUserId, String email, Long eventId) {
+            Registration registration,
+            Sector sector,
+            Long currentUserId,
+            String email,
+            Long eventId) {
         sector.checkEventLeft();
         return saveRegistrationProcess(registration, currentUserId, email, eventId);
     }

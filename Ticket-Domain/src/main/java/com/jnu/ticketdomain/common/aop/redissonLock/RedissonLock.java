@@ -1,8 +1,6 @@
 package com.jnu.ticketdomain.common.aop.redissonLock;
 
 
-import com.jnu.ticketinfrastructure.model.ChatMessage;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

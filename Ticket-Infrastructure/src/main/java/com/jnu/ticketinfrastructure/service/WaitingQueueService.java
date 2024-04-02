@@ -20,7 +20,7 @@ public class WaitingQueueService {
 
     public Boolean registerQueue(String key, Long userId, Long eventId) {
         Double score = (double) System.currentTimeMillis();
-        ChatMessage message = new ChatMessage(userId,eventId);
+        ChatMessage message = new ChatMessage(userId, eventId);
         boolean isPresent = redisRepository.zAddIfAbsent(key, message, score);
         // 재고가 있어야 처리
         if (isPresent) {
