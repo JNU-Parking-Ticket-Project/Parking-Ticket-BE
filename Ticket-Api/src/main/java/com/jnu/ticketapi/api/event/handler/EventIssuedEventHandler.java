@@ -57,7 +57,8 @@ public class EventIssuedEventHandler {
         } else {
             user.fail();
         }
-        Events.raise(RegistrationCreationEvent.of(registration, user.getStatus()));
+        Events.raise(
+                RegistrationCreationEvent.of(registration, user.getStatus(), user.getSequence()));
         sector.decreaseEventStock();
     }
 }
