@@ -13,6 +13,7 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +59,7 @@ public class EventIssuedEventHandler {
         Registration registration =
                 registrations.stream()
                         .filter(r -> r.getUser().getId().equals(userId))
-                        .findFirst()
+                        .max(Comparator.comparing(Registration::getId))
                         .orElse(null);
 
         if (sector.isSectorCapacityRemaining()) {
