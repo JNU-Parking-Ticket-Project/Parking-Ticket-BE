@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SectorRepository extends JpaRepository<Sector, Long> {
-    Optional<Sector> findById(Long sectorId);
+    //    Optional<Sector> findById(Long sectorId);
 
     @Query("select s from Sector s where s.event.id = :eventId")
     List<Sector> findByEventId(@Param("eventId") Long eventId);

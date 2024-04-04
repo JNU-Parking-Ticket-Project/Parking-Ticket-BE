@@ -3,14 +3,18 @@ package com.jnu.ticketapi.api.event.handler;
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.jnu.ticketdomain.common.domainEvent.Events;
+import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
+import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.util.Comparator;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -25,7 +29,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 public class EventIssuedEventHandler {
     private final RegistrationAdaptor registrationAdaptor;
+    private final UserAdaptor userAdaptor;
     private final WaitingQueueService waitingQueueService;
+    private final SectorAdaptor sectorAdaptor;
 
     @Async
     @TransactionalEventListener(
@@ -33,7 +39,10 @@ public class EventIssuedEventHandler {
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
-        processEventData(eventIssuedEvent.getCurrentUserId());
+        processEventData(
+                eventIssuedEvent.getCurrentUserId(),
+                eventIssuedEvent.getEventId(),
+                eventIssuedEvent.getSectorId());
         waitingQueueService.popQueue(REDIS_EVENT_ISSUE_STORE, 1, ChatMessage.class);
     }
 
@@ -43,10 +52,15 @@ public class EventIssuedEventHandler {
      * @param userId
      * @author : cookie, blackbean
      */
-    private void processEventData(Long userId) {
-        Registration registration = registrationAdaptor.findByUserId(userId);
-        Sector sector = registration.getSector();
-        User user = registration.getUser();
+    public void processEventData(Long userId, Long eventId, Long sectorId) {
+        User user = userAdaptor.findById(userId);
+        List<Registration> registrations = registrationAdaptor.findByUserId(userId);
+        Sector sector = sectorAdaptor.findById(sectorId);
+        Registration registration =
+                registrations.stream()
+                        .filter(r -> r.getUser().getId().equals(userId))
+                        .max(Comparator.comparing(Registration::getId))
+                        .orElse(null);
 
         if (sector.isSectorCapacityRemaining()) {
             user.success();

@@ -7,6 +7,7 @@ import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationE
 import com.jnu.ticketdomain.domains.registration.out.RegistrationLoadPort;
 import com.jnu.ticketdomain.domains.registration.out.RegistrationRecordPort;
 import com.jnu.ticketdomain.domains.registration.repository.RegistrationRepository;
+import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +18,8 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     private final RegistrationRepository registrationRepository;
 
     @Override
-    public Registration findByUserId(Long userId) {
-        return registrationRepository.findByUserId(userId).orElse(null);
+    public Registration findByUserIdAndEventId(Long userId, Long eventId) {
+        return registrationRepository.findByUserIdAndEventId(userId, eventId).orElse(null);
     }
 
     @Override
@@ -78,5 +79,13 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     @Override
     public Boolean existsByStudentNumAndIsSavedTrue(String studentNum, Long eventId) {
         return registrationRepository.existsByStudentNumAndIsSavedTrue(studentNum, eventId);
+    }
+
+    public List<Registration> findByUser(User user) {
+        return registrationRepository.findByUser(user);
+    }
+
+    public List<Registration> findByUserId(Long userId) {
+        return registrationRepository.findByUserId(userId);
     }
 }

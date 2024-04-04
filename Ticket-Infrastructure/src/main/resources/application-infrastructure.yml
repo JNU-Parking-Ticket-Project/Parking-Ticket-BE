@@ -13,3 +13,11 @@ aws:
     secret-key: ${AWS_SES_SECRET_KEY:default}
     region: ${AWS_SES_REGION:ap-northeast-2}
     mail-address: ${AWS_SES_SEND_MAIL_ADDRESS:centerofjnu@jnu-parking.com}
+
+slack:
+  webhook:
+    token: ${SLACK_WEBHOOK_TOKEN:}
+    url: ${SLACK_WEBHOOK_URL:}
+    id: ${SLACK_WEBHOOK_ID:}
+    channel: ${SLACK_SERVICE_CHANNEL_ID:}
+    username: ${SLACK_WEBHOOK_USERNAME:서현이의_알림요정}

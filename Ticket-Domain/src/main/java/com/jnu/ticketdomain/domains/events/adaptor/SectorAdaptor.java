@@ -17,35 +17,35 @@ import lombok.RequiredArgsConstructor;
 @Adaptor
 @RequiredArgsConstructor
 public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
-    private final SectorRepository couponRepository;
+    private final SectorRepository sectorRepository;
     private final EventAdaptor eventAdaptor;
 
-    public Sector findById(Long couponId) {
-        return couponRepository
-                .findById(couponId)
+    public Sector findById(Long sectorId) {
+        return sectorRepository
+                .findById(sectorId)
                 .orElseThrow(() -> NotFoundSectorException.EXCEPTION);
     }
 
     @Override
     public List<Sector> findAll() {
-        return couponRepository.findAll();
+        return sectorRepository.findAll();
     }
 
     @Override
     public List<Sector> findByEventId(Long eventId) {
-        return couponRepository.findByEventId(eventId);
+        return sectorRepository.findByEventId(eventId);
     }
 
     @Override
     public List<Sector> findRecentSector() {
         Event recentEvent = eventAdaptor.findRecentEvent();
         if (recentEvent == null) throw NotFoundSectorException.EXCEPTION;
-        return couponRepository.findByEventId(recentEvent.getId());
+        return sectorRepository.findByEventId(recentEvent.getId());
     }
 
     @Override
     public List<Sector> findAllByEventStatusAndPublishAndIsDeleted() {
-        List<Sector> sectors = couponRepository.findAllByEventStatus();
+        List<Sector> sectors = sectorRepository.findAllByEventStatus();
         return sectors.stream()
                 .filter(sector -> sector.getEvent().getPublish() && !sector.getEvent().isDeleted())
                 .toList();
@@ -53,12 +53,12 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
 
     @Override
     public Sector save(Sector coupon) {
-        return couponRepository.save(coupon);
+        return sectorRepository.save(coupon);
     }
 
     @Override
     public List<Sector> saveAll(List<Sector> sectorList) {
-        return couponRepository.saveAll(sectorList);
+        return sectorRepository.saveAll(sectorList);
     }
 
     @Override
@@ -120,11 +120,11 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
 
     @Override
     public void delete(Long sectorId) {
-        couponRepository.delete(sectorId);
+        sectorRepository.delete(sectorId);
     }
 
     @Override
     public void deleteByEvent(Long eventId) {
-        couponRepository.deleteByEventId(eventId);
+        sectorRepository.deleteByEventId(eventId);
     }
 }
