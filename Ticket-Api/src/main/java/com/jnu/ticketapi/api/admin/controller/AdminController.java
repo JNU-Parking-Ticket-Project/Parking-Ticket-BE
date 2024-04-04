@@ -38,4 +38,9 @@ public class AdminController {
         UpdateRoleResponse response = adminUseCase.updateRole(userId, request.role().getValue());
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/error")
+    public void error() {
+        throw new RuntimeException("error");
+    }
 }

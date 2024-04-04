@@ -27,6 +27,6 @@ public class SlackErrorNotificationProvider {
 
     @Async
     public void sendNotification(List<LayoutBlock> layoutBlocks) {
-        slackHelper.sendNotification(slackProperties.getChannel(), layoutBlocks);
+        slackHelper.sendNotification(slackProperties.getUrl(), layoutBlocks);
     }
 }

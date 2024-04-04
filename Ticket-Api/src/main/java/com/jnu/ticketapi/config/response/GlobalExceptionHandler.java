@@ -3,7 +3,10 @@ package com.jnu.ticketapi.config.response;
 import static com.jnu.ticketcommon.consts.TicketStatic.*;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.jnu.ticketapi.api.slack.sender.SlackInternalErrorSender;
+import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.exception.*;
+import java.io.IOException;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -26,12 +29,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @RestControllerAdvice
 @Slf4j
 @RequiredArgsConstructor
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    private final SlackInternalErrorSender slackInternalErrorSender;
 
     /** Json 날짜 형식 파싱에 대한 에러 핸들러 내부에서 변환할 때 발생하는 에러입니다. */
     @ExceptionHandler({InvalidFormatException.class, DateTimeParseException.class})
@@ -188,8 +193,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    protected ResponseEntity<ErrorResponse> handleException(
-            Exception e, HttpServletRequest request) {
+    protected ResponseEntity<ErrorResponse> handleException(Exception e, HttpServletRequest request)
+            throws IOException {
+        final ContentCachingRequestWrapper cachingRequest = (ContentCachingRequestWrapper) request;
+        final Long userId = SecurityUtils.getCurrentUserId();
+
         String url =
                 UriComponentsBuilder.fromHttpRequest(new ServletServerHttpRequest(request))
                         .build()
@@ -203,6 +211,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         internalServerError.getCode(),
                         internalServerError.getReason(),
                         url);
+        slackInternalErrorSender.execute(cachingRequest, e, userId);
 
         return ResponseEntity.status(HttpStatus.valueOf(internalServerError.getStatus()))
                 .body(errorResponse);

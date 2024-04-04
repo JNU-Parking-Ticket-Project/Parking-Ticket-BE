@@ -14,7 +14,6 @@ public class SlackProperties {
     private String token;
     private String url;
     private String id;
-    private String channel;
     private String username;
     private String iconUrl;
 }
