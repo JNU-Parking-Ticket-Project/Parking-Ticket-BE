@@ -13,10 +13,12 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.StringUtils;
+import org.springframework.context.annotation.Profile;
 
 @Helper
 @RequiredArgsConstructor
 @Slf4j
+@Profile("prod")
 public class SlackHelper {
     private final MethodsClient methodsClient;
 
