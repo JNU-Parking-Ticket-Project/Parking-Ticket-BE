@@ -64,7 +64,7 @@ public class EventIssuedEventHandler {
         } else if (sector.isSectorReserveRemaining()) {
 
             Long waitingOrder =
-                    waitingQueueService.getWaitingOrder(
+                    waitingQueueService.getWaitingOrder( //getWaitingOrder는 0번부터 시작
                             REDIS_EVENT_ISSUE_STORE, new ChatMessage(userId, sectorId));
             user.prepare(Integer.valueOf(waitingOrder.intValue()) + 1);
         } else {
