@@ -11,9 +11,6 @@ public class EventIssuedEvent extends InfrastructureEvent {
     private final Long sectorId;
 
     public static EventIssuedEvent from(Long currentUserId, Long sectorId) {
-        return EventIssuedEvent.builder()
-                .currentUserId(currentUserId)
-                .sectorId(sectorId)
-                .build();
+        return EventIssuedEvent.builder().currentUserId(currentUserId).sectorId(sectorId).build();
     }
 }

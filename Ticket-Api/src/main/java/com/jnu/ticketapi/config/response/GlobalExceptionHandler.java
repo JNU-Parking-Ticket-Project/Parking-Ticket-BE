@@ -1,9 +1,17 @@
 package com.jnu.ticketapi.config.response;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.*;
+
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.jnu.ticketapi.api.slack.sender.SlackInternalErrorSender;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.exception.*;
+import java.io.IOException;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -22,15 +30,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.ConstraintViolationException;
-import java.io.IOException;
-import java.time.format.DateTimeParseException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.*;
 
 @RestControllerAdvice
 @Slf4j
@@ -214,7 +213,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         internalServerError.getCode(),
                         internalServerError.getReason(),
                         url);
-        if(Arrays.asList(environment.getActiveProfiles()).contains("prod")) {
+        if (Arrays.asList(environment.getActiveProfiles()).contains("prod")) {
             slackInternalErrorSender.execute(cachingRequest, e, userId);
         }
         return ResponseEntity.status(HttpStatus.valueOf(internalServerError.getStatus()))

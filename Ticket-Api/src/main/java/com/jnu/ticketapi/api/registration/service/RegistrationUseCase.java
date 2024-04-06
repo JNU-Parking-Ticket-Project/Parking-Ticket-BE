@@ -124,14 +124,8 @@ public class RegistrationUseCase {
                 .fold(
                         tempRegistration ->
                                 reFinalRegister(
-                                        tempRegistration,
-                                        registration,
-                                        sector,
-                                        user,
-                                        email),
-                        emptyCase ->
-                                saveRegistration(
-                                        registration, sector, currentUserId, email));
+                                        tempRegistration, registration, sector, user, email),
+                        emptyCase -> saveRegistration(registration, sector, currentUserId, email));
     }
 
     private FinalSaveResponse reFinalRegister(
@@ -142,8 +136,7 @@ public class RegistrationUseCase {
             String email) {
         // 예비 번호가 있거나 합격인 경우
         sector.checkEventLeft();
-        reFinalRegisterProcess(
-                tempRegistration, registration, user, email, sector.getId());
+        reFinalRegisterProcess(tempRegistration, registration, user, email, sector.getId());
         return FinalSaveResponse.from(tempRegistration);
     }
 
@@ -160,19 +153,13 @@ public class RegistrationUseCase {
     }
 
     private FinalSaveResponse saveRegistration(
-            Registration registration,
-            Sector sector,
-            Long currentUserId,
-            String email) {
+            Registration registration, Sector sector, Long currentUserId, String email) {
         sector.checkEventLeft();
         return saveRegistrationProcess(registration, sector, currentUserId, email);
     }
 
     private FinalSaveResponse saveRegistrationProcess(
-            Registration registration,
-            Sector sector,
-            Long currentUserId,
-            String email) {
+            Registration registration, Sector sector, Long currentUserId, String email) {
         Registration saveReg = saveAndFlush(registration);
         eventWithDrawUseCase.issueEvent(currentUserId, sector.getId());
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);

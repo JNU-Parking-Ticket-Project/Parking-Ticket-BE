@@ -39,9 +39,7 @@ public class EventIssuedEventHandler {
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
-        processEventData(
-                eventIssuedEvent.getCurrentUserId(),
-                eventIssuedEvent.getSectorId());
+        processEventData(eventIssuedEvent.getCurrentUserId(), eventIssuedEvent.getSectorId());
         waitingQueueService.popQueue(REDIS_EVENT_ISSUE_STORE, 1, ChatMessage.class);
     }
 
@@ -66,7 +64,8 @@ public class EventIssuedEventHandler {
         } else if (sector.isSectorReserveRemaining()) {
 
             Long waitingOrder =
-                    waitingQueueService.getWaitingOrder(REDIS_EVENT_ISSUE_STORE, new ChatMessage(userId, sectorId));
+                    waitingQueueService.getWaitingOrder(
+                            REDIS_EVENT_ISSUE_STORE, new ChatMessage(userId, sectorId));
             user.prepare(Integer.valueOf(waitingOrder.intValue()) + 1);
         } else {
             user.fail();
