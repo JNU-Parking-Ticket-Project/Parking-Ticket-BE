@@ -65,9 +65,10 @@ public class EventIssuedEventHandler {
         if (sector.isSectorCapacityRemaining()) {
             user.success();
         } else if (sector.isSectorReserveRemaining()) {
+
             Long waitingOrder =
-                    waitingQueueService.getWaitingOrder(REDIS_EVENT_ISSUE_STORE, userId);
-            user.prepare(Integer.valueOf(waitingOrder.intValue()));
+                    waitingQueueService.getWaitingOrder(REDIS_EVENT_ISSUE_STORE, new ChatMessage(userId, eventId, sectorId));
+            user.prepare(Integer.valueOf(waitingOrder.intValue()) + 1);
         } else {
             user.fail();
         }
