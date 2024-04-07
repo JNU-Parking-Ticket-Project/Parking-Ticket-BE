@@ -8,16 +8,15 @@ import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.exception.*;
 import java.io.IOException;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +35,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Slf4j
 @RequiredArgsConstructor
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
-    private final SlackInternalErrorSender slackInternalErrorSender;
+    private final Environment environment;
+
+    @Autowired(required = false)
+    private SlackInternalErrorSender slackInternalErrorSender;
 
     /** Json 날짜 형식 파싱에 대한 에러 핸들러 내부에서 변환할 때 발생하는 에러입니다. */
     @ExceptionHandler({InvalidFormatException.class, DateTimeParseException.class})
@@ -211,8 +213,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         internalServerError.getCode(),
                         internalServerError.getReason(),
                         url);
-        slackInternalErrorSender.execute(cachingRequest, e, userId);
-
+        if (Arrays.asList(environment.getActiveProfiles()).contains("prod")) {
+            slackInternalErrorSender.execute(cachingRequest, e, userId);
+        }
         return ResponseEntity.status(HttpStatus.valueOf(internalServerError.getStatus()))
                 .body(errorResponse);
     }

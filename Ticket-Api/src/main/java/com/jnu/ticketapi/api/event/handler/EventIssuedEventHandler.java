@@ -39,10 +39,7 @@ public class EventIssuedEventHandler {
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
-        processEventData(
-                eventIssuedEvent.getCurrentUserId(),
-                eventIssuedEvent.getEventId(),
-                eventIssuedEvent.getSectorId());
+        processEventData(eventIssuedEvent.getCurrentUserId(), eventIssuedEvent.getSectorId());
         waitingQueueService.popQueue(REDIS_EVENT_ISSUE_STORE, 1, ChatMessage.class);
     }
 
@@ -52,7 +49,7 @@ public class EventIssuedEventHandler {
      * @param userId
      * @author : cookie, blackbean
      */
-    public void processEventData(Long userId, Long eventId, Long sectorId) {
+    public void processEventData(Long userId, Long sectorId) {
         User user = userAdaptor.findById(userId);
         List<Registration> registrations = registrationAdaptor.findByUserId(userId);
         Sector sector = sectorAdaptor.findById(sectorId);
@@ -65,9 +62,11 @@ public class EventIssuedEventHandler {
         if (sector.isSectorCapacityRemaining()) {
             user.success();
         } else if (sector.isSectorReserveRemaining()) {
+
             Long waitingOrder =
-                    waitingQueueService.getWaitingOrder(REDIS_EVENT_ISSUE_STORE, userId);
-            user.prepare(Integer.valueOf(waitingOrder.intValue()));
+                    waitingQueueService.getWaitingOrder( //getWaitingOrder는 0번부터 시작
+                            REDIS_EVENT_ISSUE_STORE, new ChatMessage(userId, sectorId));
+            user.prepare(Integer.valueOf(waitingOrder.intValue()) + 1);
         } else {
             user.fail();
         }
