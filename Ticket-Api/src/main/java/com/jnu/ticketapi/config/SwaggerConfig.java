@@ -40,6 +40,7 @@ import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.web.method.HandlerMethod;
 
 /** Swagger 사용 환경을 위한 설정 파일 */
@@ -50,6 +51,7 @@ import org.springframework.web.method.HandlerMethod;
 public class SwaggerConfig {
 
     private final ApplicationContext applicationContext;
+    private final Environment environment;
 
     @Bean
     public OpenAPI openAPI(ServletContext servletContext) {
