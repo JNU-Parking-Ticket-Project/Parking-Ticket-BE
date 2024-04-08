@@ -2,6 +2,8 @@ package com.jnu.ticketapi.api.event.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
@@ -13,8 +15,6 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
-import java.util.Comparator;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -32,6 +32,7 @@ public class EventIssuedEventHandler {
     private final UserAdaptor userAdaptor;
     private final WaitingQueueService waitingQueueService;
     private final SectorAdaptor sectorAdaptor;
+    private final ObjectMapper objectMapper;
 
     @Async
     @TransactionalEventListener(
@@ -39,39 +40,55 @@ public class EventIssuedEventHandler {
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
-        processEventData(eventIssuedEvent.getCurrentUserId(), eventIssuedEvent.getSectorId());
+        processEventData(eventIssuedEvent);
         waitingQueueService.popQueue(REDIS_EVENT_ISSUE_STORE, 1, ChatMessage.class);
     }
 
     /**
      * 1차신청에 대한 유저의 신청 결과 상태 정보를 변경하는 로직 1차신청에 대한 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
      *
-     * @param userId
      * @author : cookie, blackbean
      */
-    public void processEventData(Long userId, Long sectorId) {
-        User user = userAdaptor.findById(userId);
-        List<Registration> registrations = registrationAdaptor.findByUserId(userId);
-        Sector sector = sectorAdaptor.findById(sectorId);
-        Registration registration =
-                registrations.stream()
-                        .filter(r -> r.getUser().getId().equals(userId))
-                        .max(Comparator.comparing(Registration::getId))
-                        .orElse(null);
+    public void processEventData(EventIssuedEvent event) {
+        User user = userAdaptor.findById(event.getCurrentUserId());
+        Sector sector = sectorAdaptor.findById(event.getSectorId());
+        Registration registration = event.getRegistration();
 
+        saveRegistration(sector, user, registration);
+        reflectUserState(event, sector, user);
+
+        Events.raise(
+                RegistrationCreationEvent.of(
+                        event.getRegistration(), user.getStatus(), user.getSequence()));
+        sector.decreaseEventStock();
+    }
+
+    private void reflectUserState(EventIssuedEvent event, Sector sector, User user) {
         if (sector.isSectorCapacityRemaining()) {
             user.success();
         } else if (sector.isSectorReserveRemaining()) {
-
-            Long waitingOrder =
-                    waitingQueueService.getWaitingOrder( // getWaitingOrder는 0번부터 시작
-                            REDIS_EVENT_ISSUE_STORE, new ChatMessage(userId, sectorId));
-            user.prepare(Integer.valueOf(waitingOrder.intValue()) + 1);
+            try {
+                String registrationString =
+                        objectMapper.writeValueAsString(event.getRegistration());
+                Long waitingOrder =
+                        waitingQueueService.getWaitingOrder( // getWaitingOrder는 0번부터 시작
+                                REDIS_EVENT_ISSUE_STORE,
+                                new ChatMessage(
+                                        registrationString,
+                                        event.getCurrentUserId(),
+                                        event.getSectorId()));
+                user.prepare(Integer.valueOf(waitingOrder.intValue()) + 1);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
         } else {
             user.fail();
         }
-        Events.raise(
-                RegistrationCreationEvent.of(registration, user.getStatus(), user.getSequence()));
-        sector.decreaseEventStock();
+    }
+
+    private void saveRegistration(Sector sector, User user, Registration registration) {
+        registration.setSector(sector);
+        registration.setUser(user);
+        registrationAdaptor.saveAndFlush(registration);
     }
 }

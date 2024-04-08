@@ -148,7 +148,7 @@ public class RegistrationUseCase {
             Long sectorId) {
         tempRegistration.update(registration);
         tempRegistration.updateIsSaved(true);
-        eventWithDrawUseCase.issueEvent(user.getId(), sectorId);
+        eventWithDrawUseCase.issueEvent(registration, user.getId(), sectorId);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
     }
 
@@ -160,10 +160,11 @@ public class RegistrationUseCase {
 
     private FinalSaveResponse saveRegistrationProcess(
             Registration registration, Sector sector, Long currentUserId, String email) {
-        Registration saveReg = saveAndFlush(registration);
-        eventWithDrawUseCase.issueEvent(currentUserId, sector.getId());
+        //        Registration saveReg = saveAndFlush(registration);
+        eventWithDrawUseCase.issueEvent(registration, currentUserId, sector.getId());
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
-        return FinalSaveResponse.from(saveReg);
+        //        Events.raise(new EventIssuedEvent())
+        return FinalSaveResponse.from(registration);
     }
 
     private FinalSaveResponse updateRegistration(
@@ -174,7 +175,7 @@ public class RegistrationUseCase {
             Long eventId,
             Long sectorId) {
         // update
-        eventWithDrawUseCase.issueEvent(currentUserId, sectorId);
+        eventWithDrawUseCase.issueEvent(registration, currentUserId, sectorId);
         temporaryRegistration.update(registration);
         temporaryRegistration.updateIsSaved(true);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);

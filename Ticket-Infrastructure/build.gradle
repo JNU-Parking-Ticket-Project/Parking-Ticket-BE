@@ -6,6 +6,7 @@ dependencies {
     api 'io.github.openfeign:feign-httpclient:12.1'
     api 'org.springframework.cloud:spring-cloud-starter-openfeign:3.1.4'
     api project(':Ticket-Common')
+    api project(':Ticket-Domain')
     api 'org.springframework.boot:spring-boot-starter-data-redis'
     api 'org.redisson:redisson:3.19.0'
     api('com.fasterxml.jackson.datatype:jackson-datatype-jdk8')

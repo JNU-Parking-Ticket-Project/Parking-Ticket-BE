@@ -1,6 +1,7 @@
 package com.jnu.ticketdomain.domains.user.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,7 @@ public class User {
     @ColumnDefault("false")
     private boolean emailConfirmed;
 
+    @JsonBackReference
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.ALL,

@@ -1,14 +1,17 @@
 package com.jnu.ticketdomain.domains.registration.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import java.time.LocalDateTime;
 import javax.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Where;
@@ -17,10 +20,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Table(name = "registration_tb")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @DynamicUpdate
+@AllArgsConstructor(access = AccessLevel.PUBLIC) // 생성자를 public으로 변경
 @Where(clause = "is_deleted = false")
 public class Registration {
     @Id
@@ -60,10 +63,12 @@ public class Registration {
     @ColumnDefault("false")
     private boolean isDeleted;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sectorId", nullable = false)
     private Sector sector;
@@ -94,6 +99,36 @@ public class Registration {
         this.sector = sector;
     }
 
+    @JsonCreator
+    public Registration(
+            @JsonProperty("email") String email,
+            @JsonProperty("name") String name,
+            @JsonProperty("studentNum") String studentNum,
+            @JsonProperty("affiliation") String affiliation,
+            @JsonProperty("carNum") String carNum,
+            @JsonProperty("isLight") boolean isLight,
+            @JsonProperty("phoneNum") String phoneNum,
+            @JsonProperty("createdAt") LocalDateTime createdAt,
+            @JsonProperty("isSaved") boolean isSaved,
+            @JsonProperty("isDeleted") boolean isDeleted,
+            @JsonProperty("user") User user,
+            @JsonProperty("sector") Sector sector) {
+        this.email = email;
+        this.name = name;
+        this.studentNum = studentNum;
+        this.affiliation = affiliation;
+        this.carNum = carNum;
+        this.isLight = isLight;
+        this.phoneNum = phoneNum;
+        this.createdAt = createdAt;
+        this.isSaved = isSaved;
+        this.isDeleted = isDeleted;
+        this.user = user;
+        this.sector = sector;
+    }
+
+    public Registration() {}
+
     public void updateIsSaved(boolean isSaved) {
         this.isSaved = isSaved;
     }
@@ -111,5 +146,13 @@ public class Registration {
         this.isLight = registration.isLight();
         this.phoneNum = registration.getPhoneNum();
         this.sector = registration.getSector();
+    }
+
+    public void setSector(Sector sector) {
+        this.sector = sector;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }
