@@ -6,9 +6,11 @@ import com.jnu.ticketapi.config.response.JwtAuthenticationEntryPoint;
 import com.jnu.ticketapi.security.JwtAuthenticationFilter;
 import com.jnu.ticketapi.security.JwtExceptionFilter;
 import com.jnu.ticketapi.security.JwtResolver;
+import com.jnu.ticketcommon.helper.SpringEnvironmentHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -19,12 +21,18 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsUtils;
 
+import java.util.Arrays;
+
+import static com.jnu.ticketcommon.consts.TicketStatic.SwaggerPatterns;
+
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtResolver jwtResolver;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final Environment environment;
+    private final SpringEnvironmentHelper springEnvironmentHelper;
 
     protected String[] councilAndAdminUrls = {
         "/v1/announce/**", "/v1/notice/**", "/v1/registrations", "/v1/sectors/**", "/v1/events/**"
@@ -42,6 +50,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // httpBasic, csrf, formLogin, rememberMe, logout, session disable
+
         http.httpBasic()
                 .disable()
                 .csrf()
@@ -64,9 +73,21 @@ public class SecurityConfig {
                 .frameOptions()
                 .sameOrigin();
 
+        if(Arrays.asList(environment.getActiveProfiles()).contains("prod")) {
+            http.authorizeRequests().mvcMatchers(SwaggerPatterns).authenticated().and().httpBasic();
+        }
         // 요청에 대한 권한 설정
         http.authorizeRequests()
                 .requestMatchers(CorsUtils::isPreFlightRequest)
+                .permitAll()
+                .antMatchers(
+                        "/swagger-resources/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                        "/v3/api-docs",
+                        "/api-docs/**",
+                        "/api-docs")
                 .permitAll()
                 .antMatchers(HttpMethod.GET, "/v1/sectors", "/v1/events/period")
                 .authenticated()
@@ -79,9 +100,10 @@ public class SecurityConfig {
                 .anyRequest()
                 .denyAll();
 
+
         // jwt filter 설정
         http.addFilterBefore(
-                new JwtAuthenticationFilter(jwtResolver),
+                new JwtAuthenticationFilter(jwtResolver, springEnvironmentHelper),
                 UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(new JwtExceptionFilter(), JwtAuthenticationFilter.class);
         return http.build();
@@ -107,14 +129,6 @@ public class SecurityConfig {
                         .antMatchers("/v1/council/signup")
                         .antMatchers("/v1/auth/check/email/**")
                         .antMatchers("/error")
-                        .antMatchers(
-                                "/swagger-resources/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs",
-                                "/api-docs/**",
-                                "/api-docs")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 }
