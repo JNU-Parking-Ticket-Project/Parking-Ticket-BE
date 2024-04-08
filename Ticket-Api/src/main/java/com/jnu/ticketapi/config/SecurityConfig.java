@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.config;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.SwaggerPatterns;
 
 import com.jnu.ticketapi.config.response.JwtAccessDeniedHandler;
 import com.jnu.ticketapi.config.response.JwtAuthenticationEntryPoint;
@@ -7,6 +8,7 @@ import com.jnu.ticketapi.security.JwtAuthenticationFilter;
 import com.jnu.ticketapi.security.JwtExceptionFilter;
 import com.jnu.ticketapi.security.JwtResolver;
 import com.jnu.ticketcommon.helper.SpringEnvironmentHelper;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -20,10 +22,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsUtils;
-
-import java.util.Arrays;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.SwaggerPatterns;
 
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -73,7 +71,7 @@ public class SecurityConfig {
                 .frameOptions()
                 .sameOrigin();
 
-        if(Arrays.asList(environment.getActiveProfiles()).contains("prod")) {
+        if (Arrays.asList(environment.getActiveProfiles()).contains("prod")) {
             http.authorizeRequests().mvcMatchers(SwaggerPatterns).authenticated().and().httpBasic();
         }
         // 요청에 대한 권한 설정
@@ -99,7 +97,6 @@ public class SecurityConfig {
                 .authenticated()
                 .anyRequest()
                 .denyAll();
-
 
         // jwt filter 설정
         http.addFilterBefore(

@@ -4,7 +4,6 @@ import static com.jnu.ticketcommon.consts.TicketStatic.SWAGGER_DOCS_VERSION;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketapi.common.swagger.exception.SwaggerException;
 import com.jnu.ticketcommon.annotation.ApiErrorCodeExample;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import com.jnu.ticketcommon.annotation.DisableSwaggerSecurity;
@@ -38,11 +37,9 @@ import java.util.Map;
 import javax.servlet.ServletContext;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.customizers.OperationCustomizer;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.web.method.HandlerMethod;
 
@@ -86,7 +83,6 @@ public class SwaggerConfig {
                                 .in(In.HEADER)
                                 .name("Authorization"));
     }
-
 
     @Bean
     public ModelResolver modelResolver(ObjectMapper objectMapper) {

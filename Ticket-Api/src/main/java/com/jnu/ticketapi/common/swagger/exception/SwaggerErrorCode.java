@@ -1,13 +1,14 @@
 package com.jnu.ticketapi.common.swagger.exception;
 
+
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.BaseErrorCode;
 import com.jnu.ticketcommon.exception.ErrorReason;
+import java.lang.reflect.Field;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.lang.reflect.Field;
-import java.util.Objects;
 @Getter
 @AllArgsConstructor
 public enum SwaggerErrorCode implements BaseErrorCode {

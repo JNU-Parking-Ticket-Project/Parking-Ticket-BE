@@ -41,11 +41,11 @@ public class TicketStatic {
     };
 
     public static final String[] RealSwaggerPatterns = {
-            "/api/swagger-ui/index.html",
-            "/api/swagger-ui.html",
-            "/api/v3/api-docs",
-            "/api/api-docs",
-            "/api/api-docs"
+        "/api/swagger-ui/index.html",
+        "/api/swagger-ui.html",
+        "/api/v3/api-docs",
+        "/api/api-docs",
+        "/api/api-docs"
     };
     public static final String[] RolePattern = {
         "ROLE_ADMIN", "ROLE_MANAGER", "ROLE_GUEST", "ROLE_SWAGGER"
