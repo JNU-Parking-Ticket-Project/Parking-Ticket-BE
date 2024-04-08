@@ -2,6 +2,7 @@ package com.jnu.ticketinfrastructure.slack;
 
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CustomAsyncExceptionHandler implements AsyncUncaughtExceptionHandler {
     private final Environment environment;
-    //    private final SlackAsyncErrorSender slackAsyncErrorSender;
+    private final SlackAsyncErrorSender slackAsyncErrorSender;
 
     @Override
     public void handleUncaughtException(Throwable throwable, Method method, Object... params) {
@@ -22,8 +23,8 @@ public class CustomAsyncExceptionHandler implements AsyncUncaughtExceptionHandle
         for (Object param : params) {
             log.error("Parameter value - " + param);
         }
-        //        if (Arrays.asList(environment.getActiveProfiles()).contains("prod")) {
-        //            slackAsyncErrorSender.execute(method.getName(), throwable, params);
-        //        }
+        if (Arrays.asList(environment.getActiveProfiles()).contains("prod")) {
+            slackAsyncErrorSender.execute(method.getName(), throwable, params);
+        }
     }
 }
