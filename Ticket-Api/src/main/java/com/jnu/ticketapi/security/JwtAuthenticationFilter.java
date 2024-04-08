@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -32,11 +33,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         log.info("JwtAuthenticationFilter 작동중");
         log.info("requestURI : {}", request.getRequestURI());
-        if (Boolean.TRUE.equals(springEnvironmentHelper.isProdProfile())
+        if (!Boolean.TRUE.equals(springEnvironmentHelper.isProdProfile())
                 && (isSwaggerRequest(request.getRequestURI()))) {
             filterChain.doFilter(request, response);
             return;
-        } else if (!springEnvironmentHelper.isProdProfile()
+        } else if (Boolean.TRUE.equals(!springEnvironmentHelper.isProdProfile())
                 && (isSwaggerRequest(request.getRequestURI()))) {
             throw SwaggerException.EXCEPTION;
         }
@@ -53,9 +54,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
-
     private boolean isSwaggerRequest(String uri) {
         return Arrays.stream(TicketStatic.SwaggerPatterns)
-                .anyMatch(pattern -> antPathMatcher.match(pattern, uri));
+                .anyMatch(pattern -> antPathMatcher.matchStart(pattern, uri));
     }
 }

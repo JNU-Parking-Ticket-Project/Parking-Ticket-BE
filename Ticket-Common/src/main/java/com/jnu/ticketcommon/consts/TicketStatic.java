@@ -31,21 +31,13 @@ public class TicketStatic {
     public static final String REDIS_EVENT_CHANNEL = "쿠폰 발급 채널";
     public static final String REDIS_EVENT_ISSUE_STORE = "쿠폰 발급 저장소";
     public static final String[] SwaggerPatterns = {
-        "/api/swagger-resources/**",
-        "/api/swagger-ui/**",
-        "/api/swagger-ui.html",
-        "/api/v3/api-docs/**",
-        "/api/v3/api-docs",
-        "/api/api-docs/**",
-        "/api/api-docs"
-    };
-
-    public static final String[] RealSwaggerPatterns = {
-        "/api/swagger-ui/index.html",
-        "/api/swagger-ui.html",
-        "/api/v3/api-docs",
-        "/api/api-docs",
-        "/api/api-docs"
+        "/**/swagger-resources/**",
+        "/**/swagger-ui/**",
+        "/**/swagger-ui.html",
+        "/**/v3/api-docs/**",
+        "/**/v3/api-docs",
+        "/**/api-docs/**",
+        "/**/api-docs"
     };
     public static final String[] RolePattern = {
         "ROLE_ADMIN", "ROLE_MANAGER", "ROLE_GUEST", "ROLE_SWAGGER"
