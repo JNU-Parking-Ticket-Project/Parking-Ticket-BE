@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 && (isSwaggerRequest(request.getRequestURI()))) {
             filterChain.doFilter(request, response);
             return;
-        } else if (Boolean.TRUE.equals(!springEnvironmentHelper.isProdProfile())
+        } else if (Boolean.TRUE.equals(springEnvironmentHelper.isProdProfile())
                 && (isSwaggerRequest(request.getRequestURI()))) {
             throw SwaggerException.EXCEPTION;
         }
