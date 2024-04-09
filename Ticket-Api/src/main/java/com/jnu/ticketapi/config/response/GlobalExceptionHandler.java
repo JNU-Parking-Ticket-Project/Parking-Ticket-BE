@@ -164,7 +164,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> IllegalArgumentExceptionHandler(
+    public ResponseEntity<ErrorResponse> illegalArgumentExceptionHandler(
             IllegalArgumentException e, HttpServletRequest request) {
         ErrorResponse errorResponse =
                 new ErrorResponse(

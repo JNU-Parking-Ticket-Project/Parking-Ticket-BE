@@ -1,6 +1,7 @@
-package com.jnu.ticketdomain.config;
+package com.jnu.ticketinfrastructure.config;
 
 
+import com.jnu.ticketinfrastructure.slack.CustomAsyncExceptionHandler;
 import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;

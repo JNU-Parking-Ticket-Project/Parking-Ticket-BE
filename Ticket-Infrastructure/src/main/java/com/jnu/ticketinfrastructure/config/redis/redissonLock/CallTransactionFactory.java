@@ -1,4 +1,4 @@
-package com.jnu.ticketdomain.common.aop.redissonLock;
+package com.jnu.ticketinfrastructure.config.redis.redissonLock;
 
 
 import lombok.RequiredArgsConstructor;

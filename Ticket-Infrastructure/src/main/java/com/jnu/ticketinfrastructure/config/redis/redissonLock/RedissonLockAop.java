@@ -1,4 +1,4 @@
-package com.jnu.ticketdomain.common.aop.redissonLock;
+package com.jnu.ticketinfrastructure.config.redis.redissonLock;
 
 
 import com.jnu.ticketcommon.exception.BadLockIdentifierException;
@@ -31,7 +31,9 @@ public class RedissonLockAop {
     private final RedissonClient redissonClient;
     private final CallTransactionFactory callTransactionFactory;
 
-    @Around(value = "@annotation(com.jnu.ticketdomain.common.aop.redissonLock.RedissonLock)")
+    @Around(
+            value =
+                    "@annotation(com.jnu.ticketinfrastructure.config.redis.redissonLock.RedissonLock)")
     public Object lock(final ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();

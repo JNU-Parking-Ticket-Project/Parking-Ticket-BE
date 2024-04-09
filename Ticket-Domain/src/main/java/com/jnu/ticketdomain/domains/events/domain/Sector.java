@@ -1,6 +1,7 @@
 package com.jnu.ticketdomain.domains.events.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import java.util.ArrayList;
@@ -56,10 +57,12 @@ public class Sector {
     @Column(name = "is_deleted")
     private boolean isDeleted;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
 
+    @JsonBackReference
     @OneToMany(mappedBy = "sector", cascade = CascadeType.ALL)
     private List<Registration> registrations = new ArrayList<>();
 

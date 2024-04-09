@@ -61,9 +61,7 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
 
     @Override
     public Optional<Registration> findByEmailAndIsSaved(String email, boolean flag, Long eventId) {
-        Optional<Registration> registration =
-                registrationRepository.findByEmailAndIsSaved(email, flag);
-        return registration;
+        return registrationRepository.findByEmailAndIsSaved(email, flag);
     }
 
     @Override

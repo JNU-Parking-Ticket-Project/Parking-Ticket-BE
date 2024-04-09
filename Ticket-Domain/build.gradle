@@ -21,7 +21,7 @@ dependencies {
     api 'mysql:mysql-connector-java'
     runtimeOnly 'com.h2database:h2'
     implementation project(':Ticket-Common')
-    implementation project(':Ticket-Infrastructure')
+//    implementation project(':Ticket-Infrastructure')
     //queryDsl 설정 부분
     implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"
     annotationProcessor "com.querydsl:querydsl-apt:${queryDslVersion}"

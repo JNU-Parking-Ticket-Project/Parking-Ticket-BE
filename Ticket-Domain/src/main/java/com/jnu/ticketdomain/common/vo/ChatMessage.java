@@ -1,4 +1,4 @@
-package com.jnu.ticketinfrastructure.model;
+package com.jnu.ticketdomain.common.vo;
 
 
 import lombok.AllArgsConstructor;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatMessage {
-    private String registration;
+    //    private Object registration;
     private Long userId;
     private Long sectorId;
 }
