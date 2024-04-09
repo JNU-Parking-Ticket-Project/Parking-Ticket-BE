@@ -40,7 +40,11 @@ public class EventIssuedEventHandler {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
         processEventData(eventIssuedEvent);
-        waitingQueueService.popQueue(REDIS_EVENT_ISSUE_STORE, 1, ChatMessage.class);
+        Sector sector = sectorAdaptor.findById(eventIssuedEvent.getSectorId());
+        if (sector.isSectorCapacityRemaining()) {
+            waitingQueueService.popQueue(REDIS_EVENT_ISSUE_STORE, 1, ChatMessage.class);
+        }
+        sector.decreaseEventStock();
     }
 
     /**
@@ -59,7 +63,6 @@ public class EventIssuedEventHandler {
         Events.raise(
                 RegistrationCreationEvent.of(
                         event.getRegistration(), user.getStatus(), user.getSequence()));
-        sector.decreaseEventStock();
     }
 
     private void reflectUserState(EventIssuedEvent event, Sector sector, User user) {
