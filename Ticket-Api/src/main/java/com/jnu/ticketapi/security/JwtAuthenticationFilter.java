@@ -56,6 +56,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private boolean isSwaggerRequest(String uri) {
         return Arrays.stream(TicketStatic.SwaggerPatterns)
-                .anyMatch(pattern -> antPathMatcher.matchStart(pattern, uri));
+                .anyMatch(pattern -> antPathMatcher.match(pattern, uri));
     }
 }
