@@ -36,4 +36,10 @@ public class SpringEnvironmentHelper {
         List<String> currentProfile = Arrays.stream(activeProfiles).toList();
         return CollectionUtils.containsAny(PROD_AND_STAGING, currentProfile);
     }
+
+    public Boolean isDomainProfile() {
+        String[] activeProfiles = environment.getActiveProfiles();
+        List<String> currentProfile = Arrays.stream(activeProfiles).toList();
+        return currentProfile.contains("domain");
+    }
 }
