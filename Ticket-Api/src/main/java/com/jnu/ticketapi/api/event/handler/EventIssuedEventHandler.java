@@ -2,7 +2,6 @@ package com.jnu.ticketapi.api.event.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
@@ -69,7 +68,7 @@ public class EventIssuedEventHandler {
         } else if (sector.isSectorReserveRemaining()) {
             try {
                 String registrationString =
-                        objectMapper.writeValueAsString(event.getRegistration());
+                        waitingQueueService.convertRegistrationJSON(event.getRegistration());
                 Long waitingOrder =
                         waitingQueueService.getWaitingOrder( // getWaitingOrder는 0번부터 시작
                                 REDIS_EVENT_ISSUE_STORE,
@@ -78,7 +77,7 @@ public class EventIssuedEventHandler {
                                         event.getCurrentUserId(),
                                         event.getSectorId()));
                 user.prepare(Integer.valueOf(waitingOrder.intValue()) + 1);
-            } catch (JsonProcessingException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {

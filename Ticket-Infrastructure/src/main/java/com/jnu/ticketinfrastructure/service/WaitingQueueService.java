@@ -40,7 +40,7 @@ public class WaitingQueueService {
         return true;
     }
 
-    private String convertRegistrationJSON(Registration registration) {
+    public String convertRegistrationJSON(Registration registration) {
         JSONObject registrationJson = new JSONObject();
         registrationJson.put("email", registration.getEmail());
         registrationJson.put("name", registration.getName());
@@ -48,7 +48,7 @@ public class WaitingQueueService {
         registrationJson.put("affiliation", registration.getAffiliation());
         registrationJson.put("carNum", registration.getCarNum());
         registrationJson.put("phoneNum", registration.getPhoneNum());
-        registrationJson.put("createdAt", registration.getCreatedAt());
+        //        registrationJson.put("createdAt", registration.getCreatedAt());
         registrationJson.put("deleted", registration.isDeleted());
         registrationJson.put("light", registration.isLight());
         registrationJson.put("saved", registration.isSaved());
