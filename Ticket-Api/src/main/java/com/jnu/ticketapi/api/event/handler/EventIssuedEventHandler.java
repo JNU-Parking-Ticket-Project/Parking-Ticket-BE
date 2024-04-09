@@ -69,7 +69,7 @@ public class EventIssuedEventHandler {
         } else if (sector.isSectorReserveRemaining()) {
             try {
                 String registrationString =
-                        objectMapper.writeValueAsString(event.getRegistration());
+                        waitingQueueService.convertRegistrationJSON(event.getRegistration());
                 Long waitingOrder =
                         waitingQueueService.getWaitingOrder( // getWaitingOrder는 0번부터 시작
                                 REDIS_EVENT_ISSUE_STORE,
@@ -78,7 +78,7 @@ public class EventIssuedEventHandler {
                                         event.getCurrentUserId(),
                                         event.getSectorId()));
                 user.prepare(Integer.valueOf(waitingOrder.intValue()) + 1);
-            } catch (JsonProcessingException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
