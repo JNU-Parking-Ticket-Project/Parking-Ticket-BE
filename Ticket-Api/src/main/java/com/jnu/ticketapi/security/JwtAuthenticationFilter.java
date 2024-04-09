@@ -32,12 +32,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         log.info("JwtAuthenticationFilter 작동중");
         log.info("requestURI : {}", request.getRequestURI());
-        if (!Boolean.TRUE.equals(springEnvironmentHelper.isProdProfile())
-                && (isSwaggerRequest(request.getRequestURI()))) {
+        if ((isSwaggerRequest(request.getRequestURI())
+                && !Boolean.TRUE.equals(springEnvironmentHelper.isProdProfile()))) {
             filterChain.doFilter(request, response);
             return;
-        } else if (Boolean.TRUE.equals(springEnvironmentHelper.isProdProfile())
-                && (isSwaggerRequest(request.getRequestURI()))) {
+        } else if ((isSwaggerRequest(request.getRequestURI()))
+                && Boolean.TRUE.equals(springEnvironmentHelper.isProdProfile())) {
             throw SwaggerException.EXCEPTION;
         }
         String bearerToken = request.getHeader("Authorization");
