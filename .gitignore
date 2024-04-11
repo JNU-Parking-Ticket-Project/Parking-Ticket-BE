@@ -32,7 +32,7 @@ out/
 !**/src/test/**/out/
 
 ### NetBeans ###
-
+.profileconfig.json
 /build
 /build/sonar
 /build/spotless
