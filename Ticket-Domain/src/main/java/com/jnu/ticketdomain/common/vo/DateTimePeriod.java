@@ -1,8 +1,7 @@
 package com.jnu.ticketdomain.common.vo;
 
-// import com.fasterxml.jackson.annotation.JsonFormat;
 
-
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -15,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-// @JsonFormat(shape = JsonFormat.Shape.OBJECT, timezone = "Asia/Seoul")
+@JsonFormat(shape = JsonFormat.Shape.OBJECT, timezone = "Asia/Seoul")
 public class DateTimePeriod {
     // 쿠폰 발행 시작 시각
     private LocalDateTime startAt;
