@@ -35,8 +35,8 @@ public class DateTimePeriod {
     @Builder
     public DateTimePeriod(LocalDateTime startAt, LocalDateTime endAt) {
         // TimeZone UTC로 설정
-        this.startAt = startAt.atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
-        this.endAt = endAt.atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+        this.startAt = startAt;
+        this.endAt = endAt;
     }
 
     public static DateTimePeriod between(LocalDateTime startAt, LocalDateTime endAt) {
