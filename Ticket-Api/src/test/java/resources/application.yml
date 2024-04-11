@@ -39,6 +39,8 @@ logging:
       SQL: INFO
       type.descriptor.sql.BasicBinder: INFO
     org.springframework.transaction: INFO
+captcha:
+  domain: ${CLOUD_FRONT_URL:https://captcha.jnu.ac.kr}
 ---
 spring:
   config:

@@ -40,10 +40,7 @@ public class RegistrationWriter implements ItemWriter<Registration> {
     @Override
     public void write(List<? extends Registration> items) throws Exception {
         logger.info("[RegistrationJob] : ItemWriter started. Items size: " + items.size());
-        for (Registration item : items) {
-            logger.info("[RegistrationJob] : Item - " + item.toString());
-        }
-        this.delegate.write(items);
+        //        this.delegate.write(items);
     }
 
     public JdbcBatchItemWriter<Registration> getDelegate() {
