@@ -19,7 +19,7 @@ public class DateTimePeriod {
     @JsonFormat(
             shape = JsonFormat.Shape.STRING,
             pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-            timezone = "Asia/Seoul")
+            timezone = "UTC")
 
     // 쿠폰 발행 시작 시각
     private LocalDateTime startAt;
@@ -27,7 +27,7 @@ public class DateTimePeriod {
     @JsonFormat(
             shape = JsonFormat.Shape.STRING,
             pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-            timezone = "Asia/Seoul")
+            timezone = "UTC")
 
     // 쿠폰 발행 마감 시각
     private LocalDateTime endAt;
