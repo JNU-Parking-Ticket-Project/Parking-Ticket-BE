@@ -30,8 +30,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        log.info("JwtAuthenticationFilter 작동중");
-        log.info("requestURI : {}", request.getRequestURI());
         if ((isSwaggerRequest(request.getRequestURI())
                 && !Boolean.TRUE.equals(springEnvironmentHelper.isProdProfile()))) {
             filterChain.doFilter(request, response);
@@ -42,13 +40,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         String bearerToken = request.getHeader("Authorization");
         String accessToken = jwtResolver.extractToken(bearerToken);
-        log.info("AccessToken : {}", accessToken);
         if (accessToken == null) {
             throw AuthenticationNotValidException.EXCEPTION;
         }
         if (jwtResolver.accessTokenValidateToken(accessToken)) {
             Authentication authentication = jwtResolver.getAuthentication(accessToken);
-            log.info("Authentication : {}", authentication.toString());
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);

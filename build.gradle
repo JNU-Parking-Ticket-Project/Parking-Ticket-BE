@@ -54,7 +54,7 @@ subprojects {
     }
 
     jacocoTestReport {
-        dependsOn test
+        dependsOn compileJava
 
         reports {
             xml.required = false
