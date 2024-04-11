@@ -14,11 +14,13 @@ import lombok.NoArgsConstructor;
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@JsonFormat(shape = JsonFormat.Shape.OBJECT, timezone = "Asia/Seoul")
+// @JsonFormat(shape = Shape.STRING, timezone = "Asia/Seoul")
 public class DateTimePeriod {
     // 쿠폰 발행 시작 시각
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime startAt;
     // 쿠폰 발행 마감 시각
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime endAt;
 
     @Builder
