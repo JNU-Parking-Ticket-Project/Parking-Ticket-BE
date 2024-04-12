@@ -150,8 +150,6 @@ public class AuthUseCase {
         }
         TokenDto tokenDto =
                 generateToken(TicketStatic.SERVER, user.getEmail(), user.getUserRole().getValue());
-        log.info("accessToken : " + tokenDto.accessToken());
-        log.info("refreshToken : " + tokenDto.refreshToken());
         return LoginUserResponse.builder()
                 .accessToken(tokenDto.accessToken())
                 .refreshToken(tokenDto.refreshToken())
