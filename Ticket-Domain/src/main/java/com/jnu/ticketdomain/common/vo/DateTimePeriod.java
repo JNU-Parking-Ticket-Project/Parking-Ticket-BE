@@ -17,10 +17,10 @@ import lombok.NoArgsConstructor;
 // @JsonFormat(shape = JsonFormat.Shape.OBJECT, timezone = "Asia/Seoul")
 public class DateTimePeriod {
     // 쿠폰 발행 시작 시각
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime startAt;
     // 쿠폰 발행 마감 시각
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime endAt;
 
     @Builder
