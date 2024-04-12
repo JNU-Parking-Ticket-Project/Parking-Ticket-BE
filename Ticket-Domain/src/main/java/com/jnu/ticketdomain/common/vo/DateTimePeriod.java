@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.jnu.ticketdomain.domains.events.exception.InvalidPeriodEventException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import javax.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -15,26 +14,20 @@ import lombok.NoArgsConstructor;
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+// @JsonFormat(shape = JsonFormat.Shape.OBJECT, timezone = "Asia/Seoul")
 public class DateTimePeriod {
-    @JsonFormat(
-            shape = JsonFormat.Shape.STRING,
-            pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-            timezone = "Asia/Seoul")
-
     // 쿠폰 발행 시작 시각
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startAt;
-
-    @JsonFormat(
-            shape = JsonFormat.Shape.STRING,
-            pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-            timezone = "Asia/Seoul")
     // 쿠폰 발행 마감 시각
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endAt;
 
     @Builder
     public DateTimePeriod(LocalDateTime startAt, LocalDateTime endAt) {
-        this.startAt = ZonedDateTime.of(startAt, ZoneId.of("Asia/Seoul")).toLocalDateTime();
-        this.endAt = ZonedDateTime.of(endAt, ZoneId.of("Asia/Seoul")).toLocalDateTime();
+        // TimeZone UTC로 설정
+        this.startAt = startAt.atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+        this.endAt = endAt.atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
     }
 
     public static DateTimePeriod between(LocalDateTime startAt, LocalDateTime endAt) {
