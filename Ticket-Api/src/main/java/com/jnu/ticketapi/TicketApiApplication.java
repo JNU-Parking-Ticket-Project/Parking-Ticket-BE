@@ -22,7 +22,6 @@ public class TicketApiApplication implements ApplicationListener<ApplicationRead
 
     @PostConstruct
     void started() {
-        // timezone UTC 셋팅
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
     }
 
