@@ -147,7 +147,6 @@ public class RegistrationUseCase {
             String email,
             Long sectorId) {
         tempRegistration.update(registration);
-        tempRegistration.updateIsSaved(true);
         eventWithDrawUseCase.issueEvent(registration, user.getId(), sectorId);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
     }
