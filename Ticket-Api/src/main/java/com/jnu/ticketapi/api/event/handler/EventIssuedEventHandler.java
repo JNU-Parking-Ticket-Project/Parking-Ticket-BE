@@ -89,6 +89,11 @@ public class EventIssuedEventHandler {
     }
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
+        if (!registration.isSaved()) {
+            registration.updateIsSaved(true);
+            registrationAdaptor.saveAndFlush(registration);
+            return;
+        }
         registration.setSector(sector);
         registration.setUser(user);
         registrationAdaptor.saveAndFlush(registration);
