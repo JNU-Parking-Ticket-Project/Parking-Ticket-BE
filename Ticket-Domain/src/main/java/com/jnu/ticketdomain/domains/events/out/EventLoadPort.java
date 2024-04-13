@@ -23,5 +23,5 @@ public interface EventLoadPort {
 
     Result<Event, Object> findReadyOrOpenAndNotPublishEvent();
 
-    Boolean existsByPublishTrue();
+    Boolean existsByPublishTrueAndStatus();
 }

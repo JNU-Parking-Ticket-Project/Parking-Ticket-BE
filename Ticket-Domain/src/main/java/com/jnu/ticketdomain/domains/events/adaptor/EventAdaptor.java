@@ -114,7 +114,7 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
     }
 
     @Override
-    public Boolean existsByPublishTrue() {
-        return eventRepository.existsByPublishTrue();
+    public Boolean existsByPublishTrueAndStatus() {
+        return eventRepository.existsByPublishTrueAndStatus();
     }
 }

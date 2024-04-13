@@ -38,7 +38,7 @@ public class UpdatePublishStatusUseCase {
     }
 
     private void checkExistPublishTrue() {
-        if (eventAdaptor.existsByPublishTrue()) {
+        if (eventAdaptor.existsByPublishTrueAndStatus()) {
             throw AlreadyExistPublishEventException.EXCEPTION;
         }
     }
