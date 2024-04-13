@@ -89,7 +89,7 @@ public class EventIssuedEventHandler {
     }
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
-        if(!registration.isSaved()){
+        if (!registration.isSaved()) {
             registration.updateIsSaved(true);
             registrationAdaptor.saveAndFlush(registration);
             return;

@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.events.repository;
 
+
 import org.springframework.stereotype.Repository;
 
 @Repository
