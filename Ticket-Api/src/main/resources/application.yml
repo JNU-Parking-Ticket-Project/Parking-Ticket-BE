@@ -57,3 +57,8 @@ server:
 encryption:
   algorithm: ${ENCRYPTION_ALGORITHM:AES}
   secret: ${ENCRYPTION_SECRET:jnu-parking-fighting}
+
+captcha:
+  domain: dsrps7tt0ew8t.cloudfront.net
+
+ableDomainEvent : false

@@ -48,7 +48,7 @@ public class GetRegistrationTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            get("/v1/registration")
+                            get("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken));
             // eye
@@ -74,7 +74,7 @@ public class GetRegistrationTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            get("/v1/registration")
+                            get("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken));
             // eye

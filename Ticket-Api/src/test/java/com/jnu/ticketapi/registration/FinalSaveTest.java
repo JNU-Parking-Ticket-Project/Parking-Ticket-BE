@@ -73,7 +73,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -114,7 +114,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -157,7 +157,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -201,7 +201,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -245,7 +245,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -290,7 +290,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -335,7 +335,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -380,7 +380,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -425,7 +425,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -470,7 +470,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -514,7 +514,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -559,7 +559,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -604,7 +604,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -649,7 +649,7 @@ public class FinalSaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration")
+                            post("/v1/registration/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));

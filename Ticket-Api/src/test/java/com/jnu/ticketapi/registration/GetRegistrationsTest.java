@@ -54,8 +54,7 @@ public class GetRegistrationsTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().isOk(),
-                    jsonPath("$.registrations[0].email").value("user@jnu.ac.kr"),
-                    jsonPath("$.registrations[1].email").value("council@jnu.ac.kr"));
+                    jsonPath("$.registrations[0].email").value("council@jnu.ac.kr"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }

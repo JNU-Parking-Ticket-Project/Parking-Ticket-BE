@@ -1,12 +1,10 @@
 package com.jnu.ticketapi.notice.integration;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketapi.api.notice.model.request.UpdateNoticeRequest;
 import com.jnu.ticketapi.config.DatabaseClearExtension;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -27,7 +26,6 @@ import org.springframework.test.web.servlet.ResultActions;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-@ExtendWith(DatabaseClearExtension.class)
 public class GetNoticeTest {
 
     @Autowired private MockMvc mvc;
@@ -37,22 +35,10 @@ public class GetNoticeTest {
     @Test
     @DisplayName("성공 : 안내사항 조회")
     @WithMockUser(roles = "COUNCIL")
+    @Sql("classpath:db/teardown.sql")
     void get_notice_test() throws Exception {
-        // give
-        String noticeContent = "테스트 안내사항";
-        UpdateNoticeRequest updateNoticeRequest =
-                UpdateNoticeRequest.builder().noticeContent(noticeContent).build();
-        String givenRequestBody = om.writeValueAsString(updateNoticeRequest);
-
-        ResultActions givenRequest =
-                mvc.perform(
-                        put("/v1/notice")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .characterEncoding(StandardCharsets.UTF_8)
-                                .content(givenRequestBody));
-        String givenResponse =
-                givenRequest.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        log.info("givenResponse : " + givenResponse);
+        // given
+        String noticeContent = "안내사항입니다.";
 
         // when
         ResultActions resultActions =
@@ -74,8 +60,9 @@ public class GetNoticeTest {
     @Test
     @DisplayName("실패 : 안내사항 조회(안내사항이 존재하지 않는 경우 404)")
     @WithAnonymousUser
+    @ExtendWith(DatabaseClearExtension.class)
     void get_notice_fail_test() throws Exception {
-        // give
+        // given
 
         // when
         ResultActions resultActions =

@@ -6,18 +6,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.api.notice.model.request.UpdateNoticeRequest;
-import com.jnu.ticketapi.config.DatabaseClearExtension;
+import com.jnu.ticketapi.security.JwtGenerator;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -25,12 +25,14 @@ import org.springframework.test.web.servlet.ResultActions;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-@ExtendWith(DatabaseClearExtension.class)
+@Sql("classpath:db/teardown.sql")
 public class UpdateNoticeTest {
 
     @Autowired private MockMvc mvc;
 
     @Autowired private ObjectMapper om;
+
+    @Autowired JwtGenerator jwtGenerator;
 
     @Test
     @DisplayName("성공 : 안내사항 수정")
@@ -40,6 +42,7 @@ public class UpdateNoticeTest {
         // given
         UpdateNoticeRequest requestDto =
                 UpdateNoticeRequest.builder().noticeContent("업데이트할 내용").build();
+        String accessToken = jwtGenerator.generateAccessToken("admin@jnu.ac.kr", "ADMIN");
         String requestBody = om.writeValueAsString(requestDto);
 
         // when
@@ -48,6 +51,7 @@ public class UpdateNoticeTest {
                         put("/v1/notice")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .characterEncoding(StandardCharsets.UTF_8)
+                                .header("Authorization", "Bearer " + accessToken)
                                 .content(requestBody));
 
         // eye

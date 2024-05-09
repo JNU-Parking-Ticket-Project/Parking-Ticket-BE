@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.api.user.model.request.UpdatePasswordRequest;
-import com.jnu.ticketapi.config.DatabaseClearExtension;
 import com.jnu.ticketdomain.domains.CredentialCode.domain.CredentialCode;
 import com.jnu.ticketdomain.domains.CredentialCode.repository.CredentialCodeRepository;
 import com.jnu.ticketdomain.domains.user.domain.User;
@@ -17,13 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -31,7 +30,7 @@ import org.springframework.test.web.servlet.ResultActions;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-@ExtendWith(DatabaseClearExtension.class)
+@Sql("classpath:db/teardown.sql")
 public class UpdatePasswordTest {
 
     @Autowired private MockMvc mvc;
@@ -59,7 +58,7 @@ public class UpdatePasswordTest {
         // given
 
         UpdatePasswordRequest updatePasswordRequest =
-                UpdatePasswordRequest.builder().password("test1234").build();
+                UpdatePasswordRequest.builder().password("QKrdudrb@123").build();
         String requestBody = om.writeValueAsString(updatePasswordRequest);
 
         // when

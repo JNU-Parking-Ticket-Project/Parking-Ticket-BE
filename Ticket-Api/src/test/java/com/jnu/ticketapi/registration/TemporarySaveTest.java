@@ -56,14 +56,14 @@ public class TemporarySaveTest extends RestDocsConfig {
                             .carNum("12나1234")
                             .isLight(true)
                             .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
+                            .selectSectorId(2L)
                             .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration/temporary")
+                            post("/v1/registration/temporary/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -99,7 +99,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration/temporary")
+                            post("/v1/registration/temporary/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -138,7 +138,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration/temporary")
+                            post("/v1/registration/temporary/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -178,7 +178,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration/temporary")
+                            post("/v1/registration/temporary/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -218,7 +218,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration/temporary")
+                            post("/v1/registration/temporary/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -258,7 +258,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration/temporary")
+                            post("/v1/registration/temporary/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -298,7 +298,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration/temporary")
+                            post("/v1/registration/temporary/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -338,7 +338,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration/temporary")
+                            post("/v1/registration/temporary/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -377,7 +377,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration/temporary")
+                            post("/v1/registration/temporary/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
@@ -420,7 +420,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            post("/v1/registration/temporary")
+                            post("/v1/registration/temporary/1")
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken)
                                     .content(requestBody));
