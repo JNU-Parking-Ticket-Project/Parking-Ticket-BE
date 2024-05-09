@@ -1,23 +1,22 @@
 package com.jnu.ticketapi.Announce.integration;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketapi.api.announce.model.request.SaveAnnounceRequest;
-import com.jnu.ticketapi.config.DatabaseClearExtension;
+import com.jnu.ticketapi.security.JwtGenerator;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -25,11 +24,13 @@ import org.springframework.test.web.servlet.ResultActions;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-@ExtendWith(DatabaseClearExtension.class)
+@Sql("classpath:db/teardown.sql")
 public class DeleteAnnounceTest {
     @Autowired private MockMvc mvc;
 
     @Autowired private ObjectMapper om;
+
+    @Autowired JwtGenerator jwtGenerator;
 
     @Test
     @DisplayName("성공 : 공지사항 삭제")
@@ -37,33 +38,15 @@ public class DeleteAnnounceTest {
     void delete_announces_test() throws Exception {
         {
             // given
-            SaveAnnounceRequest saveRequest =
-                    SaveAnnounceRequest.builder()
-                            .announceTitle("테스트 제목")
-                            .announceContent("테스트 내용")
-                            .build();
-            String testRequestBody = om.writeValueAsString(saveRequest);
-
-            ResultActions testResultActions =
-                    mvc.perform(
-                            post("/v1/announce")
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .characterEncoding(StandardCharsets.UTF_8)
-                                    .content(testRequestBody));
-            String testResponseBody =
-                    testResultActions
-                            .andReturn()
-                            .getResponse()
-                            .getContentAsString(StandardCharsets.UTF_8);
-            log.info("responseBody : " + testResponseBody);
-
             long announceId = 1L;
+            String accessToken = jwtGenerator.generateAccessToken("admin@jnu.ac.kr", "ADMIN");
 
             // when
             ResultActions resultActions =
                     mvc.perform(
                             delete("/v1/announce/" + announceId)
                                     .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken)
                                     .characterEncoding(StandardCharsets.UTF_8));
 
             // eye
@@ -86,11 +69,13 @@ public class DeleteAnnounceTest {
         {
             // given
             long announceId = 55L;
+            String accessToken = jwtGenerator.generateAccessToken("admin@jnu.ac.kr", "ADMIN");
 
             // when
             ResultActions resultActions =
                     mvc.perform(
                             delete("/v1/announce/" + announceId)
+                                    .header("Authorization", "Bearer " + accessToken)
                                     .contentType(MediaType.APPLICATION_JSON));
             // eye
             String responseBody =
