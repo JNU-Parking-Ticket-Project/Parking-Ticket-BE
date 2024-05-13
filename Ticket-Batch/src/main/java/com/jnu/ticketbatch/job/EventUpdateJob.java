@@ -26,6 +26,7 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.annotation.Retryable;
 
 @Configuration
 @Slf4j
@@ -51,6 +52,7 @@ public class EventUpdateJob implements Job {
         }
     }
 
+    @Retryable(value = SchedulerException.class, maxAttempts = 3)
     public void cancelScheduledJob(Long eventId) {
         try {
             SchedulerFactory schedFact = new StdSchedulerFactory();
@@ -58,16 +60,19 @@ public class EventUpdateJob implements Job {
 
             // JobKey 생성
             JobKey jobKey1 = JobKey.jobKey("RESERVATION_JOB", "group1");
-            log.info(">>>>> 예약 생성 작업 스케줄러에서 삭제");
+
             JobKey jobKey2 = JobKey.jobKey("EXPIRED_JOB", "group1");
-            log.info(">>>>> 만료 작업 스케줄러에서 삭제");
             // 스케줄러에서 작업 삭제
             if (sched.checkExists(jobKey1)) { // 해당 JobKey로 등록된 작업이 존재하는지 확인
                 sched.deleteJob(jobKey1); // 작업 삭제
+                log.info(">>>>> 예약 생성 작업 스케줄러에서 삭제");
+            }
+            if (sched.checkExists(jobKey2)) { // 해당 JobKey로 등록된 작업이 존재하는지 확인
                 sched.deleteJob(jobKey2); // 작업 삭제
+                log.info(">>>>> 만료 작업 스케줄러에서 삭제");
             }
         } catch (SchedulerException e) {
-            log.info(">>>>> 예약 생성 작업 스케줄러에서 삭제 실패");
+            log.error(">>>>> 예약 생성 작업 스케줄러에서 삭제 실패" + e.getMessage());
         }
     }
 
