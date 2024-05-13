@@ -2,7 +2,6 @@ package com.jnu.ticketdomain;
 
 
 import com.jnu.ticketcommon.TicketCommonApplication;
-import com.jnu.ticketinfrastructure.TicketInfrastructureApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ComponentScan(
         basePackageClasses = {
-            TicketInfrastructureApplication.class,
             TicketDomainApplication.class,
             TicketCommonApplication.class
         })
