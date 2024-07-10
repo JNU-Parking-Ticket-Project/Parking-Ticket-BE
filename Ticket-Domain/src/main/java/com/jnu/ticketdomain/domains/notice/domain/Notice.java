@@ -24,7 +24,7 @@ public class Notice {
     @Column(name = "id")
     private Long noticeId;
 
-    @Column(name = "content", nullable = false)
+    @Column(name = "content", nullable = false, length = 5000)
     @ColumnDefault("'내용을 입력해주세요.'")
     private String noticeContent;
 
