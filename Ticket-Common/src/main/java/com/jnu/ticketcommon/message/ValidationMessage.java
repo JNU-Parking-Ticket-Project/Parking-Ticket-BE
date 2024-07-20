@@ -20,5 +20,7 @@ public class ValidationMessage {
 
     public static final String DATE_MUST_NOT_NULL = "날짜를 " + MUST_NOT_NULL;
 
+    public static final String MUST_NOT_OVER_100 = "100자 이하로 입력해 주세요.";
+
     private ValidationMessage() {}
 }
