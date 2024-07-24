@@ -29,13 +29,12 @@ import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationE
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
 @RequiredArgsConstructor
@@ -179,8 +178,8 @@ public class RegistrationUseCase {
     }
 
     private void validateEventStatusIsClosed(Event event) {
-        if (event.getEventStatus().equals(EventStatus.CLOSED) ||
-                event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())) {
+        if (event.getEventStatus().equals(EventStatus.CLOSED)
+                || event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())) {
             throw AlreadyCloseStatusException.EXCEPTION;
         }
     }
