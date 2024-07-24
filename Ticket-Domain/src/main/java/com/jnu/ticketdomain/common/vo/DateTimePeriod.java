@@ -47,4 +47,8 @@ public class DateTimePeriod {
         return (datetime.isAfter(startAt) || datetime.equals(startAt))
                 && (datetime.isBefore(endAt) || datetime.equals(endAt));
     }
+
+    public boolean isAfterEndAt(LocalDateTime datetime) {
+        return datetime.isAfter(endAt);
+    }
 }

@@ -15,10 +15,13 @@ import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketcommon.utils.Result;
+import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
+import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
-import com.jnu.ticketdomain.domains.events.exception.*;
+import com.jnu.ticketdomain.domains.events.exception.AlreadyCloseStatusException;
+import com.jnu.ticketdomain.domains.events.exception.NotPublishEventException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
@@ -26,12 +29,13 @@ import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationE
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
-import java.util.List;
-import java.util.Optional;
-import javax.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @UseCase
 @RequiredArgsConstructor
@@ -46,7 +50,7 @@ public class RegistrationUseCase {
     private final Encryption encryption;
     private final ValidateCaptchaUseCase validateCaptchaUseCase;
     private final RedisService redisService;
-    private final EntityManager em;
+    private final EventAdaptor eventAdaptor;
 
     public Registration saveAndFlush(Registration registration) {
         return registrationAdaptor.saveAndFlush(registration);
@@ -87,8 +91,9 @@ public class RegistrationUseCase {
     public TemporarySaveResponse temporarySave(
             TemporarySaveRequest requestDto, String email, Long eventId) {
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
-        validateEventPublish(sector);
-        validateEventStatusIsClosed(sector);
+        Event event = eventAdaptor.findById(eventId);
+        validateEventPublish(event);
+        validateEventStatusIsClosed(event);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
         Registration registration = requestDto.toEntity(requestDto, sector, email, user);
@@ -107,8 +112,9 @@ public class RegistrationUseCase {
     @Transactional
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email, Long eventId) {
         Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
-        validateEventPublish(sector);
-        validateEventStatusIsClosed(sector);
+        Event event = eventAdaptor.findById(eventId);
+        validateEventPublish(event);
+        validateEventStatusIsClosed(event);
         if (registrationAdaptor.existsByEmailAndIsSavedTrue(email, eventId)
                 || registrationAdaptor.existsByStudentNumAndIsSavedTrue(
                         requestDto.studentNum(), eventId)) {
@@ -166,29 +172,15 @@ public class RegistrationUseCase {
         return FinalSaveResponse.from(registration);
     }
 
-    private FinalSaveResponse updateRegistration(
-            Registration temporaryRegistration,
-            Registration registration,
-            Long currentUserId,
-            String email,
-            Long eventId,
-            Long sectorId) {
-        // update
-        eventWithDrawUseCase.issueEvent(registration, currentUserId, sectorId);
-        temporaryRegistration.update(registration);
-        temporaryRegistration.updateIsSaved(true);
-        redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
-        return FinalSaveResponse.from(temporaryRegistration);
-    }
-
-    private void validateEventPublish(Sector sector) {
-        if (Boolean.FALSE.equals(sector.getEvent().getPublish())) {
+    private void validateEventPublish(Event event) {
+        if (Boolean.FALSE.equals(event.getPublish())) {
             throw NotPublishEventException.EXCEPTION;
         }
     }
 
-    private void validateEventStatusIsClosed(Sector sector) {
-        if (sector.getEvent().getEventStatus().equals(EventStatus.CLOSED)) {
+    private void validateEventStatusIsClosed(Event event) {
+        if (event.getEventStatus().equals(EventStatus.CLOSED) ||
+                event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())) {
             throw AlreadyCloseStatusException.EXCEPTION;
         }
     }
