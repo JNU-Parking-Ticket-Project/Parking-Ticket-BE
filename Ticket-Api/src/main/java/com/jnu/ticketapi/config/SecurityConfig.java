@@ -108,7 +108,8 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web ->
                 web.ignoring()
-                        .antMatchers(HttpMethod.GET, "/v1/notice","/v1/sectors", "/v1/events/period")
+                        .antMatchers(
+                                HttpMethod.GET, "/v1/notice", "/v1/sectors", "/v1/events/period")
                         .antMatchers(HttpMethod.OPTIONS, "/v1/notice")
                         .antMatchers(HttpMethod.GET, "/v1/announce/**")
                         .antMatchers(HttpMethod.OPTIONS, "/v1/announce/**")

@@ -61,7 +61,10 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
         Optional<Event> event = eventRepository.findByEventStatus(EventStatus.READY);
         if (event.isPresent() && !event.get().getPublish()) return Result.success(event.get());
         event = eventRepository.findByEventStatus(EventStatus.OPEN);
-        return event.filter(e -> !e.getPublish() && !e.getDateTimePeriod().isAfterEndAt(LocalDateTime.now()))
+        return event.filter(
+                        e ->
+                                !e.getPublish()
+                                        && !e.getDateTimePeriod().isAfterEndAt(LocalDateTime.now()))
                 .map(Result::success)
                 .orElseGet(() -> Result.failure(NotFoundEventException.EXCEPTION));
     }
