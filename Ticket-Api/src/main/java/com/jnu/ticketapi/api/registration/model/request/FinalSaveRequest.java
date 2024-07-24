@@ -7,17 +7,17 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import lombok.Builder;
 
 @Builder
 public record FinalSaveRequest(
         @Schema(defaultValue = "홍길동", description = "이름")
                 @NotBlank(message = "이름을 " + ValidationMessage.MUST_NOT_BLANK)
-                @Max(value = 100, message = ValidationMessage.MUST_NOT_OVER_100)
+                @Size(min = 1, max = 100, message = ValidationMessage.MUST_NOT_OVER_100)
                 String name,
         @Schema(defaultValue = "183027", description = "학번")
                 @NotBlank(message = "학번을 " + ValidationMessage.MUST_NOT_BLANK)
