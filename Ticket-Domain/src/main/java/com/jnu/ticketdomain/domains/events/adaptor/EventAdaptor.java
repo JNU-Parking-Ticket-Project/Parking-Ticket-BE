@@ -10,13 +10,12 @@ import com.jnu.ticketdomain.domains.events.exception.UseOtherApiException;
 import com.jnu.ticketdomain.domains.events.out.EventLoadPort;
 import com.jnu.ticketdomain.domains.events.out.EventRecordPort;
 import com.jnu.ticketdomain.domains.events.repository.EventRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Adaptor
 @RequiredArgsConstructor
