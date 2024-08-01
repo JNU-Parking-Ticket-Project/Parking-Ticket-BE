@@ -114,6 +114,7 @@ public class RegistrationUseCase {
         Event event = eventAdaptor.findById(eventId);
         validateEventPublish(event);
         validateEventStatusIsClosed(event);
+        validateEventPeriod(event);
         if (registrationAdaptor.existsByEmailAndIsSavedTrue(email, eventId)
                 || registrationAdaptor.existsByStudentNumAndIsSavedTrue(
                         requestDto.studentNum(), eventId)) {
@@ -178,8 +179,13 @@ public class RegistrationUseCase {
     }
 
     private void validateEventStatusIsClosed(Event event) {
-        if (event.getEventStatus().equals(EventStatus.CLOSED)
-                || event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())) {
+        if (event.getEventStatus().equals(EventStatus.CLOSED)) {
+            throw AlreadyCloseStatusException.EXCEPTION;
+        }
+    }
+
+    private void validateEventPeriod(Event event) {
+        if(event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())) {
             throw AlreadyCloseStatusException.EXCEPTION;
         }
     }
