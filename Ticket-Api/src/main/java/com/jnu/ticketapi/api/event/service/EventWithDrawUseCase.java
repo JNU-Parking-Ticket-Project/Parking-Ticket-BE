@@ -62,7 +62,7 @@ public class EventWithDrawUseCase {
     }
 
     public GetEventPeriodResponse getEventPeriod() {
-        Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenAndNotPublishEvent();
+        Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
         return readyEvent.fold(
                 (event) -> {
                     if (event.getPublish().equals(false)) throw NotPublishEventException.EXCEPTION;
