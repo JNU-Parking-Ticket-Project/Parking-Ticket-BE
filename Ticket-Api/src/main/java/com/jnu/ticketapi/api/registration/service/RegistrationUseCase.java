@@ -185,7 +185,7 @@ public class RegistrationUseCase {
     }
 
     private void validateEventPeriod(Event event) {
-        if(event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())) {
+        if (event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())) {
             throw AlreadyCloseStatusException.EXCEPTION;
         }
     }
