@@ -5,6 +5,7 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.LinkedList;
@@ -34,6 +35,7 @@ public class WaitingQueueService {
         String registrationString = convertRegistrationJSON(registration);
         //            String registrationString = objectMapper.writeValueAsString(registration);
         ChatMessage message = new ChatMessage(registrationString, userId, sectorId);
+        checkDuplicateData(key, message);
         boolean isPresent = redisRepository.zAddIfAbsent(key, message, score);
         // 재고가 있어야 처리
         if (isPresent) {
@@ -88,6 +90,13 @@ public class WaitingQueueService {
         } else {
             // If the set is empty, return null or handle accordingly
             return null;
+        }
+    }
+
+    public void checkDuplicateData(String key, Object value) {
+        Long rank = redisRepository.zRank(key, value);
+        if (rank != null) {
+            throw AlreadyExistRegistrationException.EXCEPTION;
         }
     }
 }

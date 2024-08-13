@@ -28,6 +28,7 @@ import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrat
 import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationException;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import com.jnu.ticketinfrastructure.redis.RedisService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -115,11 +116,7 @@ public class RegistrationUseCase {
         validateEventPublish(event);
         validateEventStatusIsClosed(event);
         validateEventPeriod(event);
-        if (registrationAdaptor.existsByEmailAndIsSavedTrue(email, eventId)
-                || registrationAdaptor.existsByStudentNumAndIsSavedTrue(
-                        requestDto.studentNum(), eventId)) {
-            throw AlreadyExistRegistrationException.EXCEPTION;
-        }
+        checkDuplicateRegistration(email, eventId, requestDto.studentNum());
         Long captchaId = encryption.decrypt(requestDto.captchaCode());
         validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
         Long currentUserId = SecurityUtils.getCurrentUserId();
@@ -196,5 +193,12 @@ public class RegistrationUseCase {
                 registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(eventId);
 
         return GetRegistrationsResponse.of(registrations);
+    }
+
+    private void checkDuplicateRegistration(String email, Long eventId, String studentNum) {
+        if (registrationAdaptor.existsByEmailAndIsSavedTrue(email, eventId)
+                || registrationAdaptor.existsByStudentNumAndIsSavedTrue(studentNum, eventId)) {
+            throw AlreadyExistRegistrationException.EXCEPTION;
+        }
     }
 }
