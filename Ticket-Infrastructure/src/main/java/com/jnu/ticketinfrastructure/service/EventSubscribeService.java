@@ -44,14 +44,14 @@ public class EventSubscribeService implements MessageListener {
         }
         // "userId" 키의 값을 추출
         if (REDIS_EVENT_CHANNEL.equals(channel)) {
-            handleReceivedUserId(registration, userId, sectorId);
+            handleReceivedUserId(sectorId, userId);
         } else {
             log.error("Received message from unknown channel: {}", channel);
         }
     }
 
-    public void handleReceivedUserId(Registration registration, Long userId, Long sectorId) {
-        eventPublisher.publishEvent(EventIssuedEvent.from(registration, userId, sectorId));
+    public void handleReceivedUserId(Long sectorId, Long userId) {
+        eventPublisher.publishEvent(EventIssuedEvent.from(sectorId, userId));
     }
 
     public Registration convertFromString(String jsonString) {
@@ -64,8 +64,8 @@ public class EventSubscribeService implements MessageListener {
         String carNum = jsonObj.get("carNum").toString();
         String phoneNum = jsonObj.get("phoneNum").toString();
         // createdAt은 null일 수 있으므로 별도 처리가 필요합니다.
-        boolean isLight = Boolean.parseBoolean(jsonObj.get("light").toString());
-        boolean isSaved = Boolean.parseBoolean(jsonObj.get("saved").toString());
+        boolean isLight = Boolean.parseBoolean(jsonObj.get("isLight").toString());
+        boolean isSaved = Boolean.parseBoolean(jsonObj.get("isSaved").toString());
         // Now you can create a Registration object using the extracted values
         return Registration.builder()
                 .email(email)

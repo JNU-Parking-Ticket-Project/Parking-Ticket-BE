@@ -2,6 +2,8 @@ package com.jnu.ticketdomain.domains.user.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,7 @@ import org.hibernate.annotations.DynamicInsert;
 @Getter
 @Table(name = "user_tb")
 @DynamicInsert
+@JsonIgnoreProperties("registrations")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,7 +53,7 @@ public class User {
     @ColumnDefault("false")
     private boolean emailConfirmed;
 
-    @JsonBackReference
+    @JsonManagedReference(value = "user-registration")
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.ALL,

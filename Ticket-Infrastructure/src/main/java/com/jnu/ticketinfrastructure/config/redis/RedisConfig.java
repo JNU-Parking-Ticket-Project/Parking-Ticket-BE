@@ -39,7 +39,8 @@ public class RedisConfig {
     @Value("${spring.redis.password}")
     private String redisPassword;
 
-    @Autowired private EventSubscribeService eventSubscribeService;
+    @Autowired
+    private EventSubscribeService eventSubscribeService;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -57,21 +58,28 @@ public class RedisConfig {
         return new LettuceConnectionFactory(redisConfig, clientConfig);
     }
 
-    //    @Bean(name = "jedisConnectionFactory")
-    //    JedisConnectionFactory jedisConnectionFactory() {
-    //        return new JedisConnectionFactory();
-    //    }
-
-    //    redisTemplate 설정
     @Bean(name = "redisTemplate")
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
+
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(ChatMessage.class));
+        Jackson2JsonRedisSerializer<ChatMessage> serializer = new Jackson2JsonRedisSerializer<>(ChatMessage.class);
+        redisTemplate.setValueSerializer(serializer);
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(serializer);
+
         return redisTemplate;
     }
 
+    // 메세지 리스너 설정
+    @Bean
+    public MessageListenerAdapter messageListenerAdapter() {
+        Jackson2JsonRedisSerializer<ChatMessage> serializer = new Jackson2JsonRedisSerializer<>(ChatMessage.class);
+        MessageListenerAdapter adapter = new MessageListenerAdapter(eventSubscribeService);
+        adapter.setSerializer(serializer);
+        return adapter;
+    }
     // 컨테이너 설정
     @Bean
     RedisMessageListenerContainer redisContainer() {
@@ -80,14 +88,7 @@ public class RedisConfig {
         container.addMessageListener(messageListenerAdapter(), topic());
         return container;
     }
-
-    // 리스너어댑터 설정
-    @Bean
-    MessageListenerAdapter messageListenerAdapter() {
-        return new MessageListenerAdapter(eventSubscribeService);
-    }
-
-    // pub/sub 토픽 설정
+    // pub/sub 메세지를 받을 채널 설정
     @Bean
     ChannelTopic topic() {
         return new ChannelTopic(REDIS_EVENT_CHANNEL);

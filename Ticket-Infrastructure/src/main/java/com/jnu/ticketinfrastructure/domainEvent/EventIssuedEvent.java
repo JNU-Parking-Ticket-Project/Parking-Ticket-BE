@@ -8,16 +8,13 @@ import lombok.Getter;
 @Builder
 @Getter
 public class EventIssuedEvent extends InfrastructureEvent {
-    private final Registration registration;
-    private final Long currentUserId;
     private final Long sectorId;
+    private final Long userId;
 
-    public static EventIssuedEvent from(
-            Registration registration, Long currentUserId, Long sectorId) {
+    public static EventIssuedEvent from(Long sectorId, Long userId) {
         return EventIssuedEvent.builder()
-                .registration(registration)
-                .currentUserId(currentUserId)
                 .sectorId(sectorId)
+                .userId(userId)
                 .build();
     }
 }

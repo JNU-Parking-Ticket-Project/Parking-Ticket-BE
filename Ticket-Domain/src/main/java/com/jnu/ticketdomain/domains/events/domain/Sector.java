@@ -2,17 +2,16 @@ package com.jnu.ticketdomain.domains.events.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import lombok.*;
+import org.hibernate.annotations.Where;
+
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Where;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -20,6 +19,7 @@ import org.hibernate.annotations.Where;
 @Builder
 @Getter
 @Where(clause = "is_deleted = false")
+@JsonIgnoreProperties("registrations")
 public class Sector {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,12 +57,12 @@ public class Sector {
     @Column(name = "is_deleted")
     private boolean isDeleted;
 
-    @JsonBackReference
+    @JsonBackReference(value = "event-sector")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
 
-    @JsonBackReference
+    @JsonManagedReference(value = "sector-registration")
     @OneToMany(mappedBy = "sector", cascade = CascadeType.ALL)
     private List<Registration> registrations = new ArrayList<>();
 
@@ -118,6 +118,10 @@ public class Sector {
 
     public boolean isSectorReserveRemaining() {
         return reserve > 0;
+    }
+
+    public boolean isRemainingAmount() {
+        return remainingAmount > 0;
     }
 
     public void update(Sector sector) {

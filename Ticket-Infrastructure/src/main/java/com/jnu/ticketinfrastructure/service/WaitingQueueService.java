@@ -9,6 +9,8 @@ import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
+
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,9 +51,9 @@ public class WaitingQueueService {
         registrationJson.put("carNum", registration.getCarNum());
         registrationJson.put("phoneNum", registration.getPhoneNum());
         //        registrationJson.put("createdAt", registration.getCreatedAt());
-        registrationJson.put("deleted", registration.isDeleted());
-        registrationJson.put("light", registration.isLight());
-        registrationJson.put("saved", registration.isSaved());
+        registrationJson.put("isDeleted", registration.isDeleted());
+        registrationJson.put("isLight", registration.isLight());
+        registrationJson.put("isSaved", registration.isSaved());
         return registrationJson.toString();
     }
 
@@ -74,5 +76,18 @@ public class WaitingQueueService {
 
     public Long getWaitingOrder(String key, Object value) {
         return redisRepository.zRank(key, value);
+    }
+
+    public Object getValue(String key) {
+        // Get the first element in the ZSET (lowest score) without removing it
+        Set<Object> resultSet = redisRepository.zReverseRange(key, 0L, 0L, Object.class);
+
+        if (resultSet != null && !resultSet.isEmpty()) {
+            // Return the first element in the set
+            return resultSet.iterator().next();
+        } else {
+            // If the set is empty, return null or handle accordingly
+            return null;
+        }
     }
 }
