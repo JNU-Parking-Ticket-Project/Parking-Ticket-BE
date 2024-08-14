@@ -25,8 +25,6 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -46,12 +44,13 @@ public class EventIssuedEventHandler {
     public void handle(EventIssuedEvent eventIssuedEvent) {
         Sector sector = sectorAdaptor.findById(eventIssuedEvent.getSectorId());
         if (isConnectionAvailable()) {
-            ChatMessage message = (ChatMessage) waitingQueueService.getValue(REDIS_EVENT_ISSUE_STORE);
+            String key = eventIssuedEvent.getEventId().toString() + "-" + sector.getSectorNumber();
+            ChatMessage message = (ChatMessage) waitingQueueService.getValue(key);
 
             if (message != null) {
                 try {
                     Registration registration = objectMapper.readValue(message.getRegistration(), Registration.class);
-                    processQueueData(message, sector, registration);
+                    processQueueData(message, sector, registration, eventIssuedEvent.getUserId(), eventIssuedEvent.getEventId());
                     sector.decreaseEventStock();
                 } catch (Exception e) {
                     log.error("JsonProcessingException: {}", e.getMessage());
@@ -68,20 +67,21 @@ public class EventIssuedEventHandler {
      * @author : cookie, blackbean
      */
 
-    public void processQueueData(ChatMessage chatMessage, Sector sector, Registration registration) {
-        User user = userAdaptor.findById(chatMessage.getUserId());
-        reflectUserState(chatMessage, sector, user);
+    public void processQueueData(ChatMessage chatMessage, Sector sector, Registration registration, Long userId, Long eventId) {
+        User user = userAdaptor.findById(userId);
+        reflectUserState(chatMessage, sector, user, eventId);
         saveRegistration(sector, user, registration);
         Events.raise(
                 RegistrationCreationEvent.of(
                         registration, user.getStatus(), user.getSequence()));
     }
 
-    private void reflectUserState(ChatMessage chatMessage, Sector sector, User user) {
+    private void reflectUserState(ChatMessage chatMessage, Sector sector, User user, Long eventId) {
+        String key = eventId.toString() + "-" + sector.getSectorNumber();
         if (sector.isSectorCapacityRemaining())
             user.success();
         else if (sector.isSectorReserveRemaining()) {
-            user.prepare(waitingQueueService.getWaitingOrder(REDIS_EVENT_ISSUE_STORE, chatMessage).intValue() + 1);
+            user.prepare(waitingQueueService.getWaitingOrder(key, chatMessage).intValue() + 1);
         } else
             user.fail();
     }

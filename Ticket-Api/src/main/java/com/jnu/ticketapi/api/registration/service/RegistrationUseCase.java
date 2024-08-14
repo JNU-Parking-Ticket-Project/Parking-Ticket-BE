@@ -28,14 +28,14 @@ import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrat
 import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationException;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
-import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import com.jnu.ticketinfrastructure.redis.RedisService;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @UseCase
 @RequiredArgsConstructor
@@ -127,8 +127,8 @@ public class RegistrationUseCase {
                 .fold(
                         tempRegistration ->
                                 reFinalRegister(
-                                        tempRegistration, registration, sector, user, email),
-                        emptyCase -> saveRegistration(registration, sector, currentUserId, email));
+                                        tempRegistration, registration, sector, user, email, eventId),
+                        emptyCase -> saveRegistration(registration, sector, currentUserId, email, eventId));
     }
 
     private FinalSaveResponse reFinalRegister(
@@ -136,10 +136,11 @@ public class RegistrationUseCase {
             Registration registration,
             Sector sector,
             User user,
-            String email) {
+            String email,
+            Long eventId) {
         // 예비 번호가 있거나 합격인 경우
         sector.checkEventLeft();
-        reFinalRegisterProcess(tempRegistration, registration, user, email, sector.getId());
+        reFinalRegisterProcess(tempRegistration, registration, user, email, sector.getId(), eventId);
         return FinalSaveResponse.from(tempRegistration);
     }
 
@@ -148,22 +149,23 @@ public class RegistrationUseCase {
             Registration registration,
             User user,
             String email,
-            Long sectorId) {
+            Long sectorId,
+            Long eventId) {
         tempRegistration.update(registration);
-        eventWithDrawUseCase.issueEvent(registration, user.getId(), sectorId);
+        eventWithDrawUseCase.issueEvent(registration, user.getId(), sectorId, eventId);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
     }
 
     private FinalSaveResponse saveRegistration(
-            Registration registration, Sector sector, Long currentUserId, String email) {
+            Registration registration, Sector sector, Long currentUserId, String email, Long eventId) {
         sector.checkEventLeft();
-        return saveRegistrationProcess(registration, sector, currentUserId, email);
+        return saveRegistrationProcess(registration, sector, currentUserId, email, eventId);
     }
 
     private FinalSaveResponse saveRegistrationProcess(
-            Registration registration, Sector sector, Long currentUserId, String email) {
+            Registration registration, Sector sector, Long currentUserId, String email, Long eventId) {
         //        Registration saveReg = saveAndFlush(registration);
-        eventWithDrawUseCase.issueEvent(registration, currentUserId, sector.getId());
+        eventWithDrawUseCase.issueEvent(registration, currentUserId, sector.getId(), eventId);
         redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
         //        Events.raise(new EventIssuedEvent())
         return FinalSaveResponse.from(registration);

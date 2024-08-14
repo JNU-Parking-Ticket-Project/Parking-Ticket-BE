@@ -27,14 +27,14 @@ public class WaitingQueueService {
         this.redisRepository = redisRepository;
     }
 
-    public Boolean registerQueue(String key, Registration registration, Long userId, Long sectorId)
+    public Boolean registerQueue(String key, Registration registration, Long userId, Long sectorId, Long eventId)
             throws JsonProcessingException {
         Double score = (double) System.currentTimeMillis();
         //        registration to JSON String
         //        String registrationString = registration.toString();
         String registrationString = convertRegistrationJSON(registration);
         //            String registrationString = objectMapper.writeValueAsString(registration);
-        ChatMessage message = new ChatMessage(registrationString, userId, sectorId);
+        ChatMessage message = new ChatMessage(registrationString, userId, sectorId, eventId);
         checkDuplicateData(key, message);
         boolean isPresent = redisRepository.zAddIfAbsent(key, message, score);
         // 재고가 있어야 처리

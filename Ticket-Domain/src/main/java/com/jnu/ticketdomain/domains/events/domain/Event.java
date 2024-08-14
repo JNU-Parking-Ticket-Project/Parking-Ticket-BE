@@ -29,6 +29,7 @@ import org.hibernate.annotations.Where;
 @AllArgsConstructor
 @Getter
 @Where(clause = "is_deleted = false")
+@JsonIgnoreProperties("sector")
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

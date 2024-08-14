@@ -10,11 +10,13 @@ import lombok.Getter;
 public class EventIssuedEvent extends InfrastructureEvent {
     private final Long sectorId;
     private final Long userId;
+    private final Long eventId;
 
-    public static EventIssuedEvent from(Long sectorId, Long userId) {
+    public static EventIssuedEvent from(Long sectorId, Long userId, Long eventId) {
         return EventIssuedEvent.builder()
                 .sectorId(sectorId)
                 .userId(userId)
+                .eventId(eventId)
                 .build();
     }
 }

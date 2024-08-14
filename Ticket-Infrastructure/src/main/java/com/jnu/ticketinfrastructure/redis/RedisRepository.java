@@ -77,4 +77,14 @@ public class RedisRepository {
     public <T> Set<Object> zReverseRange(String key, Long startRank, Long endRank, Class<T> type) {
         return redisTemplate.opsForZSet().reverseRange(key, startRank, endRank);
     }
+
+    public void deleteKeysByPrefix(String prefix) {
+        // 1. 해당 prefix로 시작하는 모든 키 검색
+        Set<String> keys = redisTemplate.keys(prefix + "*");
+
+        // 2. 검색된 키들이 존재하는지 확인하고, 존재하면 삭제
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
+    }
 }

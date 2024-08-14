@@ -1,9 +1,6 @@
 package com.jnu.ticketapi.api.event.service;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
-
 import com.jnu.ticketapi.api.event.model.response.GetEventPeriodResponse;
-import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
@@ -15,12 +12,13 @@ import com.jnu.ticketdomain.domains.events.exception.*;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketinfrastructure.config.redis.redissonLock.RedissonLock;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @UseCase
 @RequiredArgsConstructor
@@ -38,7 +36,7 @@ public class EventWithDrawUseCase {
             leaseTime = 10000,
             timeUnit = TimeUnit.MILLISECONDS)
     @SneakyThrows
-    public void issueEvent(Registration registration, Long userId, Long sectorId) {
+    public void issueEvent(Registration registration, Long userId, Long sectorId, Long eventId) {
         // 재고 감소 로직 구현
         Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
         readyEvent.fold(
@@ -51,14 +49,8 @@ public class EventWithDrawUseCase {
                 (error) -> {
                     throw NotReadyEventStatusException.EXCEPTION;
                 });
-
-        waitingQueueService.registerQueue(REDIS_EVENT_ISSUE_STORE, registration, userId, sectorId);
-    }
-
-    @Transactional(readOnly = true)
-    public Long getEventOrder() {
-        Long currentUserId = SecurityUtils.getCurrentUserId();
-        return waitingQueueService.getWaitingOrder(REDIS_EVENT_ISSUE_STORE, currentUserId);
+        String key = eventId.toString() + "-" + registration.getSector().getSectorNumber();
+        waitingQueueService.registerQueue(key, registration, userId, sectorId, eventId);
     }
 
     public GetEventPeriodResponse getEventPeriod() {

@@ -12,4 +12,5 @@ public class ChatMessage {
     private String registration;
     private Long userId;
     private Long sectorId;
+    private Long eventId;
 }
