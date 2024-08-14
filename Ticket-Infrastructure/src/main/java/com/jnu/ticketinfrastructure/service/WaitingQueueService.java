@@ -11,7 +11,6 @@ import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
-
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +26,8 @@ public class WaitingQueueService {
         this.redisRepository = redisRepository;
     }
 
-    public Boolean registerQueue(String key, Registration registration, Long userId, Long sectorId, Long eventId)
+    public Boolean registerQueue(
+            String key, Registration registration, Long userId, Long sectorId, Long eventId)
             throws JsonProcessingException {
         Double score = (double) System.currentTimeMillis();
         //        registration to JSON String

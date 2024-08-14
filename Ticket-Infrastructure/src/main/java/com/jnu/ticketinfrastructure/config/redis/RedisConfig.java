@@ -39,8 +39,7 @@ public class RedisConfig {
     @Value("${spring.redis.password}")
     private String redisPassword;
 
-    @Autowired
-    private EventSubscribeService eventSubscribeService;
+    @Autowired private EventSubscribeService eventSubscribeService;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -64,7 +63,8 @@ public class RedisConfig {
         redisTemplate.setConnectionFactory(redisConnectionFactory());
 
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-        Jackson2JsonRedisSerializer<ChatMessage> serializer = new Jackson2JsonRedisSerializer<>(ChatMessage.class);
+        Jackson2JsonRedisSerializer<ChatMessage> serializer =
+                new Jackson2JsonRedisSerializer<>(ChatMessage.class);
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(serializer);
@@ -75,7 +75,8 @@ public class RedisConfig {
     // 메세지 리스너 설정
     @Bean
     public MessageListenerAdapter messageListenerAdapter() {
-        Jackson2JsonRedisSerializer<ChatMessage> serializer = new Jackson2JsonRedisSerializer<>(ChatMessage.class);
+        Jackson2JsonRedisSerializer<ChatMessage> serializer =
+                new Jackson2JsonRedisSerializer<>(ChatMessage.class);
         MessageListenerAdapter adapter = new MessageListenerAdapter(eventSubscribeService);
         adapter.setSerializer(serializer);
         return adapter;

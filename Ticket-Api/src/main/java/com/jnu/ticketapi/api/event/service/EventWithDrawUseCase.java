@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.event.service;
 
+
 import com.jnu.ticketapi.api.event.model.response.GetEventPeriodResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.utils.Result;
@@ -12,13 +13,12 @@ import com.jnu.ticketdomain.domains.events.exception.*;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketinfrastructure.config.redis.redissonLock.RedissonLock;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @UseCase
 @RequiredArgsConstructor

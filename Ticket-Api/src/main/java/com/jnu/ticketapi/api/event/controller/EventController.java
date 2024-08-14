@@ -76,12 +76,12 @@ public class EventController {
         return new SuccessResponse(EVENT_SUCCESS_REGISTER_MESSAGE);
     }
 
-//    @Operation(summary = "현재 대기번호 조회", description = "주차권 대기번호 조회")
-//    @ApiErrorExceptionsExample(ReadEventExceptionDocs.class)
-//    @GetMapping("/events/order")
-//    public ResponseEntity<Long> getEventOrder() {
-//        return ResponseEntity.ok(EventWithDrawUseCase.getEventOrder());
-//    }
+    //    @Operation(summary = "현재 대기번호 조회", description = "주차권 대기번호 조회")
+    //    @ApiErrorExceptionsExample(ReadEventExceptionDocs.class)
+    //    @GetMapping("/events/order")
+    //    public ResponseEntity<Long> getEventOrder() {
+    //        return ResponseEntity.ok(EventWithDrawUseCase.getEventOrder());
+    //    }
 
     @Operation(summary = "이벤트를 오픈 상태로 변경합니다.")
     @PostMapping("events/open")

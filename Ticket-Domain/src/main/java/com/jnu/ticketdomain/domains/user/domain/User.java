@@ -1,7 +1,6 @@
 package com.jnu.ticketdomain.domains.user.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;

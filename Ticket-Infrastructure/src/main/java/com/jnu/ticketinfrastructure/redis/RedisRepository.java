@@ -3,13 +3,12 @@ package com.jnu.ticketinfrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
-import org.springframework.stereotype.Repository;
-
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public class RedisRepository {
@@ -42,8 +41,7 @@ public class RedisRepository {
         ZSetOperations.TypedTuple<Object> tuple = redisTemplate.opsForZSet().popMin(key);
         if (tuple != null) {
             return tuple.getValue();
-        } else
-            return null;
+        } else return null;
     }
 
     public Long zRank(String key, Object value) {

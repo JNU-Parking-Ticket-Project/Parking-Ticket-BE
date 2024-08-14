@@ -2,7 +2,6 @@ package com.jnu.ticketapi.api.event.service;
 
 
 import com.jnu.ticketcommon.annotation.UseCase;
-import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;

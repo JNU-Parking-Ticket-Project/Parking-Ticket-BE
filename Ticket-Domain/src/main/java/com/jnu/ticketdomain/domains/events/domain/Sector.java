@@ -6,12 +6,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import lombok.*;
-import org.hibernate.annotations.Where;
-
-import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import javax.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.Where;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

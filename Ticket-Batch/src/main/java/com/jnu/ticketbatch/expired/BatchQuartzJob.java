@@ -1,7 +1,6 @@
 package com.jnu.ticketbatch.expired;
 
 
-import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;

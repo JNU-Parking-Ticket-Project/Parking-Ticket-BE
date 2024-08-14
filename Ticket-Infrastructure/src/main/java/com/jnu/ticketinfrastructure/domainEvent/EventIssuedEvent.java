@@ -1,7 +1,6 @@
 package com.jnu.ticketinfrastructure.domainEvent;
 
 
-import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import lombok.Builder;
 import lombok.Getter;
 
