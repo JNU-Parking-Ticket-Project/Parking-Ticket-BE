@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.api.event.handler;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
@@ -58,7 +59,7 @@ public class EventIssuedEventHandler {
                             eventIssuedEvent.getUserId(),
                             eventIssuedEvent.getEventId());
                     sector.decreaseEventStock();
-                } catch (Exception e) {
+                } catch (JsonProcessingException e) {
                     log.error("JsonProcessingException: {}", e.getMessage());
                 }
             }
