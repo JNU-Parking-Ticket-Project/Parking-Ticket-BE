@@ -6,11 +6,14 @@ import com.jnu.ticketinfrastructure.model.ChatMessage;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
 @Repository
+@Slf4j
 public class RedisRepository {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -40,10 +43,14 @@ public class RedisRepository {
     public Object zPopMin(String key) {
         ZSetOperations.TypedTuple<Object> tuple = redisTemplate.opsForZSet().popMin(key);
         if (tuple != null) {
+            log.info("redis zPop 성공");
+            log.info("value: " + tuple.getValue());
             return tuple.getValue();
-        } else return null;
+        } else {
+            log.error("redis zPop 실패");
+            return null;
+        }
     }
-
     public Long zRank(String key, Object value) {
         return redisTemplate.opsForZSet().rank(key, value);
     }
@@ -84,5 +91,14 @@ public class RedisRepository {
         if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);
         }
+    }
+
+    public void removeAndAdd(String key, Object value, Double score) {
+        redisTemplate.opsForZSet().remove(key, value);
+        redisTemplate.opsForZSet().add(key, value, score);
+    }
+
+    public Double getScore(String key, Object value) {
+        return redisTemplate.opsForZSet().score(key, value);
     }
 }

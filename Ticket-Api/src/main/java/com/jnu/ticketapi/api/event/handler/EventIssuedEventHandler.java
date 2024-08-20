@@ -1,7 +1,6 @@
 package com.jnu.ticketapi.api.event.handler;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
@@ -13,18 +12,26 @@ import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.sql.DataSource;
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @Component
 @RequiredArgsConstructor
@@ -35,61 +42,55 @@ public class EventIssuedEventHandler {
     private final WaitingQueueService waitingQueueService;
     private final SectorAdaptor sectorAdaptor;
     private final ObjectMapper objectMapper;
-    private final DataSource dataSource;
-
+    private final HikariDataSource hikariDataSource;
+    private final Map<Sector, AtomicInteger> counter = new ConcurrentHashMap<>();
     @Async
     @TransactionalEventListener(
             classes = EventIssuedEvent.class,
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
-        Sector sector = sectorAdaptor.findById(eventIssuedEvent.getSectorId());
-        if (isConnectionAvailable()) {
-            String key = eventIssuedEvent.getEventId().toString() + "-" + sector.getSectorNumber();
-            ChatMessage message = (ChatMessage) waitingQueueService.getValue(key);
+        log.info("주차권 신청 저장 시작");
+        if (isIdleConnectionAvailable()) {
+            Sector sector = sectorAdaptor.findById(eventIssuedEvent.getSectorId());
 
-            if (message != null) {
-                try {
-                    Registration registration =
-                            objectMapper.readValue(message.getRegistration(), Registration.class);
-                    processQueueData(
-                            message,
-                            sector,
-                            registration,
-                            eventIssuedEvent.getUserId(),
-                            eventIssuedEvent.getEventId());
-                    sector.decreaseEventStock();
-                } catch (JsonProcessingException e) {
-                    log.error("JsonProcessingException: {}", e.getMessage());
-                }
+            try {
+                Registration registration =
+                        objectMapper.readValue(eventIssuedEvent.getRegistration(), Registration.class);
+                processQueueData(sector, registration, eventIssuedEvent.getUserId());
+                sector.decreaseEventStock();
+                waitingQueueService.popValue(REDIS_EVENT_ISSUE_STORE);
+                log.info("주차권 신청 저장 완료");
+            } catch (Exception e) {
+                // 에러가 났을 때 redis에 데이터를 재등록 한다.(Not Waiting 상태로)
+                log.error("EventIssuedEventHandler Exception: {}", e.getMessage());
+                ChatMessage message = new ChatMessage(eventIssuedEvent.getRegistration(), eventIssuedEvent.getUserId(),
+                        eventIssuedEvent.getSectorId(), eventIssuedEvent.getEventId(), ChatMessageStatus.NOT_WAITING.name());
+                waitingQueueService.reRegisterQueue(REDIS_EVENT_ISSUE_STORE, message, eventIssuedEvent.getScore());
             }
         }
     }
 
     /**
      * 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
-     *
-     * @author : cookie, blackbean
      */
-    public void processQueueData(
-            ChatMessage chatMessage,
-            Sector sector,
-            Registration registration,
-            Long userId,
-            Long eventId) {
+    public void processQueueData(Sector sector, Registration registration, Long userId) {
         User user = userAdaptor.findById(userId);
-        reflectUserState(chatMessage, sector, user, eventId);
+        reflectUserState(sector, user);
         saveRegistration(sector, user, registration);
-        Events.raise(
-                RegistrationCreationEvent.of(registration, user.getStatus(), user.getSequence()));
+        Events.raise(RegistrationCreationEvent.of(registration, user.getStatus(), user.getSequence()));
     }
 
-    private void reflectUserState(ChatMessage chatMessage, Sector sector, User user, Long eventId) {
-        String key = eventId.toString() + "-" + sector.getSectorNumber();
-        if (sector.isSectorCapacityRemaining()) user.success();
-        else if (sector.isSectorReserveRemaining()) {
-            user.prepare(waitingQueueService.getWaitingOrder(key, chatMessage).intValue() + 1);
-        } else user.fail();
+    private void reflectUserState(Sector sector, User user) {
+        AtomicInteger sectorCounter = counter.computeIfAbsent(sector, k -> new AtomicInteger(1));
+        if (sector.isSectorCapacityRemaining()) {
+            user.success();
+        } else if (sector.isSectorReserveRemaining()) {
+            user.prepare(sectorCounter.get());
+            increment(sector);
+        } else {
+            user.fail();
+        }
     }
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
@@ -103,12 +104,19 @@ public class EventIssuedEventHandler {
         registrationAdaptor.saveAndFlush(registration);
     }
 
-    private boolean isConnectionAvailable() {
-        try (Connection connection = dataSource.getConnection()) {
-            return connection != null && !connection.isClosed();
-        } catch (SQLException e) {
-            log.error("Failed to check MySQL connection availability", e);
-            return false;
+    private boolean isIdleConnectionAvailable() {
+        int idleConnections = hikariDataSource.getHikariPoolMXBean().getIdleConnections();
+        return idleConnections > 0;
+    }
+
+    public void increment(Sector sector) {
+        AtomicInteger sectorCounter = counter.get(sector);
+        while (true) {
+            int existingValue = sectorCounter.get();
+            int newValue = existingValue + 1;
+            if (sectorCounter.compareAndSet(existingValue, newValue)) {
+                return;
+            }
         }
     }
 }
