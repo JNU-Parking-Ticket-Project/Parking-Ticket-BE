@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.event.handler;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
@@ -15,27 +16,17 @@ import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.zaxxer.hikari.HikariDataSource;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @Component
 @RequiredArgsConstructor
@@ -51,9 +42,8 @@ public class EventIssuedEventHandler {
     private final Map<Sector, AtomicInteger> counter = new ConcurrentHashMap<>();
 
     @Async
-    @EventListener(
-            classes = EventIssuedEvent.class)
-            @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @EventListener(classes = EventIssuedEvent.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
         log.info("주차권 신청 저장 시작");
         log.info("Thread: {}", Thread.currentThread().getName());
@@ -62,30 +52,39 @@ public class EventIssuedEventHandler {
 
             try {
                 Registration registration =
-                        objectMapper.readValue(eventIssuedEvent.getRegistration(), Registration.class);
+                        objectMapper.readValue(
+                                eventIssuedEvent.getRegistration(), Registration.class);
                 processQueueData(sector, registration, eventIssuedEvent.getUserId());
                 sector.decreaseEventStock();
                 Object message = waitingQueueService.getValue(REDIS_EVENT_ISSUE_STORE);
-                waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE,message);
+                waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, message);
                 log.info("주차권 신청 저장 완료");
             } catch (Exception e) {
                 // 에러가 났을 때 redis에 데이터를 재등록 한다.(Not Waiting 상태로)
                 log.error("EventIssuedEventHandler Exception: {}", e.getMessage());
-                ChatMessage message = new ChatMessage(eventIssuedEvent.getRegistration(), eventIssuedEvent.getUserId(),
-                        eventIssuedEvent.getSectorId(), eventIssuedEvent.getEventId(), ChatMessageStatus.WAITING.name());
-                waitingQueueService.reRegisterQueue(REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.NOT_WAITING, eventIssuedEvent.getScore());
+                ChatMessage message =
+                        new ChatMessage(
+                                eventIssuedEvent.getRegistration(),
+                                eventIssuedEvent.getUserId(),
+                                eventIssuedEvent.getSectorId(),
+                                eventIssuedEvent.getEventId(),
+                                ChatMessageStatus.WAITING.name());
+                waitingQueueService.reRegisterQueue(
+                        REDIS_EVENT_ISSUE_STORE,
+                        message,
+                        ChatMessageStatus.NOT_WAITING,
+                        eventIssuedEvent.getScore());
             }
         }
     }
 
-    /**
-     * 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
-     */
+    /** 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다. */
     public void processQueueData(Sector sector, Registration registration, Long userId) {
         User user = userAdaptor.findById(userId);
         reflectUserState(sector, user);
         saveRegistration(sector, user, registration);
-        Events.raise(RegistrationCreationEvent.of(registration, user.getStatus(), user.getSequence()));
+        Events.raise(
+                RegistrationCreationEvent.of(registration, user.getStatus(), user.getSequence()));
     }
 
     private void reflectUserState(Sector sector, User user) {

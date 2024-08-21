@@ -1,20 +1,18 @@
 package com.jnu.ticketinfrastructure.redis;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
-
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
 
 @Repository
 @Slf4j
@@ -46,20 +44,26 @@ public class RedisRepository {
 
     public Object zPopMin(String key) {
         String luaScript =
-                "local result = redis.call('ZRANGE', KEYS[1], 0, 0) " +
-                        "if result ~= nil and #result > 0 then " +
-                        "    redis.call('ZREM', KEYS[1], result[1]) " +
-                        "    return result[1] " +
-                        "else " +
-                        "    return nil " +
-                        "end";
+                "local result = redis.call('ZRANGE', KEYS[1], 0, 0) "
+                        + "if result ~= nil and #result > 0 then "
+                        + "    redis.call('ZREM', KEYS[1], result[1]) "
+                        + "    return result[1] "
+                        + "else "
+                        + "    return nil "
+                        + "end";
 
         // Log before executing the script
         log.info("Executing Lua script to pop min element from key: {}", key);
 
-        Object poppedValue = redisTemplate.execute((RedisCallback<Object>) connection ->
-                connection.eval(luaScript.getBytes(), ReturnType.VALUE, 1, key.getBytes())
-        );
+        Object poppedValue =
+                redisTemplate.execute(
+                        (RedisCallback<Object>)
+                                connection ->
+                                        connection.eval(
+                                                luaScript.getBytes(),
+                                                ReturnType.VALUE,
+                                                1,
+                                                key.getBytes()));
 
         // Log after executing the script
         if (poppedValue != null) {
@@ -113,7 +117,8 @@ public class RedisRepository {
         }
     }
 
-    public void removeAndAdd(String key, ChatMessage message, ChatMessageStatus newStatus, Double score) {
+    public void removeAndAdd(
+            String key, ChatMessage message, ChatMessageStatus newStatus, Double score) {
         // Remove the message from the set
         redisTemplate.opsForZSet().remove(key, message);
 
@@ -121,11 +126,9 @@ public class RedisRepository {
         message.setStatus(newStatus.name());
 
         // Add the message back to the set with the new status and score
-       Boolean result = redisTemplate.opsForZSet().add(key, message, score);
-       log.info("removeAndAdd result: {}", result);
+        Boolean result = redisTemplate.opsForZSet().add(key, message, score);
+        log.info("removeAndAdd result: {}", result);
     }
-
-
 
     public Double getScore(String key, Object value) {
         return redisTemplate.opsForZSet().score(key, value);

@@ -1,6 +1,9 @@
 package com.jnu.ticketinfrastructure.config.redis;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
+
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -15,13 +18,7 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-
-import java.time.Duration;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 
 @EnableRedisRepositories(
         basePackages = "com.jnu",
@@ -39,7 +36,6 @@ public class RedisConfig {
 
     @Value("${spring.redis.password}")
     private String redisPassword;
-
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {

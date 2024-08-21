@@ -13,7 +13,8 @@ public class EventIssuedEvent extends InfrastructureEvent {
     private final String registration;
     private final Double score;
 
-    public static EventIssuedEvent from(Long sectorId, Long userId, Long eventId, String registration, Double score) {
+    public static EventIssuedEvent from(
+            Long sectorId, Long userId, Long eventId, String registration, Double score) {
         return EventIssuedEvent.builder()
                 .sectorId(sectorId)
                 .userId(userId)

@@ -1,9 +1,9 @@
 package com.jnu.ticketapi.api.event.service;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.jnu.ticketapi.api.event.model.response.GetEventPeriodResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
-import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
@@ -20,8 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @UseCase
 @RequiredArgsConstructor
@@ -52,7 +50,8 @@ public class EventWithDrawUseCase {
                 (error) -> {
                     throw NotReadyEventStatusException.EXCEPTION;
                 });
-        waitingQueueService.registerQueue(REDIS_EVENT_ISSUE_STORE, registration, userId, sectorId, eventId);
+        waitingQueueService.registerQueue(
+                REDIS_EVENT_ISSUE_STORE, registration, userId, sectorId, eventId);
     }
 
     public GetEventPeriodResponse getEventPeriod() {

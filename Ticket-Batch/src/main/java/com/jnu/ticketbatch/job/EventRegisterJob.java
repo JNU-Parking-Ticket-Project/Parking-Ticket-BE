@@ -6,11 +6,10 @@ import static org.quartz.TriggerBuilder.newTrigger;
 import com.jnu.ticketbatch.config.ProcessQueueDataJob;
 import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketbatch.expired.BatchQuartzJob;
+import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-
-import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
@@ -109,6 +108,7 @@ public class EventRegisterJob implements Job {
         log.info(">>>>> Event 만료 스케줄링 등록");
         sched.scheduleJob(expiredEventQuartzJob, reserveTrigger);
     }
+
     public void ProcessQueueDataJob(Long eventId, LocalDateTime endAt) throws Exception {
         SchedulerFactory schedFact = new StdSchedulerFactory();
         Scheduler sched = schedFact.getScheduler();
@@ -121,20 +121,26 @@ public class EventRegisterJob implements Job {
         jobDataMap.put("waitingQueueService", waitingQueueService);
 
         JobDetail processQueueDataJob =
-            newJob(ProcessQueueDataJob.class)
-                .withIdentity("PROCESS_QUEUE_DATA_JOB", "group1")
-                .usingJobData("eventId", eventId)
-                .setJobData(jobDataMap)
-                .build();
+                newJob(ProcessQueueDataJob.class)
+                        .withIdentity("PROCESS_QUEUE_DATA_JOB", "group1")
+                        .usingJobData("eventId", eventId)
+                        .setJobData(jobDataMap)
+                        .build();
         Date end = Date.from(endAt.atZone(ZoneId.of("Asia/Seoul")).toInstant());
-        Date start = Date.from(LocalDateTime.now().plusMinutes(1).atZone(ZoneId.of("Asia/Seoul")).toInstant());
+        Date start =
+                Date.from(
+                        LocalDateTime.now()
+                                .plusMinutes(1)
+                                .atZone(ZoneId.of("Asia/Seoul"))
+                                .toInstant());
         TriggerBuilder<Trigger> triggerTriggerBuilder = newTrigger();
         triggerTriggerBuilder.withIdentity("PROCESS_QUEUE_DATA_TRIGGER", "group1");
         triggerTriggerBuilder.startAt(start);
         triggerTriggerBuilder.endAt(end);
-        triggerTriggerBuilder.withSchedule(SimpleScheduleBuilder.simpleSchedule()
-                .withIntervalInSeconds(10)
-                .repeatForever());  // 5초마다 실행;  // 지정된 시간 동안 반복 실행
+        triggerTriggerBuilder.withSchedule(
+                SimpleScheduleBuilder.simpleSchedule()
+                        .withIntervalInSeconds(10)
+                        .repeatForever()); // 5초마다 실행;  // 지정된 시간 동안 반복 실행
         triggerTriggerBuilder.forJob(processQueueDataJob);
         Trigger reserveTrigger = triggerTriggerBuilder.build();
 

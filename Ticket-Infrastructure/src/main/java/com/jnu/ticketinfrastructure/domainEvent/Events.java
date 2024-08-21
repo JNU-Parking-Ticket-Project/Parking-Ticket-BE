@@ -3,6 +3,7 @@ package com.jnu.ticketinfrastructure.domainEvent;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+
 @Slf4j
 public class Events {
     private static ThreadLocal<ApplicationEventPublisher> publisherLocal = new ThreadLocal<>();
