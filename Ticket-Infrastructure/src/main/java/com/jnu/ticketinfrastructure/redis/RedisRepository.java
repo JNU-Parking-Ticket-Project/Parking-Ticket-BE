@@ -1,6 +1,7 @@
 package com.jnu.ticketinfrastructure.redis;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
@@ -113,32 +114,18 @@ public class RedisRepository {
     }
 
     public void removeAndAdd(String key, ChatMessage message, ChatMessageStatus newStatus, Double score) {
-        log.info("Re-registering the message in Redis");
+        // Remove the message from the set
+        redisTemplate.opsForZSet().remove(key, message);
 
         // Update the status of the message
         message.setStatus(newStatus.name());
 
-        // Lua script for atomic removal and addition
-        String luaScript =
-                "local removed = redis.call('ZREM', KEYS[1], ARGV[1]) " +
-                        "if removed > 0 then " +
-                        "   return redis.call('ZADD', KEYS[1], ARGV[2], ARGV[3]) " +
-                        "else " +
-                        "   return 0 " +
-                        "end";
-
-        // Execute Lua script
-        Long result = redisTemplate.execute((RedisCallback<Long>) connection ->
-                connection.eval(luaScript.getBytes(), ReturnType.INTEGER, 1,
-                        key.getBytes(),
-                        message.toString().getBytes(),
-                        score.toString().getBytes(),
-                        message.toString().getBytes()
-                )
-        );
-
-        log.info("Re-registration result: {}", result > 0 ? "Success" : "Failure");
+        // Add the message back to the set with the new status and score
+       Boolean result = redisTemplate.opsForZSet().add(key, message, score);
+       log.info("removeAndAdd result: {}", result);
     }
+
+
 
     public Double getScore(String key, Object value) {
         return redisTemplate.opsForZSet().score(key, value);

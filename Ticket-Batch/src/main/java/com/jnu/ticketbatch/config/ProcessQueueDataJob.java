@@ -10,10 +10,7 @@ import org.quartz.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
@@ -41,26 +38,11 @@ public class ProcessQueueDataJob implements Job {
             ChatMessage message = waitingQueueService.getValueNotWaiting(REDIS_EVENT_ISSUE_STORE);
 
             if (message != null) {
-                String lockKey = "lock:" + message.getEventId();
-                ValueOperations<String, String> ops = stringRedisTemplate.opsForValue();
+                log.info("Message found, raising event");
+                Double score = waitingQueueService.getScore(REDIS_EVENT_ISSUE_STORE, message);
+                waitingQueueService.reRegisterQueue(REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
+                Events.raise(EventIssuedEvent.from(message.getSectorId(), message.getUserId(), message.getEventId(), message.getRegistration(), score));
 
-                // 락 획득
-                boolean acquired = ops.setIfAbsent(lockKey, "lock", 1, TimeUnit.SECONDS);
-
-                if (acquired) {
-                    try {
-                        log.info("Message found, raising event");
-                        Double score = waitingQueueService.getScore(REDIS_EVENT_ISSUE_STORE, message);
-                        waitingQueueService.reRegisterQueue(REDIS_EVENT_ISSUE_STORE,message ,ChatMessageStatus.WAITING, score);
-                        Events.raise(EventIssuedEvent.from(message.getSectorId(), message.getUserId(), message.getEventId(), message.getRegistration(), score));
-                    } finally {
-                        // 락 해제
-                        stringRedisTemplate.delete(lockKey);
-                        log.info("Lock released for event: {}", message.getEventId());
-                    }
-                } else {
-                    log.info("Lock not acquired, another process might be handling the event.");
-                }
             }
         } catch (Exception e) {
             log.error("ProcessQueueDataJob Exception: {}", e.getMessage());

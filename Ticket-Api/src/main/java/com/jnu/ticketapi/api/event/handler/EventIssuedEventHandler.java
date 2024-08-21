@@ -54,32 +54,6 @@ public class EventIssuedEventHandler {
     @EventListener(
             classes = EventIssuedEvent.class)
             @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handleWithLock(EventIssuedEvent eventIssuedEvent) {
-        String lockKey = "lock:" + eventIssuedEvent.getEventId();
-        ValueOperations<String, String> ops = stringRedisTemplate.opsForValue();
-
-        try {
-            // Try to acquire the lock with a timeout
-            boolean acquired = ops.setIfAbsent(lockKey, "lock", 10, TimeUnit.SECONDS);
-
-            if (acquired) {
-                log.info("Lock acquired for event: {}", eventIssuedEvent.getEventId());
-
-                // Critical section: your existing logic goes here
-                handle(eventIssuedEvent);
-
-            } else {
-                log.info("Lock not acquired, another process might be handling the event.");
-            }
-        } catch (Exception e) {
-            log.error("Exception while handling event with lock: {}", e.getMessage());
-        } finally {
-            // Release the lock
-            stringRedisTemplate.delete(lockKey);
-            log.info("Lock released for event: {}", eventIssuedEvent.getEventId());
-        }
-    }
-
     public void handle(EventIssuedEvent eventIssuedEvent) {
         log.info("주차권 신청 저장 시작");
         log.info("Thread: {}", Thread.currentThread().getName());
