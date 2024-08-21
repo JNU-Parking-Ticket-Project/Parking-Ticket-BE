@@ -40,6 +40,12 @@ logging:
       type.descriptor.sql.BasicBinder: INFO
     org.springframework.transaction: INFO
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
 captcha:
   domain: ${CLOUD_FRONT_URL}
 
