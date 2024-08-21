@@ -32,6 +32,7 @@ public class WaitingQueueService {
         this.redisRepository = redisRepository;
     }
 
+
     public void registerQueue(
             String key, Registration registration, Long userId, Long sectorId, Long eventId)
             throws JsonProcessingException {
@@ -80,7 +81,7 @@ public class WaitingQueueService {
         return redisRepository.zRank(key, value);
     }
 
-    public ChatMessage getValue(String key) {
+    public ChatMessage getValueNotWaiting(String key) {
         // Get the first element in the ZSET (lowest score) without removing it
         Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
         log.info("resultSetSize: {}", resultSet.size());
@@ -104,11 +105,29 @@ public class WaitingQueueService {
         }
     }
 
-    public void reRegisterQueue(String key, Object value, Double score) {
-        redisRepository.removeAndAdd(key, value, score);
+    public void reRegisterQueue(String key, ChatMessage message, ChatMessageStatus newStatus,  Double score) {
+        log.info("redis에 데이터 다시 넣기");
+        redisRepository.removeAndAdd(key, message, newStatus, score);
     }
 
     public Double getScore(String key, Object value) {
         return redisRepository.getScore(key, value);
+    }
+
+    public void remove(String key, Object value) {
+        redisRepository.remove(key, value);
+    }
+
+    public Object getValue(String key) {
+        // Get the first element in the ZSET (lowest score) without removing it
+        Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
+        log.info("resultSetSize: {}", resultSet.size());
+        if (resultSet != null && !resultSet.isEmpty()) {
+            // Return the first element in the set
+            return resultSet.iterator().next();
+        } else {
+            // If the set is empty, return null or handle accordingly
+            return null;
+        }
     }
 }

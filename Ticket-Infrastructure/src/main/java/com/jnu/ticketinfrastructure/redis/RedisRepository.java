@@ -3,14 +3,17 @@ package com.jnu.ticketinfrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
-
+import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
+
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
 @Repository
 @Slf4j
@@ -41,16 +44,32 @@ public class RedisRepository {
     }
 
     public Object zPopMin(String key) {
-        ZSetOperations.TypedTuple<Object> tuple = redisTemplate.opsForZSet().popMin(key);
-        if (tuple != null) {
-            log.info("redis zPop 성공");
-            log.info("value: " + tuple.getValue());
-            return tuple.getValue();
+        String luaScript =
+                "local result = redis.call('ZRANGE', KEYS[1], 0, 0) " +
+                        "if result ~= nil and #result > 0 then " +
+                        "    redis.call('ZREM', KEYS[1], result[1]) " +
+                        "    return result[1] " +
+                        "else " +
+                        "    return nil " +
+                        "end";
+
+        // Log before executing the script
+        log.info("Executing Lua script to pop min element from key: {}", key);
+
+        Object poppedValue = redisTemplate.execute((RedisCallback<Object>) connection ->
+                connection.eval(luaScript.getBytes(), ReturnType.VALUE, 1, key.getBytes())
+        );
+
+        // Log after executing the script
+        if (poppedValue != null) {
+            log.info("Popped value from Redis: {}", poppedValue);
         } else {
-            log.error("redis zPop 실패");
-            return null;
+            log.info("No value was popped, the set might be empty or another issue occurred.");
         }
+
+        return poppedValue;
     }
+
     public Long zRank(String key, Object value) {
         return redisTemplate.opsForZSet().rank(key, value);
     }
@@ -93,12 +112,57 @@ public class RedisRepository {
         }
     }
 
-    public void removeAndAdd(String key, Object value, Double score) {
-        redisTemplate.opsForZSet().remove(key, value);
-        redisTemplate.opsForZSet().add(key, value, score);
+    public void removeAndAdd(String key, ChatMessage message, ChatMessageStatus newStatus, Double score) {
+        log.info("Re-registering the message in Redis");
+
+        // Update the status of the message
+        message.setStatus(newStatus.name());
+
+        // Lua script for atomic removal and addition
+        String luaScript =
+                "local removed = redis.call('ZREM', KEYS[1], ARGV[1]) " +
+                        "if removed > 0 then " +
+                        "   return redis.call('ZADD', KEYS[1], ARGV[2], ARGV[3]) " +
+                        "else " +
+                        "   return 0 " +
+                        "end";
+
+        // Execute Lua script
+        Long result = redisTemplate.execute((RedisCallback<Long>) connection ->
+                connection.eval(luaScript.getBytes(), ReturnType.INTEGER, 1,
+                        key.getBytes(),
+                        message.toString().getBytes(),
+                        score.toString().getBytes(),
+                        message.toString().getBytes()
+                )
+        );
+
+        log.info("Re-registration result: {}", result > 0 ? "Success" : "Failure");
     }
 
     public Double getScore(String key, Object value) {
         return redisTemplate.opsForZSet().score(key, value);
+    }
+
+    public void remove(String key, Object value) {
+        redisTemplate.opsForZSet().remove(key, value);
+    }
+
+    public Object getValue(String key) {
+        ZSetOperations<String, Object> zSetOperations = redisTemplate.opsForZSet();
+
+        // Get the element with the smallest score
+        Set<ZSetOperations.TypedTuple<Object>> tuples = zSetOperations.rangeWithScores(key, 0, 0);
+
+        if (!tuples.isEmpty()) {
+            // Get the first tuple (element with the smallest score)
+            ZSetOperations.TypedTuple<Object> tuple = tuples.iterator().next();
+
+            // Return the removed element
+            return tuple.getValue();
+        } else {
+            // Set is empty, return null or handle accordingly
+            return null;
+        }
     }
 }

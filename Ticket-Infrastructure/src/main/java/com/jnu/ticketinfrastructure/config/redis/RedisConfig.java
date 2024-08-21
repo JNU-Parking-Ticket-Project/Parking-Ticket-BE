@@ -15,6 +15,9 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.time.Duration;
 
@@ -24,6 +27,7 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
         basePackages = "com.jnu",
         enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP)
 @Configuration
+@EnableTransactionManagement
 @Slf4j
 public class RedisConfig {
 
@@ -64,6 +68,7 @@ public class RedisConfig {
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(serializer);
+        redisTemplate.setEnableTransactionSupport(true);
         return redisTemplate;
     }
 

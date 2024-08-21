@@ -17,6 +17,9 @@ import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -29,6 +32,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
@@ -43,14 +47,42 @@ public class EventIssuedEventHandler {
     private final SectorAdaptor sectorAdaptor;
     private final ObjectMapper objectMapper;
     private final HikariDataSource hikariDataSource;
+    private final StringRedisTemplate stringRedisTemplate;
     private final Map<Sector, AtomicInteger> counter = new ConcurrentHashMap<>();
+
     @Async
-    @TransactionalEventListener(
-            classes = EventIssuedEvent.class,
-            phase = TransactionPhase.AFTER_COMMIT)
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @EventListener(
+            classes = EventIssuedEvent.class)
+            @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleWithLock(EventIssuedEvent eventIssuedEvent) {
+        String lockKey = "lock:" + eventIssuedEvent.getEventId();
+        ValueOperations<String, String> ops = stringRedisTemplate.opsForValue();
+
+        try {
+            // Try to acquire the lock with a timeout
+            boolean acquired = ops.setIfAbsent(lockKey, "lock", 10, TimeUnit.SECONDS);
+
+            if (acquired) {
+                log.info("Lock acquired for event: {}", eventIssuedEvent.getEventId());
+
+                // Critical section: your existing logic goes here
+                handle(eventIssuedEvent);
+
+            } else {
+                log.info("Lock not acquired, another process might be handling the event.");
+            }
+        } catch (Exception e) {
+            log.error("Exception while handling event with lock: {}", e.getMessage());
+        } finally {
+            // Release the lock
+            stringRedisTemplate.delete(lockKey);
+            log.info("Lock released for event: {}", eventIssuedEvent.getEventId());
+        }
+    }
+
     public void handle(EventIssuedEvent eventIssuedEvent) {
         log.info("주차권 신청 저장 시작");
+        log.info("Thread: {}", Thread.currentThread().getName());
         if (isIdleConnectionAvailable()) {
             Sector sector = sectorAdaptor.findById(eventIssuedEvent.getSectorId());
 
@@ -59,14 +91,15 @@ public class EventIssuedEventHandler {
                         objectMapper.readValue(eventIssuedEvent.getRegistration(), Registration.class);
                 processQueueData(sector, registration, eventIssuedEvent.getUserId());
                 sector.decreaseEventStock();
-                waitingQueueService.popValue(REDIS_EVENT_ISSUE_STORE);
+                Object message = waitingQueueService.getValue(REDIS_EVENT_ISSUE_STORE);
+                waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE,message);
                 log.info("주차권 신청 저장 완료");
             } catch (Exception e) {
                 // 에러가 났을 때 redis에 데이터를 재등록 한다.(Not Waiting 상태로)
                 log.error("EventIssuedEventHandler Exception: {}", e.getMessage());
                 ChatMessage message = new ChatMessage(eventIssuedEvent.getRegistration(), eventIssuedEvent.getUserId(),
-                        eventIssuedEvent.getSectorId(), eventIssuedEvent.getEventId(), ChatMessageStatus.NOT_WAITING.name());
-                waitingQueueService.reRegisterQueue(REDIS_EVENT_ISSUE_STORE, message, eventIssuedEvent.getScore());
+                        eventIssuedEvent.getSectorId(), eventIssuedEvent.getEventId(), ChatMessageStatus.WAITING.name());
+                waitingQueueService.reRegisterQueue(REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.NOT_WAITING, eventIssuedEvent.getScore());
             }
         }
     }

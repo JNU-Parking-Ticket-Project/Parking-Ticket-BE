@@ -9,6 +9,8 @@ import com.jnu.ticketbatch.expired.BatchQuartzJob;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+
+import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
@@ -33,6 +35,7 @@ public class EventRegisterJob implements Job {
     @Autowired private StepBuilderFactory stepBuilderFactory;
     @Autowired private JobBuilderFactory jobBuilderFactory;
     @Autowired private ApplicationEventPublisher applicationEventPublisher;
+    @Autowired private WaitingQueueService waitingQueueService;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -115,6 +118,7 @@ public class EventRegisterJob implements Job {
         jobDataMap.put("eventId", eventId);
         jobDataMap.put("applicationContext", applicationContext);
         jobDataMap.put("applicationEventPublisher", applicationEventPublisher);
+        jobDataMap.put("waitingQueueService", waitingQueueService);
 
         JobDetail processQueueDataJob =
             newJob(ProcessQueueDataJob.class)
@@ -129,8 +133,7 @@ public class EventRegisterJob implements Job {
         triggerTriggerBuilder.startAt(start);
         triggerTriggerBuilder.endAt(end);
         triggerTriggerBuilder.withSchedule(SimpleScheduleBuilder.simpleSchedule()
-                .withIntervalInSeconds(30)  // 5초마다 실행
-                .repeatForever());  // 지정된 시간 동안 반복 실행
+                .withIntervalInSeconds(10));  // 5초마다 실행;  // 지정된 시간 동안 반복 실행
         triggerTriggerBuilder.forJob(processQueueDataJob);
         Trigger reserveTrigger = triggerTriggerBuilder.build();
 
