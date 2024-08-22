@@ -22,14 +22,6 @@ public class ProcessQueueDataJob implements Job {
         log.info(">>>>>>>>>>>>> ProcessQueueDataJob execute");
         log.info("Thread: {}", Thread.currentThread().getName());
 
-        ApplicationContext applicationContext =
-                (ApplicationContext)
-                        context.getJobDetail().getJobDataMap().get("applicationContext");
-        PlatformTransactionManager transactionManager =
-                applicationContext.getBean(PlatformTransactionManager.class);
-        StringRedisTemplate stringRedisTemplate =
-                applicationContext.getBean(StringRedisTemplate.class);
-
         JobDataMap jobDataMap = context.getMergedJobDataMap();
         ApplicationEventPublisher publisher =
                 (ApplicationEventPublisher) jobDataMap.get("applicationEventPublisher");
