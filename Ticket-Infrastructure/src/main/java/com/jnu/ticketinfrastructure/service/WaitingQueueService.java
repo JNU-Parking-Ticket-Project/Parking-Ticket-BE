@@ -84,7 +84,7 @@ public class WaitingQueueService {
         return redisRepository.zRank(key, value);
     }
 
-    public ChatMessage getValueNotWaiting(String key) {
+    public ChatMessage getValueByStatus(String key, ChatMessageStatus status) {
         // Get the first element in the ZSET (lowest score) without removing it
         Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
         log.info("resultSetSize: {}", resultSet.size());
@@ -124,8 +124,8 @@ public class WaitingQueueService {
         return redisRepository.getScore(key, value);
     }
 
-    public void remove(String key, Object value) {
-        redisRepository.remove(key, value);
+    public Long remove(String key, Object value) {
+        return redisRepository.remove(key, value);
     }
 
     public Object getValue(String key) {

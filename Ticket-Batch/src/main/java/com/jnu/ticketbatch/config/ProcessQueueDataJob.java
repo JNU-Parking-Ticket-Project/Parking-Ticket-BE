@@ -9,10 +9,7 @@ import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.transaction.PlatformTransactionManager;
 
 @Slf4j
 @DisallowConcurrentExecution
@@ -31,7 +28,9 @@ public class ProcessQueueDataJob implements Job {
 
             WaitingQueueService waitingQueueService =
                     (WaitingQueueService) jobDataMap.get("waitingQueueService");
-            ChatMessage message = waitingQueueService.getValueNotWaiting(REDIS_EVENT_ISSUE_STORE);
+            ChatMessage message =
+                    waitingQueueService.getValueByStatus(
+                            REDIS_EVENT_ISSUE_STORE, ChatMessageStatus.NOT_WAITING);
 
             if (message != null) {
                 log.info("Message found, raising event");

@@ -57,7 +57,8 @@ public class EventIssuedEventHandler {
                 processQueueData(sector, registration, eventIssuedEvent.getUserId());
                 sector.decreaseEventStock();
                 Object message = waitingQueueService.getValue(REDIS_EVENT_ISSUE_STORE);
-                waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, message);
+                Long removeNum = waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, message);
+                log.info("removeNum: {}", removeNum);
                 log.info("주차권 신청 저장 완료");
             } catch (Exception e) {
                 // 에러가 났을 때 redis에 데이터를 재등록 한다.(Not Waiting 상태로)
@@ -102,6 +103,8 @@ public class EventIssuedEventHandler {
     private void saveRegistration(Sector sector, User user, Registration registration) {
         if (!registration.isSaved()) {
             registration.updateIsSaved(true);
+            registration.setSector(sector);
+            registration.setUser(user);
             registrationAdaptor.saveAndFlush(registration);
             return;
         }

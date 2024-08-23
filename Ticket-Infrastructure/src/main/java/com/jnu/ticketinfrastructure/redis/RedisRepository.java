@@ -134,8 +134,8 @@ public class RedisRepository {
         return redisTemplate.opsForZSet().score(key, value);
     }
 
-    public void remove(String key, Object value) {
-        redisTemplate.opsForZSet().remove(key, value);
+    public Long remove(String key, Object value) {
+        return redisTemplate.opsForZSet().remove(key, value);
     }
 
     public Object getValue(String key) {
