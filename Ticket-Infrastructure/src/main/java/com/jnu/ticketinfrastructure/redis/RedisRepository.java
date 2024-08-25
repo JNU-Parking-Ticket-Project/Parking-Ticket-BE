@@ -56,14 +56,10 @@ public class RedisRepository {
         log.info("Executing Lua script to pop min element from key: {}", key);
 
         return redisTemplate.execute(
-                        (RedisCallback<Object>)
-                                connection ->
-                                        connection.eval(
-                                                luaScript.getBytes(),
-                                                ReturnType.VALUE,
-                                                1,
-                                                key.getBytes()));
-
+                (RedisCallback<Object>)
+                        connection ->
+                                connection.eval(
+                                        luaScript.getBytes(), ReturnType.VALUE, 1, key.getBytes()));
     }
 
     public Long zRank(String key, Object value) {
