@@ -27,3 +27,11 @@ JNU 주차권 백엔드 프로젝트에 많은 관심을 가져주셔서 감사�
 - 커피요정 개발자 이서현 올림
 
 [![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=JNU-Parking-Ticket-Project_Parking-Ticket-BE)](https://sonarcloud.io/summary/new_code?id=JNU-Parking-Ticket-Project_Parking-Ticket-BE)
+
+
+---
+# Setup
+1. 인수인계 받은 .env 파일을 프로젝트 루트에 추가합니다.
+2. Docker Engine 혹은 Docker Hub를 설치하고, Docker deamon을 실행합니다.
+3. `/docker-compose.yml` 파일을 실행합니다. (redis, mysql)
+4. Ticket-Api 모듈을 실행합니다.
