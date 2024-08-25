@@ -8,6 +8,7 @@ import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Where;
@@ -137,5 +138,18 @@ public class Sector {
 
     public void setEvent(Event savedEvent) {
         this.event = savedEvent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Sector sector = (Sector) o;
+        return Objects.equals(id, sector.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }
