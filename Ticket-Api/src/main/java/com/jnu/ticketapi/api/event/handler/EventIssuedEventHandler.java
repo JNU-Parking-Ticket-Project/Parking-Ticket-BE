@@ -56,7 +56,7 @@ public class EventIssuedEventHandler {
                                 eventIssuedEvent.getRegistration(), Registration.class);
                 processQueueData(sector, registration, eventIssuedEvent.getUserId());
                 sector.decreaseEventStock();
-                Object message = waitingQueueService.getValue(REDIS_EVENT_ISSUE_STORE);
+                Object message = waitingQueueService.getValueByStatus(REDIS_EVENT_ISSUE_STORE, ChatMessageStatus.WAITING);
                 Long removeNum = waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, message);
                 log.info("removeNum: {}", removeNum);
                 log.info("주차권 신청 저장 완료");
@@ -86,15 +86,19 @@ public class EventIssuedEventHandler {
         saveRegistration(sector, user, registration);
         Events.raise(
                 RegistrationCreationEvent.of(registration, user.getStatus(), user.getSequence()));
-    }
+    } // 이진혁 바보 멍청이 말미잘
 
     private void reflectUserState(Sector sector, User user) {
         AtomicInteger sectorCounter = counter.computeIfAbsent(sector, k -> new AtomicInteger(1));
         if (sector.isSectorCapacityRemaining()) {
             user.success();
         } else if (sector.isSectorReserveRemaining()) {
-            user.prepare(sectorCounter.get());
+            int reserve = sectorCounter.get();
+            log.info("sectorCounter : " + reserve);
+            user.prepare(reserve);
             increment(sector);
+            int newReserve = sectorCounter.get();
+            log.info("newReserve : " + newReserve);
         } else {
             user.fail();
         }
