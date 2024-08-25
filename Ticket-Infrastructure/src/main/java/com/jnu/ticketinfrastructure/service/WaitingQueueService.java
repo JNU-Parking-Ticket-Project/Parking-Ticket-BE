@@ -87,15 +87,14 @@ public class WaitingQueueService {
     public ChatMessage getValueByStatus(String key, ChatMessageStatus status) {
         // Get the first element in the ZSET (lowest score) without removing it
         Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
-        log.info("resultSetSize: {}", resultSet.size());
+        String valueStatus = ((ChatMessage) resultSet.iterator().next()).getStatus();
+        log.info("Value의 ChatMessageStatus: {}", valueStatus);
         Set<ChatMessage> chatMessages =
                 resultSet.stream()
                         .map(o -> (ChatMessage) o)
                         .filter(
                                 chatMessage ->
-                                        Objects.equals(
-                                                chatMessage.getStatus(),
-                                                ChatMessageStatus.NOT_WAITING.name()))
+                                        Objects.equals(chatMessage.getStatus(), status.name()))
                         .collect(Collectors.toSet());
         log.info("chatMessages: {}", chatMessages);
         if (chatMessages != null && !chatMessages.isEmpty()) {

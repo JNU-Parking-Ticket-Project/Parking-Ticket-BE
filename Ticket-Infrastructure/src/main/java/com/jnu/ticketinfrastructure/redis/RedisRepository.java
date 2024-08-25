@@ -120,13 +120,14 @@ public class RedisRepository {
     public void removeAndAdd(
             String key, ChatMessage message, ChatMessageStatus newStatus, Double score) {
         // Remove the message from the set
-        redisTemplate.opsForZSet().remove(key, message);
+        Long removeNum = redisTemplate.opsForZSet().remove(key, message);
+        log.info(removeNum > 0 ? "redis에서 데이터 제거 성공" : "redis에서 데이터 제거 실패");
 
         // Update the status of the message
         message.setStatus(newStatus.name());
 
         // Add the message back to the set with the new status and score
-        Boolean result = redisTemplate.opsForZSet().add(key, message, score);
+        Boolean result = redisTemplate.opsForZSet().addIfAbsent(key, message, score);
         log.info("removeAndAdd result: {}", result);
     }
 

@@ -56,7 +56,9 @@ public class EventIssuedEventHandler {
                                 eventIssuedEvent.getRegistration(), Registration.class);
                 processQueueData(sector, registration, eventIssuedEvent.getUserId());
                 sector.decreaseEventStock();
-                Object message = waitingQueueService.getValueByStatus(REDIS_EVENT_ISSUE_STORE, ChatMessageStatus.WAITING);
+                Object message =
+                        waitingQueueService.getValueByStatus(
+                                REDIS_EVENT_ISSUE_STORE, ChatMessageStatus.WAITING);
                 Long removeNum = waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, message);
                 log.info("removeNum: {}", removeNum);
                 log.info("주차권 신청 저장 완료");
