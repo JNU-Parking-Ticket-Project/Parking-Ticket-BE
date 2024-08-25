@@ -4,3 +4,16 @@ services:
     image: 'redis:alpine'
     ports:
       - '6379:6379'
+  mysql:
+    image: 'mysql:8.0.35'
+    environment:
+#      THIS IS LOCAL RUNTIME DB CONFIGURATION, DO NOT USE IN ANYWHERE
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_DATABASE: 'jnu-parking'
+      MYSQL_USER: 'econo'
+      MYSQL_PASSWORD: 'econo'
+    ports:
+      - '3306:3306'
+    volumes:
+#      ./initdb/init.sql : DB 초기화 스크립트
+      - './initdb:/docker-entrypoint-initdb.d'

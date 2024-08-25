@@ -25,6 +25,7 @@ jobs:
       - name: Github에서 레포 받아오기
         uses: actions/checkout@v3
       - name: 변수 출력하기
+        id: setup-env
         run: |
           echo "image-name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           echo "image-tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -55,10 +56,10 @@ jobs:
       id-token: write
       contents: read
     secrets:
-      SSH_HOST: ${{ secrets.SSH_HOST }}
-      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
-      SSH_KEY: ${{ secrets.SSH_KEY }}
-      SSH_PORT: ${{ secrets.SSH_PORT }}
+      SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
+      SSH_USERNAME: ${{ secrets.DEV_SSH_USERNAME }}
+      SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
+      SSH_PORT: ${{ secrets.DEV_SSH_PORT }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     with:
       image-name: ${{ needs.prepare-variables.outputs.image-name }}
