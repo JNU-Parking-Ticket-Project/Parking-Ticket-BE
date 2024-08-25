@@ -2,16 +2,15 @@ package com.jnu.ticketdomain.domains.events.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Where;
 
 @Entity
@@ -20,6 +19,7 @@ import org.hibernate.annotations.Where;
 @Builder
 @Getter
 @Where(clause = "is_deleted = false")
+@JsonIgnoreProperties("registrations")
 public class Sector {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,12 +57,12 @@ public class Sector {
     @Column(name = "is_deleted")
     private boolean isDeleted;
 
-    @JsonBackReference
+    @JsonBackReference(value = "event-sector")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
 
-    @JsonBackReference
+    @JsonManagedReference(value = "sector-registration")
     @OneToMany(mappedBy = "sector", cascade = CascadeType.ALL)
     private List<Registration> registrations = new ArrayList<>();
 
@@ -120,6 +120,10 @@ public class Sector {
         return reserve > 0;
     }
 
+    public boolean isRemainingAmount() {
+        return remainingAmount > 0;
+    }
+
     public void update(Sector sector) {
         this.sectorNumber = sector.sectorNumber;
         this.name = sector.name;
@@ -134,5 +138,18 @@ public class Sector {
 
     public void setEvent(Event savedEvent) {
         this.event = savedEvent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Sector sector = (Sector) o;
+        return Objects.equals(id, sector.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

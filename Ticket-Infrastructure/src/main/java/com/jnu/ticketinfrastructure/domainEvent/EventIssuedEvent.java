@@ -1,23 +1,26 @@
 package com.jnu.ticketinfrastructure.domainEvent;
 
 
-import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import lombok.Builder;
 import lombok.Getter;
 
 @Builder
 @Getter
 public class EventIssuedEvent extends InfrastructureEvent {
-    private final Registration registration;
-    private final Long currentUserId;
     private final Long sectorId;
+    private final Long userId;
+    private final Long eventId;
+    private final String registration;
+    private final Double score;
 
     public static EventIssuedEvent from(
-            Registration registration, Long currentUserId, Long sectorId) {
+            Long sectorId, Long userId, Long eventId, String registration, Double score) {
         return EventIssuedEvent.builder()
-                .registration(registration)
-                .currentUserId(currentUserId)
                 .sectorId(sectorId)
+                .userId(userId)
+                .eventId(eventId)
+                .registration(registration)
+                .score(score)
                 .build();
     }
 }

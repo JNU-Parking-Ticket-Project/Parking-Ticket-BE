@@ -2,7 +2,6 @@ package com.jnu.ticketapi.api.event.service;
 
 
 import com.jnu.ticketcommon.annotation.UseCase;
-import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
@@ -28,7 +27,7 @@ public class EventDeleteUseCase {
         Events.raise(EventDeletedEvent.of(event));
         event.deleteEvent();
         event.updateStatus(EventStatus.CLOSED, null);
-        redisRepository.delete(TicketStatic.REDIS_EVENT_ISSUE_STORE);
+        redisRepository.deleteKeysByPrefix(eventId.toString());
         sectorAdaptor.deleteByEvent(eventId);
         registrationAdaptor.deleteByEvent(eventId);
     }

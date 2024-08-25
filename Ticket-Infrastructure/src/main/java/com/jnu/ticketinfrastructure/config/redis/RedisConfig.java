@@ -3,10 +3,8 @@ package com.jnu.ticketinfrastructure.config.redis;
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import com.jnu.ticketinfrastructure.service.EventSubscribeService;
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,16 +15,16 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisKeyValueAdapter;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @EnableRedisRepositories(
         basePackages = "com.jnu",
         enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP)
 @Configuration
+@EnableTransactionManagement
 @Slf4j
 public class RedisConfig {
 
@@ -38,8 +36,6 @@ public class RedisConfig {
 
     @Value("${spring.redis.password}")
     private String redisPassword;
-
-    @Autowired private EventSubscribeService eventSubscribeService;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -57,37 +53,23 @@ public class RedisConfig {
         return new LettuceConnectionFactory(redisConfig, clientConfig);
     }
 
-    //    @Bean(name = "jedisConnectionFactory")
-    //    JedisConnectionFactory jedisConnectionFactory() {
-    //        return new JedisConnectionFactory();
-    //    }
-
-    //    redisTemplate 설정
     @Bean(name = "redisTemplate")
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
+
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(ChatMessage.class));
+        Jackson2JsonRedisSerializer<ChatMessage> serializer =
+                new Jackson2JsonRedisSerializer<>(ChatMessage.class);
+        redisTemplate.setValueSerializer(serializer);
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(serializer);
+        redisTemplate.setEnableTransactionSupport(true);
         return redisTemplate;
     }
 
-    // 컨테이너 설정
-    @Bean
-    RedisMessageListenerContainer redisContainer() {
-        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(redisConnectionFactory());
-        container.addMessageListener(messageListenerAdapter(), topic());
-        return container;
-    }
-
-    // 리스너어댑터 설정
-    @Bean
-    MessageListenerAdapter messageListenerAdapter() {
-        return new MessageListenerAdapter(eventSubscribeService);
-    }
-
-    // pub/sub 토픽 설정
+    // 메세지 리스너 설정
+    // pub/sub 메세지를 받을 채널 설정
     @Bean
     ChannelTopic topic() {
         return new ChannelTopic(REDIS_EVENT_CHANNEL);

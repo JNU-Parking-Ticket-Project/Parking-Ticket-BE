@@ -5,6 +5,8 @@ import static com.jnu.ticketdomain.domains.events.domain.EventStatus.CLOSED;
 import static com.jnu.ticketdomain.domains.events.domain.EventStatus.OPEN;
 import static com.jnu.ticketdomain.domains.events.domain.EventStatus.READY;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.jnu.ticketcommon.exception.TicketCodeException;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
@@ -27,6 +29,7 @@ import org.hibernate.annotations.Where;
 @AllArgsConstructor
 @Getter
 @Where(clause = "is_deleted = false")
+@JsonIgnoreProperties("sector")
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,6 +51,7 @@ public class Event {
 
     // 구간별 정보
     //    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "event", cascade = CascadeType.ALL)
     private List<Sector> sector = new ArrayList<>();
 
