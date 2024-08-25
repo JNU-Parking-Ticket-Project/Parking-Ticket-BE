@@ -46,7 +46,6 @@ public class EventIssuedEventHandler {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
         log.info("주차권 신청 저장 시작");
-        log.info("Thread: {}", Thread.currentThread().getName());
         if (isIdleConnectionAvailable()) {
             Sector sector = sectorAdaptor.findById(eventIssuedEvent.getSectorId());
 
@@ -60,7 +59,6 @@ public class EventIssuedEventHandler {
                         waitingQueueService.getValueByStatus(
                                 REDIS_EVENT_ISSUE_STORE, ChatMessageStatus.WAITING);
                 Long removeNum = waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, message);
-                log.info("removeNum: {}", removeNum);
                 log.info("주차권 신청 저장 완료");
             } catch (Exception e) {
                 // 에러가 났을 때 redis에 데이터를 재등록 한다.(Not Waiting 상태로)
@@ -95,12 +93,8 @@ public class EventIssuedEventHandler {
         if (sector.isSectorCapacityRemaining()) {
             user.success();
         } else if (sector.isSectorReserveRemaining()) {
-            int reserve = sectorCounter.get();
-            log.info("sectorCounter : " + reserve);
-            user.prepare(reserve);
+            user.prepare(sectorCounter.get());
             increment(sector);
-            int newReserve = sectorCounter.get();
-            log.info("newReserve : " + newReserve);
         } else {
             user.fail();
         }

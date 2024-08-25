@@ -87,8 +87,6 @@ public class WaitingQueueService {
     public ChatMessage getValueByStatus(String key, ChatMessageStatus status) {
         // Get the first element in the ZSET (lowest score) without removing it
         Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
-        String valueStatus = ((ChatMessage) resultSet.iterator().next()).getStatus();
-        log.info("Value의 ChatMessageStatus: {}", valueStatus);
         Set<ChatMessage> chatMessages =
                 resultSet.stream()
                         .map(o -> (ChatMessage) o)
@@ -115,7 +113,6 @@ public class WaitingQueueService {
 
     public void reRegisterQueue(
             String key, ChatMessage message, ChatMessageStatus newStatus, Double score) {
-        log.info("redis에 데이터 다시 넣기");
         redisRepository.removeAndAdd(key, message, newStatus, score);
     }
 
@@ -130,7 +127,6 @@ public class WaitingQueueService {
     public Object getValue(String key) {
         // Get the first element in the ZSET (lowest score) without removing it
         Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
-        log.info("resultSetSize: {}", resultSet.size());
         if (resultSet != null && !resultSet.isEmpty()) {
             // Return the first element in the set
             return resultSet.iterator().next();
