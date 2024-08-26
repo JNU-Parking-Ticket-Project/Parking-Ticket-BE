@@ -25,7 +25,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @EnableRedisRepositories(
         basePackages = "com.jnu",
-        enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP)
+        enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP,
+        keyspaceNotificationsConfigParameter = ""
+)
 @Configuration
 @Slf4j
 public class RedisConfig {
