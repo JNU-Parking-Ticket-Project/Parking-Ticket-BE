@@ -3,22 +3,15 @@ package com.jnu.ticketbatch.job;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
+import com.jnu.ticketbatch.config.ProcessQueueDataJob;
 import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketbatch.expired.BatchQuartzJob;
+import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
-import org.quartz.Job;
-import org.quartz.JobDataMap;
-import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.SchedulerFactory;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
+import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -27,6 +20,7 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -39,6 +33,8 @@ public class EventRegisterJob implements Job {
     @Autowired private ApplicationContext applicationContext;
     @Autowired private StepBuilderFactory stepBuilderFactory;
     @Autowired private JobBuilderFactory jobBuilderFactory;
+    @Autowired private ApplicationEventPublisher applicationEventPublisher;
+    @Autowired private WaitingQueueService waitingQueueService;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -111,5 +107,44 @@ public class EventRegisterJob implements Job {
 
         log.info(">>>>> Event 만료 스케줄링 등록");
         sched.scheduleJob(expiredEventQuartzJob, reserveTrigger);
+    }
+
+    public void ProcessQueueDataJob(Long eventId, LocalDateTime endAt) throws Exception {
+        SchedulerFactory schedFact = new StdSchedulerFactory();
+        Scheduler sched = schedFact.getScheduler();
+        sched.start();
+
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put("eventId", eventId);
+        jobDataMap.put("applicationContext", applicationContext);
+        jobDataMap.put("applicationEventPublisher", applicationEventPublisher);
+        jobDataMap.put("waitingQueueService", waitingQueueService);
+
+        JobDetail processQueueDataJob =
+                newJob(ProcessQueueDataJob.class)
+                        .withIdentity("PROCESS_QUEUE_DATA_JOB", "group1")
+                        .usingJobData("eventId", eventId)
+                        .setJobData(jobDataMap)
+                        .build();
+        Date end = Date.from(endAt.atZone(ZoneId.of("Asia/Seoul")).toInstant());
+        Date start =
+                Date.from(
+                        LocalDateTime.now()
+                                .plusMinutes(1)
+                                .atZone(ZoneId.of("Asia/Seoul"))
+                                .toInstant());
+        TriggerBuilder<Trigger> triggerTriggerBuilder = newTrigger();
+        triggerTriggerBuilder.withIdentity("PROCESS_QUEUE_DATA_TRIGGER", "group1");
+        triggerTriggerBuilder.startAt(start);
+        triggerTriggerBuilder.endAt(end);
+        triggerTriggerBuilder.withSchedule(
+                SimpleScheduleBuilder.simpleSchedule()
+                        .withIntervalInSeconds(10)
+                        .repeatForever()); // 5초마다 실행;  // 지정된 시간 동안 반복 실행
+        triggerTriggerBuilder.forJob(processQueueDataJob);
+        Trigger reserveTrigger = triggerTriggerBuilder.build();
+
+        log.info(">>>>> ProcessQueueData 스케줄링 등록");
+        sched.scheduleJob(processQueueDataJob, reserveTrigger);
     }
 }

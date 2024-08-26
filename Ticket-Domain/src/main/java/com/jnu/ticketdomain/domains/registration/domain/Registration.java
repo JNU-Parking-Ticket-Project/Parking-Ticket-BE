@@ -1,9 +1,7 @@
 package com.jnu.ticketdomain.domains.registration.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import java.time.LocalDateTime;
@@ -63,12 +61,12 @@ public class Registration {
     @ColumnDefault("false")
     private boolean isDeleted;
 
-    @JsonIgnore
+    @JsonBackReference(value = "user-registration")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @JsonIgnore
+    @JsonBackReference(value = "sector-registration")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sectorId", nullable = false)
     private Sector sector;

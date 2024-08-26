@@ -5,10 +5,15 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,20 +29,23 @@ public class WaitingQueueService {
         this.redisRepository = redisRepository;
     }
 
-    public Boolean registerQueue(String key, Registration registration, Long userId, Long sectorId)
+    public void registerQueue(
+            String key, Registration registration, Long userId, Long sectorId, Long eventId)
             throws JsonProcessingException {
         Double score = (double) System.currentTimeMillis();
         //        registration to JSON String
         //        String registrationString = registration.toString();
         String registrationString = convertRegistrationJSON(registration);
         //            String registrationString = objectMapper.writeValueAsString(registration);
-        ChatMessage message = new ChatMessage(registrationString, userId, sectorId);
-        boolean isPresent = redisRepository.zAddIfAbsent(key, message, score);
-        // 재고가 있어야 처리
-        if (isPresent) {
-            publishMessage(message);
-        }
-        return true;
+        ChatMessage message =
+                new ChatMessage(
+                        registrationString,
+                        userId,
+                        sectorId,
+                        eventId,
+                        ChatMessageStatus.NOT_WAITING.name());
+        checkDuplicateData(key, message);
+        redisRepository.zAddIfAbsent(key, message, score);
     }
 
     public String convertRegistrationJSON(Registration registration) {
@@ -49,9 +57,9 @@ public class WaitingQueueService {
         registrationJson.put("carNum", registration.getCarNum());
         registrationJson.put("phoneNum", registration.getPhoneNum());
         //        registrationJson.put("createdAt", registration.getCreatedAt());
-        registrationJson.put("deleted", registration.isDeleted());
-        registrationJson.put("light", registration.isLight());
-        registrationJson.put("saved", registration.isSaved());
+        registrationJson.put("isDeleted", registration.isDeleted());
+        registrationJson.put("isLight", registration.isLight());
+        registrationJson.put("isSaved", registration.isSaved());
         return registrationJson.toString();
     }
 
@@ -74,5 +82,57 @@ public class WaitingQueueService {
 
     public Long getWaitingOrder(String key, Object value) {
         return redisRepository.zRank(key, value);
+    }
+
+    public ChatMessage getValueByStatus(String key, ChatMessageStatus status) {
+        // Get the first element in the ZSET (lowest score) without removing it
+        Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
+        Set<ChatMessage> chatMessages =
+                resultSet.stream()
+                        .map(o -> (ChatMessage) o)
+                        .filter(
+                                chatMessage ->
+                                        Objects.equals(chatMessage.getStatus(), status.name()))
+                        .collect(Collectors.toSet());
+        log.info("chatMessages: {}", chatMessages);
+        if (chatMessages != null && !chatMessages.isEmpty()) {
+            // Return the first element in the set
+            return chatMessages.iterator().next();
+        } else {
+            // If the set is empty, return null or handle accordingly
+            return null;
+        }
+    }
+
+    public void checkDuplicateData(String key, Object value) {
+        Long rank = redisRepository.zRank(key, value);
+        if (rank != null) {
+            throw AlreadyExistRegistrationException.EXCEPTION;
+        }
+    }
+
+    public void reRegisterQueue(
+            String key, ChatMessage message, ChatMessageStatus newStatus, Double score) {
+        redisRepository.removeAndAdd(key, message, newStatus, score);
+    }
+
+    public Double getScore(String key, Object value) {
+        return redisRepository.getScore(key, value);
+    }
+
+    public Long remove(String key, Object value) {
+        return redisRepository.remove(key, value);
+    }
+
+    public Object getValue(String key) {
+        // Get the first element in the ZSET (lowest score) without removing it
+        Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
+        if (resultSet != null && !resultSet.isEmpty()) {
+            // Return the first element in the set
+            return resultSet.iterator().next();
+        } else {
+            // If the set is empty, return null or handle accordingly
+            return null;
+        }
     }
 }

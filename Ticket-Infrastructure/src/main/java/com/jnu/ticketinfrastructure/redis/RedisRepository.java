@@ -3,14 +3,19 @@ package com.jnu.ticketinfrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
 @Repository
+@Slf4j
 public class RedisRepository {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -33,31 +38,28 @@ public class RedisRepository {
     }
 
     public <T> Queue<T> zPopMin(String key, Long count, Class<T> type) {
-        ZSetOperations.TypedTuple<Object> objectTypedTuple = redisTemplate.opsForZSet().popMin(key);
-        objectTypedTuple.getValue();
         Set<T> set = (Set<T>) redisTemplate.opsForZSet().popMin(key, count);
         return new LinkedList<>(set);
     }
 
     public Object zPopMin(String key) {
-        ZSetOperations<String, Object> zSetOperations = redisTemplate.opsForZSet();
+        String luaScript =
+                "local result = redis.call('ZRANGE', KEYS[1], 0, 0) "
+                        + "if result ~= nil and #result > 0 then "
+                        + "    redis.call('ZREM', KEYS[1], result[1]) "
+                        + "    return result[1] "
+                        + "else "
+                        + "    return nil "
+                        + "end";
 
-        // Get the element with the smallest score
-        Set<ZSetOperations.TypedTuple<Object>> tuples = zSetOperations.rangeWithScores(key, 0, 0);
+        // Log before executing the script
+        log.info("Executing Lua script to pop min element from key: {}", key);
 
-        if (!tuples.isEmpty()) {
-            // Get the first tuple (element with the smallest score)
-            ZSetOperations.TypedTuple<Object> tuple = tuples.iterator().next();
-
-            // Remove the element from the set
-            zSetOperations.remove(key, tuple.getValue());
-
-            // Return the removed element
-            return tuple.getValue();
-        } else {
-            // Set is empty, return null or handle accordingly
-            return null;
-        }
+        return redisTemplate.execute(
+                (RedisCallback<Object>)
+                        connection ->
+                                connection.eval(
+                                        luaScript.getBytes(), ReturnType.VALUE, 1, key.getBytes()));
     }
 
     public Long zRank(String key, Object value) {
@@ -86,5 +88,57 @@ public class RedisRepository {
 
     public void delete(String key) {
         redisTemplate.delete(key);
+    }
+
+    public <T> Set<Object> zReverseRange(String key, Long startRank, Long endRank, Class<T> type) {
+        return redisTemplate.opsForZSet().reverseRange(key, startRank, endRank);
+    }
+
+    public void deleteKeysByPrefix(String prefix) {
+        // 1. 해당 prefix로 시작하는 모든 키 검색
+        Set<String> keys = redisTemplate.keys(prefix + "*");
+
+        // 2. 검색된 키들이 존재하는지 확인하고, 존재하면 삭제
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
+    }
+
+    public void removeAndAdd(
+            String key, ChatMessage message, ChatMessageStatus newStatus, Double score) {
+        // Remove the message from the set
+        redisTemplate.opsForZSet().remove(key, message);
+
+        // Update the status of the message
+        message.setStatus(newStatus.name());
+
+        // Add the message back to the set with the new status and score
+        redisTemplate.opsForZSet().addIfAbsent(key, message, score);
+    }
+
+    public Double getScore(String key, Object value) {
+        return redisTemplate.opsForZSet().score(key, value);
+    }
+
+    public Long remove(String key, Object value) {
+        return redisTemplate.opsForZSet().remove(key, value);
+    }
+
+    public Object getValue(String key) {
+        ZSetOperations<String, Object> zSetOperations = redisTemplate.opsForZSet();
+
+        // Get the element with the smallest score
+        Set<ZSetOperations.TypedTuple<Object>> tuples = zSetOperations.rangeWithScores(key, 0, 0);
+
+        if (!tuples.isEmpty()) {
+            // Get the first tuple (element with the smallest score)
+            ZSetOperations.TypedTuple<Object> tuple = tuples.iterator().next();
+
+            // Return the removed element
+            return tuple.getValue();
+        } else {
+            // Set is empty, return null or handle accordingly
+            return null;
+        }
     }
 }
