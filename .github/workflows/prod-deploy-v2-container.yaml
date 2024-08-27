@@ -54,7 +54,7 @@ jobs:
           script: |
             sudo docker rm -f $(docker ps -qa)
             sudo docker pull ${{ inputs.image-name }}:${{ inputs.image-tag }}
-            sudo docker-compose up -d
+            sudo docker compose up -d
             sudo docker image prune -f
 
       - name: 배포 완료 슬랙 알림 보내기
