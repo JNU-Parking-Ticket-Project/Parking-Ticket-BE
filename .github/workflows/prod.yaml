@@ -47,11 +47,31 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
+  call-deploy-workflow-outdated:
+    if: github.event_name == 'push'
+    needs: [ prepare-variables, call-build-workflow ]
+    name: 서비스 배포
+    uses: ./.github/workflows/prod-deploy-v1-swarm.yaml
+    permissions:
+      id-token: write
+      contents: read
+    secrets:
+      PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+      PROD_SSH_USERNAME: ${{ secrets.PROD_SSH_USERNAME }}
+      PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+      PROD_SSH_PORT: ${{ secrets.PROD_SSH_PORT }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    with:
+      image-name: ${{ needs.prepare-variables.outputs.image-name }}
+      image-tag: ${{ needs.prepare-variables.outputs.image-tag }}
+      environment: ${{ needs.prepare-variables.outputs.environment }}
+      service-name: ${{ needs.prepare-variables.outputs.service-name }}
+
   call-deploy-workflow:
     if: github.event_name == 'push'
     needs: [ prepare-variables, call-build-workflow ]
     name: 서비스 배포
-    uses: ./.github/workflows/prod-deploy.yaml
+    uses: ./.github/workflows/prod-deploy-v2-container.yaml
     permissions:
       id-token: write
       contents: read

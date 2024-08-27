@@ -1,4 +1,4 @@
-name: 라이브 서비스 배포
+name: 라이브 서비스 배포 (OUTDATED)
 on:
   workflow_call:
     secrets:
