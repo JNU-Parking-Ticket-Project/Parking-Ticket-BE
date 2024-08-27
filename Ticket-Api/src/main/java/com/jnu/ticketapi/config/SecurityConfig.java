@@ -85,8 +85,8 @@ public class SecurityConfig {
                         "/v3/api-docs/**",
                         "/v3/api-docs",
                         "/api-docs/**",
-                        "/api-docs",
-                        "/actuator/**")
+                        "/api-docs"
+                        )
                 .permitAll()
                 .antMatchers(councilAndAdminUrls)
                 .hasAnyRole("COUNCIL", "ADMIN")
@@ -110,7 +110,7 @@ public class SecurityConfig {
         return web ->
                 web.ignoring()
                         .antMatchers(
-                                HttpMethod.GET, "/v1/notice", "/v1/sectors", "/v1/events/period")
+                                HttpMethod.GET, "/v1/notice", "/v1/sectors", "/v1/events/period", "/actuator/**")
                         .antMatchers(HttpMethod.OPTIONS, "/v1/notice")
                         .antMatchers(HttpMethod.GET, "/v1/announce/**")
                         .antMatchers(HttpMethod.OPTIONS, "/v1/announce/**")
