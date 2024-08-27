@@ -139,8 +139,8 @@ public class EventRegisterJob implements Job {
         triggerTriggerBuilder.endAt(end);
         triggerTriggerBuilder.withSchedule(
                 SimpleScheduleBuilder.simpleSchedule()
-                        .withIntervalInSeconds(10)
-                        .repeatForever()); // 5초마다 실행;  // 지정된 시간 동안 반복 실행
+                        .withIntervalInSeconds(1)
+                        .repeatForever()); // 1초마다 실행;
         triggerTriggerBuilder.forJob(processQueueDataJob);
         Trigger reserveTrigger = triggerTriggerBuilder.build();
 
