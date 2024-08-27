@@ -86,8 +86,7 @@ public class SecurityConfig {
                         "/v3/api-docs",
                         "/api-docs/**",
                         "/api-docs",
-                        "/actuator/**"
-                        )
+                        "/actuator/**")
                 .permitAll()
                 .antMatchers(councilAndAdminUrls)
                 .hasAnyRole("COUNCIL", "ADMIN")

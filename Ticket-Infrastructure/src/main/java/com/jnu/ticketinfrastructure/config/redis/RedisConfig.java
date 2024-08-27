@@ -23,8 +23,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableRedisRepositories(
         basePackages = "com.jnu",
         enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP,
-        keyspaceNotificationsConfigParameter = ""
-)
+        keyspaceNotificationsConfigParameter = "")
 @Configuration
 @EnableTransactionManagement
 @Slf4j
