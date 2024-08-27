@@ -13,6 +13,7 @@ import com.jnu.ticketapi.api.registration.service.RegistrationUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
@@ -44,7 +45,7 @@ public class RegistrationController {
     @ApiErrorExceptionsExample(TemporarySaveExceptionFDocs.class)
     public ResponseEntity<TemporarySaveResponse> temporarySave(
             @RequestBody @Valid TemporarySaveRequest requestDto,
-            @GetEmail String email,
+            @Parameter(hidden = true) @GetEmail String email,
             @PathVariable("event-id") Long eventId) {
         TemporarySaveResponse responseDto =
                 registrationUseCase.temporarySave(requestDto, email, eventId);
@@ -56,7 +57,7 @@ public class RegistrationController {
     @ApiErrorExceptionsExample(FinalSaveExceptionDocs.class)
     public ResponseEntity<FinalSaveResponse> finalSave(
             @RequestBody @Valid FinalSaveRequest requestDto,
-            @GetEmail String email,
+            @Parameter(hidden = true) @GetEmail String email,
             @PathVariable("event-id") Long eventId) {
         FinalSaveResponse responseDto = registrationUseCase.finalSave(requestDto, email, eventId);
         return ResponseEntity.ok(responseDto);
