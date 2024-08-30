@@ -139,7 +139,7 @@ public class EventRegisterJob implements Job {
         triggerTriggerBuilder.endAt(end);
         triggerTriggerBuilder.withSchedule(
                 SimpleScheduleBuilder.simpleSchedule()
-                        .withIntervalInSeconds(1)
+                        .withIntervalInMilliseconds(200)
                         .repeatForever()); // 1초마다 실행;
         triggerTriggerBuilder.forJob(processQueueDataJob);
         Trigger reserveTrigger = triggerTriggerBuilder.build();
