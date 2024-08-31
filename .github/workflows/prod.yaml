@@ -5,7 +5,7 @@ on:
       - main
 
 env:
-  ENVIRONMENT: production
+  ENVIRONMENT: prod
   IMAGE_NAME: jnuparking/jnu-parking-prod
   SERVICE_NAME: jnu-parking-prod-was
 
