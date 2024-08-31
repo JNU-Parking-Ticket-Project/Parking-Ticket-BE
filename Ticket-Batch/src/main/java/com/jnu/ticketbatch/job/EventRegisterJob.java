@@ -109,7 +109,8 @@ public class EventRegisterJob implements Job {
         sched.scheduleJob(expiredEventQuartzJob, reserveTrigger);
     }
 
-    public void ProcessQueueDataJob(Long eventId, LocalDateTime endAt) throws Exception {
+    public void ProcessQueueDataJob(Long eventId, LocalDateTime startAt, LocalDateTime endAt)
+            throws Exception {
         SchedulerFactory schedFact = new StdSchedulerFactory();
         Scheduler sched = schedFact.getScheduler();
         sched.start();
@@ -126,13 +127,8 @@ public class EventRegisterJob implements Job {
                         .usingJobData("eventId", eventId)
                         .setJobData(jobDataMap)
                         .build();
+        Date start = Date.from(startAt.atZone(ZoneId.of("Asia/Seoul")).toInstant());
         Date end = Date.from(endAt.atZone(ZoneId.of("Asia/Seoul")).toInstant());
-        Date start =
-                Date.from(
-                        LocalDateTime.now()
-                                .plusMinutes(1)
-                                .atZone(ZoneId.of("Asia/Seoul"))
-                                .toInstant());
         TriggerBuilder<Trigger> triggerTriggerBuilder = newTrigger();
         triggerTriggerBuilder.withIdentity("PROCESS_QUEUE_DATA_TRIGGER", "group1");
         triggerTriggerBuilder.startAt(start);
