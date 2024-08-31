@@ -2,6 +2,7 @@ package com.jnu.ticketapi.api.event.service;
 
 
 import com.jnu.ticketcommon.annotation.UseCase;
+import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
@@ -12,6 +13,8 @@ import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @UseCase
 @RequiredArgsConstructor
@@ -27,7 +30,7 @@ public class EventDeleteUseCase {
         Events.raise(EventDeletedEvent.of(event));
         event.deleteEvent();
         event.updateStatus(EventStatus.CLOSED, null);
-        redisRepository.deleteKeysByPrefix(eventId.toString());
+        redisRepository.delete(REDIS_EVENT_ISSUE_STORE);
         sectorAdaptor.deleteByEvent(eventId);
         registrationAdaptor.deleteByEvent(eventId);
     }
