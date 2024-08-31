@@ -52,7 +52,7 @@ jobs:
           key: ${{ secrets.PROD_SSH_KEY }}
           port: ${{ secrets.PROD_SSH_PORT }}
           script: |
-            sudo docker rm -f $(docker ps -qa)
+            sudo docker rm -f $(sudo docker ps -qa)
             sudo docker pull ${{ inputs.image-name }}:${{ inputs.image-tag }}
             sudo docker compose up -d
             sudo docker image prune -f
