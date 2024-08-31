@@ -39,7 +39,9 @@ public class EventUpdatedEventHandler {
             eventRegisterJob.expiredJob(
                     event.getId(), eventUpdateEvent.getDateTimePeriod().getEndAt());
             eventRegisterJob.ProcessQueueDataJob(
-                    event.getId(), event.getDateTimePeriod().getEndAt());
+                    event.getId(),
+                    event.getDateTimePeriod().getStartAt(),
+                    event.getDateTimePeriod().getEndAt());
         } catch (Exception e) {
             log.info("스케줄링 실패 : " + e.getMessage());
             throw new RuntimeException("스케줄링 실패 : " + e.getMessage());
