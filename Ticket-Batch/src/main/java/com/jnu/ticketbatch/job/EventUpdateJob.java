@@ -73,7 +73,7 @@ public class EventUpdateJob implements Job {
                 sched.deleteJob(jobKey2); // 작업 삭제
                 log.info(">>>>> 만료 작업 스케줄러에서 삭제");
             }
-            if(sched.checkExists(jobKey3)){
+            if (sched.checkExists(jobKey3)) {
                 sched.deleteJob(jobKey3);
                 log.info(">>>>> redis 대기열 데이터 처리 작업 스케줄러에서 삭제");
             }
