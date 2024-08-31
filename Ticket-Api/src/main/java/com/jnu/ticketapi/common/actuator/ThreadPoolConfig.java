@@ -2,10 +2,10 @@ package com.jnu.ticketapi.common.actuator;
 
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.stereotype.Component;
 
-@Configuration
+@Component
 @Endpoint(id = "threadpool")
 public class ThreadPoolConfig {
 
