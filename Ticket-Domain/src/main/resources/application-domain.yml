@@ -29,13 +29,28 @@ spring:
     jdbc:
       initialize-schema: always
 
+#  level:
+
+thread:
+  core-pool-size: ${THREAD_CORE_POOL_SIZE:10}
+  max-pool-size: ${THREAD_MAX_POOL_SIZE:20}
+  queue-capacity: ${THREAD_QUEUE_CAPACITY:100}
+
 logging:
   level:
-    com.zaxxer.hikari.HikariConfig: DEBUG
+    root: ${LOGGING_LEVEL:ERROR}
+
+    org.springframework.orm.jpa: ${LOGGING_LEVEL:DEBUG}
+    org.springframework.transaction: ${LOGGING_LEVEL:DEBUG}
+    org.springframework.aop: ${LOGGING_LEVEL:DEBUG}
+    org.springframework.orm.jpa.JpaTransactionManager: ${LOGGING_LEVEL:INFO}
+    # HikariCP
+    com.zaxxer.hikari.HikariConfig: ${LOGGING_LEVEL:DEBUG}
     com.zaxxer.hikari: ERROR
-    org.springframework.orm.jpa: DEBUG
-    org.springframework.transaction: DEBUG
-    org.springframework.aop: DEBUG
+    org.hibernate:
+      SQL: ${LOGGING_LEVEL:INFO}
+      type.descriptor.sql.BasicBinder: ${LOGGING_LEVEL:INFO}
+
 ableEventLock: true
 ---
 
@@ -87,6 +102,7 @@ spring:
   config:
     activate:
       on-profile: prod
+
   datasource:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
     driver-class-name: com.mysql.cj.jdbc.Driver
