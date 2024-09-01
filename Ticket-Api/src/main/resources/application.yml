@@ -44,7 +44,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics
+        include: health,info,prometheus,metrics,threadpool
 
 captcha:
   domain: ${CLOUD_FRONT_URL}
