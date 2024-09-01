@@ -12,10 +12,8 @@ import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.*;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import com.jnu.ticketinfrastructure.config.redis.redissonLock.RedissonLock;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -30,12 +28,12 @@ public class EventWithDrawUseCase {
     private final EventAdaptor eventAdaptor;
 
     /** 재고 감소 */
-    @RedissonLock(
-            LockName = "주차권_발급",
-            identifier = "userId",
-            waitTime = 5000,
-            leaseTime = 10000,
-            timeUnit = TimeUnit.MILLISECONDS)
+    //    @RedissonLock(
+    //            LockName = "주차권_발급",
+    //            identifier = "userId",
+    //            waitTime = 5000,
+    //            leaseTime = 10000,
+    //            timeUnit = TimeUnit.MILLISECONDS)
     @SneakyThrows
     public void issueEvent(Registration registration, Long userId, Long sectorId, Long eventId) {
         // 재고 감소 로직 구현
