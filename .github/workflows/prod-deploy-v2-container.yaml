@@ -67,7 +67,7 @@ jobs:
               attachments: [{
                 color: '#59f764',
                 title: '서버 배포 알림',
-                text: `전남대 주차권 라이브 서버 배포 성공!`,
+                text: `전남대 주차권 프로덕션 서버 배포 성공!`,
                 fields: [
                   {
                     title: '배포 환경',
