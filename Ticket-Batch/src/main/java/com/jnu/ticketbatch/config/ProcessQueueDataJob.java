@@ -26,7 +26,8 @@ public class ProcessQueueDataJob implements Job {
 
             WaitingQueueService waitingQueueService =
                     (WaitingQueueService) jobDataMap.get("waitingQueueService");
-            ChatMessage message = (ChatMessage) waitingQueueService.findFirst(REDIS_EVENT_ISSUE_STORE);
+            ChatMessage message =
+                    (ChatMessage) waitingQueueService.findFirst(REDIS_EVENT_ISSUE_STORE);
 
             if (message != null) {
                 log.info("Message found, raising event");
@@ -39,5 +40,4 @@ public class ProcessQueueDataJob implements Job {
             log.error("ProcessQueueDataJob Exception: {}", e.getMessage());
         }
     }
-
 }

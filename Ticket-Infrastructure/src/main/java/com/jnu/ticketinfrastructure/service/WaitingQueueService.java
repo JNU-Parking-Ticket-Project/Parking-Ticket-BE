@@ -135,5 +135,4 @@ public class WaitingQueueService {
             return null;
         }
     }
-
 }

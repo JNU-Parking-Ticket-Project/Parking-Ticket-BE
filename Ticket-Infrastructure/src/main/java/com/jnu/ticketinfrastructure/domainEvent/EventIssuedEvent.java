@@ -11,11 +11,7 @@ public class EventIssuedEvent extends InfrastructureEvent {
     private ChatMessage message;
     private final Double score;
 
-    public static EventIssuedEvent from(
-            ChatMessage message, Double score) {
-        return EventIssuedEvent.builder()
-                .message(message)
-                .score(score)
-                .build();
+    public static EventIssuedEvent from(ChatMessage message, Double score) {
+        return EventIssuedEvent.builder().message(message).score(score).build();
     }
 }

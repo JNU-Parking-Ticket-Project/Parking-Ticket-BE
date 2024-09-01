@@ -16,15 +16,6 @@ public class RegistrationCreationEvent extends DomainEvent {
     private final String status;
     private final Integer sequence;
 
-    public static RegistrationCreationEvent of(Registration registration) {
-        return RegistrationCreationEvent.builder()
-                .email(registration.getEmail())
-                .name(registration.getName())
-                .status(registration.getUser().getStatus())
-                .sequence(registration.getUser().getSequence())
-                .build();
-    }
-
     public static RegistrationCreationEvent of(
             Registration registration, String status, Integer sequence) {
         return RegistrationCreationEvent.builder()

@@ -53,12 +53,13 @@ public class EventIssuedEventHandler {
             try {
                 Registration registration =
                         objectMapper.readValue(
-                                eventIssuedEvent.getMessage().getRegistration(), Registration.class);
+                                eventIssuedEvent.getMessage().getRegistration(),
+                                Registration.class);
                 processQueueData(sector, registration, eventIssuedEvent.getMessage().getUserId());
                 waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                 sector.decreaseEventStock();
                 log.info("주차권 신청 저장 완료");
-            }catch (NoEventStockLeftException e) {
+            } catch (NoEventStockLeftException e) {
                 log.error("해당 구간 잔여 여석이 없습니다.");
                 waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
             } catch (Exception e) {
@@ -102,7 +103,7 @@ public class EventIssuedEventHandler {
     }
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
-        if(!sector.isRemainingAmount()) {
+        if (!sector.isRemainingAmount()) {
             throw NoEventStockLeftException.EXCEPTION;
         }
         if (!registration.isSaved()) {
