@@ -17,7 +17,6 @@ import org.springframework.context.ApplicationEventPublisher;
 public class ProcessQueueDataJob implements Job {
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        log.info(">>>>>>>>>>>>> ProcessQueueDataJob execute");
         JobDataMap jobDataMap = context.getMergedJobDataMap();
         ApplicationEventPublisher publisher =
                 (ApplicationEventPublisher) jobDataMap.get("applicationEventPublisher");
