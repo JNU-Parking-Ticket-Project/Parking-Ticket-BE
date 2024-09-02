@@ -102,6 +102,7 @@ public class EventIssuedEventHandler {
     }
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
+        // TODO: Registration 로그 남기기
         if (!sector.isRemainingAmount()) {
             throw NoEventStockLeftException.EXCEPTION;
         }

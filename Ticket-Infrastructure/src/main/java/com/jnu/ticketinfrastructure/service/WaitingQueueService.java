@@ -1,6 +1,7 @@
 package com.jnu.ticketinfrastructure.service;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -134,5 +135,10 @@ public class WaitingQueueService {
             // If the set is empty, return null or handle accordingly
             return null;
         }
+    }
+
+    public Set<ChatMessage> findAll(String key) {
+        return redisRepository.zRange(key, 0L, -1L, Object.class)
+                .stream().map(o -> (ChatMessage) o).collect(Collectors.toSet());
     }
 }
