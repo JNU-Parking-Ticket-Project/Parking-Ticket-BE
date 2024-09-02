@@ -3,12 +3,10 @@ package com.jnu.ticketapi.api.event.handler;
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
@@ -84,8 +82,9 @@ public class EventIssuedEventHandler {
         User user = userAdaptor.findById(userId);
         reflectUserState(sector, user);
         saveRegistration(sector, user, registration);
-        Events.raise(
-                RegistrationCreationEvent.of(registration, user.getStatus(), user.getSequence()));
+        //        Events.raise(
+        //                RegistrationCreationEvent.of(registration, user.getStatus(),
+        // user.getSequence()));
     } // 이진혁 바보 멍청이 말미잘
 
     private void reflectUserState(Sector sector, User user) {

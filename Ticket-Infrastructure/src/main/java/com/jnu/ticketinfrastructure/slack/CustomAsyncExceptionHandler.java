@@ -24,7 +24,7 @@ public class CustomAsyncExceptionHandler implements AsyncUncaughtExceptionHandle
             log.error("Parameter value - " + param);
         }
         if (Arrays.asList(environment.getActiveProfiles()).contains("prod")) {
-            slackAsyncErrorSender.execute(method.getName(), throwable, params);
+            //            slackAsyncErrorSender.execute(method.getName(), throwable, params);
         }
     }
 }
