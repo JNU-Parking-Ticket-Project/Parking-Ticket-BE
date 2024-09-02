@@ -32,7 +32,6 @@ public class ProcessQueueDataJob implements Job {
 
             if (!messages.isEmpty()) {
                 for (ChatMessage message : messages) {
-                    log.info("Message found, raising event");
                     Double score = waitingQueueService.getScore(REDIS_EVENT_ISSUE_STORE, message);
                     waitingQueueService.reRegisterQueue(
                             REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
