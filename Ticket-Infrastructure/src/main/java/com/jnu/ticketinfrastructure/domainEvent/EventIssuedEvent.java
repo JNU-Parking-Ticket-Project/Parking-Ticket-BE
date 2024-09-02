@@ -1,26 +1,17 @@
 package com.jnu.ticketinfrastructure.domainEvent;
 
 
+import com.jnu.ticketinfrastructure.model.ChatMessage;
 import lombok.Builder;
 import lombok.Getter;
 
 @Builder
 @Getter
 public class EventIssuedEvent extends InfrastructureEvent {
-    private final Long sectorId;
-    private final Long userId;
-    private final Long eventId;
-    private final String registration;
+    private ChatMessage message;
     private final Double score;
 
-    public static EventIssuedEvent from(
-            Long sectorId, Long userId, Long eventId, String registration, Double score) {
-        return EventIssuedEvent.builder()
-                .sectorId(sectorId)
-                .userId(userId)
-                .eventId(eventId)
-                .registration(registration)
-                .score(score)
-                .build();
+    public static EventIssuedEvent from(ChatMessage message, Double score) {
+        return EventIssuedEvent.builder().message(message).score(score).build();
     }
 }

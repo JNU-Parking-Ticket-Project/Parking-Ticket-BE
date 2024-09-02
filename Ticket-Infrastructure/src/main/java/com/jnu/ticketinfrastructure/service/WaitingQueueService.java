@@ -84,7 +84,7 @@ public class WaitingQueueService {
         return redisRepository.zRank(key, value);
     }
 
-    public ChatMessage getValueByStatus(String key, ChatMessageStatus status) {
+    public ChatMessage findFirstByStatus(String key, ChatMessageStatus status) {
         // Get the first element in the ZSET (lowest score) without removing it
         Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
         Set<ChatMessage> chatMessages =
@@ -124,7 +124,7 @@ public class WaitingQueueService {
         return redisRepository.remove(key, value);
     }
 
-    public Object getValue(String key) {
+    public Object findFirst(String key) {
         // Get the first element in the ZSET (lowest score) without removing it
         Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
         if (resultSet != null && !resultSet.isEmpty()) {

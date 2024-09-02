@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
@@ -47,28 +48,29 @@ public class EventIssuedEventHandler {
     public void handle(EventIssuedEvent eventIssuedEvent) {
         log.info("주차권 신청 저장 시작");
         if (isIdleConnectionAvailable()) {
-            Sector sector = sectorAdaptor.findById(eventIssuedEvent.getSectorId());
+            Sector sector = sectorAdaptor.findById(eventIssuedEvent.getMessage().getSectorId());
 
             try {
                 Registration registration =
                         objectMapper.readValue(
-                                eventIssuedEvent.getRegistration(), Registration.class);
-                processQueueData(sector, registration, eventIssuedEvent.getUserId());
+                                eventIssuedEvent.getMessage().getRegistration(),
+                                Registration.class);
+                processQueueData(sector, registration, eventIssuedEvent.getMessage().getUserId());
+                waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                 sector.decreaseEventStock();
-                Object message =
-                        waitingQueueService.getValueByStatus(
-                                REDIS_EVENT_ISSUE_STORE, ChatMessageStatus.WAITING);
-                Long removeNum = waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, message);
                 log.info("주차권 신청 저장 완료");
+            } catch (NoEventStockLeftException e) {
+                log.error("해당 구간 잔여 여석이 없습니다.");
+                waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
             } catch (Exception e) {
                 // 에러가 났을 때 redis에 데이터를 재등록 한다.(Not Waiting 상태로)
-                log.error("EventIssuedEventHandler Exception: {}", e.getMessage());
+                log.error("EventIssuedEventHandler Exception: ", e);
                 ChatMessage message =
                         new ChatMessage(
-                                eventIssuedEvent.getRegistration(),
-                                eventIssuedEvent.getUserId(),
-                                eventIssuedEvent.getSectorId(),
-                                eventIssuedEvent.getEventId(),
+                                eventIssuedEvent.getMessage().getRegistration(),
+                                eventIssuedEvent.getMessage().getUserId(),
+                                eventIssuedEvent.getMessage().getSectorId(),
+                                eventIssuedEvent.getMessage().getEventId(),
                                 ChatMessageStatus.WAITING.name());
                 waitingQueueService.reRegisterQueue(
                         REDIS_EVENT_ISSUE_STORE,
@@ -101,11 +103,14 @@ public class EventIssuedEventHandler {
     }
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
+        if (!sector.isRemainingAmount()) {
+            throw NoEventStockLeftException.EXCEPTION;
+        }
         if (!registration.isSaved()) {
             registration.updateIsSaved(true);
             registration.setSector(sector);
             registration.setUser(user);
-            registrationAdaptor.saveAndFlush(registration);
+            registrationAdaptor.save(registration);
             return;
         }
         registration.setSector(sector);

@@ -27,21 +27,14 @@ public class ProcessQueueDataJob implements Job {
             WaitingQueueService waitingQueueService =
                     (WaitingQueueService) jobDataMap.get("waitingQueueService");
             ChatMessage message =
-                    waitingQueueService.getValueByStatus(
-                            REDIS_EVENT_ISSUE_STORE, ChatMessageStatus.NOT_WAITING);
+                    (ChatMessage) waitingQueueService.findFirst(REDIS_EVENT_ISSUE_STORE);
 
             if (message != null) {
                 log.info("Message found, raising event");
                 Double score = waitingQueueService.getScore(REDIS_EVENT_ISSUE_STORE, message);
                 waitingQueueService.reRegisterQueue(
                         REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
-                Events.raise(
-                        EventIssuedEvent.from(
-                                message.getSectorId(),
-                                message.getUserId(),
-                                message.getEventId(),
-                                message.getRegistration(),
-                                score));
+                Events.raise(EventIssuedEvent.from(message, score));
             }
         } catch (Exception e) {
             log.error("ProcessQueueDataJob Exception: {}", e.getMessage());
