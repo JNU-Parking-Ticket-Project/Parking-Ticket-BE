@@ -7,11 +7,10 @@ import com.jnu.ticketinfrastructure.domainEvent.Events;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.context.ApplicationEventPublisher;
-
-import java.util.Set;
 
 @Slf4j
 @DisallowConcurrentExecution
@@ -32,7 +31,7 @@ public class ProcessQueueDataJob implements Job {
             Set<ChatMessage> messages = waitingQueueService.findAll(REDIS_EVENT_ISSUE_STORE);
 
             if (!messages.isEmpty()) {
-                for(ChatMessage message : messages) {
+                for (ChatMessage message : messages) {
                     log.info("Message found, raising event");
                     Double score = waitingQueueService.getScore(REDIS_EVENT_ISSUE_STORE, message);
                     waitingQueueService.reRegisterQueue(
@@ -44,5 +43,4 @@ public class ProcessQueueDataJob implements Job {
             log.error("ProcessQueueDataJob Exception: {}", e.getMessage());
         }
     }
-
 }
