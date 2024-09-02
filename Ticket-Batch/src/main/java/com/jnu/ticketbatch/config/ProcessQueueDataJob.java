@@ -7,6 +7,7 @@ import com.jnu.ticketinfrastructure.domainEvent.Events;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.context.ApplicationEventPublisher;
@@ -16,7 +17,6 @@ import org.springframework.context.ApplicationEventPublisher;
 public class ProcessQueueDataJob implements Job {
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        log.info(">>>>>>>>>>>>> ProcessQueueDataJob execute");
         JobDataMap jobDataMap = context.getMergedJobDataMap();
         ApplicationEventPublisher publisher =
                 (ApplicationEventPublisher) jobDataMap.get("applicationEventPublisher");
@@ -26,15 +26,16 @@ public class ProcessQueueDataJob implements Job {
 
             WaitingQueueService waitingQueueService =
                     (WaitingQueueService) jobDataMap.get("waitingQueueService");
-            ChatMessage message =
-                    (ChatMessage) waitingQueueService.findFirst(REDIS_EVENT_ISSUE_STORE);
 
-            if (message != null) {
-                log.info("Message found, raising event");
-                Double score = waitingQueueService.getScore(REDIS_EVENT_ISSUE_STORE, message);
-                waitingQueueService.reRegisterQueue(
-                        REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
-                Events.raise(EventIssuedEvent.from(message, score));
+            Set<ChatMessage> messages = waitingQueueService.findAll(REDIS_EVENT_ISSUE_STORE);
+
+            if (!messages.isEmpty()) {
+                for (ChatMessage message : messages) {
+                    Double score = waitingQueueService.getScore(REDIS_EVENT_ISSUE_STORE, message);
+                    waitingQueueService.reRegisterQueue(
+                            REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
+                    Events.raise(EventIssuedEvent.from(message, score));
+                }
             }
         } catch (Exception e) {
             log.error("ProcessQueueDataJob Exception: {}", e.getMessage());

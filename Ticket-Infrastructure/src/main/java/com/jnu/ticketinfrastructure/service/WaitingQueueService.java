@@ -135,4 +135,10 @@ public class WaitingQueueService {
             return null;
         }
     }
+
+    public Set<ChatMessage> findAll(String key) {
+        return redisRepository.zRange(key, 0L, -1L, Object.class).stream()
+                .map(o -> (ChatMessage) o)
+                .collect(Collectors.toSet());
+    }
 }
