@@ -1,23 +1,21 @@
 package com.jnu.ticketapi.api.event.handler;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.event.UserReflectStatusEvent;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.zaxxer.hikari.HikariDataSource;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -26,6 +24,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @Component
 @RequiredArgsConstructor
@@ -37,8 +37,6 @@ public class EventIssuedEventHandler {
     private final SectorAdaptor sectorAdaptor;
     private final ObjectMapper objectMapper;
     private final HikariDataSource hikariDataSource;
-    private final StringRedisTemplate stringRedisTemplate;
-    private final Map<Sector, AtomicInteger> counter = new ConcurrentHashMap<>();
 
     @Async
     @EventListener(classes = EventIssuedEvent.class)
@@ -53,6 +51,10 @@ public class EventIssuedEventHandler {
                         objectMapper.readValue(
                                 eventIssuedEvent.getMessage().getRegistration(),
                                 Registration.class);
+
+                if(Boolean.TRUE.equals(registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId())))
+                    return;
+
                 processQueueData(sector, registration, eventIssuedEvent.getMessage().getUserId());
                 waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                 sector.decreaseEventStock();
@@ -79,33 +81,24 @@ public class EventIssuedEventHandler {
         }
     }
 
-    /** 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다. */
+    /**
+     * 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
+     */
     public void processQueueData(Sector sector, Registration registration, Long userId) {
         User user = userAdaptor.findById(userId);
-        reflectUserState(sector, user);
         saveRegistration(sector, user, registration);
-        //        Events.raise(
-        //                RegistrationCreationEvent.of(registration, user.getStatus(),
-        // user.getSequence()));
+                Events.raise(
+                        UserReflectStatusEvent.of(userId, registration, sector));
     } // 이진혁 바보 멍청이 말미잘
 
-    private void reflectUserState(Sector sector, User user) {
-        AtomicInteger sectorCounter = counter.computeIfAbsent(sector, k -> new AtomicInteger(1));
-        if (sector.isSectorCapacityRemaining()) {
-            user.success();
-        } else if (sector.isSectorReserveRemaining()) {
-            user.prepare(sectorCounter.get());
-            increment(sector);
-        } else {
-            user.fail();
-        }
-    }
+
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
         // TODO: Registration 로그 남기기
         if (!sector.isRemainingAmount()) {
             throw NoEventStockLeftException.EXCEPTION;
         }
+
         if (!registration.isSaved()) {
             registration.updateIsSaved(true);
             registration.setSector(sector);
@@ -123,14 +116,5 @@ public class EventIssuedEventHandler {
         return idleConnections > 0;
     }
 
-    public void increment(Sector sector) {
-        AtomicInteger sectorCounter = counter.get(sector);
-        while (true) {
-            int existingValue = sectorCounter.get();
-            int newValue = existingValue + 1;
-            if (sectorCounter.compareAndSet(existingValue, newValue)) {
-                return;
-            }
-        }
-    }
 }
+
