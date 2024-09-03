@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.config;
 
 
+import java.util.List;
 import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,7 +13,7 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConstructorBinding
 @ConfigurationProperties(prefix = "web.log")
 public class WebProperties {
-    private String[] urlNoLogging;
+    private List<String> urlNoLogging;
 
     public boolean isNoLoggable(String path) {
         for (String pattern : urlNoLogging) {
