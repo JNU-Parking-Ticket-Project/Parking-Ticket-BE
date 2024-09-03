@@ -20,7 +20,7 @@ public class RegistrationPublishEvent extends DomainEvent {
         return RegistrationPublishEvent.builder()
                 .email(registration.getEmail())
                 .name(registration.getName())
-                .status(registration.getUser().getStatus())
+                .status(registration.getUser().getStatus().getValue())
                 .sequence(registration.getUser().getSequence())
                 .build();
     }
