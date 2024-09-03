@@ -35,6 +35,11 @@ management:
 captcha:
   domain: ${CLOUD_FRONT_URL}
 
+web:
+  log:
+    url-no-logging:
+      - /api/swagger-ui.html
+
 ---
 spring:
   config:
