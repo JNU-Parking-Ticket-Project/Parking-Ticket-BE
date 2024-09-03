@@ -102,8 +102,8 @@ public class EventIssuedEventHandler {
     }
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
-        // TODO: Registration 로그 남기기
         if (!sector.isRemainingAmount()) {
+            log.warn("잔여 여석이 남지 않음. Registration: {}", registration);
             throw NoEventStockLeftException.EXCEPTION;
         }
         if (!registration.isSaved()) {
