@@ -1,7 +1,9 @@
 package com.jnu.ticketapi.config;
 
 
-import java.util.Optional;
+import com.jnu.ticketapi.security.JwtResolver;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -17,35 +19,33 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class WebRequestInterceptor implements HandlerInterceptor {
+public class WebLogginInterceptor implements HandlerInterceptor {
     private static final String START_TIME_ATTR_NAME = "startTime";
     private static final String REQUEST_ID_KEY = "requestId";
-    private static final String REGISTRATION_PATH = "/registration";
-
+    private static final String REGISTRATION_PATH = "/api/v1/registration/";
     private final WebProperties webProperties;
+    private final JwtResolver jwtResolver;
 
     @Override
     public boolean preHandle(
             HttpServletRequest request, HttpServletResponse response, Object handler) {
         MDC.put(REQUEST_ID_KEY, generateRequestId());
         request.setAttribute(START_TIME_ATTR_NAME, System.currentTimeMillis());
+
         return true;
     }
 
     @Override
     public void afterCompletion(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Object handler,
-            Exception ex) {
+            HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
+            throws IOException {
         if (isSkipLogging(request)) {
             return;
         }
 
-        StringBuilder logMessage = createBaseLogMessage(request, response);
-        appendSensitiveDataToLogMessage(request, logMessage);
+        createBaseLogMessage(request, response);
+        appendSensitiveDataToLogMessage(request);
 
-        log.info(logMessage.toString());
         MDC.clear();
     }
 
@@ -67,39 +67,32 @@ public class WebRequestInterceptor implements HandlerInterceptor {
         return HttpMethod.OPTIONS.matches(request.getMethod());
     }
 
-    private StringBuilder createBaseLogMessage(
-            HttpServletRequest request, HttpServletResponse response) {
-        Long currentUserId = SecurityUtils.getCurrentUserId();
+    private void createBaseLogMessage(HttpServletRequest request, HttpServletResponse response) {
+        String bearerToken = request.getHeader("Authorization");
+        String accessToken = jwtResolver.extractToken(bearerToken);
+
+        String currentUserId = jwtResolver.getAuthentication(accessToken).getName();
         long executionTime = getExecutionTime(request);
         String requestUrl = request.getRequestURI();
         String responseType = response.getContentType();
 
-        return new StringBuilder(
+        log.info(
                 String.format(
                         "URL: %s, User: %s, ResponseType: %s, ResponseTime: %dms",
                         requestUrl, currentUserId, responseType, executionTime));
     }
 
-    private void appendSensitiveDataToLogMessage(
-            HttpServletRequest request, StringBuilder logMessage) {
+    private void appendSensitiveDataToLogMessage(HttpServletRequest request) throws IOException {
         String requestUri = request.getRequestURI();
-        if (requestUri.contains(REGISTRATION_PATH)) {
-            appendRegistrationDataToLogMessage(request, logMessage);
+        if (requestUri.trim().startsWith(REGISTRATION_PATH)) {
+            log.info("[registration request]" + getBody(request));
         }
     }
 
-    private void appendRegistrationDataToLogMessage(
-            HttpServletRequest request, StringBuilder logMessage) {
-        appendParameterToLogMessage(
-                logMessage, request, "phoneNumber", "Registration data - Phone");
-        appendParameterToLogMessage(logMessage, request, "carNumber", "Car");
-    }
-
-    private void appendParameterToLogMessage(
-            StringBuilder logMessage, HttpServletRequest request, String paramName, String label) {
-        Optional.ofNullable(request.getParameter(paramName))
-                .ifPresent(
-                        value -> logMessage.append(" ").append(label).append(": ").append(value));
+    private String getBody(HttpServletRequest request) throws IOException {
+        CacheAccessRequestFilter wrapRequest = (CacheAccessRequestFilter) request;
+        byte[] contents = wrapRequest.getContents();
+        return new String(contents, StandardCharsets.UTF_8);
     }
 
     private long getExecutionTime(HttpServletRequest request) {
