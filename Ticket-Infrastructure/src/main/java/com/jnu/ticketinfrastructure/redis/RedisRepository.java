@@ -37,6 +37,10 @@ public class RedisRepository {
         return redisTemplate.opsForZSet().range(key, startRank, endRank);
     }
 
+    public Set<ZSetOperations.TypedTuple<Object>> zRangeWithScores(String key, Long startRank, Long endRank) {
+        return redisTemplate.opsForZSet().rangeWithScores(key, startRank, endRank);
+    }
+
     public <T> Queue<T> zPopMin(String key, Long count, Class<T> type) {
         Set<T> set = (Set<T>) redisTemplate.opsForZSet().popMin(key, count);
         return new LinkedList<>(set);
@@ -90,9 +94,6 @@ public class RedisRepository {
         redisTemplate.delete(key);
     }
 
-    public <T> Set<Object> zReverseRange(String key, Long startRank, Long endRank, Class<T> type) {
-        return redisTemplate.opsForZSet().reverseRange(key, startRank, endRank);
-    }
 
     public void deleteKeysByPrefix(String prefix) {
         // 1. 해당 prefix로 시작하는 모든 키 검색

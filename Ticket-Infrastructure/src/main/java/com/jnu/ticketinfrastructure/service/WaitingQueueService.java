@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -136,9 +137,7 @@ public class WaitingQueueService {
         }
     }
 
-    public Set<ChatMessage> findAll(String key) {
-        return redisRepository.zRange(key, 0L, -1L, Object.class).stream()
-                .map(o -> (ChatMessage) o)
-                .collect(Collectors.toSet());
+    public Set<ZSetOperations.TypedTuple<Object>> findAllWithScore(String key) {
+        return redisRepository.zRangeWithScores(key, 0L, -1L);
     }
 }
