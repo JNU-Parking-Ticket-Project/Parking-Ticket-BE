@@ -1,7 +1,15 @@
 <configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <property name="LOG_PATH" value="./logs" />
-    <property name="LOG_FILE_NAME" value="application" />
     <property name="LOG_PATTERN" value="%X{requestId} %d{yyyy-MM-dd HH:mm:ss.SSS} %5p --- [%15.15t] %-40.40logger{39} : %m%n%ex{full}" />
+
+    <springProperty scope="context" name="LOGGING_LEVEL_ROOT" source="logging.level.root"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -12,9 +20,15 @@
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
     </appender>
 
-    <!-- Root logger -->
+    <root level="${LOGGING_LEVEL_ROOT}">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
     <root level="INFO">
         <appender-ref ref="FILE" />
     </root>
