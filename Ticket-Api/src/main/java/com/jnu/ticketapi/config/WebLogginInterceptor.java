@@ -74,12 +74,13 @@ public class WebLogginInterceptor implements HandlerInterceptor {
         String currentUserId = jwtResolver.getAuthentication(accessToken).getName();
         long executionTime = getExecutionTime(request);
         String requestUrl = request.getRequestURI();
+        String method = request.getMethod();
         String responseType = response.getContentType();
 
         log.info(
                 String.format(
-                        "URL: %s, User: %s, ResponseType: %s, ResponseTime: %dms",
-                        requestUrl, currentUserId, responseType, executionTime));
+                        "Method : %s, URL: %s, User: %s, ResponseType: %s, ResponseTime: %dms",
+                        method, requestUrl, currentUserId, responseType, executionTime));
     }
 
     private void appendSensitiveDataToLogMessage(HttpServletRequest request) throws IOException {
