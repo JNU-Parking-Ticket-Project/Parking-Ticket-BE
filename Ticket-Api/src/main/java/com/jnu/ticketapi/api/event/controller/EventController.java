@@ -43,6 +43,7 @@ public class EventController {
     private final UpdatePublishStatusUseCase updatePublishStatusUseCase;
     private final EventDeleteUseCase eventDeleteUseCase;
     private final EventUpdateUseCase eventUpdateUseCase;
+    private final TestUseCase testUseCase;
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
@@ -163,5 +164,20 @@ public class EventController {
     public SuccessResponse deleteEvent(@PathVariable("event-id") Long eventId) {
         eventDeleteUseCase.deleteEvent(eventId);
         return new SuccessResponse(EVENT_SUCCESS_DELETE_MESSAGE);
+    }
+    @Operation(description = "OPEN 중인 이벤트를 닫고 이벤트를 생성한다.")
+    @PostMapping("/events/test")
+    public void test() {
+        testUseCase.execute();
+    }
+    @Operation(description = "issueAmount가 60인 구간 5개를 만든다.")
+    @PostMapping("/events/test2")
+    public void test2() {
+        testUseCase.execute2();
+    }
+    @Operation(description = "주차권 신청 2개를 신청한다.")
+    @PostMapping("/events/test3")
+    public void test3() {
+        testUseCase.execute3();
     }
 }
