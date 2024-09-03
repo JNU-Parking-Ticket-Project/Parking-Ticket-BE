@@ -55,7 +55,9 @@ public interface RegistrationRepository
     List<Registration> findByUserId(@Param("userId") Long userId);
 
     List<Registration> findByUser(User user);
-    @Query("select count (r) from Registration r where r.id < :id and r.isSaved = true and r.sector.id = :sectorId")
+
+    @Query(
+            "select count (r) from Registration r where r.id < :id and r.isSaved = true and r.sector.id = :sectorId")
     Integer findPositionById(@Param("id") Long id, @Param("sectorId") Long sectorId);
 
     Boolean existsByIdAndIsSavedTrue(Long id);

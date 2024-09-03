@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.user.domain;
 
+
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 

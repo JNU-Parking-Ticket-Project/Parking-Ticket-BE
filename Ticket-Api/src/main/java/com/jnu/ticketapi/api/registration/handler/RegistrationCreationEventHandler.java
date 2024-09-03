@@ -1,10 +1,7 @@
 package com.jnu.ticketapi.api.registration.handler;
 
 
-import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
-import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
-import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.service.MailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +20,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class RegistrationCreationEventHandler {
     private final MailService mailService;
 
-
     @Async
     @TransactionalEventListener(
             classes = RegistrationCreationEvent.class,
@@ -39,7 +35,4 @@ public class RegistrationCreationEventHandler {
         mailService.sendRegistrationResultMail(
                 event.getEmail(), event.getName(), event.getStatus(), event.getSequence());
     }
-
-
-
 }

@@ -1,5 +1,7 @@
 package com.jnu.ticketapi.api.event.handler;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
@@ -7,7 +9,6 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.event.UserReflectStatusEvent;
@@ -19,13 +20,10 @@ import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @Component
 @RequiredArgsConstructor
@@ -52,8 +50,8 @@ public class EventIssuedEventHandler {
                                 eventIssuedEvent.getMessage().getRegistration(),
                                 Registration.class);
 
-                if(Boolean.TRUE.equals(registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId())))
-                    return;
+                if (Boolean.TRUE.equals(
+                        registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId()))) return;
 
                 processQueueData(sector, registration, eventIssuedEvent.getMessage().getUserId());
                 waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
@@ -81,17 +79,12 @@ public class EventIssuedEventHandler {
         }
     }
 
-    /**
-     * 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
-     */
+    /** 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다. */
     public void processQueueData(Sector sector, Registration registration, Long userId) {
         User user = userAdaptor.findById(userId);
         saveRegistration(sector, user, registration);
-                Events.raise(
-                        UserReflectStatusEvent.of(userId, registration, sector));
+        Events.raise(UserReflectStatusEvent.of(userId, registration, sector));
     } // 이진혁 바보 멍청이 말미잘
-
-
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
         // TODO: Registration 로그 남기기
@@ -115,6 +108,4 @@ public class EventIssuedEventHandler {
         int idleConnections = hikariDataSource.getHikariPoolMXBean().getIdleConnections();
         return idleConnections > 0;
     }
-
 }
-

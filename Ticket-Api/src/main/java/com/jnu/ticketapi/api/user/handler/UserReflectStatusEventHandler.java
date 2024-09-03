@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.user.handler;
 
+
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
@@ -38,10 +39,14 @@ public class UserReflectStatusEventHandler {
         User user = userAdaptor.findById(event.getUserId());
         reflectUserState(event, user);
         Events.raise(
-                RegistrationCreationEvent.of(event.getRegistration(), user.getStatus().getValue(), user.getSequence()));
+                RegistrationCreationEvent.of(
+                        event.getRegistration(), user.getStatus().getValue(), user.getSequence()));
     }
+
     private void reflectUserState(UserReflectStatusEvent event, User user) {
-        Integer position = registrationAdaptor.findPositionById(event.getRegistration().getId(), event.getSector().getId());
+        Integer position =
+                registrationAdaptor.findPositionById(
+                        event.getRegistration().getId(), event.getSector().getId());
         Integer sectorCapacity = event.getSector().getInitSectorCapacity();
         Integer issueAmount = event.getSector().getIssueAmount();
         if (position <= sectorCapacity) {
