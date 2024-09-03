@@ -54,3 +54,8 @@ captcha:
   domain: dsrps7tt0ew8t.cloudfront.net
 
 ableDomainEvent : false
+
+web:
+  log:
+    url-no-logging:
+      - /api/swagger-ui.html
