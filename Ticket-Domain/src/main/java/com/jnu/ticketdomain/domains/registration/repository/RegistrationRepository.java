@@ -32,7 +32,7 @@ public interface RegistrationRepository
     Optional<Registration> findByEmail(String email);
 
     @Query(
-            "select r from Registration r where r.isDeleted = false and r.isSaved = true and r.sector.event.id = :eventId")
+            "select r from Registration r join fetch r.sector join fetch r.user where r.isSaved = true and r.sector.event.id = :eventId")
     List<Registration> findByIsDeletedFalseAndIsSavedTrue(@Param("eventId") Long eventId);
 
     @Query("UPDATE Registration r SET r.isDeleted = true WHERE r.sector.id = :sectorId")
@@ -55,4 +55,10 @@ public interface RegistrationRepository
     List<Registration> findByUserId(@Param("userId") Long userId);
 
     List<Registration> findByUser(User user);
+
+    @Query(
+            "select count (r) from Registration r where r.id < :id and r.isSaved = true and r.sector.id = :sectorId")
+    Integer findPositionById(@Param("id") Long id, @Param("sectorId") Long sectorId);
+
+    Boolean existsByIdAndIsSavedTrue(Long id);
 }

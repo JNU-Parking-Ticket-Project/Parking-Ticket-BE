@@ -73,6 +73,6 @@ public class SlackInternalErrorSender {
         layoutBlocks.add(
                 section(section -> section.fields(List.of(errorNameMarkdown, errorStackMarkdown))));
 
-        //        slackProvider.sendNotification(layoutBlocks);
+                slackProvider.sendNotification(layoutBlocks);
     }
 }

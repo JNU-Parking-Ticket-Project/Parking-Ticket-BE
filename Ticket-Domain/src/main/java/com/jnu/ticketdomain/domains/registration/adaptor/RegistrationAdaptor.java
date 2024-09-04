@@ -91,4 +91,14 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     public List<Registration> findByUserId(Long userId) {
         return registrationRepository.findByUserId(userId);
     }
+
+    @Override
+    public Integer findPositionById(Long id, Long sectorId) {
+        return registrationRepository.findPositionById(id, sectorId) + 1;
+    }
+
+    @Override
+    public Boolean existsByIdAndIsSavedTrue(Long id) {
+        return registrationRepository.existsByIdAndIsSavedTrue(id);
+    }
 }

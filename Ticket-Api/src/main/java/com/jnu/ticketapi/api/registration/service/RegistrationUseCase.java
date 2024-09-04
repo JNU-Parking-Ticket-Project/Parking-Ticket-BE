@@ -28,8 +28,10 @@ import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrat
 import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationException;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.redis.RedisService;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -204,10 +206,35 @@ public class RegistrationUseCase {
         }
     }
 
+    /*
+     * 신청자 목록 조회
+     * 먼저 구간 순으로 정렬하고, 합격자가 예비자보다 우선되도록 정렬, 합격자는 id로 정렬, 예비자는 sequence로 정렬
+     */
     @Transactional(readOnly = true)
     public GetRegistrationsResponse getRegistrations(Long eventId) {
         List<Registration> registrations =
-                registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(eventId);
+                registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(eventId).stream()
+                        .filter(
+                                registration -> {
+                                    UserStatus status = registration.getUser().getStatus();
+                                    return status.equals(UserStatus.SUCCESS)
+                                            || status.equals(UserStatus.PREPARE);
+                                })
+                        .sorted(
+                                Comparator.comparing(
+                                                (Registration r) -> r.getSector().getSectorNumber())
+                                        .thenComparing(r -> r.getUser().getStatus())
+                                        .thenComparing(
+                                                r ->
+                                                        r.getUser()
+                                                                        .getStatus()
+                                                                        .equals(UserStatus.SUCCESS)
+                                                                ? r.getId()
+                                                                : r.getUser().getSequence())
+                                        .thenComparing(
+                                                registration ->
+                                                        registration.getSector().getSectorNumber()))
+                        .toList();
 
         return GetRegistrationsResponse.of(registrations);
     }
@@ -217,5 +244,9 @@ public class RegistrationUseCase {
                 || registrationAdaptor.existsByStudentNumAndIsSavedTrue(studentNum, eventId)) {
             throw AlreadyExistRegistrationException.EXCEPTION;
         }
+    }
+
+    private Integer parseSectorNumber(String sectorNumber) {
+        return Integer.parseInt(sectorNumber.split("구간")[0]);
     }
 }

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import javax.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Where;
 
 @Entity
@@ -20,6 +21,7 @@ import org.hibernate.annotations.Where;
 @Getter
 @Where(clause = "is_deleted = false")
 @JsonIgnoreProperties("registrations")
+@DynamicUpdate
 public class Sector {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

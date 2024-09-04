@@ -11,6 +11,7 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 
 @Slf4j
 @DisallowConcurrentExecution
@@ -27,11 +28,13 @@ public class ProcessQueueDataJob implements Job {
             WaitingQueueService waitingQueueService =
                     (WaitingQueueService) jobDataMap.get("waitingQueueService");
 
-            Set<ChatMessage> messages = waitingQueueService.findAll(REDIS_EVENT_ISSUE_STORE);
+            Set<TypedTuple<Object>> messagesWithScores =
+                    waitingQueueService.findAllWithScore(REDIS_EVENT_ISSUE_STORE);
 
-            if (!messages.isEmpty()) {
-                for (ChatMessage message : messages) {
-                    Double score = waitingQueueService.getScore(REDIS_EVENT_ISSUE_STORE, message);
+            if (!messagesWithScores.isEmpty()) {
+                for (TypedTuple<Object> messageWithScore : messagesWithScores) {
+                    Double score = messageWithScore.getScore();
+                    ChatMessage message = (ChatMessage) messageWithScore.getValue();
                     waitingQueueService.reRegisterQueue(
                             REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
                     Events.raise(EventIssuedEvent.from(message, score));
