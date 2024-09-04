@@ -34,10 +34,7 @@ public class WaitingQueueService {
             String key, Registration registration, Long userId, Long sectorId, Long eventId)
             throws JsonProcessingException {
         Double score = (double) System.currentTimeMillis();
-        //        registration to JSON String
-        //        String registrationString = registration.toString();
         String registrationString = convertRegistrationJSON(registration);
-        //            String registrationString = objectMapper.writeValueAsString(registration);
         ChatMessage message =
                 new ChatMessage(
                         registrationString,
@@ -57,7 +54,6 @@ public class WaitingQueueService {
         registrationJson.put("affiliation", registration.getAffiliation());
         registrationJson.put("carNum", registration.getCarNum());
         registrationJson.put("phoneNum", registration.getPhoneNum());
-        //        registrationJson.put("createdAt", registration.getCreatedAt());
         registrationJson.put("isDeleted", registration.isDeleted());
         registrationJson.put("isLight", registration.isLight());
         registrationJson.put("isSaved", registration.isSaved());
@@ -86,7 +82,6 @@ public class WaitingQueueService {
     }
 
     public ChatMessage findFirstByStatus(String key, ChatMessageStatus status) {
-        // Get the first element in the ZSET (lowest score) without removing it
         Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
         Set<ChatMessage> chatMessages =
                 resultSet.stream()
@@ -95,7 +90,6 @@ public class WaitingQueueService {
                                 chatMessage ->
                                         Objects.equals(chatMessage.getStatus(), status.name()))
                         .collect(Collectors.toSet());
-        log.info("chatMessages: {}", chatMessages);
         if (chatMessages != null && !chatMessages.isEmpty()) {
             // Return the first element in the set
             return chatMessages.iterator().next();

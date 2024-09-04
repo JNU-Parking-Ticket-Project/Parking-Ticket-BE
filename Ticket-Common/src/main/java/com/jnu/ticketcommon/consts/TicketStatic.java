@@ -30,6 +30,9 @@ public class TicketStatic {
 
     public static final String REDIS_EVENT_CHANNEL = "쿠폰 발급 채널";
     public static final String REDIS_EVENT_ISSUE_STORE = "쿠폰 발급 저장소";
+
+    public static final Integer REGISTRATION_SIZE = 14;
+    public static final Integer MAX_EMAIL_SEND_RETRY = 10;
     public static final String[] SwaggerPatterns = {
         "/api/swagger-resources/**",
         "/api/swagger-ui/**",

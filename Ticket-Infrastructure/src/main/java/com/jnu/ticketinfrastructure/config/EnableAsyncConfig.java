@@ -5,6 +5,7 @@ import com.jnu.ticketinfrastructure.slack.CustomAsyncExceptionHandler;
 import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
@@ -18,6 +19,8 @@ public class EnableAsyncConfig implements AsyncConfigurer {
 
     private final CustomAsyncExceptionHandler customAsyncExceptionHandler;
 
+    @Autowired private ThreadPoolTaskExecutor executor;
+
     @Value("${thread.core-pool-size}")
     private int corePoolSize;
 
@@ -29,7 +32,6 @@ public class EnableAsyncConfig implements AsyncConfigurer {
 
     @Override
     public Executor getAsyncExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(corePoolSize);
         executor.setMaxPoolSize(maxPoolSize);
         executor.setQueueCapacity(queueCapacity);

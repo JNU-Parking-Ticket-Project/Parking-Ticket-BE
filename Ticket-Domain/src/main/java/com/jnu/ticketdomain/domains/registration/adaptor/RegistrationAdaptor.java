@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.registration.adaptor;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REGISTRATION_SIZE;
 
 import com.jnu.ticketcommon.annotation.Adaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
@@ -11,6 +12,9 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @RequiredArgsConstructor
 @Adaptor
@@ -72,6 +76,11 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     @Override
     public List<Registration> findByIsDeletedFalseAndIsSavedTrue(Long eventId) {
         return registrationRepository.findByIsDeletedFalseAndIsSavedTrue(eventId);
+    }
+
+    public Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(Long eventId, int page) {
+        Pageable pageable = PageRequest.of(page, REGISTRATION_SIZE);
+        return registrationRepository.findByIsDeletedFalseAndIsSavedTrueByPage(eventId, pageable);
     }
 
     @Override

@@ -40,7 +40,6 @@ public class EventIssuedEventHandler {
     @EventListener(classes = EventIssuedEvent.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
-        log.info("주차권 신청 저장 시작");
         if (isIdleConnectionAvailable()) {
             Sector sector = sectorAdaptor.findById(eventIssuedEvent.getMessage().getSectorId());
 
@@ -56,9 +55,8 @@ public class EventIssuedEventHandler {
                 processQueueData(sector, registration, eventIssuedEvent.getMessage().getUserId());
                 waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                 sector.decreaseEventStock();
-                log.info("주차권 신청 저장 완료");
             } catch (NoEventStockLeftException e) {
-                log.error("해당 구간 잔여 여석이 없습니다.");
+                log.info("해당 구간 잔여 여석이 없습니다.");
                 waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
             } catch (Exception e) {
                 // 에러가 났을 때 redis에 데이터를 재등록 한다.(Not Waiting 상태로)
