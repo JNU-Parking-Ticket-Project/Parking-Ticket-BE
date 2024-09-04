@@ -103,7 +103,7 @@ public class EventIssuedEventHandler {
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
         if (!sector.isRemainingAmount()) {
-            log.info("잔여 여석이 남지 않음. Registration: {}", registration);
+            log.info("No seats remaining. Registration: {}", registration);
             throw NoEventStockLeftException.EXCEPTION;
         }
         if (!registration.isSaved()) {
