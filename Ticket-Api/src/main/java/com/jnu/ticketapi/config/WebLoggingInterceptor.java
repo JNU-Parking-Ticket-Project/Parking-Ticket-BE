@@ -19,7 +19,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class WebLogginInterceptor implements HandlerInterceptor {
+public class WebLoggingInterceptor implements HandlerInterceptor {
     private static final String START_TIME_ATTR_NAME = "startTime";
     private static final String REQUEST_ID_KEY = "requestId";
     private static final String REGISTRATION_PATH = "/api/v1/registration/";

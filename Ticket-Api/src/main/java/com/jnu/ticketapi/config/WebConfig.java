@@ -15,7 +15,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
     private final EmailMethodArgumentResolver emailMethodArgumentResolver;
-    private final WebLogginInterceptor webLogginInterceptor;
+    private final WebLoggingInterceptor webLoggingInterceptor;
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
@@ -24,7 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(webLogginInterceptor);
+        registry.addInterceptor(webLoggingInterceptor);
     }
 
     @Override
