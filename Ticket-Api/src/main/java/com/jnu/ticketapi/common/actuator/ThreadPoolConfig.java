@@ -11,8 +11,7 @@ import org.springframework.stereotype.Component;
 @Endpoint(id = "threadpool")
 public class ThreadPoolConfig {
 
-    @Autowired
-    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    @Autowired private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     @ReadOperation
     public ThreadPoolStats threadPoolStats() {

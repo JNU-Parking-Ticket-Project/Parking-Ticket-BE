@@ -25,14 +25,15 @@ public class RegistrationCreationEventHandler {
             classes = RegistrationCreationEvent.class,
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Deprecated
     @Retryable(
             retryFor = {Exception.class},
             maxAttempts = 3,
             backoff = @Backoff(delay = 1000))
     public void handle(RegistrationCreationEvent event) {
         // 새로운 persistence context에서 User를 조회 (User를 영속화 하기 위해)
-
-        mailService.sendRegistrationResultMail(
-                event.getEmail(), event.getName(), event.getStatus(), event.getSequence());
+        //        mailService.sendRegistrationResultMail(
+        //                event.getEmail(), event.getName(), event.getStatus(),
+        // event.getSequence());
     }
 }

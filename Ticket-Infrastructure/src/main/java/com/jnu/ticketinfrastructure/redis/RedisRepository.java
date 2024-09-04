@@ -57,9 +57,6 @@ public class RedisRepository {
                         + "    return nil "
                         + "end";
 
-        // Log before executing the script
-        log.info("Executing Lua script to pop min element from key: {}", key);
-
         return redisTemplate.execute(
                 (RedisCallback<Object>)
                         connection ->

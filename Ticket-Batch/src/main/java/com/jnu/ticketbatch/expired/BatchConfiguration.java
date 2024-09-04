@@ -2,6 +2,8 @@ package com.jnu.ticketbatch.expired;
 
 
 import com.jnu.ticketbatch.writer.RegistrationWriter;
+import com.jnu.ticketdomain.common.domainEvent.Events;
+import com.jnu.ticketdomain.domains.events.event.EventExpiredEvent;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,6 +69,7 @@ public class BatchConfiguration {
     @StepScope
     public HibernateCursorItemReader<Registration> customItemReader(
             @Value("#{jobParameters['eventId']}") Long eventId) {
+        Events.raise(new EventExpiredEvent(eventId));
         return new HibernateCursorItemReaderBuilder<Registration>()
                 .name("hibernateCursorReader")
                 .sessionFactory(sessionFactory)

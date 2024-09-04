@@ -19,8 +19,7 @@ public class EnableAsyncConfig implements AsyncConfigurer {
 
     private final CustomAsyncExceptionHandler customAsyncExceptionHandler;
 
-    @Autowired
-    private ThreadPoolTaskExecutor executor;
+    @Autowired private ThreadPoolTaskExecutor executor;
 
     @Value("${thread.core-pool-size}")
     private int corePoolSize;
