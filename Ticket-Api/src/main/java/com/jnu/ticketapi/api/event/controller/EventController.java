@@ -177,10 +177,4 @@ public class EventController {
     public void test2() {
         testUseCase.execute2();
     }
-
-    @Operation(description = "주차권 신청 2개를 신청한다.")
-    @PostMapping("/events/test3")
-    public void test3() {
-        testUseCase.execute3();
-    }
 }
