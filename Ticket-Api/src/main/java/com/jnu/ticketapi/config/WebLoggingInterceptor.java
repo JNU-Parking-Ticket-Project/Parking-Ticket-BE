@@ -39,12 +39,12 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
     public void afterCompletion(
             HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
             throws IOException {
-        if (shouldSkipLogging(request)) {
+        if (isSkipLogging(request)) {
             return;
         }
 
-        logRequestDetails(request, response);
-        logSensitiveData(request);
+        createRequestLog(request, response);
+        createAdditionalLog(request);
 
         MDC.clear();
     }
@@ -60,7 +60,7 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
                 .collect(Collectors.joining());
     }
 
-    private boolean shouldSkipLogging(HttpServletRequest request) {
+    private boolean isSkipLogging(HttpServletRequest request) {
         return webProperties.isNoLoggable(request.getServletPath()) || isPreflight(request);
     }
 
@@ -68,7 +68,7 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
         return HttpMethod.OPTIONS.matches(request.getMethod());
     }
 
-    private void logRequestDetails(HttpServletRequest request, HttpServletResponse response) {
+    private void createRequestLog(HttpServletRequest request, HttpServletResponse response) {
         String currentUserId = getCurrentUserId(request);
         long executionTime = getExecutionTime(request);
         String requestUrl = request.getRequestURI();
@@ -93,7 +93,7 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
         return jwtResolver.getAuthentication(accessToken).getName();
     }
 
-    private void logSensitiveData(HttpServletRequest request) throws IOException {
+    private void createAdditionalLog(HttpServletRequest request) throws IOException {
         String requestUri = request.getRequestURI();
         if (requestUri.trim().startsWith(REGISTRATION_PATH)) {
             log.info("[registration request] {}", getRequestBody(request));
