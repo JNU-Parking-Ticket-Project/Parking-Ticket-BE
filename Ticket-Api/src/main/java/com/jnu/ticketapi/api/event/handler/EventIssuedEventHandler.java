@@ -87,8 +87,8 @@ public class EventIssuedEventHandler {
     } // 이진혁 바보 멍청이 말미잘
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
-        // TODO: Registration 로그 남기기
         if (!sector.isRemainingAmount()) {
+            log.info("[No seats remaining]. Registration: {}", registration);
             throw NoEventStockLeftException.EXCEPTION;
         }
 

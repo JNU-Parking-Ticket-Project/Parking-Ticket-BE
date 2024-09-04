@@ -35,6 +35,12 @@ management:
 captcha:
   domain: ${CLOUD_FRONT_URL}
 
+web:
+  log:
+    url-no-logging:
+      - /api/swagger-ui.html
+      - /api/actuator/**
+
 ---
 spring:
   config:
@@ -54,3 +60,8 @@ captcha:
   domain: dsrps7tt0ew8t.cloudfront.net
 
 ableDomainEvent : false
+
+web:
+  log:
+    url-no-logging:
+      - /api/swagger-ui.html
