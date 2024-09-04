@@ -35,14 +35,7 @@ public class WebProperties {
     }
 
     private boolean isMatchPattern(String pattern, String input) {
-        String regex;
-        if (pattern.contains("**")) {
-            regex = pattern.replace(".", "\\.").replace("**", ".*").replace("*", "[^/]*");
-            regex = "^" + regex + "$";
-
-            return Pattern.matches(regex, input);
-        }
-        regex = pattern.replace("*", ".*");
+        String regex = pattern.replace("*", ".*");
         return Pattern.matches(regex, input);
     }
 }
