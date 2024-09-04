@@ -6,6 +6,7 @@ import static org.quartz.TriggerBuilder.newTrigger;
 import com.jnu.ticketbatch.config.ProcessQueueDataJob;
 import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketbatch.expired.BatchQuartzJob;
+import com.jnu.ticketdomain.domains.events.EventExpiredEventRaiseGateway;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -33,6 +34,7 @@ public class EventRegisterJob implements Job {
     @Autowired private ApplicationContext applicationContext;
     @Autowired private StepBuilderFactory stepBuilderFactory;
     @Autowired private JobBuilderFactory jobBuilderFactory;
+    @Autowired private EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
     @Autowired private ApplicationEventPublisher applicationEventPublisher;
     @Autowired private WaitingQueueService waitingQueueService;
 
@@ -90,6 +92,7 @@ public class EventRegisterJob implements Job {
         jobDataMap.put("stepBuilderFactory", stepBuilderFactory);
         jobDataMap.put("jobBuilderFactory", jobBuilderFactory);
         jobDataMap.put("jobLauncher", jobLauncher);
+        jobDataMap.put("eventExpiredEventRaiseGateway", eventExpiredEventRaiseGateway);
         JobDetail expiredEventQuartzJob =
                 newJob(BatchQuartzJob.class)
                         .withIdentity("EXPIRED_JOB", "group1")

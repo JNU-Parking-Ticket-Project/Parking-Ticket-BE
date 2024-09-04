@@ -2,11 +2,10 @@ package com.jnu.ticketbatch.expired;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
-import com.jnu.ticketdomain.common.domainEvent.Events;
+import com.jnu.ticketdomain.domains.events.EventExpiredEventRaiseGateway;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
-import com.jnu.ticketdomain.domains.events.event.EventExpiredEvent;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +40,9 @@ public class BatchQuartzJob extends QuartzJobBean {
         RedisRepository redisRepository = applicationContext.getBean(RedisRepository.class);
         RegistrationAdaptor registrationAdaptor =
                 applicationContext.getBean(RegistrationAdaptor.class);
+        EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway =
+                applicationContext.getBean(EventExpiredEventRaiseGateway.class);
+
         // JobDataMap에서 eventId를 가져옵니다.
         Long eventId = (Long) context.getJobDetail().getJobDataMap().get("eventId");
         Event event = eventAdaptor.findById(eventId);
@@ -52,10 +54,10 @@ public class BatchQuartzJob extends QuartzJobBean {
                         .getNextJobParameters(this.job)
                         .addLong("eventId", eventId)
                         .toJobParameters();
-
+        log.info("EventThrow in BatchQuartzJob");
+        eventExpiredEventRaiseGateway.handle(eventId);
         try {
             this.jobLauncher.run(this.job, jobParameters);
-            Events.raise(new EventExpiredEvent(eventId));
         } catch (Exception e) {
             log.error("Failed to run batch job", e);
             throw new JobExecutionException(e);
