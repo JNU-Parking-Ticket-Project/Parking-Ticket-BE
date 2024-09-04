@@ -206,6 +206,10 @@ public class RegistrationUseCase {
         }
     }
 
+    /*
+     * 신청자 목록 조회
+     * 먼저 구간 순으로 정렬하고, 합격자가 예비자보다 우선되도록 정렬, 합격자는 id로 정렬, 예비자는 sequence로 정렬
+     */
     @Transactional(readOnly = true)
     public GetRegistrationsResponse getRegistrations(Long eventId) {
         List<Registration> registrations =
@@ -218,22 +222,15 @@ public class RegistrationUseCase {
                                 })
                         .sorted(
                                 Comparator.comparing(
-                                                (Registration r) ->
-                                                        r.getSector()
-                                                                .getSectorNumber()) // 구간 순으로 정렬
-                                        .thenComparing(
-                                                r -> r.getUser().getStatus()) // 합격자가 예비자보다 우선되도록
+                                                (Registration r) -> r.getSector().getSectorNumber())
+                                        .thenComparing(r -> r.getUser().getStatus())
                                         .thenComparing(
                                                 r ->
                                                         r.getUser()
                                                                         .getStatus()
                                                                         .equals(UserStatus.SUCCESS)
                                                                 ? r.getId()
-                                                                : r.getUser()
-                                                                        .getSequence()) // 합격자는 id로
-                                        // 정렬, 예비자는
-                                        // sequence로
-                                        // 정렬
+                                                                : r.getUser().getSequence())
                                         .thenComparing(
                                                 registration ->
                                                         registration.getSector().getSectorNumber()))
