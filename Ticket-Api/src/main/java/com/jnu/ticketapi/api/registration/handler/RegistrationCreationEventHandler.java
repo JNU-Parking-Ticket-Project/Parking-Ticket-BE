@@ -25,7 +25,7 @@ public class RegistrationCreationEventHandler {
             classes = RegistrationCreationEvent.class,
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Deprecated
+    @Deprecated(since = "Email 발송 시점 변경", forRemoval = true)
     @Retryable(
             retryFor = {Exception.class},
             maxAttempts = 3,

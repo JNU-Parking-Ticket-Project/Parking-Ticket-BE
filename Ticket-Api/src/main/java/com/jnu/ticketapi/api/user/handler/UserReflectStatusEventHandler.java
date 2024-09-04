@@ -1,9 +1,7 @@
 package com.jnu.ticketapi.api.user.handler;
 
 
-import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
-import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.event.UserReflectStatusEvent;
@@ -38,9 +36,12 @@ public class UserReflectStatusEventHandler {
         // 새로운 persistence context에서 User를 조회 (User를 영속화 하기 위해)
         User user = userAdaptor.findById(event.getUserId());
         reflectUserState(event, user);
-        Events.raise(
-                RegistrationCreationEvent.of(
-                        event.getRegistration(), user.getStatus().getValue(), user.getSequence()));
+
+        // 이메일 발송은 Closed 될때 배치로 돌릴 수 있도록 리펙토링 완료했습니다.
+        //        Events.raise(
+        //                RegistrationCreationEvent.of(
+        //                        event.getRegistration(), user.getStatus().getValue(),
+        // user.getSequence()));
     }
 
     private void reflectUserState(UserReflectStatusEvent event, User user) {
