@@ -1,20 +1,20 @@
 package com.jnu.ticketapi.config;
 
+
 import com.jnu.ticketapi.security.JwtResolver;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,14 +28,16 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
     private final JwtResolver jwtResolver;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    public boolean preHandle(
+            HttpServletRequest request, HttpServletResponse response, Object handler) {
         MDC.put(REQUEST_ID_KEY, generateRequestId());
         request.setAttribute(START_TIME_ATTR_NAME, System.currentTimeMillis());
         return true;
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
+    public void afterCompletion(
+            HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
             throws IOException {
         if (shouldSkipLogging(request)) {
             return;
@@ -50,9 +52,11 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
     private String generateRequestId() {
         return IntStream.range(0, 8)
                 .mapToObj(i -> String.valueOf((char) ThreadLocalRandom.current().nextInt(48, 123)))
-                .filter(ch -> (ch.charAt(0) >= '0' && ch.charAt(0) <= '9') ||
-                        (ch.charAt(0) >= 'A' && ch.charAt(0) <= 'Z') ||
-                        (ch.charAt(0) >= 'a' && ch.charAt(0) <= 'z'))
+                .filter(
+                        ch ->
+                                (ch.charAt(0) >= '0' && ch.charAt(0) <= '9')
+                                        || (ch.charAt(0) >= 'A' && ch.charAt(0) <= 'Z')
+                                        || (ch.charAt(0) >= 'a' && ch.charAt(0) <= 'z'))
                 .collect(Collectors.joining());
     }
 
@@ -71,12 +75,17 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
         String method = request.getMethod();
         String responseType = response.getContentType();
 
-        log.info("Method: {}, URL: {}, User: {}, ResponseType: {}, ResponseTime: {}ms",
-                method, requestUrl, currentUserId, responseType, executionTime);
+        log.info(
+                "Method: {}, URL: {}, User: {}, ResponseType: {}, ResponseTime: {}ms",
+                method,
+                requestUrl,
+                currentUserId,
+                responseType,
+                executionTime);
     }
 
     private String getCurrentUserId(HttpServletRequest request) {
-        if (webProperties.isNoLoggable(request.getServletPath())) {
+        if (webProperties.isAnonymous(request.getServletPath())) {
             return "anonymous";
         }
         String bearerToken = request.getHeader("Authorization");
