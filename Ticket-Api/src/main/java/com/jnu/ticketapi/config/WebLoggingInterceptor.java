@@ -85,11 +85,13 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
     }
 
     private String getCurrentUserId(HttpServletRequest request) {
-        if (webProperties.isAnonymous(request.getServletPath())) {
-            return "anonymous";
-        }
         String bearerToken = request.getHeader("Authorization");
         String accessToken = jwtResolver.extractToken(bearerToken);
+
+        if (accessToken == null) {
+            return "anonymous";
+        }
+
         return jwtResolver.getAuthentication(accessToken).getName();
     }
 
