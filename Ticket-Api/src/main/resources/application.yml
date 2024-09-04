@@ -39,8 +39,7 @@ web:
   log:
     url-no-logging:
       - /api/swagger-ui.html
-      - /api/actuator/**
-
+      - /api/actuator/*
 ---
 spring:
   config:

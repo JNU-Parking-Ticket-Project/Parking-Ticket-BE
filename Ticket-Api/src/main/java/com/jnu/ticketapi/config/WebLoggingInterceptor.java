@@ -23,6 +23,7 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
     private static final String START_TIME_ATTR_NAME = "startTime";
     private static final String REQUEST_ID_KEY = "requestId";
     private static final String REGISTRATION_PATH = "/api/v1/registration/";
+
     private final WebProperties webProperties;
     private final JwtResolver jwtResolver;
 
@@ -31,7 +32,6 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
             HttpServletRequest request, HttpServletResponse response, Object handler) {
         MDC.put(REQUEST_ID_KEY, generateRequestId());
         request.setAttribute(START_TIME_ATTR_NAME, System.currentTimeMillis());
-
         return true;
     }
 
@@ -43,8 +43,8 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
             return;
         }
 
-        createBaseLogMessage(request, response);
-        appendSensitiveDataToLogMessage(request);
+        createRequestLog(request, response);
+        createAdditionalLog(request);
 
         MDC.clear();
     }
@@ -54,8 +54,9 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
                 .mapToObj(i -> String.valueOf((char) ThreadLocalRandom.current().nextInt(48, 123)))
                 .filter(
                         ch ->
-                                (ch.charAt(0) <= '9' || ch.charAt(0) >= 'A')
-                                        && (ch.charAt(0) <= 'Z' || ch.charAt(0) >= 'a'))
+                                (ch.charAt(0) >= '0' && ch.charAt(0) <= '9')
+                                        || (ch.charAt(0) >= 'A' && ch.charAt(0) <= 'Z')
+                                        || (ch.charAt(0) >= 'a' && ch.charAt(0) <= 'z'))
                 .collect(Collectors.joining());
     }
 
@@ -67,30 +68,40 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
         return HttpMethod.OPTIONS.matches(request.getMethod());
     }
 
-    private void createBaseLogMessage(HttpServletRequest request, HttpServletResponse response) {
-        String bearerToken = request.getHeader("Authorization");
-        String accessToken = jwtResolver.extractToken(bearerToken);
-
-        String currentUserId = jwtResolver.getAuthentication(accessToken).getName();
+    private void createRequestLog(HttpServletRequest request, HttpServletResponse response) {
+        String currentUserId = getCurrentUserId(request);
         long executionTime = getExecutionTime(request);
         String requestUrl = request.getRequestURI();
         String method = request.getMethod();
         String responseType = response.getContentType();
 
         log.info(
-                String.format(
-                        "Method : %s, URL: %s, User: %s, ResponseType: %s, ResponseTime: %dms",
-                        method, requestUrl, currentUserId, responseType, executionTime));
+                "Method: {}, URL: {}, User: {}, ResponseType: {}, ResponseTime: {}ms",
+                method,
+                requestUrl,
+                currentUserId,
+                responseType,
+                executionTime);
     }
 
-    private void appendSensitiveDataToLogMessage(HttpServletRequest request) throws IOException {
+    private String getCurrentUserId(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken == null) {
+            return "anonymous";
+        }
+
+        String accessToken = jwtResolver.extractToken(bearerToken);
+        return jwtResolver.getAuthentication(accessToken).getName();
+    }
+
+    private void createAdditionalLog(HttpServletRequest request) throws IOException {
         String requestUri = request.getRequestURI();
         if (requestUri.trim().startsWith(REGISTRATION_PATH)) {
-            log.info("[registration request]" + getBody(request));
+            log.info("[registration request] {}", getRequestBody(request));
         }
     }
 
-    private String getBody(HttpServletRequest request) throws IOException {
+    private String getRequestBody(HttpServletRequest request) throws IOException {
         CacheAccessRequestFilter wrapRequest = (CacheAccessRequestFilter) request;
         byte[] contents = wrapRequest.getContents();
         return new String(contents, StandardCharsets.UTF_8);
