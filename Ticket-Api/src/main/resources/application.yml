@@ -40,8 +40,6 @@ web:
     url-no-logging:
       - /api/swagger-ui.html
       - /api/actuator/*
-    anonymous-logging:
-      - /v1/auth/*
 ---
 spring:
   config:

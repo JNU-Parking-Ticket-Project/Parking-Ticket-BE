@@ -14,19 +14,9 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConfigurationProperties(prefix = "web.log")
 public class WebProperties {
     private List<String> urlNoLogging;
-    private List<String> anonymousLogging;
 
     public boolean isNoLoggable(String path) {
         for (String pattern : urlNoLogging) {
-            if (isMatchPattern(pattern, path)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean isAnonymous(String path) {
-        for (String pattern : anonymousLogging) {
             if (isMatchPattern(pattern, path)) {
                 return true;
             }
