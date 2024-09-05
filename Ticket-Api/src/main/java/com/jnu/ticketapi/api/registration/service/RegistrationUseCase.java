@@ -60,7 +60,7 @@ public class RegistrationUseCase {
     public Result<Registration, Object> findResultByEmail(
             String email, boolean flag, Long eventId) {
         Optional<Registration> registration =
-                registrationAdaptor.findByEmailAndIsSaved(email, flag, eventId);
+                registrationAdaptor.findByEmailAndIsSaved(email, flag);
         return registration
                 .filter(r -> r.getSector().getEvent().getId().equals(eventId))
                 .map(Result::success)
@@ -74,7 +74,7 @@ public class RegistrationUseCase {
     @Transactional(readOnly = true)
     public GetRegistrationResponse getRegistration(String email, Long eventId) {
         Optional<Registration> registration =
-                registrationAdaptor.findByEmailAndIsSaved(email, false, eventId);
+                registrationAdaptor.findByEmailAndIsSaved(email, false).stream().findFirst();
         List<Sector> sectorList = sectorAdaptor.findAllByEventStatusAndPublishAndIsDeleted();
         // 신청자가 임시저장을 하지 않았을 경우
         if (registration.isEmpty()) {

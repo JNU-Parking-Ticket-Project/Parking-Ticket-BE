@@ -54,7 +54,7 @@ public interface RegistrationRepository
     @Modifying()
     void deleteByEventId(@Param("eventId") Long eventId);
 
-    @Query("select r from Registration r where r.isSaved = :flag and r.email = :email")
+    @Query("select r from Registration r where r.isSaved = :flag and r.email = :email order by r.id desc")
     Optional<Registration> findByEmailAndIsSaved(
             @Param("email") String email, @Param("flag") boolean flag);
 
