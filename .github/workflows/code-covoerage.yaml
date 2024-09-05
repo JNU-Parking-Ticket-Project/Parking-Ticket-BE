@@ -1,0 +1,99 @@
+name: CI 근데 SonarCloud와 Jacoco를 곁들인
+
+on:
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 췍
+        uses: actions/checkout@v3
+
+      - name: JDK 17 설정
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: gradle
+
+      - name: Gradle 캐슁
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: 권한부여
+        run: chmod +x gradlew
+
+      - name: 빌드와 테스트
+        run: ./gradlew clean build jacocoTestReport
+
+      - name: SonarCloud 시작
+        uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=${{ secrets.PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.ORGANIZATION }}
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+            -Dsonar.qualitygate.wait=true
+
+      - name: 테스트 커버리지 쳌
+        run: |
+          COVERAGE=$(grep -oP '(?<=<counter type="LINE" missed="\d+" covered="\d+">).*?(?=</counter>)' build/reports/jacoco/test/jacocoTestReport.xml)
+          if (( $(echo "$COVERAGE < 80.0" |bc -l) )); then
+            echo "Test coverage is below 80%. Coverage: $COVERAGE"
+            exit 1
+          fi
+
+      - name: SonarCloud Quality Gate 상태 겟또
+        id: sonar_quality_gate
+        run: |
+          STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY }}" | jq -r '.projectStatus.status')
+          echo "Quality Gate status: $STATUS"
+          echo "::set-output name=status::$STATUS"
+
+      - name: PR 커멘트 남기기
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const coverage = require('fs').readFileSync('build/reports/jacoco/test/jacocoTestReport.xml', 'utf8');
+            const coverageMatch = coverage.match(/<counter type="LINE" missed="\d+" covered="(\d+)">/);
+            const coveredLines = coverageMatch ? parseInt(coverageMatch[1], 10) : 0;
+            
+            const qualityGateStatus = '${{ steps.sonar_quality_gate.outputs.status }}';
+            const prNumber = context.payload.pull_request.number;
+
+            const comment = `
+            ### Test 결과
+            - **테스트 커버리지**: ${coveredLines}%
+            - **Quality Gate**: ${qualityGateStatus}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Slack 웹훅훅
+        run: |
+          PR_TITLE=$(jq -r '.pull_request.title' < "${{ github.event_path }}")
+          PR_AUTHOR=$(jq -r '.pull_request.user.login' < "${{ github.event_path }}")
+          COVERAGE=$(grep -oP '(?<=<counter type="LINE" missed="\d+" covered="\d+">).*?(?=</counter>)' build/reports/jacoco/test/jacocoTestReport.xml)
+          QUALITY_GATE_STATUS="${{ steps.sonar_quality_gate.outputs.status }}"
+
+          SLACK_MESSAGE="*PR Title*: ${PR_TITLE}\n*Author*: ${PR_AUTHOR}\n*Test Coverage*: ${COVERAGE}%\n*Quality Gate*: ${QUALITY_GATE_STATUS}"
+
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\": \"${SLACK_MESSAGE}\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
