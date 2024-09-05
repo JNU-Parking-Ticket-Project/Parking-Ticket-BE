@@ -59,12 +59,9 @@ public class RegistrationUseCase {
 
     public Result<Registration, Object> findResultByEmail(
             String email, boolean flag, Long eventId) {
-        Registration registration =
-                registrationAdaptor.findByEmailAndIsSaved(email, flag).stream()
-                        .findFirst()
-                        .orElseThrow(() -> NotFoundRegistrationException.EXCEPTION);
-        Optional<Registration> registrationOptional = Optional.of(registration);
-        return registrationOptional
+        Optional<Registration> registration =
+                registrationAdaptor.findByEmailAndIsSaved(email, flag).stream().findFirst();
+        return registration
                 .filter(r -> r.getSector().getEvent().getId().equals(eventId))
                 .map(Result::success)
                 .orElseGet(() -> Result.failure(NotFoundRegistrationException.EXCEPTION));
