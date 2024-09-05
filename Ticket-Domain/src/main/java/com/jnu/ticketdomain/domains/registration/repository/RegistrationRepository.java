@@ -56,7 +56,7 @@ public interface RegistrationRepository
 
     @Query(
             "select r from Registration r where r.isSaved = :flag and r.email = :email order by r.id desc")
-    Optional<Registration> findByEmailAndIsSaved(
+    List<Registration> findByEmailAndIsSaved(
             @Param("email") String email, @Param("flag") boolean flag);
 
     @Query("select r from Registration r where r.user.id = :userId")

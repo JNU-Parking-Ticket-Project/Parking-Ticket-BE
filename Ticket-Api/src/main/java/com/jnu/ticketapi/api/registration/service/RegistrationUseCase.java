@@ -59,9 +59,12 @@ public class RegistrationUseCase {
 
     public Result<Registration, Object> findResultByEmail(
             String email, boolean flag, Long eventId) {
-        Optional<Registration> registration =
-                registrationAdaptor.findByEmailAndIsSaved(email, flag);
-        return registration
+        Registration registration =
+                registrationAdaptor.findByEmailAndIsSaved(email, flag).stream()
+                        .findFirst()
+                        .orElseThrow(() -> NotFoundRegistrationException.EXCEPTION);
+        Optional<Registration> registrationOptional = Optional.of(registration);
+        return registrationOptional
                 .filter(r -> r.getSector().getEvent().getId().equals(eventId))
                 .map(Result::success)
                 .orElseGet(() -> Result.failure(NotFoundRegistrationException.EXCEPTION));
@@ -117,6 +120,7 @@ public class RegistrationUseCase {
         validateEventPublish(event);
         validateEventStatusIsClosed(event);
         validateEventPeriod(event);
+
         checkDuplicateRegistration(email, eventId, requestDto.studentNum());
         Long captchaId = encryption.decrypt(requestDto.captchaCode());
         validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
@@ -201,7 +205,8 @@ public class RegistrationUseCase {
     }
 
     private void validateEventPeriod(Event event) {
-        if (event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())) {
+        if (event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())
+                && event.getDateTimePeriod().isBeforeStartAt(LocalDateTime.now())) {
             throw AlreadyCloseStatusException.EXCEPTION;
         }
     }
