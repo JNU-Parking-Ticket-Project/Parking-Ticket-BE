@@ -12,13 +12,14 @@ import com.jnu.ticketdomain.domains.events.event.EventDeletedEvent;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
 @RequiredArgsConstructor
 public class EventDeleteUseCase {
     private final EventAdaptor eventAdaptor;
-    private final RedisRepository redisRepository;
+    @Autowired(required = false) private  RedisRepository redisRepository;
     private final SectorAdaptor sectorAdaptor;
     private final RegistrationAdaptor registrationAdaptor;
 
