@@ -22,13 +22,17 @@ import com.jnu.ticketdomain.domains.council.exception.AlreadyExistEmailException
 import com.jnu.ticketdomain.domains.council.exception.IsNotCouncilException;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -36,14 +40,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthUseCase {
     private final JwtResolver jwtResolver;
     private final JwtGenerator jwtGenerator;
-    private final RedisService redisService;
     private final UserUseCase userUseCase;
     private final CouncilUseCase councilUseCase;
     private final Converter converter;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Value("${ableRedis:true}")
+    private boolean ableRedis;
+    @Autowired(required = false)
+    private RedisService redisService;
 
     // 토큰 재발급: validate 메서드가 true 반환할 때만 사용 -> AT, RT 재발급
     @Transactional
+    @ConditionalOnExpression("${ableRedis:true}")
     public ReissueTokenResponse reissue(
             String requestAccessToken, String requestRefreshToken, String email) {
 
@@ -86,9 +94,9 @@ public class AuthUseCase {
     */
     public TokenDto generateToken(String provider, String email, String authorities) {
         // RT가 이미 있을 경우
-        if (redisService.getValues("RT(" + provider + "):" + email) != null) {
+        if (ableRedis && redisService.getValues("RT(" + provider + "):" + email) != null && ableRedis)
             redisService.deleteValues("RT(" + provider + "):" + email); // 삭제
-        }
+
 
         // AT, RT 생성 및 Redis에 RT 저장
         TokenDto tokenDto =
@@ -96,7 +104,9 @@ public class AuthUseCase {
                         .accessToken(jwtGenerator.generateAccessToken(email, authorities))
                         .refreshToken(jwtGenerator.generateRefreshToken(email, authorities))
                         .build();
-        saveRefreshToken(provider, email, tokenDto.refreshToken());
+        if (ableRedis) {
+            saveRefreshToken(provider, email, tokenDto.refreshToken());
+        }
         return tokenDto;
     }
 
@@ -126,10 +136,12 @@ public class AuthUseCase {
         String principal = getPrincipal(requestAccessToken);
 
         // Redis에 저장되어 있는 RT 삭제
-        String refreshTokenInRedis =
-                redisService.getValues("RT(" + TicketStatic.SERVER + "):" + principal);
-        if (refreshTokenInRedis != null) {
-            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + principal);
+        if (ableRedis) {
+            String refreshTokenInRedis =
+                    redisService.getValues("RT(" + TicketStatic.SERVER + "):" + principal);
+            if (refreshTokenInRedis != null) {
+                redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + principal);
+            }
         }
         return LogoutUserResponse.builder().message(ResponseMessage.SUCCESS_LOGOUT).build();
     }
