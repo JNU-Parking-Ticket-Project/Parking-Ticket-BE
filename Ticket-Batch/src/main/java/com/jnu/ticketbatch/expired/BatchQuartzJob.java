@@ -17,7 +17,6 @@ import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
 @Slf4j
@@ -31,7 +30,6 @@ public class BatchQuartzJob extends QuartzJobBean {
     @Autowired RedisRepository redisRepository;
     @Autowired RegistrationAdaptor registrationAdaptor;
     @Autowired EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
-
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {

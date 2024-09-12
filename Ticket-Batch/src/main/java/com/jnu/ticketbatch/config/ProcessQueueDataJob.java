@@ -17,11 +17,10 @@ import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 @Slf4j
 @DisallowConcurrentExecution
 public class ProcessQueueDataJob implements Job {
-    @Autowired
-    private ApplicationEventPublisher publisher;
+    @Autowired private ApplicationEventPublisher publisher;
 
-    @Autowired
-    private WaitingQueueService waitingQueueService;
+    @Autowired private WaitingQueueService waitingQueueService;
+
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {

@@ -1,10 +1,16 @@
 package com.jnu.ticketbatch.job;
 
+import static org.quartz.JobBuilder.newJob;
+import static org.quartz.TriggerBuilder.newTrigger;
+
 import com.jnu.ticketbatch.config.ProcessQueueDataJob;
 import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketbatch.expired.BatchQuartzJob;
 import com.jnu.ticketdomain.domains.events.EventExpiredEventRaiseGateway;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.batch.core.JobParameters;
@@ -14,29 +20,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Configuration;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-
-import static org.quartz.JobBuilder.newJob;
-import static org.quartz.TriggerBuilder.newTrigger;
-
 @Configuration
 @Slf4j
 public class EventRegisterJob implements Job {
 
-    @Autowired
-    private JobLauncher jobLauncher;
-    @Autowired
-    private org.springframework.batch.core.Job expirationJob;
-    @Autowired
-    private EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
-    @Autowired
-    private WaitingQueueService waitingQueueService;
-    @Autowired
-    private Scheduler scheduler;
+    @Autowired private JobLauncher jobLauncher;
+    @Autowired private org.springframework.batch.core.Job expirationJob;
+    @Autowired private EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
+    @Autowired private ApplicationEventPublisher applicationEventPublisher;
+    @Autowired private WaitingQueueService waitingQueueService;
+    @Autowired private Scheduler scheduler;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -65,11 +58,12 @@ public class EventRegisterJob implements Job {
 
         Date date = Date.from(startAt.atZone(ZoneId.of("Asia/Seoul")).toInstant());
 
-        Trigger reserveTrigger = newTrigger()
-                .withIdentity("RESERVATION_TRIGGER", "group1")
-                .startAt(date)
-                .forJob(reserveEventQuartzJob)
-                .build();
+        Trigger reserveTrigger =
+                newTrigger()
+                        .withIdentity("RESERVATION_TRIGGER", "group1")
+                        .startAt(date)
+                        .forJob(reserveEventQuartzJob)
+                        .build();
 
         log.info(">>>>> Event OPEN 스케줄링 등록");
 
@@ -89,11 +83,12 @@ public class EventRegisterJob implements Job {
 
         Date date = Date.from(endAt.atZone(ZoneId.of("Asia/Seoul")).toInstant());
 
-        Trigger reserveTrigger = newTrigger()
-                .withIdentity("EXPIRED_TRIGGER", "group1")
-                .startAt(date)
-                .forJob(expiredEventQuartzJob)
-                .build();
+        Trigger reserveTrigger =
+                newTrigger()
+                        .withIdentity("EXPIRED_TRIGGER", "group1")
+                        .startAt(date)
+                        .forJob(expiredEventQuartzJob)
+                        .build();
 
         log.info(">>>>> Event 만료 스케줄링 등록");
 
@@ -116,15 +111,17 @@ public class EventRegisterJob implements Job {
         Date start = Date.from(startAt.atZone(ZoneId.of("Asia/Seoul")).toInstant());
         Date end = Date.from(endAt.atZone(ZoneId.of("Asia/Seoul")).toInstant());
 
-        Trigger reserveTrigger = newTrigger()
-                .withIdentity("PROCESS_QUEUE_DATA_TRIGGER", "group1")
-                .startAt(start)
-                .endAt(end)
-                .withSchedule(SimpleScheduleBuilder.simpleSchedule()
-                        .withIntervalInMilliseconds(400)
-                        .repeatForever())
-                .forJob(processQueueDataJob)
-                .build();
+        Trigger reserveTrigger =
+                newTrigger()
+                        .withIdentity("PROCESS_QUEUE_DATA_TRIGGER", "group1")
+                        .startAt(start)
+                        .endAt(end)
+                        .withSchedule(
+                                SimpleScheduleBuilder.simpleSchedule()
+                                        .withIntervalInMilliseconds(400)
+                                        .repeatForever())
+                        .forJob(processQueueDataJob)
+                        .build();
 
         log.info(">>>>> ProcessQueueData 스케줄링 등록");
 

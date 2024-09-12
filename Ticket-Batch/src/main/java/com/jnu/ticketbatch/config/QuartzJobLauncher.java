@@ -13,8 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @RequiredArgsConstructor
 public class QuartzJobLauncher implements Job {
-    @Autowired
-    private EventAdaptor eventAdaptor;
+    @Autowired private EventAdaptor eventAdaptor;
+
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         JobDataMap jobDataMap = context.getMergedJobDataMap();

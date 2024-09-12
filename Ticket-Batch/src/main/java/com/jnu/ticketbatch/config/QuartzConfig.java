@@ -1,5 +1,7 @@
 package com.jnu.ticketbatch.config;
 
+
+import javax.sql.DataSource;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,15 +9,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
-import javax.sql.DataSource;
-
 @Configuration
 public class QuartzConfig {
 
-    @Autowired
-    private AutoWiringSpringBeanJobFactory jobFactory;
-    @Autowired
-    private DataSource dataSource;
+    @Autowired private AutoWiringSpringBeanJobFactory jobFactory;
+    @Autowired private DataSource dataSource;
 
     @Bean
     public SchedulerFactoryBean schedulerFactoryBean() throws SchedulerException {
