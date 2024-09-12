@@ -77,7 +77,6 @@ public class EventController {
         return new SuccessResponse(EVENT_SUCCESS_REGISTER_MESSAGE);
     }
 
-
     @Operation(summary = "이벤트를 오픈 상태로 변경합니다.")
     @PostMapping("events/open")
     public SuccessResponse openEventStatus() {
