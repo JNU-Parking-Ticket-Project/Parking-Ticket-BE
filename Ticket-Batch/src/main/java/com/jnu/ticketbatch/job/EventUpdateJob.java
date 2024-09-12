@@ -38,6 +38,8 @@ public class EventUpdateJob implements Job {
 
     @Autowired private ApplicationContext applicationContext;
 
+    @Autowired private Scheduler sched;
+
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
@@ -55,9 +57,6 @@ public class EventUpdateJob implements Job {
     @Retryable(value = SchedulerException.class, maxAttempts = 3)
     public void cancelScheduledJob(Long eventId) {
         try {
-            SchedulerFactory schedFact = new StdSchedulerFactory();
-            Scheduler sched = schedFact.getScheduler();
-
             // JobKey 생성
             JobKey jobKey1 = JobKey.jobKey("RESERVATION_JOB", "group1");
 
@@ -84,8 +83,6 @@ public class EventUpdateJob implements Job {
 
     public void reRegisterJob(Long eventId, LocalDateTime startAt) throws Exception {
         // Quartz 스케줄러 초기화
-        SchedulerFactory schedFact = new StdSchedulerFactory();
-        Scheduler sched = schedFact.getScheduler();
         sched.start();
         // 예약 생성 작업 정의
         cancelScheduledJob(eventId);
