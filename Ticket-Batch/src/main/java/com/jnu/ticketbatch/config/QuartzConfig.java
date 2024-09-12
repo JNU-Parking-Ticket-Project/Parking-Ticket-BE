@@ -2,7 +2,6 @@ package com.jnu.ticketbatch.config;
 
 
 import javax.sql.DataSource;
-import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -21,10 +20,5 @@ public class QuartzConfig {
         factory.setJobFactory(jobFactory); // AutoWiringSpringBeanJobFactory 설정
         factory.setDataSource(dataSource); // DataSource 설정
         return factory;
-    }
-
-    @Bean
-    public Scheduler scheduler() throws SchedulerException {
-        return schedulerFactoryBean().getScheduler();
     }
 }
