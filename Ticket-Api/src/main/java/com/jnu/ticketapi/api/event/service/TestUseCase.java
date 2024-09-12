@@ -8,9 +8,11 @@ import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.events.repository.EventRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +30,16 @@ public class TestUseCase {
 
     @Transactional
     public void execute() {
-        Event event = eventAdaptor.findOpenEvent();
+        Event event =
+                eventRepository.findAll().stream()
+                        .sorted(Comparator.comparing(Event::getId).reversed())
+                        .findFirst()
+                        .orElseThrow(() -> NotFoundEventException.EXCEPTION);
         eventRepository.delete(event);
 
         DateTimePeriod dateTimePeriod =
                 new DateTimePeriod(
-                        LocalDateTime.now().plusSeconds(1), LocalDateTime.now().plusHours(3));
+                        LocalDateTime.now().plusSeconds(1), LocalDateTime.now().plusMinutes(2));
 
         EventRegisterRequest eventRegisterRequest =
                 new EventRegisterRequest(dateTimePeriod, "test");
