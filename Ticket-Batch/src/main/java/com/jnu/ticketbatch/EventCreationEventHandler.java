@@ -32,7 +32,7 @@ public class EventCreationEventHandler {
         try {
             eventRegisterJob.registerJob(event.getId(), event.getDateTimePeriod().getStartAt());
             eventRegisterJob.expiredJob(event.getId(), event.getDateTimePeriod().getEndAt());
-            eventRegisterJob.ProcessQueueDataJob(
+            eventRegisterJob.processQueueDataJob(
                     event.getId(),
                     event.getDateTimePeriod().getStartAt(),
                     event.getDateTimePeriod().getEndAt());
