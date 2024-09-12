@@ -34,7 +34,7 @@ public class EventUpdateJob implements Job {
 
     @Autowired private JobLauncher jobLauncher;
 
-    @Autowired private org.springframework.batch.core.Job reserveJob;
+    @Autowired private org.springframework.batch.core.Job expirationJob;
 
     @Autowired private ApplicationContext applicationContext;
 
@@ -46,7 +46,7 @@ public class EventUpdateJob implements Job {
                             .addLong("eventId", context.getMergedJobDataMap().getLong("eventId"))
                             .toJobParameters();
 
-            jobLauncher.run(reserveJob, jobParameters);
+            jobLauncher.run(expirationJob, jobParameters);
         } catch (Exception e) {
             throw new JobExecutionException("Failed to execute Spring Batch job", e);
         }

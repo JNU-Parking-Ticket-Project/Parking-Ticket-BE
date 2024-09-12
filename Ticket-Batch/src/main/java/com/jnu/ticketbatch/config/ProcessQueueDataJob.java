@@ -10,23 +10,23 @@ import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 
 @Slf4j
 @DisallowConcurrentExecution
 public class ProcessQueueDataJob implements Job {
+    @Autowired
+    private ApplicationEventPublisher publisher;
+
+    @Autowired
+    private WaitingQueueService waitingQueueService;
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        JobDataMap jobDataMap = context.getMergedJobDataMap();
-        ApplicationEventPublisher publisher =
-                (ApplicationEventPublisher) jobDataMap.get("applicationEventPublisher");
         try {
             // 현재 쓰레드에 ApplicationEventPublisher를 설정
             Events.setPublisher(publisher);
-
-            WaitingQueueService waitingQueueService =
-                    (WaitingQueueService) jobDataMap.get("waitingQueueService");
 
             Set<TypedTuple<Object>> messagesWithScores =
                     waitingQueueService.findAllWithScore(REDIS_EVENT_ISSUE_STORE);

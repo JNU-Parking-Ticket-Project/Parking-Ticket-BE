@@ -16,33 +16,25 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
 @Slf4j
 public class BatchQuartzJob extends QuartzJobBean {
 
-    private JobLauncher jobLauncher;
-    private Job job;
-    private JobExplorer jobExplorer;
+    @Autowired private JobLauncher jobLauncher;
+    @Autowired private Job job;
+    @Autowired private JobExplorer jobExplorer;
+
+    @Autowired EventAdaptor eventAdaptor;
+    @Autowired RedisRepository redisRepository;
+    @Autowired RegistrationAdaptor registrationAdaptor;
+    @Autowired EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
+
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        ApplicationContext applicationContext =
-                (ApplicationContext)
-                        context.getJobDetail().getJobDataMap().get("applicationContext");
-
-        // JobLauncher, Job, JobExplorer를 ApplicationContext에서 가져옵니다.
-        this.jobLauncher = applicationContext.getBean(JobLauncher.class);
-        this.job = applicationContext.getBean(Job.class);
-        this.jobExplorer = applicationContext.getBean(JobExplorer.class);
-        EventAdaptor eventAdaptor = applicationContext.getBean(EventAdaptor.class);
-        RedisRepository redisRepository = applicationContext.getBean(RedisRepository.class);
-        RegistrationAdaptor registrationAdaptor =
-                applicationContext.getBean(RegistrationAdaptor.class);
-        EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway =
-                applicationContext.getBean(EventExpiredEventRaiseGateway.class);
-
         // JobDataMap에서 eventId를 가져옵니다.
         Long eventId = (Long) context.getJobDetail().getJobDataMap().get("eventId");
         Event event = eventAdaptor.findById(eventId);
