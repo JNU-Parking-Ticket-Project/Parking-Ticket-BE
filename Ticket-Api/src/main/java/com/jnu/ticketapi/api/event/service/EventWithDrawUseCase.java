@@ -25,7 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class EventWithDrawUseCase {
 
-    @Autowired(required = false) private WaitingQueueService waitingQueueService;
+    @Autowired(required = false)
+    private WaitingQueueService waitingQueueService;
+
     private final EventAdaptor eventAdaptor;
 
     /** 재고 감소 */

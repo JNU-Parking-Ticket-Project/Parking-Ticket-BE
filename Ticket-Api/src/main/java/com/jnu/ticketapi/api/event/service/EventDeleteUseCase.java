@@ -19,7 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class EventDeleteUseCase {
     private final EventAdaptor eventAdaptor;
-    @Autowired(required = false) private  RedisRepository redisRepository;
+
+    @Autowired(required = false)
+    private RedisRepository redisRepository;
+
     private final SectorAdaptor sectorAdaptor;
     private final RegistrationAdaptor registrationAdaptor;
 

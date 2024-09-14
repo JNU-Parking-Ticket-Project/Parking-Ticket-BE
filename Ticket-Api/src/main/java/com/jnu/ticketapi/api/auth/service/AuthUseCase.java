@@ -22,6 +22,7 @@ import com.jnu.ticketdomain.domains.council.exception.AlreadyExistEmailException
 import com.jnu.ticketdomain.domains.council.exception.IsNotCouncilException;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +32,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -44,8 +43,10 @@ public class AuthUseCase {
     private final CouncilUseCase councilUseCase;
     private final Converter converter;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
     @Value("${ableRedis:true}")
     private boolean ableRedis;
+
     @Autowired(required = false)
     private RedisService redisService;
 
@@ -96,7 +97,6 @@ public class AuthUseCase {
         // RT가 이미 있을 경우
         if (ableRedis && redisService.getValues("RT(" + provider + "):" + email) != null)
             redisService.deleteValues("RT(" + provider + "):" + email); // 삭제
-
 
         // AT, RT 생성 및 Redis에 RT 저장
         TokenDto tokenDto =

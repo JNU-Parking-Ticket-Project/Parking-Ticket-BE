@@ -36,7 +36,9 @@ public class EventRegisterJob implements Job {
     @Autowired private JobBuilderFactory jobBuilderFactory;
     @Autowired private EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
     @Autowired private ApplicationEventPublisher applicationEventPublisher;
-    @Autowired(required = false) private WaitingQueueService waitingQueueService;
+
+    @Autowired(required = false)
+    private WaitingQueueService waitingQueueService;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {

@@ -32,7 +32,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventIssuedEventHandler {
     private final RegistrationAdaptor registrationAdaptor;
     private final UserAdaptor userAdaptor;
-    @Autowired(required = false) private WaitingQueueService waitingQueueService;
+
+    @Autowired(required = false)
+    private WaitingQueueService waitingQueueService;
+
     private final SectorAdaptor sectorAdaptor;
     private final ObjectMapper objectMapper;
     private final HikariDataSource hikariDataSource;

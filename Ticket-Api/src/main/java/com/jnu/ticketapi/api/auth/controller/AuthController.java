@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "1. [인증]")
 public class AuthController {
     private final AuthUseCase authUseCase;
+
     @Value("${ableRedis:true}")
     private boolean ableRedis;
 

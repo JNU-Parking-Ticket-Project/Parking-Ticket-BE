@@ -30,16 +30,15 @@ import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.redis.RedisService;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 
 @UseCase
 @RequiredArgsConstructor
@@ -53,7 +52,10 @@ public class RegistrationUseCase {
     private final EventWithDrawUseCase eventWithDrawUseCase;
     private final Encryption encryption;
     private final ValidateCaptchaUseCase validateCaptchaUseCase;
-    @Autowired(required = false) private RedisService redisService;
+
+    @Autowired(required = false)
+    private RedisService redisService;
+
     private final EventAdaptor eventAdaptor;
 
     @Value("${ableRedis:true}")
@@ -239,8 +241,8 @@ public class RegistrationUseCase {
                                         .thenComparing(
                                                 r ->
                                                         r.getUser()
-                                                                .getStatus()
-                                                                .equals(UserStatus.SUCCESS)
+                                                                        .getStatus()
+                                                                        .equals(UserStatus.SUCCESS)
                                                                 ? r.getId()
                                                                 : r.getUser().getSequence())
                                         .thenComparing(
