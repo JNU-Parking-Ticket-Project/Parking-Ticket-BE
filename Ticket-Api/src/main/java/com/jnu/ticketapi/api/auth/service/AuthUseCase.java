@@ -94,7 +94,7 @@ public class AuthUseCase {
     */
     public TokenDto generateToken(String provider, String email, String authorities) {
         // RT가 이미 있을 경우
-        if (ableRedis && redisService.getValues("RT(" + provider + "):" + email) != null && ableRedis)
+        if (ableRedis && redisService.getValues("RT(" + provider + "):" + email) != null)
             redisService.deleteValues("RT(" + provider + "):" + email); // 삭제
 
 
