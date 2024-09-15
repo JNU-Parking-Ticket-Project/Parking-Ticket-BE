@@ -33,19 +33,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: 빌드와 테스트
-        run: ./gradlew clean build -x test jacocoTestReport
-
-      - name: SonarCloud 시작
-        uses: sonarsource/sonarcloud-github-action@v2
-        with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=${{ secrets.PROJECT_KEY }}
-            -Dsonar.organization=${{ secrets.ORGANIZATION }}
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
-            -Dsonar.qualitygate.wait=true
+        run: ./gradlew clean build -x test jacocoTestReport # 임시로 테스트 체크 안함
 
       - name: 테스트 커버리지
         run: |
@@ -54,14 +42,6 @@ jobs:
             echo "Test coverage is below 80%. Coverage: $COVERAGE"
             exit 1
           fi
-
-      - name: SonarCloud Quality Gate 상태
-        id: sonar_quality_gate
-        run: |
-          STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY }}" | jq -r '.projectStatus.status')
-          echo "Quality Gate status: $STATUS"
-          echo "::set-output name=status::$STATUS"
-
       - name: PR 커멘트 작성
         uses: actions/github-script@v6
         with:
@@ -85,6 +65,27 @@ jobs:
               repo: context.repo.repo,
               body: comment
             });
+
+      - name: SonarCloud 시작
+        uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=${{ secrets.PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.ORGANIZATION }}
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+            -Dsonar.qualitygate.wait=true
+
+      - name: SonarCloud Quality Gate 상태
+        id: sonar_quality_gate
+        run: |
+          STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY }}" | jq -r '.projectStatus.status')
+          echo "Quality Gate status: $STATUS"
+          echo "::set-output name=status::$STATUS"
+
+
   # deploy 있어야 되긴하는데 일단 스킵(논의 후 작성)
   notification:
     name: Slack Notification
