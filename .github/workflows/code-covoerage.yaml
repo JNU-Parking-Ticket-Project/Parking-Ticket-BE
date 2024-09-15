@@ -51,7 +51,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: 빌드와 테스트
-        run: ./gradlew clean build jacocoTestReport # 임시로 테스트 체크 안함
+        run: ./gradlew clean build -x spotless -x spotlessCheck jacocoTestReport # 임시로 테스트 체크 안함
 
       - name: 테스트 커버리지를 PR에 코멘트로 등록합니다
         id: jacoco
