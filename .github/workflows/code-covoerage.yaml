@@ -37,8 +37,8 @@ jobs:
 
       - name: 테스트 커버리지
         run: |
-          COVERED=$(xmllint --xpath 'string(//counter[@type="LINE"]/@covered)' build/reports/jacoco/test/jacocoTestReport.xml)
-          MISSED=$(xmllint --xpath 'string(//counter[@type="LINE"]/@missed)' build/reports/jacoco/test/jacocoTestReport.xml)
+          COVERED=$(awk -F'"' '/<counter type="LINE"/ {print $8}' build/reports/jacoco/test/jacocoTestReport.xml)
+          MISSED=$(awk -F'"' '/<counter type="LINE"/ {print $4}' build/reports/jacoco/test/jacocoTestReport.xml)
           TOTAL=$((COVERED + MISSED))
           COVERAGE=$(echo "scale=2; $COVERED / $TOTAL * 100" | bc)
           echo "Test coverage is $COVERAGE%"
