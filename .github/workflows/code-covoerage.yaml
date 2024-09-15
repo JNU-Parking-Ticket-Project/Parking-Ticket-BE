@@ -37,9 +37,13 @@ jobs:
 
       - name: 테스트 커버리지
         run: |
-          COVERAGE=$(grep -oP '(?<=<counter type="LINE" missed="\d+" covered="\d+">).*?(?=</counter>)' build/reports/jacoco/test/jacocoTestReport.xml)
-          if (( $(echo "$COVERAGE < 80.0" |bc -l) )); then
-            echo "Test coverage is below 80%. Coverage: $COVERAGE"
+          COVERED=$(xmllint --xpath 'string(//counter[@type="LINE"]/@covered)' build/reports/jacoco/test/jacocoTestReport.xml)
+          MISSED=$(xmllint --xpath 'string(//counter[@type="LINE"]/@missed)' build/reports/jacoco/test/jacocoTestReport.xml)
+          TOTAL=$((COVERED + MISSED))
+          COVERAGE=$(echo "scale=2; $COVERED / $TOTAL * 100" | bc)
+          echo "Test coverage is $COVERAGE%"
+          if (( $(echo "$COVERAGE < 80.0" | bc -l) )); then
+            echo "Test coverage is below 80%. Coverage: $COVERAGE%"
             exit 1
           fi
       - name: PR 커멘트 작성
