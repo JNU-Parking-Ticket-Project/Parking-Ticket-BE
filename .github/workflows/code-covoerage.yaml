@@ -35,40 +35,15 @@ jobs:
       - name: 빌드와 테스트
         run: ./gradlew clean build -x test jacocoTestReport # 임시로 테스트 체크 안함
 
-      - name: 테스트 커버리지
-        run: |
-          COVERED=$(awk -F'"' '/<counter type="LINE"/ {print $8}' build/reports/jacoco/test/jacocoTestReport.xml)
-          MISSED=$(awk -F'"' '/<counter type="LINE"/ {print $4}' build/reports/jacoco/test/jacocoTestReport.xml)
-          TOTAL=$((COVERED + MISSED))
-          COVERAGE=$(echo "scale=2; $COVERED / $TOTAL * 100" | bc)
-          echo "Test coverage is $COVERAGE%"
-          if (( $(echo "$COVERAGE < 80.0" | bc -l) )); then
-            echo "Test coverage is below 80%. Coverage: $COVERAGE%"
-            exit 1
-          fi
-      - name: PR 커멘트 작성
-        uses: actions/github-script@v6
+      - name: 테스트 커버리지를 PR에 코멘트로 등록합니다
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.2
         with:
-          script: |
-            const coverage = require('fs').readFileSync('build/reports/jacoco/test/jacocoTestReport.xml', 'utf8');
-            const coverageMatch = coverage.match(/<counter type="LINE" missed="\d+" covered="(\d+)">/);
-            const coveredLines = coverageMatch ? parseInt(coverageMatch[1], 10) : 0;
-            
-            const qualityGateStatus = '${{ steps.sonar_quality_gate.outputs.status }}';
-            const prNumber = context.payload.pull_request.number;
-
-            const comment = `
-            ### Test 결과
-            - **테스트 커버리지**: ${coveredLines}%
-            - **Quality Gate**: ${qualityGateStatus}
-            `;
-
-            github.rest.issues.createComment({
-              issue_number: prNumber,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+          title: 📝 테스트 커버리지 리포트입니다
+          paths: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 50
+          min-coverage-changed-files: 50
 
       - name: SonarCloud 시작
         uses: sonarsource/sonarcloud-github-action@v2
