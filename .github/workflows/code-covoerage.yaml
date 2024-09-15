@@ -7,8 +7,15 @@ on:
       - feature-#185
 
 jobs:
+  uses: mirromutth/mysql-action@v1.1
+  with:
+    host port: 3306
+    container port: 3306
+    mysql database: 'ticket'
+    mysql root password: 1234
   build:
     runs-on: ubuntu-latest
+
 
     steps:
       - name: 코드 체크
