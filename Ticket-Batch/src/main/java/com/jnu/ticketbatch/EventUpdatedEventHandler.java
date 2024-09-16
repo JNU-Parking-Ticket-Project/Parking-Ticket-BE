@@ -38,7 +38,7 @@ public class EventUpdatedEventHandler {
                     event.getId(), eventUpdateEvent.getDateTimePeriod().getStartAt());
             eventRegisterJob.expiredJob(
                     event.getId(), eventUpdateEvent.getDateTimePeriod().getEndAt());
-            eventRegisterJob.ProcessQueueDataJob(
+            eventRegisterJob.processQueueDataJob(
                     event.getId(),
                     event.getDateTimePeriod().getStartAt(),
                     event.getDateTimePeriod().getEndAt());

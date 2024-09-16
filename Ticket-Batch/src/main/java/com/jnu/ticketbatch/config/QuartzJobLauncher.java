@@ -9,19 +9,16 @@ import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RequiredArgsConstructor
 public class QuartzJobLauncher implements Job {
+    @Autowired private EventAdaptor eventAdaptor;
+
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        ApplicationContext applicationContext =
-                (ApplicationContext)
-                        context.getJobDetail().getJobDataMap().get("applicationContext");
-
         JobDataMap jobDataMap = context.getMergedJobDataMap();
         Long eventId = jobDataMap.getLong("eventId");
-        EventAdaptor eventAdaptor = applicationContext.getBean(EventAdaptor.class);
         Event event = eventAdaptor.findById(eventId);
         eventAdaptor.updateEventStatus(event, EventStatus.OPEN);
     }
