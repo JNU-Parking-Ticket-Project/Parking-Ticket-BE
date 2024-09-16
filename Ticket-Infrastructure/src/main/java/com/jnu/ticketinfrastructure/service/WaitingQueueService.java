@@ -17,11 +17,13 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@ConditionalOnExpression("${ableRedis:true}")
 public class WaitingQueueService {
     private final RedisRepository redisRepository;
     @Autowired private ObjectMapper objectMapper;

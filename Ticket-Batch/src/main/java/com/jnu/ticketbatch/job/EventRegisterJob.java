@@ -13,10 +13,14 @@ import java.time.ZoneId;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
+import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,7 +32,8 @@ public class EventRegisterJob implements Job {
     @Autowired private org.springframework.batch.core.Job expirationJob;
     @Autowired private EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
     @Autowired private ApplicationEventPublisher applicationEventPublisher;
-    @Autowired private WaitingQueueService waitingQueueService;
+    @Autowired(required = false)
+    private WaitingQueueService waitingQueueService;
     @Autowired private Scheduler scheduler;
 
     @Override
@@ -53,7 +58,8 @@ public class EventRegisterJob implements Job {
         JobDetail reserveEventQuartzJob =
                 newJob(QuartzJobLauncher.class)
                         .withIdentity("RESERVATION_JOB", "group1")
-                        .usingJobData(jobDataMap) // eventId만 JobDataMap에 추가
+                        .usingJobData("eventId", eventId) // Pass eventId as job data
+                        .setJobData(jobDataMap)
                         .build();
 
         Date date = Date.from(startAt.atZone(ZoneId.of("Asia/Seoul")).toInstant());
@@ -78,7 +84,8 @@ public class EventRegisterJob implements Job {
         JobDetail expiredEventQuartzJob =
                 newJob(BatchQuartzJob.class)
                         .withIdentity("EXPIRED_JOB", "group1")
-                        .usingJobData(jobDataMap) // eventId만 JobDataMap에 추가
+                        .usingJobData("eventId", eventId)//                .usingJobData("endAt", endAt.toString())
+                        .setJobData(jobDataMap)
                         .build();
 
         Date date = Date.from(endAt.atZone(ZoneId.of("Asia/Seoul")).toInstant());

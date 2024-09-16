@@ -25,7 +25,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 @Component
 @Slf4j
-@ConditionalOnExpression("${ableRedissonLock:true}")
+@ConditionalOnExpression("${ableRedissonLock:false}")
 public class RedissonLockAop {
 
     private final RedissonClient redissonClient;

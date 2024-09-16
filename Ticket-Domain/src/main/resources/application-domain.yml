@@ -67,7 +67,15 @@ logging:
       SQL: ${LOGGING_LEVEL:INFO}
       type.descriptor.sql.BasicBinder: ${LOGGING_LEVEL:INFO}
 
+
 ableEventLock: true
+ableRedis: ${ABLE_REDIS:true}
+ableRedisson: ${ABLE_REDISSON:true}
+
+management:
+  health:
+    redis:
+      enabled: ${ABLE_REDIS:true}
 ---
 
 spring:
@@ -130,6 +138,15 @@ logging:
     org.springframework.orm.jpa: DEBUG
     org.springframework.transaction: DEBUG
 
+ableEventLock: true
+ableRedis: ${ABLE_REDIS:true}
+ableRedisson: ${ABLE_REDISSON:true}
+
+management:
+  health:
+    redis:
+      enabled: ${ABLE_REDIS:true}
+
 ---
 
 spring:
@@ -180,3 +197,12 @@ thread:
 logging:
   level:
     root: ${LOGGING_LEVEL:debug}
+ableEventLock: true
+ableRedis: ${ABLE_REDIS:true}
+ableRedisson: ${ABLE_REDISSON:true}
+
+management:
+  health:
+    redis:
+      enabled: ${ABLE_REDIS:true}
+
