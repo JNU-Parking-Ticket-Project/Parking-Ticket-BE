@@ -10,15 +10,14 @@ import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.events.repository.EventRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +41,8 @@ public class TestUseCase {
 
         DateTimePeriod dateTimePeriod =
                 new DateTimePeriod(
-                        LocalDateTime.now().plusSeconds(TEST_SCHEDULER_START_TIME_AFTER_NOW), LocalDateTime.now().plusMinutes(TEST_SCHEDULER_END_TIME_AFTER_NOW));
+                        LocalDateTime.now().plusSeconds(TEST_SCHEDULER_START_TIME_AFTER_NOW),
+                        LocalDateTime.now().plusMinutes(TEST_SCHEDULER_END_TIME_AFTER_NOW));
 
         EventRegisterRequest eventRegisterRequest =
                 new EventRegisterRequest(dateTimePeriod, "test");
