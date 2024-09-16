@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -50,8 +52,14 @@ public class RegistrationUseCase {
     private final EventWithDrawUseCase eventWithDrawUseCase;
     private final Encryption encryption;
     private final ValidateCaptchaUseCase validateCaptchaUseCase;
-    private final RedisService redisService;
+
+    @Autowired(required = false)
+    private RedisService redisService;
+
     private final EventAdaptor eventAdaptor;
+
+    @Value("${ableRedis:true}")
+    private boolean ableRedis;
 
     public Registration saveAndFlush(Registration registration) {
         return registrationAdaptor.saveAndFlush(registration);
@@ -163,7 +171,9 @@ public class RegistrationUseCase {
             Long eventId) {
         tempRegistration.update(registration);
         eventWithDrawUseCase.issueEvent(registration, user.getId(), sectorId, eventId);
-        redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
+        if (ableRedis) {
+            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
+        }
     }
 
     private FinalSaveResponse saveRegistration(
@@ -184,7 +194,9 @@ public class RegistrationUseCase {
             Long eventId) {
         //        Registration saveReg = saveAndFlush(registration);
         eventWithDrawUseCase.issueEvent(registration, currentUserId, sector.getId(), eventId);
-        redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
+        if (ableRedis) {
+            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
+        }
         //        Events.raise(new EventIssuedEvent())
         return FinalSaveResponse.from(registration);
     }

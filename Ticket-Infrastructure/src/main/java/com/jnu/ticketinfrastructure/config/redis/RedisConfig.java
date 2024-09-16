@@ -6,6 +6,7 @@ import com.jnu.ticketinfrastructure.model.ChatMessage;
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Configuration
 @EnableTransactionManagement
 @Slf4j
+@ConditionalOnExpression("${ableRedis:true}")
 public class RedisConfig {
 
     @Value("${spring.redis.host}")
@@ -39,6 +41,7 @@ public class RedisConfig {
     private String redisPassword;
 
     @Bean
+    @ConditionalOnExpression("${ableRedis:true}")
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration redisConfig =
                 new RedisStandaloneConfiguration(redisHost, redisPort);
@@ -55,6 +58,7 @@ public class RedisConfig {
     }
 
     @Bean(name = "redisTemplate")
+    @ConditionalOnExpression("${ableRedis:true}")
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
@@ -69,9 +73,10 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-    // 메세지 리스너 설정
+    // 메세지 리스너 설정x
     // pub/sub 메세지를 받을 채널 설정
     @Bean
+    @ConditionalOnExpression("${ableRedis:true}")
     ChannelTopic topic() {
         return new ChannelTopic(REDIS_EVENT_CHANNEL);
     }

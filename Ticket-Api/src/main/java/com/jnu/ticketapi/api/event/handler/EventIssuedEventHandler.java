@@ -19,6 +19,7 @@ import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -31,7 +32,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventIssuedEventHandler {
     private final RegistrationAdaptor registrationAdaptor;
     private final UserAdaptor userAdaptor;
-    private final WaitingQueueService waitingQueueService;
+
+    @Autowired(required = false)
+    private WaitingQueueService waitingQueueService;
+
     private final SectorAdaptor sectorAdaptor;
     private final ObjectMapper objectMapper;
     private final HikariDataSource hikariDataSource;
