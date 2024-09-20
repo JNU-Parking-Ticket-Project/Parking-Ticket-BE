@@ -68,7 +68,7 @@ jobs:
         with:
           projectBaseDir: .
           args: >
-            -Dsonar.projectKey=${{ secrets.PROJECT_KEY }}
+            -Dsonar.projectKey=${{ secrets.PROJECT_KEY_SONAR }}
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
             -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco.xml
