@@ -6,7 +6,7 @@ on:
         required: true
       SSH_USERNAME:
         required: true
-      SSH_KEY:
+      SSH_PASSWORD:
         required: true
       SSH_PORT:
         required: true
@@ -49,10 +49,14 @@ jobs:
         with:
           host: ${{ secrets.DEV_SSH_HOST }}
           username: ${{ secrets.DEV_SSH_USERNAME }}
-          key: ${{ secrets.DEV_SSH_KEY }}
+          password: ${{ secrets.DEV_SSH_PASSWORD }}
           port: ${{ secrets.DEV_SSH_PORT }}
           script: |
-            docker service update --image ${{ inputs.image-name }}:${{ inputs.image-tag }} ${{ inputs.service-name }}
+            sudo cd ~/jnu-parking/Parking-Ticket-BE
+            sudo docker rm -f $(sudo docker ps -aq --filter "ancestor=${{ inputs.image-name }}")
+            sudo docker pull ${{ inputs.image-name }}:latest
+            sudo docker compose up -d
+            sudo docker image prune -f
 
       - name: 배포 완료 슬랙 알림 보내기
         uses: 8398a7/action-slack@v3
@@ -64,7 +68,7 @@ jobs:
               attachments: [{
                 color: '#59f764',
                 title: '서버 배포 알림',
-                text: `전남대 주차권 개발 서버 배포 성공!`,
+                text: `🏃‍♂️‍➡️ 개발 서버 CICD 진행 완료!`,
                 fields: [
                   {
                     title: '배포 환경',

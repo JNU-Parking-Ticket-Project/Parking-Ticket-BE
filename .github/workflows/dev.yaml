@@ -5,7 +5,7 @@ on:
       - dev
 
 env:
-  ENVIRONMENT: development
+  ENVIRONMENT: dev
   IMAGE_NAME: jnuparking/jnu-parking-dev
   SERVICE_NAME: jnu-parking-dev-was
 
@@ -51,14 +51,14 @@ jobs:
     if: github.event_name == 'push'
     needs: [ prepare-variables, call-build-workflow ]
     name: 서비스 배포
-    uses: ./.github/workflows/dev-deploy.yaml
+    uses: ./.github/workflows/dev-deploy-v2-container.yaml
     permissions:
       id-token: write
       contents: read
     secrets:
       SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
       SSH_USERNAME: ${{ secrets.DEV_SSH_USERNAME }}
-      SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
+      SSH_PASSWORD: ${{ secrets.DEV_SSH_PASSWORD }}
       SSH_PORT: ${{ secrets.DEV_SSH_PORT }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     with:
