@@ -77,7 +77,7 @@ jobs:
       - name: SonarCloud Quality Gate 상태
         id: sonar_quality_gate
         run: |
-          STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY }}" | jq -r '.projectStatus.status')
+          STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY_SONAR }}" | jq -r '.projectStatus.status')
           echo "Quality Gate status: $STATUS"
           echo "::set-output name=status::$STATUS"
 
