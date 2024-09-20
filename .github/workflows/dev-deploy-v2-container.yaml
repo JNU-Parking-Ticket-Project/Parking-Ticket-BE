@@ -52,7 +52,7 @@ jobs:
           password: ${{ secrets.DEV_SSH_PASSWORD }}
           port: ${{ secrets.DEV_SSH_PORT }}
           script: |
-            sudo cd ~/jnu-parking/Parking-Ticket-BE
+            cd ~/jnu-parking/Parking-Ticket-BE
             sudo docker rm -f $(sudo docker ps -aq --filter "ancestor=${{ inputs.image-name }}")
             sudo docker pull ${{ inputs.image-name }}:latest
             sudo docker compose up -d
