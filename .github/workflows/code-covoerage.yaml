@@ -69,10 +69,9 @@ jobs:
           projectBaseDir: .
           args: >
             -Dsonar.projectKey=${{ secrets.PROJECT_KEY }}
-            -Dsonar.organization=${{ secrets.ORGANIZATION }}
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco.xml
             -Dsonar.qualitygate.wait=true
 
       - name: SonarCloud Quality Gate 상태
