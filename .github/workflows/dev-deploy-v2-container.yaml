@@ -2,13 +2,13 @@ name: 개발 서비스 배포
 on:
   workflow_call:
     secrets:
-      SSH_HOST:
+      DEV_SSH_HOST:
         required: true
-      SSH_USERNAME:
+      DEV_SSH_USERNAME:
         required: true
-      SSH_PASSWORD:
+      DEV_SSH_PASSWORD:
         required: true
-      SSH_PORT:
+      DEV_SSH_PORT:
         required: true
       SLACK_WEBHOOK_URL:
         required: true
