@@ -50,7 +50,6 @@ jobs:
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
-          context: .
           platforms: linux/amd64,linux/arm/v7,linux/arm64  # For Raspberry Pi, include ARM architectures
           push: true
           tags: ${{ inputs.image-name }}:latest
