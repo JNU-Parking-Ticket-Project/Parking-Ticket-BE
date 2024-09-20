@@ -36,7 +36,7 @@ jobs:
     if: github.event_name == 'push'
     needs: [ prepare-variables ]
     name: 이미지 빌드
-    uses: ./.github/workflows/build.yaml
+    uses: ./.github/workflows/build-raspberry.yaml
     permissions:
       id-token: write
       contents: read
