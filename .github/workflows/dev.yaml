@@ -36,7 +36,7 @@ jobs:
     if: github.event_name == 'push'
     needs: [ prepare-variables ]
     name: 이미지 빌드
-    uses: ./.github/workflows/build-raspberry.yaml
+    uses: ./.github/workflows/build.yaml
     permissions:
       id-token: write
       contents: read
@@ -58,7 +58,7 @@ jobs:
     secrets:
       DEV_SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
       DEV_SSH_USERNAME: ${{ secrets.DEV_SSH_USERNAME }}
-      DEV_SSH_PASSWORD: ${{ secrets.DEV_SSH_PASSWORD }}
+      DEV_SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
       DEV_SSH_PORT: ${{ secrets.DEV_SSH_PORT }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     with:

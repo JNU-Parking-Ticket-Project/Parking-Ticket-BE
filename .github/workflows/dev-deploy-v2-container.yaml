@@ -6,7 +6,7 @@ on:
         required: true
       DEV_SSH_USERNAME:
         required: true
-      DEV_SSH_PASSWORD:
+      DEV_SSH_KEY:
         required: true
       DEV_SSH_PORT:
         required: true
@@ -49,7 +49,7 @@ jobs:
         with:
           host: ${{ secrets.DEV_SSH_HOST }}
           username: ${{ secrets.DEV_SSH_USERNAME }}
-          password: ${{ secrets.DEV_SSH_PASSWORD }}
+          key: ${{ secrets.DEV_SSH_KEY }}
           port: ${{ secrets.DEV_SSH_PORT }}
           script: |
             cd ~/jnu-parking/Parking-Ticket-BE
