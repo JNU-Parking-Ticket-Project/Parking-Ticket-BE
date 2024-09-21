@@ -71,7 +71,7 @@ jobs:
       - name: SonarCloud 품질 게이트 상태 추출
         id: sonar_result
         run: |
-          QUALITY_GATE_STATUS=$(curl -s -X GET "https://sonarcloud.io/api/project_analyses/search?project=${{ secrets.PROJECT_KEY_SONAR }}" | jq -r '.analyses[0].status')
+          QUALITY_GATE_STATUS=$(curl -s -X GET "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY_SONAR }}" | jq -r '.projectStatus.status')
           echo "quality_gate=${QUALITY_GATE_STATUS}" >> $GITHUB_ENV
           echo "::set-output name=quality_gate::${QUALITY_GATE_STATUS}"
 
