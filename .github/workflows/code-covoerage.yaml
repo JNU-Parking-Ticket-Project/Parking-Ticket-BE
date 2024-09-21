@@ -102,6 +102,22 @@ jobs:
           status: ${{ steps.check.outputs.status }} # workflow결과 받아옴
           author_name: Github Action Bot
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CI }}
+        if: always()
+
+  notificationSonar:
+    name: Sonar Notification
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: [ notification ]
+    steps:
+      - name: SonarCloud 공지
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          author_name: Github Action Bot
           custom_payload: |
             {
               "text": "SonarCloud 품질 게이트 상태: ${{ env.quality_gate }}",
@@ -115,3 +131,4 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CI }}
         if: always()
+
