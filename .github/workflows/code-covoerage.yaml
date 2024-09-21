@@ -85,7 +85,8 @@ jobs:
       - name: Jacoco 커버리지 추출
         id: jacoco_coverage
         run: |
-          cat ${{ github.workspace }}/Ticket-Api/build/reports/jacoco.xml
+          head -n 100 ${{ github.workspace }}/Ticket-Api/build/reports/jacoco.xml
+          
           TOTAL_COVERAGE=$(grep -oP 'totalMissed="\K[0-9]+' ${{ github.workspace }}/Ticket-Api/build/reports/jacoco.xml)
           TOTAL_COVERED=$(grep -oP 'totalCovered="\K[0-9]+(?=")' ${{ github.workspace }}/Ticket-Api/build/reports/jacoco.xml)
           
