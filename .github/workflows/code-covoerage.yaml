@@ -72,8 +72,7 @@ jobs:
         id: sonar_result
         run: |
           QUALITY_GATE_STATUS=$(curl -s -X GET "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY_SONAR }}" | jq -r '.projectStatus.status')
-          echo "quality_gate=${QUALITY_GATE_STATUS}" >> $GITHUB_ENV
-          echo "::set-output name=quality_gate::${QUALITY_GATE_STATUS}"
+          echo "QUALITY_GATE=${QUALITY_GATE_STATUS}" >> $GITHUB_ENV
 
 
       - name: 테스트 커버리지를 PR에 코멘트로 등록합니다
@@ -121,11 +120,11 @@ jobs:
           author_name: Github Action Bot
           custom_payload: |
             {
-              "text": "SonarCloud 품질 게이트 상태: ${{ steps.sonar_result.outputs.quality_gate }}",
+              "text": "SonarCloud 품질 게이트 상태: ${{ env.QUALITY_GATE }}",
               "attachments": [
                 {
                   "title": "테스트 커버리지 리포트",
-                  "text": "테스트 커버리지 결과를 확인하세요."
+                  "text": "${{ env.QUALITY_GATE }}"
                 }
               ]
             }
