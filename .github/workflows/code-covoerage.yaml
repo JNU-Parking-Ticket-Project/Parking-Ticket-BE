@@ -79,43 +79,6 @@ jobs:
           min-coverage-changed-files: 50
 
 
-#  sonarcloud:
-#    name: SonarCloud 시작
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          fetch-depth: 0
-#      - name: Set up JDK 17
-#        uses: actions/setup-java@v2
-#        with:
-#          java-version: 17
-#          distribution: 'temurin'
-#          cache: 'gradle'
-#      - name: SonarCloud Scan
-#        uses: SonarSource/sonarcloud-github-action@master
-#        env:
-#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#      - name: SonarCloud 시작
-#        uses: sonarsource/sonarcloud-github-action@v2
-#        with:
-#          projectBaseDir: .
-#          args: >
-#            -Dsonar.projectKey=${{ secrets.PROJECT_KEY_SONAR }}
-#            -Dsonar.host.url=https://sonarcloud.io
-#            -Dsonar.organization=${{ secrets.ORGANIZATION_KEY_SONAR }}
-#            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-#            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco.xml
-#            -Dsonar.qualitygate.wait=true
-#
-#      - name: SonarCloud Quality Gate 상태
-#        id: sonar_quality_gate
-#        run: |
-#          STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY_SONAR }}" | jq -r '.projectStatus.status')
-#          echo "Quality Gate status: $STATUS"
-#          echo "::set-output name=status::$STATUS"
-
-
   # deploy 있어야 되긴하는데 일단 스킵(논의 후 작성)
   notification:
     name: Slack Notification
