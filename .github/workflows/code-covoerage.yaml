@@ -68,11 +68,7 @@ jobs:
           SONAR_PROJECT_KEY: ${{ secrets.PROJECT_KEY_SONAR }}  # SonarCloud 프로젝트 키
         run: ./gradlew sonar --info --stacktrace
 
-      - name: SonarCloud 품질 게이트 상태 추출
-        id: sonar_result
-        run: |
-          QUALITY_GATE_STATUS=$(curl -s -X GET "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY_SONAR }}" | jq -r '.projectStatus.status')
-          echo "QUALITY_GATE=${QUALITY_GATE_STATUS}" >> $GITHUB_ENV
+
 
 
       - name: 테스트 커버리지를 PR에 코멘트로 등록합니다
@@ -113,6 +109,11 @@ jobs:
     if: ${{ always() }}
     needs: [ notification ]
     steps:
+      - name: SonarCloud 품질 게이트 상태 추출
+        id: sonar_result
+        run: |
+          QUALITY_GATE_STATUS=$(curl -s -X GET "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY_SONAR }}" | jq -r '.projectStatus.status')
+          echo "QUALITY_GATE=${QUALITY_GATE_STATUS}" >> $GITHUB_ENV
       - name: SonarCloud 공지
         uses: 8398a7/action-slack@v3
         with:
