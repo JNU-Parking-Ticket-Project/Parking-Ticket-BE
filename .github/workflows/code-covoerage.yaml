@@ -121,11 +121,11 @@ jobs:
           author_name: Github Action Bot
           custom_payload: |
             {
-              "text": "SonarCloud 품질 게이트 상태: ${{ env.QUALITY_GATE }}",
+              "text": "SonarCloud Quality Gate 상태",
               "attachments": [
                 {
-                  "title": "테스트 커버리지 리포트",
-                  "text": "${{ env.QUALITY_GATE }}"
+                  "title": "SonarCloud Quality Gate 상태 입니다. 자세한 내용은 PR을 확인해주세요",
+                  "text": "상태 요약 : ${{ env.QUALITY_GATE }}"
                 }
               ]
             }
