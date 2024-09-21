@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.registration.adaptor;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REGISTRATION_SIZE;
 
 import com.jnu.ticketcommon.annotation.Adaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
@@ -11,6 +12,9 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @RequiredArgsConstructor
 @Adaptor
@@ -25,6 +29,11 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     @Override
     public Registration saveAndFlush(Registration registration) {
         return registrationRepository.saveAndFlush(registration);
+    }
+
+    @Override
+    public Registration save(Registration registration) {
+        return registrationRepository.save(registration);
     }
 
     @Override
@@ -60,13 +69,18 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     }
 
     @Override
-    public Optional<Registration> findByEmailAndIsSaved(String email, boolean flag, Long eventId) {
+    public List<Registration> findByEmailAndIsSaved(String email, boolean flag) {
         return registrationRepository.findByEmailAndIsSaved(email, flag);
     }
 
     @Override
     public List<Registration> findByIsDeletedFalseAndIsSavedTrue(Long eventId) {
         return registrationRepository.findByIsDeletedFalseAndIsSavedTrue(eventId);
+    }
+
+    public Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(Long eventId, int page) {
+        Pageable pageable = PageRequest.of(page, REGISTRATION_SIZE);
+        return registrationRepository.findByIsDeletedFalseAndIsSavedTrueByPage(eventId, pageable);
     }
 
     @Override
@@ -85,5 +99,15 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
 
     public List<Registration> findByUserId(Long userId) {
         return registrationRepository.findByUserId(userId);
+    }
+
+    @Override
+    public Integer findPositionById(Long id, Long sectorId) {
+        return registrationRepository.findPositionById(id, sectorId) + 1;
+    }
+
+    @Override
+    public Boolean existsByIdAndIsSavedTrue(Long id) {
+        return registrationRepository.existsByIdAndIsSavedTrue(id);
     }
 }

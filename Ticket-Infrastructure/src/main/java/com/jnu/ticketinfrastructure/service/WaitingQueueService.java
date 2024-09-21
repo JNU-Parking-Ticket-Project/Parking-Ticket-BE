@@ -17,10 +17,13 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@ConditionalOnExpression("${ableRedis:true}")
 public class WaitingQueueService {
     private final RedisRepository redisRepository;
     @Autowired private ObjectMapper objectMapper;
@@ -33,10 +36,7 @@ public class WaitingQueueService {
             String key, Registration registration, Long userId, Long sectorId, Long eventId)
             throws JsonProcessingException {
         Double score = (double) System.currentTimeMillis();
-        //        registration to JSON String
-        //        String registrationString = registration.toString();
         String registrationString = convertRegistrationJSON(registration);
-        //            String registrationString = objectMapper.writeValueAsString(registration);
         ChatMessage message =
                 new ChatMessage(
                         registrationString,
@@ -56,7 +56,6 @@ public class WaitingQueueService {
         registrationJson.put("affiliation", registration.getAffiliation());
         registrationJson.put("carNum", registration.getCarNum());
         registrationJson.put("phoneNum", registration.getPhoneNum());
-        //        registrationJson.put("createdAt", registration.getCreatedAt());
         registrationJson.put("isDeleted", registration.isDeleted());
         registrationJson.put("isLight", registration.isLight());
         registrationJson.put("isSaved", registration.isSaved());
@@ -84,8 +83,7 @@ public class WaitingQueueService {
         return redisRepository.zRank(key, value);
     }
 
-    public ChatMessage getValueByStatus(String key, ChatMessageStatus status) {
-        // Get the first element in the ZSET (lowest score) without removing it
+    public ChatMessage findFirstByStatus(String key, ChatMessageStatus status) {
         Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
         Set<ChatMessage> chatMessages =
                 resultSet.stream()
@@ -94,7 +92,6 @@ public class WaitingQueueService {
                                 chatMessage ->
                                         Objects.equals(chatMessage.getStatus(), status.name()))
                         .collect(Collectors.toSet());
-        log.info("chatMessages: {}", chatMessages);
         if (chatMessages != null && !chatMessages.isEmpty()) {
             // Return the first element in the set
             return chatMessages.iterator().next();
@@ -124,7 +121,7 @@ public class WaitingQueueService {
         return redisRepository.remove(key, value);
     }
 
-    public Object getValue(String key) {
+    public Object findFirst(String key) {
         // Get the first element in the ZSET (lowest score) without removing it
         Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
         if (resultSet != null && !resultSet.isEmpty()) {
@@ -134,5 +131,9 @@ public class WaitingQueueService {
             // If the set is empty, return null or handle accordingly
             return null;
         }
+    }
+
+    public Set<ZSetOperations.TypedTuple<Object>> findAllWithScore(String key) {
+        return redisRepository.zRangeWithScores(key, 0L, -1L);
     }
 }

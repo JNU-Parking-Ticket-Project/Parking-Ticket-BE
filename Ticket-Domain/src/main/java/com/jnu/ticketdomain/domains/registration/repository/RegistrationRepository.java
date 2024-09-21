@@ -5,6 +5,8 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -32,8 +34,13 @@ public interface RegistrationRepository
     Optional<Registration> findByEmail(String email);
 
     @Query(
-            "select r from Registration r where r.isDeleted = false and r.isSaved = true and r.sector.event.id = :eventId")
+            "select r from Registration r join fetch r.sector join fetch r.user where r.isSaved = true and r.sector.event.id = :eventId")
     List<Registration> findByIsDeletedFalseAndIsSavedTrue(@Param("eventId") Long eventId);
+
+    @Query(
+            "select r from Registration r where r.isDeleted = false and r.isSaved = true and r.sector.event.id = :eventId")
+    Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(
+            @Param("eventId") Long eventId, Pageable pageable);
 
     @Query("UPDATE Registration r SET r.isDeleted = true WHERE r.sector.id = :sectorId")
     @Modifying(clearAutomatically = true)
@@ -47,12 +54,19 @@ public interface RegistrationRepository
     @Modifying()
     void deleteByEventId(@Param("eventId") Long eventId);
 
-    @Query("select r from Registration r where r.isSaved = :flag and r.email = :email")
-    Optional<Registration> findByEmailAndIsSaved(
+    @Query(
+            "select r from Registration r where r.isSaved = :flag and r.email = :email order by r.id desc")
+    List<Registration> findByEmailAndIsSaved(
             @Param("email") String email, @Param("flag") boolean flag);
 
     @Query("select r from Registration r where r.user.id = :userId")
     List<Registration> findByUserId(@Param("userId") Long userId);
 
     List<Registration> findByUser(User user);
+
+    @Query(
+            "select count (r) from Registration r where r.id < :id and r.isSaved = true and r.sector.id = :sectorId")
+    Integer findPositionById(@Param("id") Long id, @Param("sectorId") Long sectorId);
+
+    Boolean existsByIdAndIsSavedTrue(Long id);
 }

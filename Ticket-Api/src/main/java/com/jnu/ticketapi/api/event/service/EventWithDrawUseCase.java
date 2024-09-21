@@ -17,6 +17,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -24,7 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class EventWithDrawUseCase {
 
-    private final WaitingQueueService waitingQueueService;
+    @Autowired(required = false)
+    private WaitingQueueService waitingQueueService;
+
     private final EventAdaptor eventAdaptor;
 
     /** 재고 감소 */

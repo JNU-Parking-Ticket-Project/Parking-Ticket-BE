@@ -13,11 +13,13 @@ import com.jnu.ticketapi.api.auth.model.response.*;
 import com.jnu.ticketapi.api.auth.service.AuthUseCase;
 import com.jnu.ticketapi.common.aop.GetEmail;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
+import com.jnu.ticketcommon.exception.RefreshTokenExpiredException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +30,9 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "1. [인증]")
 public class AuthController {
     private final AuthUseCase authUseCase;
+
+    @Value("${ableRedis:true}")
+    private boolean ableRedis;
 
     @ApiErrorExceptionsExample(UserLoginExceptionDocs.class)
     @Operation(summary = "로그인/회원가입", description = "로그인을 하면 동시에 회원가입이 되면서 로그인 처리")
@@ -47,6 +52,9 @@ public class AuthController {
             @RequestBody @Valid ReissueTokenRequest requestDto,
             @RequestHeader("Authorization") String bearerToken,
             @GetEmail String email) {
+        if (!ableRedis) {
+            throw RefreshTokenExpiredException.EXCEPTION;
+        }
         String accessToken = authUseCase.extractToken(bearerToken);
         ReissueTokenResponse responseDto =
                 authUseCase.reissue(accessToken, requestDto.refreshToken(), email);

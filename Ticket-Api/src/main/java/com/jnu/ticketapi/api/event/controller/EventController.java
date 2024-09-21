@@ -43,6 +43,7 @@ public class EventController {
     private final UpdatePublishStatusUseCase updatePublishStatusUseCase;
     private final EventDeleteUseCase eventDeleteUseCase;
     private final EventUpdateUseCase eventUpdateUseCase;
+    private final TestUseCase testUseCase;
 
     @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
@@ -75,13 +76,6 @@ public class EventController {
     public SuccessResponse issueEvent() {
         return new SuccessResponse(EVENT_SUCCESS_REGISTER_MESSAGE);
     }
-
-    //    @Operation(summary = "현재 대기번호 조회", description = "주차권 대기번호 조회")
-    //    @ApiErrorExceptionsExample(ReadEventExceptionDocs.class)
-    //    @GetMapping("/events/order")
-    //    public ResponseEntity<Long> getEventOrder() {
-    //        return ResponseEntity.ok(EventWithDrawUseCase.getEventOrder());
-    //    }
 
     @Operation(summary = "이벤트를 오픈 상태로 변경합니다.")
     @PostMapping("events/open")
@@ -163,5 +157,17 @@ public class EventController {
     public SuccessResponse deleteEvent(@PathVariable("event-id") Long eventId) {
         eventDeleteUseCase.deleteEvent(eventId);
         return new SuccessResponse(EVENT_SUCCESS_DELETE_MESSAGE);
+    }
+
+    @Operation(description = "OPEN 중인 이벤트를 닫고 이벤트를 생성한다.")
+    @PostMapping("/events/test")
+    public void test() {
+        testUseCase.execute();
+    }
+
+    @Operation(description = "issueAmount가 60인 구간 5개를 만든다.")
+    @PostMapping("/events/test2")
+    public void test2() {
+        testUseCase.execute2();
     }
 }

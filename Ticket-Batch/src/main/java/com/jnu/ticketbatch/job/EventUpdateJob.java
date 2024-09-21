@@ -16,10 +16,8 @@ import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.quartz.SchedulerFactory;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
-import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -34,9 +32,11 @@ public class EventUpdateJob implements Job {
 
     @Autowired private JobLauncher jobLauncher;
 
-    @Autowired private org.springframework.batch.core.Job reserveJob;
+    @Autowired private org.springframework.batch.core.Job expirationJob;
 
     @Autowired private ApplicationContext applicationContext;
+
+    @Autowired private Scheduler sched;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -46,7 +46,7 @@ public class EventUpdateJob implements Job {
                             .addLong("eventId", context.getMergedJobDataMap().getLong("eventId"))
                             .toJobParameters();
 
-            jobLauncher.run(reserveJob, jobParameters);
+            jobLauncher.run(expirationJob, jobParameters);
         } catch (Exception e) {
             throw new JobExecutionException("Failed to execute Spring Batch job", e);
         }
@@ -55,9 +55,6 @@ public class EventUpdateJob implements Job {
     @Retryable(value = SchedulerException.class, maxAttempts = 3)
     public void cancelScheduledJob(Long eventId) {
         try {
-            SchedulerFactory schedFact = new StdSchedulerFactory();
-            Scheduler sched = schedFact.getScheduler();
-
             // JobKey 생성
             JobKey jobKey1 = JobKey.jobKey("RESERVATION_JOB", "group1");
 
@@ -84,8 +81,6 @@ public class EventUpdateJob implements Job {
 
     public void reRegisterJob(Long eventId, LocalDateTime startAt) throws Exception {
         // Quartz 스케줄러 초기화
-        SchedulerFactory schedFact = new StdSchedulerFactory();
-        Scheduler sched = schedFact.getScheduler();
         sched.start();
         // 예약 생성 작업 정의
         cancelScheduledJob(eventId);

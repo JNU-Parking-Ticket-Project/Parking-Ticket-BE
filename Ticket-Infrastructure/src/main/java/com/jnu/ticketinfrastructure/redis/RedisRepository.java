@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @Slf4j
+@ConditionalOnExpression("${ableRedis:true}")
 public class RedisRepository {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -37,6 +39,11 @@ public class RedisRepository {
         return redisTemplate.opsForZSet().range(key, startRank, endRank);
     }
 
+    public Set<ZSetOperations.TypedTuple<Object>> zRangeWithScores(
+            String key, Long startRank, Long endRank) {
+        return redisTemplate.opsForZSet().rangeWithScores(key, startRank, endRank);
+    }
+
     public <T> Queue<T> zPopMin(String key, Long count, Class<T> type) {
         Set<T> set = (Set<T>) redisTemplate.opsForZSet().popMin(key, count);
         return new LinkedList<>(set);
@@ -51,9 +58,6 @@ public class RedisRepository {
                         + "else "
                         + "    return nil "
                         + "end";
-
-        // Log before executing the script
-        log.info("Executing Lua script to pop min element from key: {}", key);
 
         return redisTemplate.execute(
                 (RedisCallback<Object>)
@@ -88,10 +92,6 @@ public class RedisRepository {
 
     public void delete(String key) {
         redisTemplate.delete(key);
-    }
-
-    public <T> Set<Object> zReverseRange(String key, Long startRank, Long endRank, Class<T> type) {
-        return redisTemplate.opsForZSet().reverseRange(key, startRank, endRank);
     }
 
     public void deleteKeysByPrefix(String prefix) {

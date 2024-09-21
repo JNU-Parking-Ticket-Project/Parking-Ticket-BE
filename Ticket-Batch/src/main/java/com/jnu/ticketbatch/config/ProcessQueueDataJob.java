@@ -7,41 +7,37 @@ import com.jnu.ticketinfrastructure.domainEvent.Events;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 
 @Slf4j
 @DisallowConcurrentExecution
 public class ProcessQueueDataJob implements Job {
+    @Autowired private ApplicationEventPublisher publisher;
+
+    @Autowired private WaitingQueueService waitingQueueService;
+
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        log.info(">>>>>>>>>>>>> ProcessQueueDataJob execute");
-        JobDataMap jobDataMap = context.getMergedJobDataMap();
-        ApplicationEventPublisher publisher =
-                (ApplicationEventPublisher) jobDataMap.get("applicationEventPublisher");
         try {
             // 현재 쓰레드에 ApplicationEventPublisher를 설정
             Events.setPublisher(publisher);
 
-            WaitingQueueService waitingQueueService =
-                    (WaitingQueueService) jobDataMap.get("waitingQueueService");
-            ChatMessage message =
-                    waitingQueueService.getValueByStatus(
-                            REDIS_EVENT_ISSUE_STORE, ChatMessageStatus.NOT_WAITING);
+            Set<TypedTuple<Object>> messagesWithScores =
+                    waitingQueueService.findAllWithScore(REDIS_EVENT_ISSUE_STORE);
 
-            if (message != null) {
-                log.info("Message found, raising event");
-                Double score = waitingQueueService.getScore(REDIS_EVENT_ISSUE_STORE, message);
-                waitingQueueService.reRegisterQueue(
-                        REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
-                Events.raise(
-                        EventIssuedEvent.from(
-                                message.getSectorId(),
-                                message.getUserId(),
-                                message.getEventId(),
-                                message.getRegistration(),
-                                score));
+            if (!messagesWithScores.isEmpty()) {
+                for (TypedTuple<Object> messageWithScore : messagesWithScores) {
+                    Double score = messageWithScore.getScore();
+                    ChatMessage message = (ChatMessage) messageWithScore.getValue();
+                    waitingQueueService.reRegisterQueue(
+                            REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
+                    Events.raise(EventIssuedEvent.from(message, score));
+                }
             }
         } catch (Exception e) {
             log.error("ProcessQueueDataJob Exception: {}", e.getMessage());

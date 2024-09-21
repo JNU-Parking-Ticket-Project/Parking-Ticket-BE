@@ -2,6 +2,7 @@ package com.jnu.ticketbatch.expired;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
+import com.jnu.ticketdomain.domains.events.EventExpiredEventRaiseGateway;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
@@ -15,30 +16,23 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
 @Slf4j
 public class BatchQuartzJob extends QuartzJobBean {
 
-    private JobLauncher jobLauncher;
-    private Job job;
-    private JobExplorer jobExplorer;
+    @Autowired private JobLauncher jobLauncher;
+    @Autowired private Job job;
+    @Autowired private JobExplorer jobExplorer;
+
+    @Autowired EventAdaptor eventAdaptor;
+    @Autowired RedisRepository redisRepository;
+    @Autowired RegistrationAdaptor registrationAdaptor;
+    @Autowired EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        ApplicationContext applicationContext =
-                (ApplicationContext)
-                        context.getJobDetail().getJobDataMap().get("applicationContext");
-
-        // JobLauncher, Job, JobExplorer를 ApplicationContext에서 가져옵니다.
-        this.jobLauncher = applicationContext.getBean(JobLauncher.class);
-        this.job = applicationContext.getBean(Job.class);
-        this.jobExplorer = applicationContext.getBean(JobExplorer.class);
-        EventAdaptor eventAdaptor = applicationContext.getBean(EventAdaptor.class);
-        RedisRepository redisRepository = applicationContext.getBean(RedisRepository.class);
-        RegistrationAdaptor registrationAdaptor =
-                applicationContext.getBean(RegistrationAdaptor.class);
         // JobDataMap에서 eventId를 가져옵니다.
         Long eventId = (Long) context.getJobDetail().getJobDataMap().get("eventId");
         Event event = eventAdaptor.findById(eventId);
@@ -50,7 +44,8 @@ public class BatchQuartzJob extends QuartzJobBean {
                         .getNextJobParameters(this.job)
                         .addLong("eventId", eventId)
                         .toJobParameters();
-
+        log.info("EventThrow in BatchQuartzJob");
+        eventExpiredEventRaiseGateway.handle(eventId);
         try {
             this.jobLauncher.run(this.job, jobParameters);
         } catch (Exception e) {

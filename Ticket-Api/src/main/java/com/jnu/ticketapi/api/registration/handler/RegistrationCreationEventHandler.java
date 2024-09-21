@@ -5,6 +5,8 @@ import com.jnu.ticketdomain.domains.registration.event.RegistrationCreationEvent
 import com.jnu.ticketinfrastructure.service.MailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -23,8 +25,15 @@ public class RegistrationCreationEventHandler {
             classes = RegistrationCreationEvent.class,
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Deprecated(since = "Email 발송 시점 변경", forRemoval = true)
+    @Retryable(
+            retryFor = {Exception.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 1000))
     public void handle(RegistrationCreationEvent event) {
-        mailService.sendRegistrationResultMail(
-                event.getEmail(), event.getName(), event.getStatus(), event.getSequence());
+        // 새로운 persistence context에서 User를 조회 (User를 영속화 하기 위해)
+        //        mailService.sendRegistrationResultMail(
+        //                event.getEmail(), event.getName(), event.getStatus(),
+        // event.getSequence());
     }
 }

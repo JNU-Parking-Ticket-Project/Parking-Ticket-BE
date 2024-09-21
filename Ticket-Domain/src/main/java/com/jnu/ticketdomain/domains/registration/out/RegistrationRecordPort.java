@@ -11,4 +11,6 @@ public interface RegistrationRecordPort {
     void deleteBySector(Long sectorId);
 
     void deleteByEvent(Long eventId);
+
+    Registration save(Registration registration);
 }

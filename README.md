@@ -35,3 +35,8 @@ JNU 주차권 백엔드 프로젝트에 많은 관심을 가져주셔서 감사�
 2. Docker Engine 혹은 Docker Hub를 설치하고, Docker deamon을 실행합니다.
 3. `/docker-compose.yml` 파일을 실행합니다. (redis, mysql)
 4. Ticket-Api 모듈을 실행합니다.
+
+---
+# Architecture
+![TO_BE2](https://github.com/user-attachments/assets/2f5e3a3a-4f9c-4b04-afab-1d6dff0eeb39)
+
