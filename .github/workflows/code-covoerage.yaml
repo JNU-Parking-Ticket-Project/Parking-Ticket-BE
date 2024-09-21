@@ -42,6 +42,7 @@ jobs:
       - name: Gradle 캐싱
         uses: actions/cache@v3
         with:
+          arguments: check
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
@@ -50,8 +51,22 @@ jobs:
       - name: 권한부여
         run: chmod +x gradlew
 
+      - name: SonarCloud Set
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
       - name: 빌드와 테스트
         run: ./gradlew clean build -x spotlessApply -x spotlessCheck -x spotlessJavaCheck -x spotlessJavaApply jacocoTestReport # 임시로 테스트 체크 안함
+
+      - name: SonarCloud
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ secrets.PROJECT_KEY_SONAR }}  # SonarCloud 프로젝트 키
+        run: ./gradlew sonar --info --stacktrace
 
       - name: 테스트 커버리지를 PR에 코멘트로 등록합니다
         id: jacoco
@@ -63,24 +78,42 @@ jobs:
           min-coverage-overall: 50
           min-coverage-changed-files: 50
 
-      - name: SonarCloud 시작
-        uses: sonarsource/sonarcloud-github-action@v2
-        with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=${{ secrets.PROJECT_KEY_SONAR }}
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.organization=${{ secrets.ORGANIZATION_KEY_SONAR }}
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco.xml
-            -Dsonar.qualitygate.wait=true
 
-      - name: SonarCloud Quality Gate 상태
-        id: sonar_quality_gate
-        run: |
-          STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY_SONAR }}" | jq -r '.projectStatus.status')
-          echo "Quality Gate status: $STATUS"
-          echo "::set-output name=status::$STATUS"
+  sonarcloud:
+    name: SonarCloud 시작
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17
+          distribution: 'temurin'
+          cache: 'gradle'
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#      - name: SonarCloud 시작
+#        uses: sonarsource/sonarcloud-github-action@v2
+#        with:
+#          projectBaseDir: .
+#          args: >
+#            -Dsonar.projectKey=${{ secrets.PROJECT_KEY_SONAR }}
+#            -Dsonar.host.url=https://sonarcloud.io
+#            -Dsonar.organization=${{ secrets.ORGANIZATION_KEY_SONAR }}
+#            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+#            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco.xml
+#            -Dsonar.qualitygate.wait=true
+#
+#      - name: SonarCloud Quality Gate 상태
+#        id: sonar_quality_gate
+#        run: |
+#          STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY_SONAR }}" | jq -r '.projectStatus.status')
+#          echo "Quality Gate status: $STATUS"
+#          echo "::set-output name=status::$STATUS"
 
 
   # deploy 있어야 되긴하는데 일단 스킵(논의 후 작성)
