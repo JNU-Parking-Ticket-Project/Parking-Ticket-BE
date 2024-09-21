@@ -13,6 +13,8 @@ on:
         required: true
       DOCKER_PASSWORD:
         required: true
+      SLACK_WEBHOOK_URL:
+        required: true
 
 env:
   IMAGE_TAG: ${{ inputs.image-tag || 'latest' }}
