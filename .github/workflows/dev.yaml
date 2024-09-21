@@ -1,4 +1,4 @@
-name: 개발 서버 워크플로우
+name: 🧑‍💻 개발 환경 Spring boot CI/CD
 on:
   push:
     branches:

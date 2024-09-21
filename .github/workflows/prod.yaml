@@ -1,4 +1,4 @@
-name: 라이브 서버 워크플로우
+name: 🚨 프로덕션 환경 Spring boot CICD
 on:
   push:
     branches:
