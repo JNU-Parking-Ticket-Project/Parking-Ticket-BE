@@ -78,6 +78,19 @@ jobs:
           min-coverage-overall: 50
           min-coverage-changed-files: 50
 
+      - name: SonarCloud 추출
+        id: sonar_result
+        run: echo "::set-output name=quality_gate::$(cat ${GITHUB_WORKSPACE}/.scannerwork/report-task.txt | grep status)"
+
+      - name: Jacoco 커버리지 추출
+        id: jacoco_coverage
+        run: |
+          TOTAL_COVERAGE=$(grep -Po 'totalMissed=".*?" totalCovered=".*?"' ${{ github.workspace }}/Ticket-Api/build/reports/jacoco.xml)
+          echo "::set-output name=coverage::${TOTAL_COVERAGE}"
+    outputs:
+      sonar_quality_gate: ${{ steps.sonar_result.outputs.quality_gate }}
+      jacoco_coverage: ${{ steps.jacoco_coverage.outputs.coverage }}
+
 
   # deploy 있어야 되긴하는데 일단 스킵(논의 후 작성)
   notification:
@@ -94,6 +107,10 @@ jobs:
           status: ${{ steps.check.outputs.status }} # workflow결과 받아옴
           author_name: Github Action Bot
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          custom_field_1_title: SonarCloud Quality Gate
+          custom_field_1_value: ${{ needs.build.outputs.sonar_quality_gate }} # SonarCloud 상태
+          custom_field_2_title: Jacoco Coverage
+          custom_field_2_value: ${{ needs.build.outputs.jacoco_coverage }} # Jacoco 커버리지
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CI }}
         if: always()
