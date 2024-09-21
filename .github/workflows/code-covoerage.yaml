@@ -102,8 +102,16 @@ jobs:
           status: ${{ steps.check.outputs.status }} # workflow결과 받아옴
           author_name: Github Action Bot
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-          custom_field_1_title: SonarCloud Quality Gate
-          custom_field_1_value: ${{ env.quality_gate }} # SonarCloud 상태
+          custom_payload: |
+            {
+              "text": "SonarCloud 품질 게이트 상태: ${{ env.quality_gate }}",
+              "attachments": [
+                {
+                  "title": "테스트 커버리지 리포트",
+                  "text": "테스트 커버리지 결과를 확인하세요."
+                }
+              ]
+            }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CI }}
         if: always()
