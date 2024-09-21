@@ -82,23 +82,8 @@ jobs:
         id: sonar_result
         run: echo "::set-output name=quality_gate::$(cat ${GITHUB_WORKSPACE}/.scannerwork/report-task.txt | grep status)"
 
-      - name: Jacoco 커버리지 추출
-        id: jacoco_coverage
-        run: |
-          head -n 100 ${{ github.workspace }}/Ticket-Api/build/reports/jacoco.xml
-          
-          TOTAL_COVERAGE=$(grep -oP 'totalMissed="\K[0-9]+' ${{ github.workspace }}/Ticket-Api/build/reports/jacoco.xml)
-          TOTAL_COVERED=$(grep -oP 'totalCovered="\K[0-9]+(?=")' ${{ github.workspace }}/Ticket-Api/build/reports/jacoco.xml)
-          
-          # 결과 출력
-          echo "Missed: $TOTAL_COVERAGE, Covered: $TOTAL_COVERED"
-
-          # 커버리지 결과를 출력으로 설정
-          echo "::set-output name=coverage::Missed: $TOTAL_COVERAGE, Covered: $TOTAL_COVERED"
-
     outputs:
       sonar_quality_gate: ${{ steps.sonar_result.outputs.quality_gate }}
-      jacoco_coverage: ${{ steps.jacoco_coverage.outputs.coverage }}
 
 
   # deploy 있어야 되긴하는데 일단 스킵(논의 후 작성)
@@ -118,8 +103,6 @@ jobs:
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
           custom_field_1_title: SonarCloud Quality Gate
           custom_field_1_value: ${{ needs.build.outputs.sonar_quality_gate }} # SonarCloud 상태
-          custom_field_2_title: Jacoco Coverage
-          custom_field_2_value: ${{ needs.build.outputs.jacoco_coverage }} # Jacoco 커버리지
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CI }}
         if: always()
