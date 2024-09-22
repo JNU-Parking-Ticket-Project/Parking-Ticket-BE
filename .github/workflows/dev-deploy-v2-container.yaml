@@ -2,13 +2,13 @@ name: 개발 서비스 배포
 on:
   workflow_call:
     secrets:
-      SSH_HOST:
+      DEV_SSH_HOST:
         required: true
-      SSH_USERNAME:
+      DEV_SSH_USERNAME:
         required: true
-      SSH_KEY:
+      DEV_SSH_KEY:
         required: true
-      SSH_PORT:
+      DEV_SSH_PORT:
         required: true
       SLACK_WEBHOOK_URL:
         required: true
@@ -52,9 +52,14 @@ jobs:
           key: ${{ secrets.DEV_SSH_KEY }}
           port: ${{ secrets.DEV_SSH_PORT }}
           script: |
-            docker service update --image ${{ inputs.image-name }}:${{ inputs.image-tag }} ${{ inputs.service-name }}
+            cd ~/jnu-parking/Parking-Ticket-BE
+            sudo docker rm -f $(sudo docker ps -aq --filter "ancestor=${{ inputs.image-name }}")
+            sudo docker pull ${{ inputs.image-name }}:latest
+            sudo docker compose up -d
+            sudo docker image prune -f
 
-      - name: 배포 완료 슬랙 알림 보내기
+      - name: Slack CICD 성공 알림
+        if: success()
         uses: 8398a7/action-slack@v3
         with:
           status: custom
@@ -63,8 +68,45 @@ jobs:
             {
               attachments: [{
                 color: '#59f764',
-                title: '서버 배포 알림',
-                text: `전남대 주차권 개발 서버 배포 성공!`,
+                title: `🏃‍♂️‍➡️ 개발 환경 CICD 진행 완료!`,
+                fields: [
+                  {
+                    title: '배포 환경',
+                    value: `${process.env.ENVIRONMENT}`,
+                    short: true,
+                  },
+                  {
+                    title: '배포자',
+                    value: `${process.env.AS_AUTHOR}`,
+                    short: true,
+                  },
+                  {
+                    title: '워크플로 링크',
+                    value: `${process.env.AS_WORKFLOW_RUN}`,
+                    short: true,
+                  },
+                  {
+                    title: 'PR 링크',
+                    value: `${process.env.AS_PULL_REQUEST}`,
+                    short: true,
+                  }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Slack CICD 실패 알림
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: author, workflowRun, pullRequest
+          custom_payload: |
+            {
+              attachments: [{
+                color: '#CA0025',
+                title: `🧎‍♂️‍➡️ 개발 환경 CICD 진행 실패!`,
                 fields: [
                   {
                     title: '배포 환경',

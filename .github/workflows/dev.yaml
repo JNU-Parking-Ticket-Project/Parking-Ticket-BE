@@ -1,11 +1,11 @@
-name: 개발 서버 워크플로우
+name: 🧑‍💻 개발 환경 Spring boot CI/CD
 on:
   push:
     branches:
       - dev
 
 env:
-  ENVIRONMENT: development
+  ENVIRONMENT: dev
   IMAGE_NAME: jnuparking/jnu-parking-dev
   SERVICE_NAME: jnu-parking-dev-was
 
@@ -46,20 +46,21 @@ jobs:
     secrets:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   call-deploy-workflow:
     if: github.event_name == 'push'
     needs: [ prepare-variables, call-build-workflow ]
     name: 서비스 배포
-    uses: ./.github/workflows/dev-deploy.yaml
+    uses: ./.github/workflows/dev-deploy-v2-container.yaml
     permissions:
       id-token: write
       contents: read
     secrets:
-      SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
-      SSH_USERNAME: ${{ secrets.DEV_SSH_USERNAME }}
-      SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
-      SSH_PORT: ${{ secrets.DEV_SSH_PORT }}
+      DEV_SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
+      DEV_SSH_USERNAME: ${{ secrets.DEV_SSH_USERNAME }}
+      DEV_SSH_KEY: ${{ secrets.DEV_SSH_KEY }}
+      DEV_SSH_PORT: ${{ secrets.DEV_SSH_PORT }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     with:
       image-name: ${{ needs.prepare-variables.outputs.image-name }}

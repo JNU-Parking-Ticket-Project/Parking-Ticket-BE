@@ -33,7 +33,9 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                         "http://localhost:4200",
                         "https://apply.jnu-parking.com/",
-                        "https://manager.jnu-parking.com/")
+                        "https://apply.dev.jnu-parking.com",
+                        "https://manager.jnu-parking.com/",
+                        "https://manager.dev.jnu-parking.com")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);
