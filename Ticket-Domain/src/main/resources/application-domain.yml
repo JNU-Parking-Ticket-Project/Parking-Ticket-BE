@@ -88,6 +88,23 @@ spring:
     username: sa
   jpa:
     show-sql: true
+
+  quartz:
+    job-store-type: jdbc  # Quartz가 메모리가 아닌 DB에 Job/Trigger 저장
+    jdbc:
+      initialize-schema: always # 스키마 자동 생성 비활성화 (한번만 수동으로 생성)
+      properties:
+        org:
+          quartz:
+            scheduler:
+              instanceName: QuartzScheduler
+              instanceId: AUTO
+            jobStore:
+              class: org.quartz.impl.jdbcjobstore.JobStoreTX  # Transactional JobStore 설정
+              driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+              isClustered: true  # 클러스터링 지원 (필요한 경우)
+              tablePrefix: QRTZ_  # 테이블 접두사 (기본값)
+              useProperties: false
   h2:
     console:
       enabled: true
