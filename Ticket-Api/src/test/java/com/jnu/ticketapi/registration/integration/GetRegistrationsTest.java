@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.registration;
+package com.jnu.ticketapi.registration.integration;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -28,64 +28,33 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
-public class GetRegistrationTest extends RestDocsConfig {
+public class GetRegistrationsTest extends RestDocsConfig {
     @Autowired private MockMvc mvc;
-
+    @Autowired private JwtGenerator jwtGenerator;
     @Autowired private ObjectMapper om;
 
-    @Autowired JwtGenerator jwtGenerator;
-
     @Nested
-    class getRegistrationTest {
-
+    class getRegistrationListTest {
         @Test
-        @DisplayName("성공 : 임시저장 조회(임시저장을 안했을 경우)")
+        @DisplayName("성공 : 신청 목록 조회")
         void success() throws Exception {
             // given
-            String email = "user4@jnu.ac.kr";
-            String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
-
+            Long eventId = 1L;
+            String accessToken = jwtGenerator.generateAccessToken("council@jnu.ac.kr", "COUNCIxL");
             // when
             ResultActions resultActions =
                     mvc.perform(
-                            get("/v1/registration/1")
+                            get("/v1/registrations/" + eventId)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header("Authorization", "Bearer " + accessToken));
+
             // eye
             String responseBody = resultActions.andReturn().getResponse().getContentAsString();
 
             // then
             resultActions.andExpectAll(
                     status().isOk(),
-                    jsonPath("$.email").value(email),
-                    jsonPath("$.studentNum").isEmpty(),
-                    jsonPath("$.phoneNum").isEmpty());
-            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
-            log.info("responseBody : {}", responseBody);
-        }
-
-        @Test
-        @DisplayName("성공 : 임시저장 조회(임시저장을 했을 경우)")
-        void success2() throws Exception {
-            // given
-            String email = "user@jnu.ac.kr";
-            String accessToken = jwtGenerator.generateAccessToken(email, "USER");
-
-            // when
-            ResultActions resultActions =
-                    mvc.perform(
-                            get("/v1/registration/1")
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .header("Authorization", "Bearer " + accessToken));
-            // eye
-            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
-
-            // then
-            resultActions.andExpectAll(
-                    status().isOk(),
-                    jsonPath("$.email").value(email),
-                    jsonPath("$.name").value("이진혁"),
-                    jsonPath("$.studentNum").value("215555"));
+                    jsonPath("$.registrations[0].email").value("council@jnu.ac.kr"));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }

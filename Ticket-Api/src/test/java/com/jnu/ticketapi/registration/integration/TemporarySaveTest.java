@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.registration;
+package com.jnu.ticketapi.registration.integration;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
