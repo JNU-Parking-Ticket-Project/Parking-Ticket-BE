@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.application.helper.Encryption;
+import com.jnu.ticketapi.config.DatabaseClearExtension;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.message.ValidationMessage;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -35,7 +37,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
-public class FinalSaveTest extends RestDocsConfig {
+@ExtendWith(DatabaseClearExtension.class)
+public class FinalSaveIntegrationTest extends RestDocsConfig {
     @Autowired private MockMvc mvc;
 
     @Autowired private ObjectMapper om;
@@ -50,11 +53,11 @@ public class FinalSaveTest extends RestDocsConfig {
         @DisplayName("성공 : 1차 신청")
         void success() throws Exception {
             // given
-            String email = "admin@jnu.ac.kr";
+            String email = "user4@jnu.ac.kr";
             String captchaCode = encryption.encrypt(1L);
             String captchaAnswer = "1234";
 
-            String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+            String accessToken = jwtGenerator.generateAccessToken(email, "USER");
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
@@ -62,7 +65,7 @@ public class FinalSaveTest extends RestDocsConfig {
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
-                            .studentNum("215551")
+                            .studentNum("000000")
                             .carNum("12나1234")
                             .isLight(true)
                             .phoneNum("010-1111-2222")
