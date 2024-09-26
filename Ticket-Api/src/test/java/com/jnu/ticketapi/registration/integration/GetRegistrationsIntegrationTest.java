@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
-public class GetRegistrationsTest extends RestDocsConfig {
+public class GetRegistrationsIntegrationTest extends RestDocsConfig {
     @Autowired private MockMvc mvc;
     @Autowired private JwtGenerator jwtGenerator;
     @Autowired private ObjectMapper om;

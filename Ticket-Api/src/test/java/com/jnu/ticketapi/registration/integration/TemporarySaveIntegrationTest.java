@@ -32,7 +32,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
-public class TemporarySaveTest extends RestDocsConfig {
+public class TemporarySaveIntegrationTest extends RestDocsConfig {
     @Autowired private MockMvc mvc;
 
     @Autowired private ObjectMapper om;
