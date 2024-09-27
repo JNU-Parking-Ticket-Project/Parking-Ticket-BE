@@ -37,7 +37,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
-@ExtendWith(DatabaseClearExtension.class)
 public class FinalSaveIntegrationTest extends RestDocsConfig {
     @Autowired private MockMvc mvc;
 
