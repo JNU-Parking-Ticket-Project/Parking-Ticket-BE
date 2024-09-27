@@ -1,18 +1,16 @@
 package com.jnu.ticketapi.config;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
+import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-
-import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @Component
 @RequiredArgsConstructor
