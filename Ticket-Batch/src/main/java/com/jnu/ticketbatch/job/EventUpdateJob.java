@@ -56,11 +56,11 @@ public class EventUpdateJob implements Job {
     public void cancelScheduledJob(Long eventId) {
         try {
             // JobKey 생성
-            JobKey jobKey1 = JobKey.jobKey("RESERVATION_JOB", "group1");
+            JobKey jobKey1 = JobKey.jobKey("RESERVATION_JOB" + eventId, "group1");
 
-            JobKey jobKey2 = JobKey.jobKey("EXPIRED_JOB", "group1");
+            JobKey jobKey2 = JobKey.jobKey("EXPIRED_JOB" + eventId, "group1");
 
-            JobKey jobKey3 = JobKey.jobKey("PROCESS_QUEUE_DATA_JOB", "group1");
+            JobKey jobKey3 = JobKey.jobKey("PROCESS_QUEUE_DATA_JOB" + eventId, "group1");
             // 스케줄러에서 작업 삭제
             if (sched.checkExists(jobKey1)) { // 해당 JobKey로 등록된 작업이 존재하는지 확인
                 sched.deleteJob(jobKey1); // 작업 삭제
