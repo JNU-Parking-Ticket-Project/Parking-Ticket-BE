@@ -8,6 +8,9 @@ on:
       image-tag:
         required: true
         type: string
+      environment:
+        required: true
+        type: string
     secrets:
       DOCKER_USERNAME:
         required: true
@@ -19,6 +22,7 @@ on:
 env:
   IMAGE_TAG: ${{ inputs.image-tag || 'latest' }}
   IMAGE_NAME: ${{ inputs.image-name }}
+  ENVIRONMENT: ${{ inputs.environment || 'prod' }}
 
 jobs:
   build:
@@ -47,6 +51,8 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          ENVIRONMENT: ${{ inputs.environment }}
+
         run: |
           echo "IMAGE_TAG=$IMAGE_TAG, IMAGE_NAME=$IMAGE_NAME" &&
           chmod +x ./gradlew &&
