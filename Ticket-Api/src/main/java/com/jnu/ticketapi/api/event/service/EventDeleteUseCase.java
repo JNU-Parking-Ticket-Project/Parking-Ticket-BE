@@ -13,6 +13,7 @@ import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -26,13 +27,18 @@ public class EventDeleteUseCase {
     private final SectorAdaptor sectorAdaptor;
     private final RegistrationAdaptor registrationAdaptor;
 
+    @Value("${ableRedis:true}")
+    private boolean ableRedis;
+
     @Transactional
     public void deleteEvent(Long eventId) {
         Event event = eventAdaptor.findById(eventId);
         Events.raise(EventDeletedEvent.of(event));
         event.deleteEvent();
         event.updateStatus(EventStatus.CLOSED, null);
-        redisRepository.delete(REDIS_EVENT_ISSUE_STORE);
+        if (ableRedis) {
+            redisRepository.delete(REDIS_EVENT_ISSUE_STORE);
+        }
         sectorAdaptor.deleteByEvent(eventId);
         registrationAdaptor.deleteByEvent(eventId);
     }

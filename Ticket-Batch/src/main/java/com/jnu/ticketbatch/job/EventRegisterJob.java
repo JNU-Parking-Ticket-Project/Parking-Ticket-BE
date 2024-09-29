@@ -59,7 +59,7 @@ public class EventRegisterJob implements Job {
         jobDataMap.put(EVENT_ID, eventId);
         JobDetail reserveEventQuartzJob =
                 newJob(QuartzJobLauncher.class)
-                        .withIdentity("RESERVATION_JOB", GROUP)
+                        .withIdentity("RESERVATION_JOB" + eventId, GROUP)
                         .usingJobData(EVENT_ID, eventId) // Pass eventId as job data
                         .setJobData(jobDataMap)
                         .build();
@@ -68,7 +68,7 @@ public class EventRegisterJob implements Job {
 
         Trigger reserveTrigger =
                 newTrigger()
-                        .withIdentity("RESERVATION_TRIGGER", GROUP)
+                        .withIdentity("RESERVATION_TRIGGER" + eventId, GROUP)
                         .startAt(date)
                         .forJob(reserveEventQuartzJob)
                         .build();
@@ -85,7 +85,7 @@ public class EventRegisterJob implements Job {
         jobDataMap.put(EVENT_ID, eventId);
         JobDetail expiredEventQuartzJob =
                 newJob(BatchQuartzJob.class)
-                        .withIdentity("EXPIRED_JOB", GROUP)
+                        .withIdentity("EXPIRED_JOB" + eventId, GROUP)
                         .usingJobData(jobDataMap) //                .usingJobData("endAt",
                         // endAt.toString())
                         .build();
@@ -94,7 +94,7 @@ public class EventRegisterJob implements Job {
 
         Trigger reserveTrigger =
                 newTrigger()
-                        .withIdentity("EXPIRED_TRIGGER", GROUP)
+                        .withIdentity("EXPIRED_TRIGGER" + eventId, GROUP)
                         .startAt(date)
                         .forJob(expiredEventQuartzJob)
                         .build();
@@ -113,7 +113,7 @@ public class EventRegisterJob implements Job {
 
         JobDetail processQueueDataJob =
                 newJob(ProcessQueueDataJob.class)
-                        .withIdentity("PROCESS_QUEUE_DATA_JOB", GROUP)
+                        .withIdentity("PROCESS_QUEUE_DATA_JOB" + eventId, GROUP)
                         .usingJobData(jobDataMap) // eventId만 JobDataMap에 추가
                         .build();
 
@@ -122,7 +122,7 @@ public class EventRegisterJob implements Job {
 
         Trigger reserveTrigger =
                 newTrigger()
-                        .withIdentity("PROCESS_QUEUE_DATA_TRIGGER", GROUP)
+                        .withIdentity("PROCESS_QUEUE_DATA_TRIGGER" + eventId, GROUP)
                         .startAt(start)
                         .endAt(end)
                         .withSchedule(
