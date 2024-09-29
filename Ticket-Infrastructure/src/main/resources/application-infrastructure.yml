@@ -5,7 +5,7 @@ spring:
     password: ${REDIS_PASSWORD:}
     lettuce:
       pool:
-        enabled: on
+        enabled: false
 
 aws:
   ses:
