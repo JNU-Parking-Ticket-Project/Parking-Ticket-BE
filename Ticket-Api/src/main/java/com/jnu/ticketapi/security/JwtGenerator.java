@@ -19,7 +19,7 @@ public class JwtGenerator {
     private static final String USER_EMAIL_CLAIM_KEY = "Email";
     private static final String USER_AUTH_CLAM_KEY = "Auth";
 
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 30; // 30분
+    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24; // 1일
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 7; // 7일
 
     private final Key key;
