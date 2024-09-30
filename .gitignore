@@ -58,3 +58,4 @@ dump.rdb
 
 application-local.yml
 logs/**
+*.log
