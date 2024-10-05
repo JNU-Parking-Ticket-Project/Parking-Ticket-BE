@@ -43,6 +43,7 @@ jobs:
     with:
         image-tag: ${{ needs.prepare-variables.outputs.image-tag }}
         image-name: ${{ needs.prepare-variables.outputs.image-name }}
+        environment: ${{ needs.prepare-variables.outputs.environment }}
     secrets:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
