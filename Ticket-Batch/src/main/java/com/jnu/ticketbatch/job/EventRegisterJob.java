@@ -5,6 +5,7 @@ import static org.quartz.TriggerBuilder.newTrigger;
 
 import com.jnu.ticketbatch.config.ProcessQueueDataJob;
 import com.jnu.ticketbatch.config.QuartzJobLauncher;
+import com.jnu.ticketbatch.config.RegistrationResultEmailJob;
 import com.jnu.ticketbatch.expired.BatchQuartzJob;
 import com.jnu.ticketdomain.domains.events.EventExpiredEventRaiseGateway;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
@@ -135,5 +136,43 @@ public class EventRegisterJob implements Job {
         log.info(">>>>> ProcessQueueData 스케줄링 등록");
 
         scheduler.scheduleJob(processQueueDataJob, reserveTrigger);
+    }
+
+    public void registrationResultEmailJob(Long eventId, LocalDateTime eventStartAt, LocalDateTime eventEndAt) {
+        try {
+            scheduler.start();
+
+            JobDataMap jobDataMap = new JobDataMap();
+            jobDataMap.put(EVENT_ID, eventId);
+
+            JobDetail registrationResultEmailJob =
+                    newJob(RegistrationResultEmailJob.class)
+                            .withIdentity("REGISTRATION_RESULT_EMAIL_JOB" + eventId, GROUP)
+                            .usingJobData(jobDataMap)
+                            .build();
+
+            // 이벤트가 시작되고 1분 후부터 1분 간격으로 실행
+            Date start = Date.from(eventStartAt.plusMinutes(1).atZone(ZoneId.of(ASIA_SEOUL)).toInstant());
+            Date end = Date.from(eventEndAt.atZone(ZoneId.of(ASIA_SEOUL)).toInstant());
+
+            Trigger reserveTrigger =
+                    newTrigger()
+                            .withIdentity("REGISTRATION_RESULT_EMAIL_TRIGGER" + eventId, GROUP)
+                            .startAt(start)
+                            .endAt(end)
+                            .withSchedule(
+                                    SimpleScheduleBuilder.simpleSchedule()
+                                            .withIntervalInMinutes(1)
+                                            .repeatForever()
+                            )
+                            .forJob(registrationResultEmailJob)
+                            .build();
+
+            log.info(">>>>> RegistrationResultEmail 스케줄링 등록");
+
+            scheduler.scheduleJob(registrationResultEmailJob, reserveTrigger);
+        } catch (SchedulerException e) {
+            log.error("RegistrationResultEmailJob Exception: {}", e.getMessage());
+        }
     }
 }
