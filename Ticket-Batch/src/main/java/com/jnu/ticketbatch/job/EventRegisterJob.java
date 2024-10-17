@@ -35,9 +35,9 @@ public class EventRegisterJob implements Job {
 
     @Autowired private Scheduler scheduler;
 
-    private static final String EVENT_ID = "eventId";
-    private static final String GROUP = "group1";
-    private static final String ASIA_SEOUL = "Asia/Seoul";
+    public static final String EVENT_ID = "eventId";
+    public static final String GROUP = "group1";
+    public static final String ASIA_SEOUL = "Asia/Seoul";
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
