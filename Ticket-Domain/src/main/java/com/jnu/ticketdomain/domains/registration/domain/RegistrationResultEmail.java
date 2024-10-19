@@ -1,5 +1,8 @@
 package com.jnu.ticketdomain.domains.registration.domain;
 
+
+import java.time.LocalDateTime;
+import javax.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -7,19 +10,19 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 @Entity
 @Table(name = "registration_result_email_outbox")
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 @Getter
-public class RegistrationResultEmailOutbox {
+public class RegistrationResultEmail {
 
     @Id
-    private String id;
+    @Column(name = "email_id", nullable = false)
+    private String emailId;
+
+    @Column(name = "event_id", nullable = false)
+    private Long eventId;
 
     @Column(name = "receiver_email", nullable = false)
     private String receiverEmail;
@@ -34,7 +37,7 @@ public class RegistrationResultEmailOutbox {
     private Integer registrationSequence;
 
     @Column(name = "transfer_status", nullable = false)
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     private TransferStatus transferStatus;
 
     @CreatedDate
@@ -45,17 +48,27 @@ public class RegistrationResultEmailOutbox {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-
     @Builder
-    public RegistrationResultEmailOutbox(String id, String receiverEmail, String receiverName, String registrationResult, Integer registrationSequence) {
-        this.id = id;
+    public RegistrationResultEmail(
+            String emailId,
+            Long eventId,
+            String receiverEmail,
+            String receiverName,
+            String registrationResult,
+            Integer registrationSequence) {
+        this.emailId = emailId;
+        this.eventId = eventId;
         this.receiverEmail = receiverEmail;
         this.receiverName = receiverName;
         this.registrationResult = registrationResult;
         this.registrationSequence = registrationSequence;
     }
 
-    public void setTransferStatus(TransferStatus transferStatus) {
-        this.transferStatus = transferStatus;
+    public void updateEmailTransferResult(boolean transferResult) {
+        if (transferResult) {
+            this.transferStatus = TransferStatus.SUCCEEDED;
+        } else {
+            this.transferStatus = TransferStatus.FAILED;
+        }
     }
 }

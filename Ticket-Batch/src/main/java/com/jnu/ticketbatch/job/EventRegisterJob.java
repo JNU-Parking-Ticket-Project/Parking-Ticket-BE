@@ -138,7 +138,8 @@ public class EventRegisterJob implements Job {
         scheduler.scheduleJob(processQueueDataJob, reserveTrigger);
     }
 
-    public void registrationResultEmailJob(Long eventId, LocalDateTime eventStartAt, LocalDateTime eventEndAt) {
+    public void registrationResultEmailJob(
+            Long eventId, LocalDateTime eventStartAt, LocalDateTime eventEndAt) {
         try {
             scheduler.start();
 
@@ -152,7 +153,9 @@ public class EventRegisterJob implements Job {
                             .build();
 
             // 이벤트가 시작되고 1분 후부터 1분 간격으로 실행
-            Date start = Date.from(eventStartAt.plusMinutes(1).atZone(ZoneId.of(ASIA_SEOUL)).toInstant());
+            Date start =
+                    Date.from(
+                            eventStartAt.plusMinutes(1).atZone(ZoneId.of(ASIA_SEOUL)).toInstant());
             Date end = Date.from(eventEndAt.atZone(ZoneId.of(ASIA_SEOUL)).toInstant());
 
             Trigger reserveTrigger =
@@ -163,8 +166,7 @@ public class EventRegisterJob implements Job {
                             .withSchedule(
                                     SimpleScheduleBuilder.simpleSchedule()
                                             .withIntervalInMinutes(1)
-                                            .repeatForever()
-                            )
+                                            .repeatForever())
                             .forJob(registrationResultEmailJob)
                             .build();
 
