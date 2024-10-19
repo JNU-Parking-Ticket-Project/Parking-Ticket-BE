@@ -66,9 +66,24 @@ public class RegistrationResultEmail {
 
     public void updateEmailTransferResult(boolean transferResult) {
         if (transferResult) {
-            this.transferStatus = TransferStatus.SUCCEEDED;
+            this.transferStatus = TransferStatus.SUCCESS;
+
         } else {
-            this.transferStatus = TransferStatus.FAILED;
+            switch (this.transferStatus) {
+                case PENDING:
+                    this.transferStatus = TransferStatus.FAILED_1;
+                    break;
+                case FAILED_1:
+                    this.transferStatus = TransferStatus.FAILED_2;
+                    break;
+                case FAILED_2:
+                    this.transferStatus = TransferStatus.FAILED_3;
+                    break;
+                case FAILED_3:
+                default:
+                    this.transferStatus = TransferStatus.EXCLUDED;
+                    break;
+            }
         }
     }
 }
