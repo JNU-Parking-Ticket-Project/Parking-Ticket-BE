@@ -79,6 +79,7 @@ subprojects {
                                 "**/*Request*",
                                 "**/*Response*",
                                 "**/*Interceptor*",
+                                "**/*Filter*",
                                 "**/*Exception*"
                         ] + Qdomains)
                     })
