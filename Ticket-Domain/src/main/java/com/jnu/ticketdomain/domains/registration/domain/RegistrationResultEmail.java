@@ -62,6 +62,7 @@ public class RegistrationResultEmail {
         this.receiverName = receiverName;
         this.registrationResult = registrationResult;
         this.registrationSequence = registrationSequence;
+        this.transferStatus = TransferStatus.PENDING;
     }
 
     public void updateEmailTransferResult(boolean transferResult) {
