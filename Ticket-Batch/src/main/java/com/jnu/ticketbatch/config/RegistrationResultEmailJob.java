@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -17,8 +18,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RegistrationResultEmailJob implements Job {
 
-    private final RegistrationResultEmailAdaptor registrationResultEmailAdaptor;
-    private final MailService mailService;
+    @Autowired private final RegistrationResultEmailAdaptor registrationResultEmailAdaptor;
+    @Autowired private final MailService mailService;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
