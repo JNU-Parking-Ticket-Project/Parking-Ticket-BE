@@ -18,7 +18,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class RegistrationResultEmail {
 
     @Id
-    @Column(name = "email_id", nullable = false)
+    @Column(name = "email_id", columnDefinition = "CHAR(26)", nullable = false)
     private String emailId;
 
     @Column(name = "event_id", nullable = false)
