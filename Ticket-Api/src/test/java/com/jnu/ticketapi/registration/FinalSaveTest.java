@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
+import com.jnu.ticketapi.application.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketcommon.exception.GlobalErrorCode;
@@ -51,14 +52,14 @@ public class FinalSaveTest extends RestDocsConfig {
         void success() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "1234";
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -92,14 +93,14 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "45";
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -135,14 +136,14 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail2() throws Exception {
             // given
             String email = "imFaker@T1.com";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "1234";
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -179,14 +180,14 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail3() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "1234";
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -267,7 +268,7 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail5() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "1234";
             String target = "이름을 ";
 
@@ -275,7 +276,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name(" ")
                             .affiliation("AI융합대")
@@ -312,7 +313,7 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail6() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "1234";
             String target = "소속대학을 ";
 
@@ -320,7 +321,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation(" ")
@@ -357,7 +358,7 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail7() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "1234";
             String target = "학번을 ";
 
@@ -365,7 +366,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -402,7 +403,7 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail8() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "1234";
             String target = "차량번호를 ";
 
@@ -410,7 +411,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -447,7 +448,7 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail9() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "1234";
             String target = "구간 ID는 ";
 
@@ -455,7 +456,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -492,14 +493,14 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail10() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "1234";
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -536,7 +537,7 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail11() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
+            HashResult result = encryption.encrypt(1L);
             String captchaAnswer = "1234";
             String target = "경차 여부를 ";
 
@@ -544,7 +545,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -581,7 +582,6 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail13() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
             String captchaAnswer = "1234";
             String target = "캡챠 코드를 ";
 
@@ -626,15 +626,14 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail14() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            String captchaCode = encryption.encrypt(1L);
-            String captchaAnswer = "1234";
+            HashResult result = encryption.encrypt(1L);
             String target = "캡챠 답변을 ";
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
+                            .captchaCode(result.getCaptchaCode())
                             .captchaAnswer(null)
                             .name("박영규")
                             .affiliation("AI융합대")
