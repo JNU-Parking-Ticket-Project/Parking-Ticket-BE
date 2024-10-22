@@ -27,7 +27,8 @@ public class ValidateCaptchaUseCase {
         Long userId = SecurityUtils.getCurrentUserId();
         CaptchaLog captchaLog = captchaLogAdaptor.findLatestByUserId(userId);
 
-        if (!encryption.validateCaptchaId(encryptedCode, captchaLog.getCaptchaId())) {
+        if (!encryption.validateCaptchaId(
+                encryptedCode, captchaLog.getCaptchaId(), captchaLog.getSalt())) {
             throw WrongCaptchaAnswerException.EXCEPTION;
         }
 

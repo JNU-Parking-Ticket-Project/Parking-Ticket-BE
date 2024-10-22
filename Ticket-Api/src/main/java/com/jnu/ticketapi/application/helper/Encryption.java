@@ -24,20 +24,15 @@ public class Encryption {
         return encryptWithSaltBytes(plainText, salt);
     }
 
-    public HashResult encryptWithSalt(final Long plainText, final String encodedSalt) {
-        byte[] salt = Base64.getDecoder().decode(encodedSalt);
-        return encryptWithSaltBytes(plainText, salt);
+    public boolean validateCaptchaId(String encryptedCode, Long captchaId, String captchaSalt) {
+        HashResult result = encryptWithSalt(captchaId, captchaSalt);
+        return encryptedCode.equals(result.getCaptchaCode());
     }
 
-    public boolean validateCaptchaId(String encryptedCode, Long captchaId) {
-        int saltBase64Length = (int) Math.ceil(SALT_LENGTH / 3.0) * 4;
-
-        String encodedSalt = encryptedCode.substring(0, saltBase64Length);
-        String storedHash = encryptedCode.substring(saltBase64Length);
-
-        HashResult computedResult = encryptWithSalt(captchaId, encodedSalt);
-
-        return storedHash.equals(computedResult.getCaptchaCode());
+    private byte[] generateSalt() {
+        byte[] salt = new byte[SALT_LENGTH];
+        RANDOM.nextBytes(salt);
+        return salt;
     }
 
     private HashResult encryptWithSaltBytes(final Long plainText, final byte[] salt) {
@@ -50,12 +45,6 @@ public class Encryption {
         } catch (NoSuchAlgorithmException e) {
             throw EncryptionErrorException.EXCEPTION;
         }
-    }
-
-    private byte[] generateSalt() {
-        byte[] salt = new byte[SALT_LENGTH];
-        RANDOM.nextBytes(salt);
-        return salt;
     }
 
     public byte[] computeHash(byte[] data, byte[] salt) throws NoSuchAlgorithmException {
@@ -73,5 +62,10 @@ public class Encryption {
     private byte[] calculateHash(byte[] data) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
         return digest.digest(data);
+    }
+
+    private HashResult encryptWithSalt(final Long plainText, final String encodedSalt) {
+        byte[] salt = Base64.getDecoder().decode(encodedSalt);
+        return encryptWithSaltBytes(plainText, salt);
     }
 }
