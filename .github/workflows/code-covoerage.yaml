@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - dev
-      - feature-#185
 
 jobs:
   build:
