@@ -11,13 +11,11 @@ import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
 import com.jnu.ticketdomain.domains.captcha.out.CaptchaLogPort;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
 @RequiredArgsConstructor
-@Slf4j
 public class GetCaptchaUseCase {
 
     private final CaptchaAdaptor captchaAdaptor;
