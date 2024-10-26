@@ -47,7 +47,7 @@ public class Encryption {
         }
     }
 
-    public byte[] computeHash(byte[] data, byte[] salt) throws NoSuchAlgorithmException {
+    private byte[] computeHash(byte[] data, byte[] salt) throws NoSuchAlgorithmException {
         byte[] saltedData = combineSaltAndData(salt, data);
         return calculateHash(saltedData);
     }
