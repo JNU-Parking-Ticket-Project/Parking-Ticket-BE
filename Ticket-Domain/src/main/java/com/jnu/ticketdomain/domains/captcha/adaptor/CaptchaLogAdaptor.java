@@ -19,6 +19,6 @@ public class CaptchaLogAdaptor implements CaptchaLogPort {
 
     @Override
     public CaptchaLog findLatestByUserId(Long userId) {
-        return captchaLogRepository.findLatestByUserId(userId);
+        return captchaLogRepository.findTopByUserIdAndIsSuccessFalseOrderByTimestampDesc(userId);
     }
 }
