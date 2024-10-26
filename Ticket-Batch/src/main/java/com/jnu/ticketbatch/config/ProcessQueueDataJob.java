@@ -34,8 +34,6 @@ public class ProcessQueueDataJob implements Job {
                 for (TypedTuple<Object> messageWithScore : messagesWithScores) {
                     Double score = messageWithScore.getScore();
                     ChatMessage message = (ChatMessage) messageWithScore.getValue();
-                    waitingQueueService.reRegisterQueue(
-                            REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
                     Events.raise(EventIssuedEvent.from(message, score));
                 }
             }
