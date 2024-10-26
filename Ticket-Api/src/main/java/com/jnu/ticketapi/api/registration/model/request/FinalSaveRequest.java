@@ -57,6 +57,7 @@ public record FinalSaveRequest(
                 .sector(sector)
                 .isSaved(true)
                 .user(user)
+                .savedAt(System.currentTimeMillis() * 1_000_000)
                 .build();
     }
 }
