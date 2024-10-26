@@ -33,6 +33,8 @@ public class ValidateCaptchaUseCase {
         }
 
         Captcha captcha = captchaAdaptor.findById(captchaLog.getCaptchaId());
-        captcha.validate(answer);
+        if (!captcha.validate(answer)) {
+            throw WrongCaptchaAnswerException.EXCEPTION;
+        }
     }
 }
