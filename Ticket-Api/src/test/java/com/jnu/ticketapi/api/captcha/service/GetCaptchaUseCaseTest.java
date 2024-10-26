@@ -23,7 +23,7 @@ class GetCaptchaUseCaseTest extends BaseIntegrationTest {
 
     @Test
     @WithCustomMockUser(id = 1L)
-    @DisplayName("성공 : 캡차 이미지 조회 시 로그 정보 저장")
+    @DisplayName("캡차 이미지 조회 시 로그 정보를 저장한다.")
     void execute_integration() {
         // given
         Long userId = 1L;
