@@ -9,7 +9,6 @@ import com.jnu.ticketapi.WithCustomMockUser;
 import com.jnu.ticketapi.application.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.BaseIntegrationTest;
-import com.jnu.ticketapi.config.DatabaseClearExtension;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
@@ -17,12 +16,9 @@ import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-@ExtendWith({DatabaseClearExtension.class, MockitoExtension.class})
 class ValidateCaptchaUseCaseTest extends BaseIntegrationTest {
 
     @Autowired private ValidateCaptchaUseCase validateCaptchaUseCase;
