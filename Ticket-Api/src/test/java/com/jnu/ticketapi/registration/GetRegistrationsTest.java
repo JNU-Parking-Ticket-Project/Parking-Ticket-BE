@@ -40,7 +40,7 @@ public class GetRegistrationsTest extends RestDocsConfig {
         void success() throws Exception {
             // given
             Long eventId = 1L;
-            String accessToken = jwtGenerator.generateAccessToken("council@jnu.ac.kr", "COUNCIxL");
+            String accessToken = jwtGenerator.generateAccessToken("council@jnu.ac.kr", "COUNCIL");
             // when
             ResultActions resultActions =
                     mvc.perform(
