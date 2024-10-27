@@ -11,7 +11,6 @@ import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
-
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,12 +34,7 @@ public class WaitingQueueService {
             throws JsonProcessingException {
         Double score = (double) System.currentTimeMillis();
         String registrationString = convertRegistrationJSON(registration);
-        ChatMessage message =
-                new ChatMessage(
-                        registrationString,
-                        userId,
-                        sectorId,
-                        eventId);
+        ChatMessage message = new ChatMessage(registrationString, userId, sectorId, eventId);
         checkDuplicateData(key, message);
         redisRepository.zAddIfAbsent(key, message, score);
     }
@@ -83,14 +77,12 @@ public class WaitingQueueService {
         return redisRepository.zRank(key, value);
     }
 
-
     public void checkDuplicateData(String key, Object value) {
         Long rank = redisRepository.zRank(key, value);
         if (rank != null) {
             throw AlreadyExistRegistrationException.EXCEPTION;
         }
     }
-
 
     public Double getScore(String key, Object value) {
         return redisRepository.getScore(key, value);

@@ -3,7 +3,6 @@ package com.jnu.ticketinfrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
