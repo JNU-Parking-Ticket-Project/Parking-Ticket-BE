@@ -103,7 +103,7 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
 
     @Override
     public Integer findPositionBySavedAt(Long id, Long sectorId) {
-        return registrationRepository.findPositionBySavedAt(id, sectorId) + 1;
+        return registrationRepository.findPositionBySavedAt(id, sectorId);
     }
 
     @Override
