@@ -15,6 +15,4 @@ public class ChatMessage {
     private Long userId;
     private Long sectorId;
     private Long eventId;
-    // Waiting인지 아닌지만 확인하는 status -> WAITING, NOT_WAITING
-    private String status;
 }

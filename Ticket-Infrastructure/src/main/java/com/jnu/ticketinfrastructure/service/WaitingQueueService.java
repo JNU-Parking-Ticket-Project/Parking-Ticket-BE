@@ -7,13 +7,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.LinkedList;
-import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +40,7 @@ public class WaitingQueueService {
                         registrationString,
                         userId,
                         sectorId,
-                        eventId,
-                        ChatMessageStatus.NOT_WAITING.name());
+                        eventId);
         checkDuplicateData(key, message);
         redisRepository.zAddIfAbsent(key, message, score);
     }
@@ -86,23 +83,6 @@ public class WaitingQueueService {
         return redisRepository.zRank(key, value);
     }
 
-    public ChatMessage findFirstByStatus(String key, ChatMessageStatus status) {
-        Set<Object> resultSet = redisRepository.zRange(key, 0L, 0L, Object.class);
-        Set<ChatMessage> chatMessages =
-                resultSet.stream()
-                        .map(o -> (ChatMessage) o)
-                        .filter(
-                                chatMessage ->
-                                        Objects.equals(chatMessage.getStatus(), status.name()))
-                        .collect(Collectors.toSet());
-        if (chatMessages != null && !chatMessages.isEmpty()) {
-            // Return the first element in the set
-            return chatMessages.iterator().next();
-        } else {
-            // If the set is empty, return null or handle accordingly
-            return null;
-        }
-    }
 
     public void checkDuplicateData(String key, Object value) {
         Long rank = redisRepository.zRank(key, value);
@@ -111,10 +91,6 @@ public class WaitingQueueService {
         }
     }
 
-    public void reRegisterQueue(
-            String key, ChatMessage message, ChatMessageStatus newStatus, Double score) {
-        redisRepository.removeAndAdd(key, message, newStatus, score);
-    }
 
     public Double getScore(String key, Object value) {
         return redisRepository.getScore(key, value);
