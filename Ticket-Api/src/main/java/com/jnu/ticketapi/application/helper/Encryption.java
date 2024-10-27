@@ -2,6 +2,7 @@ package com.jnu.ticketapi.application.helper;
 
 
 import com.jnu.ticketapi.application.HashResult;
+import com.jnu.ticketapi.config.EncryptionProperties;
 import com.jnu.ticketcommon.annotation.Helper;
 import com.jnu.ticketcommon.exception.EncryptionErrorException;
 import java.nio.charset.StandardCharsets;
@@ -9,12 +10,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
+import lombok.RequiredArgsConstructor;
 
 @Helper
+@RequiredArgsConstructor
 public class Encryption {
+    private final EncryptionProperties encryptionProperties;
 
-    private static final int SALT_LENGTH = 16;
-    private static final String HASH_ALGORITHM = "SHA-256";
     private static final SecureRandom RANDOM = new SecureRandom();
 
     public HashResult encrypt(final Long plainText) {
@@ -28,7 +30,7 @@ public class Encryption {
     }
 
     private byte[] generateSalt() {
-        byte[] salt = new byte[SALT_LENGTH];
+        byte[] salt = new byte[encryptionProperties.getLength()];
         RANDOM.nextBytes(salt);
         return salt;
     }
@@ -58,7 +60,7 @@ public class Encryption {
     }
 
     private byte[] calculateHash(byte[] data) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
+        MessageDigest digest = MessageDigest.getInstance(encryptionProperties.getAlgorithm());
         return digest.digest(data);
     }
 

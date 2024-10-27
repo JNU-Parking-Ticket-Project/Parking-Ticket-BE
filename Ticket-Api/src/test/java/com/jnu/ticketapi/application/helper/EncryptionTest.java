@@ -4,13 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.jnu.ticketapi.application.HashResult;
+import com.jnu.ticketapi.config.EncryptionProperties;
 import java.util.Base64;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class EncryptionTest {
 
-    private final Encryption encryption = new Encryption();
+    private final Encryption encryption = new Encryption(new EncryptionProperties(16, "SHA-256"));
 
     @Test
     @DisplayName("평문을 암호화하면 salt와 해시값이 생성된다")
