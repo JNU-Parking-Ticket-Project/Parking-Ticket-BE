@@ -14,6 +14,7 @@ import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
+import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaCodeException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,7 +74,7 @@ class ValidateCaptchaUseCaseTest extends BaseIntegrationTest {
 
         // when & then
         assertThrows(
-                WrongCaptchaAnswerException.class,
+                WrongCaptchaCodeException.class,
                 () -> validateCaptchaUseCase.execute(wrongCaptchaCode, ANSWER));
     }
 
