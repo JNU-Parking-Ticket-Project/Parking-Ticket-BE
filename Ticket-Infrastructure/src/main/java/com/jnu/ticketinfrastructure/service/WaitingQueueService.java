@@ -60,6 +60,7 @@ public class WaitingQueueService {
         registrationJson.put("isLight", registration.isLight());
         registrationJson.put("isSaved", registration.isSaved());
         registrationJson.put("savedAt", registration.getSavedAt());
+        registrationJson.put("registrationId", registration.getId());
         return registrationJson.toString();
     }
 
