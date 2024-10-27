@@ -46,7 +46,7 @@ public class UserReflectStatusEventHandler {
 
     private void reflectUserState(UserReflectStatusEvent event, User user) {
         Integer position =
-                registrationAdaptor.findPositionById(
+                registrationAdaptor.findPositionBySavedAt(
                         event.getRegistration().getId(), event.getSector().getId());
         Integer sectorCapacity = event.getSector().getInitSectorCapacity();
         Integer issueAmount = event.getSector().getIssueAmount();
