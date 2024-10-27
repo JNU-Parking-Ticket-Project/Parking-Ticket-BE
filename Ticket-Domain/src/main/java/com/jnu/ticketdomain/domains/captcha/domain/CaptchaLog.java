@@ -1,6 +1,7 @@
 package com.jnu.ticketdomain.domains.captcha.domain;
 
 
+import java.time.LocalDateTime;
 import javax.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -34,5 +35,5 @@ public class CaptchaLog {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)
-    private Long timestamp;
+    private LocalDateTime timestamp;
 }
