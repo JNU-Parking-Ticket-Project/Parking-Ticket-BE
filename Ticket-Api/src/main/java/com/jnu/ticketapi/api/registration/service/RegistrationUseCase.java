@@ -136,17 +136,29 @@ public class RegistrationUseCase {
         return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration ->
-                                reFinalRegister(tempRegistration, registration, sector, user, email, eventId),
+                                reFinalRegister(
+                                        tempRegistration,
+                                        registration,
+                                        sector,
+                                        user,
+                                        email,
+                                        eventId),
                         emptyCase ->
                                 saveRegistration(
                                         registration, sector, currentUserId, email, eventId));
     }
 
     private FinalSaveResponse reFinalRegister(
-            Registration tempRegistration, Registration registration, Sector sector, User user, String email, Long eventId) {
+            Registration tempRegistration,
+            Registration registration,
+            Sector sector,
+            User user,
+            String email,
+            Long eventId) {
         sector.checkEventLeft();
         registration.setId(tempRegistration.getId()); // update 치기 위해 Id 값을 채워줌
-        registration.setCreatedAt(tempRegistration.getCreatedAt()); // create_at이 null이 들어가지 않게 하기 위해 값을 채워줌
+        registration.setCreatedAt(
+                tempRegistration.getCreatedAt()); // create_at이 null이 들어가지 않게 하기 위해 값을 채워줌
         reFinalRegisterProcess(registration, user, email, sector.getId(), eventId);
         return FinalSaveResponse.from(registration);
     }

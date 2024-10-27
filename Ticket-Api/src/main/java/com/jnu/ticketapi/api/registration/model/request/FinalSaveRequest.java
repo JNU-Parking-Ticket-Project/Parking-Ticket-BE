@@ -7,15 +7,12 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;
-
-import javax.persistence.criteria.CriteriaBuilder;
+import java.time.Instant;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import lombok.Builder;
-
-import java.time.Instant;
 
 @Builder
 public record FinalSaveRequest(
@@ -62,7 +59,9 @@ public record FinalSaveRequest(
                 .sector(sector)
                 .isSaved(true)
                 .user(user)
-                .savedAt(now.getEpochSecond() * 1_000_000_000L + now.getNano()) // 현재 시간을 나노초 단위 정수로 변환
+                .savedAt(
+                        now.getEpochSecond() * 1_000_000_000L
+                                + now.getNano()) // 현재 시간을 나노초 단위 정수로 변환
                 .build();
     }
 }
