@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.user.domain.User;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -130,7 +132,8 @@ public class Registration {
             @JsonProperty("isDeleted") boolean isDeleted,
             @JsonProperty("savedAt") Long savedAt,
             @JsonProperty("user") User user,
-            @JsonProperty("sector") Sector sector) {
+            @JsonProperty("sector") Sector sector,
+            @JsonProperty("id") Long id) {
         this.email = email;
         this.name = name;
         this.studentNum = studentNum;
@@ -144,13 +147,15 @@ public class Registration {
         this.savedAt = savedAt;
         this.user = user;
         this.sector = sector;
+        this.id = id;
     }
 
     public Registration() {}
 
     public void finalSave() {
         this.isSaved = true;
-        this.savedAt = System.currentTimeMillis() * 1_000_000; // 현재 시간을 나노초로 변환
+        Instant now = Instant.now();
+        this.savedAt = now.getEpochSecond() * 1_000_000_000L + now.getNano(); // 현재 시간을 나노초 단위 정수로 변환
     }
 
     public void updateIsDeleted(boolean isDeleted) {
@@ -175,4 +180,8 @@ public class Registration {
     public void setUser(User user) {
         this.user = user;
     }
+
+    public void setId(Long id) {this.id = id;}
+
+    public void setCreatedAt(LocalDateTime createdAt) {this.createdAt = createdAt;}
 }
