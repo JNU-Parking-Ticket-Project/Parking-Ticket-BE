@@ -5,7 +5,6 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.domainEvent.Events;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
