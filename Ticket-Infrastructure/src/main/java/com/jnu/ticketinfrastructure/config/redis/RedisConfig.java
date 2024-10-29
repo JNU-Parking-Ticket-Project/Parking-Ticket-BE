@@ -72,12 +72,4 @@ public class RedisConfig {
         redisTemplate.setEnableTransactionSupport(true);
         return redisTemplate;
     }
-
-    // 메세지 리스너 설정x
-    // pub/sub 메세지를 받을 채널 설정
-    @Bean
-    @ConditionalOnExpression("${ableRedis:true}")
-    ChannelTopic topic() {
-        return new ChannelTopic(REDIS_EVENT_CHANNEL);
-    }
 }
