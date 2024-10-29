@@ -11,11 +11,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Helper
 @RequiredArgsConstructor
-@Slf4j
 public class Encryption {
     private final EncryptionProperties encryptionProperties;
 
@@ -28,8 +26,6 @@ public class Encryption {
 
     public boolean validateCaptchaId(String encryptedCode, Long captchaId, String captchaSalt) {
         HashResult result = encryptWithSalt(captchaId, captchaSalt);
-        log.info("=================== 캡챠 ID : " + captchaId);
-        log.info("=================== 다시 암호화된 캡챠 코드 : " + result.getCaptchaCode());
         return encryptedCode.equals(result.getCaptchaCode());
     }
 
