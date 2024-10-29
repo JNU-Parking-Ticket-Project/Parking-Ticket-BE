@@ -1,69 +1,71 @@
 package com.jnu.ticketapi.application.helper;
 
 
+import com.jnu.ticketapi.application.HashResult;
+import com.jnu.ticketapi.config.EncryptionProperties;
 import com.jnu.ticketcommon.annotation.Helper;
-import com.jnu.ticketcommon.exception.DecryptionErrorException;
 import com.jnu.ticketcommon.exception.EncryptionErrorException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.Arrays;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Base64;
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 
 @Helper
-@Slf4j
+@RequiredArgsConstructor
 public class Encryption {
-    @Value("${encryption.algorithm}")
-    private String algorithm;
+    private final EncryptionProperties encryptionProperties;
 
-    @Value("${encryption.secret}")
-    private String secret;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
-    private SecretKeySpec secretKeySpec;
+    public HashResult encrypt(final Long plainText) {
+        byte[] salt = generateSalt();
+        return encryptWithSaltBytes(plainText, salt);
+    }
 
-    private SecretKeySpec generateKey() {
+    public boolean validateCaptchaId(String encryptedCode, Long captchaId, String captchaSalt) {
+        HashResult result = encryptWithSalt(captchaId, captchaSalt);
+        return encryptedCode.equals(result.getCaptchaCode());
+    }
+
+    private byte[] generateSalt() {
+        byte[] salt = new byte[encryptionProperties.getLength()];
+        RANDOM.nextBytes(salt);
+        return salt;
+    }
+
+    private HashResult encryptWithSaltBytes(final Long plainText, final byte[] salt) {
         try {
-            if (secretKeySpec == null) {
-                byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-                MessageDigest sha = MessageDigest.getInstance("SHA-256");
-                keyBytes = sha.digest(keyBytes);
-                keyBytes = Arrays.copyOf(keyBytes, 16); // AES-128을 위한 16바이트 키
-                secretKeySpec = new SecretKeySpec(keyBytes, algorithm);
-            }
-            return secretKeySpec;
-        } catch (Exception e) {
-            log.error("Error during generateKey", e);
+            byte[] hash = computeHash(plainText.toString().getBytes(StandardCharsets.UTF_8), salt);
+
+            return new HashResult(
+                    Base64.getEncoder().encodeToString(salt),
+                    Base64.getEncoder().encodeToString(hash));
+        } catch (NoSuchAlgorithmException e) {
             throw EncryptionErrorException.EXCEPTION;
         }
     }
 
-    public String encrypt(Long value) {
-        try {
-            Cipher cipher = Cipher.getInstance(algorithm);
-            cipher.init(Cipher.ENCRYPT_MODE, generateKey());
-            byte[] valueBytes = ByteBuffer.allocate(Long.BYTES).putLong(value).array();
-            byte[] encrypted = cipher.doFinal(valueBytes);
-            return Base64.getEncoder().encodeToString(encrypted);
-        } catch (Exception e) {
-            log.error("Error during encryption", e);
-            throw EncryptionErrorException.EXCEPTION;
-        }
+    private byte[] computeHash(byte[] data, byte[] salt) throws NoSuchAlgorithmException {
+        byte[] saltedData = combineSaltAndData(salt, data);
+        return calculateHash(saltedData);
     }
 
-    public Long decrypt(final String encryptedValue) {
-        try {
-            Cipher cipher = Cipher.getInstance(algorithm);
-            cipher.init(Cipher.DECRYPT_MODE, generateKey());
-            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedValue);
-            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
-            return ByteBuffer.wrap(decryptedBytes).getLong();
-        } catch (Exception e) {
-            log.error("Error during decryption", e);
-            throw DecryptionErrorException.EXCEPTION;
-        }
+    private byte[] combineSaltAndData(byte[] salt, byte[] data) {
+        byte[] combined = new byte[salt.length + data.length];
+        System.arraycopy(salt, 0, combined, 0, salt.length);
+        System.arraycopy(data, 0, combined, salt.length, data.length);
+        return combined;
+    }
+
+    private byte[] calculateHash(byte[] data) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance(encryptionProperties.getAlgorithm());
+        return digest.digest(data);
+    }
+
+    private HashResult encryptWithSalt(final Long plainText, final String encodedSalt) {
+        byte[] salt = Base64.getDecoder().decode(encodedSalt);
+        return encryptWithSaltBytes(plainText, salt);
     }
 }
