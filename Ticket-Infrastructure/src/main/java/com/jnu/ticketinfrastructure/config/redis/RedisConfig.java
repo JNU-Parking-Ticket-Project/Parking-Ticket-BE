@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP,
         keyspaceNotificationsConfigParameter = "")
 @Configuration
-@EnableTransactionManagement
 @Slf4j
 @ConditionalOnExpression("${ableRedis:true}")
 public class RedisConfig {
@@ -69,7 +68,6 @@ public class RedisConfig {
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(serializer);
-        redisTemplate.setEnableTransactionSupport(true);
         return redisTemplate;
     }
 }
