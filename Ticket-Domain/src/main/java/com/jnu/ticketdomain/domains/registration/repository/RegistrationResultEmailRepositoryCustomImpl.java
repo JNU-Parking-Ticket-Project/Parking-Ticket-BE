@@ -22,14 +22,15 @@ public class RegistrationResultEmailRepositoryCustomImpl
         return queryFactory
                 .selectFrom(registrationResultEmail)
                 .where(
-                        registrationResultEmail
-                                .eventId
-                                .eq(eventId),
-                        registrationResultEmail
-                                .transferStatus
-                                .in(TransferStatus.PENDING, TransferStatus.FAILED_1, TransferStatus.FAILED_2, TransferStatus.FAILED_3)
-                )
-                .orderBy(registrationResultEmail.transferStatus.asc(), registrationResultEmail.emailId.asc())
+                        registrationResultEmail.eventId.eq(eventId),
+                        registrationResultEmail.transferStatus.in(
+                                TransferStatus.PENDING,
+                                TransferStatus.FAILED_1,
+                                TransferStatus.FAILED_2,
+                                TransferStatus.FAILED_3))
+                .orderBy(
+                        registrationResultEmail.transferStatus.asc(),
+                        registrationResultEmail.emailId.asc())
                 .limit(fetchSize) // PENDING -> FAILED 순으로 정렬 (transferStatus는 EnumType.ORDINAL)
                 .fetch();
     }

@@ -14,22 +14,28 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Adaptor
-public class RegistrationResultEmailAdaptor implements RegistrationResultEmailLoadPort, RegistrationResultEmailRecordPort {
+public class RegistrationResultEmailAdaptor
+        implements RegistrationResultEmailLoadPort, RegistrationResultEmailRecordPort {
     private static final int EMAIL_TRANSFER_THRESHOLD = 14;
     private final RegistrationResultEmailRepository registrationResultEmailRepository;
 
-
-    public String save(long eventId, String receiverEmail, String receiverName, String registrationResult, int registrationSequence) {
-        return registrationResultEmailRepository.save(
-                RegistrationResultEmail.builder()
-                        .emailId(UlidGenerator.generateUlid())
-                        .eventId(eventId)
-                        .receiverEmail(receiverEmail)
-                        .receiverName(receiverName)
-                        .registrationResult(registrationResult)
-                        .registrationSequence(registrationSequence)
-                        .build()
-        ).getEmailId();
+    public String save(
+            long eventId,
+            String receiverEmail,
+            String receiverName,
+            String registrationResult,
+            int registrationSequence) {
+        return registrationResultEmailRepository
+                .save(
+                        RegistrationResultEmail.builder()
+                                .emailId(UlidGenerator.generateUlid())
+                                .eventId(eventId)
+                                .receiverEmail(receiverEmail)
+                                .receiverName(receiverName)
+                                .registrationResult(registrationResult)
+                                .registrationSequence(registrationSequence)
+                                .build())
+                .getEmailId();
     }
 
     public RegistrationResultEmail getById(String id) {

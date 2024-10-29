@@ -40,7 +40,8 @@ public class UserReflectStatusEventHandler {
         reflectUserState(event, user);
 
         // (2024.09.04, blackbean99) 이메일 발송은 Closed 될때 배치로 돌릴 수 있도록 리펙토링 완료했습니다.
-        // (2024.10.19, sckwon770) 이메일 발송은 Transactional Email Outbox를 도입해 신뢰성 있는 준실시간으로 발송되도록 리팩토링 완료했습니다.
+        // (2024.10.19, sckwon770) 이메일 발송은 Transactional Email Outbox를 도입해 신뢰성 있는 준실시간으로 발송되도록 리팩토링
+        // 완료했습니다.
         registrationResultEmailAdaptor.save(
                 event.getEventId(),
                 user.getEmail(),

@@ -56,7 +56,11 @@ public class EventIssuedEventHandler {
                 if (Boolean.TRUE.equals(
                         registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId()))) return;
 
-                processQueueData(sector, registration, eventIssuedEvent.getMessage().getUserId(), eventIssuedEvent.getMessage().getEventId());
+                processQueueData(
+                        sector,
+                        registration,
+                        eventIssuedEvent.getMessage().getUserId(),
+                        eventIssuedEvent.getMessage().getEventId());
                 waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                 sector.decreaseEventStock();
             } catch (NoEventStockLeftException e) {
@@ -82,7 +86,8 @@ public class EventIssuedEventHandler {
     }
 
     /** 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다. */
-    public void processQueueData(Sector sector, Registration registration, Long userId, Long eventId) {
+    public void processQueueData(
+            Sector sector, Registration registration, Long userId, Long eventId) {
         User user = userAdaptor.findById(userId);
         saveRegistration(sector, user, registration);
         Events.raise(UserReflectStatusEvent.of(userId, eventId, registration, sector));

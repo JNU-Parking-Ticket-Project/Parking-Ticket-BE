@@ -17,7 +17,8 @@ public class UserReflectStatusEvent extends DomainEvent {
     private Registration registration;
     private Sector sector;
 
-    public static UserReflectStatusEvent of(Long userId, Long eventId, Registration registration, Sector sector) {
+    public static UserReflectStatusEvent of(
+            Long userId, Long eventId, Registration registration, Sector sector) {
         return UserReflectStatusEvent.builder()
                 .userId(userId)
                 .eventId(eventId)

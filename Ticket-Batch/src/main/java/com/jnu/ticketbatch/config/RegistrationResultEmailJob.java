@@ -30,12 +30,14 @@ public class RegistrationResultEmailJob implements Job {
             List<RegistrationResultEmailDto> registrationResultEmailDtos =
                     registrationResultEmailAdaptor.findOutboxEmailsByEventIdWithThreshold(eventId);
 
-            for (RegistrationResultEmailDto registrationResultEmailDto : registrationResultEmailDtos) {
-                boolean emailTransferResult = mailService.sendRegistrationResultMail(
-                                                registrationResultEmailDto.receiverEmail(),
-                                                registrationResultEmailDto.receiverName(),
-                                                registrationResultEmailDto.registrationResult(),
-                                                registrationResultEmailDto.registrationSequence());
+            for (RegistrationResultEmailDto registrationResultEmailDto :
+                    registrationResultEmailDtos) {
+                boolean emailTransferResult =
+                        mailService.sendRegistrationResultMail(
+                                registrationResultEmailDto.receiverEmail(),
+                                registrationResultEmailDto.receiverName(),
+                                registrationResultEmailDto.registrationResult(),
+                                registrationResultEmailDto.registrationSequence());
 
                 registrationResultEmailAdaptor.updateEmailTransferResult(
                         registrationResultEmailDto.id(), emailTransferResult);

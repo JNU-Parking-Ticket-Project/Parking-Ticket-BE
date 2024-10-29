@@ -33,7 +33,7 @@ spring:
   quartz:
     job-store-type: jdbc  # Quartz가 메모리가 아닌 DB에 Job/Trigger 저장
     jdbc:
-      initialize-schema: never # 스키마 자동 생성 비활성화 (한번만 수동으로 생성)
+      initialize-schema: always # 스키마 자동 생성 비활성화 (한번만 수동으로 생성)
       properties:
         org:
           quartz:

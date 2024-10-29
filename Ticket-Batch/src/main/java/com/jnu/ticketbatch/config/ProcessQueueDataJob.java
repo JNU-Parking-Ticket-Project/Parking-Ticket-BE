@@ -35,7 +35,7 @@ public class ProcessQueueDataJob implements Job {
                     Double score = messageWithScore.getScore();
                     ChatMessage message = (ChatMessage) messageWithScore.getValue();
                     waitingQueueService.reRegisterQueue(
-                            9, message, ChatMessageStatus.WAITING, score);
+                            REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
                     Events.raise(EventIssuedEvent.from(message, score));
                 }
             }
