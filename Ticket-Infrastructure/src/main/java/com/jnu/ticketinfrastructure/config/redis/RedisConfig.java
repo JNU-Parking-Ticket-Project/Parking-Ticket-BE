@@ -1,6 +1,5 @@
 package com.jnu.ticketinfrastructure.config.redis;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import java.time.Duration;
@@ -15,11 +14,9 @@ import org.springframework.data.redis.connection.lettuce.LettuceClientConfigurat
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisKeyValueAdapter;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @EnableRedisRepositories(
         basePackages = "com.jnu",
