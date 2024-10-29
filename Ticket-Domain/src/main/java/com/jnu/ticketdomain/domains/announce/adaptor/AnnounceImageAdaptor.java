@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.announce.adaptor;
 
+
 import com.jnu.ticketcommon.annotation.Adaptor;
 import com.jnu.ticketdomain.domains.announce.domain.Announce;
 import com.jnu.ticketdomain.domains.announce.domain.AnnounceImage;
@@ -8,7 +9,6 @@ import com.jnu.ticketdomain.domains.announce.out.AnnounceImageRecordPort;
 import com.jnu.ticketdomain.domains.announce.repository.AnnounceImageNativeRepository;
 import com.jnu.ticketdomain.domains.announce.repository.AnnounceImageRepository;
 import java.util.List;
-import javax.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
