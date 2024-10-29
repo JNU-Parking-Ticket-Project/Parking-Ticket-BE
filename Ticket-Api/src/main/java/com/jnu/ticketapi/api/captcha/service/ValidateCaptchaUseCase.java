@@ -28,6 +28,8 @@ public class ValidateCaptchaUseCase {
         Long userId = SecurityUtils.getCurrentUserId();
         CaptchaLog captchaLog = captchaLogAdaptor.findLatestByUserId(userId);
 
+        log.info("=================== 사용자로부터 받은 암호화된 캡챠 코드 : " + encryptedCode);
+
         if (!encryption.validateCaptchaId(
                 encryptedCode, captchaLog.getCaptchaId(), captchaLog.getSalt())) {
             throw WrongCaptchaCodeException.EXCEPTION;
