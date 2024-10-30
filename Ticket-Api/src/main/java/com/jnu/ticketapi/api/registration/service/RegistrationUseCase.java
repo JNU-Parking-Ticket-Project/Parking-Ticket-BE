@@ -10,7 +10,6 @@ import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse
 import com.jnu.ticketapi.api.registration.model.response.GetRegistrationsResponse;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.application.helper.Converter;
-import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.consts.TicketStatic;
@@ -50,7 +49,6 @@ public class RegistrationUseCase {
     private final Converter converter;
     private final UserAdaptor userAdaptor;
     private final EventWithDrawUseCase eventWithDrawUseCase;
-    private final Encryption encryption;
     private final ValidateCaptchaUseCase validateCaptchaUseCase;
 
     @Autowired(required = false)
@@ -127,8 +125,7 @@ public class RegistrationUseCase {
         validateEventPeriod(event);
 
         checkDuplicateRegistration(email, eventId, requestDto.studentNum());
-        Long captchaId = encryption.decrypt(requestDto.captchaCode());
-        validateCaptchaUseCase.execute(captchaId, requestDto.captchaAnswer());
+        validateCaptchaUseCase.execute(requestDto.captchaCode(), requestDto.captchaAnswer());
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
 
