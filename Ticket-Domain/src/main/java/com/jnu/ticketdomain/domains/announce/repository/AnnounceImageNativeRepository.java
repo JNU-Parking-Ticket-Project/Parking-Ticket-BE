@@ -16,7 +16,7 @@ public class AnnounceImageNativeRepository {
     private final EntityManager entityManager;
 
     private static final String DELETE_NOT_FOUND_IMAGE =
-            "DELETE FROM ANNOUNCE_IMAGE_TB i WHERE i.URL NOT IN :url";
+            "DELETE FROM AnnounceImage i WHERE i.imageUrl NOT IN :imageUrl";
     private static final String INSERT_DUPLICATE_ON =
             "INSERT INTO ANNOUNCE_IMAGE_TB(URL, ANNOUNCE_ID) VALUES (?,?)"
                     + "ON DUPLICATE KEY UPDATE URL = VALUES(URL)";
@@ -26,7 +26,7 @@ public class AnnounceImageNativeRepository {
         entityManager
                 .createQuery(DELETE_NOT_FOUND_IMAGE)
                 .setParameter(
-                        "url",
+                        "imageUrl",
                         announceImages.stream()
                                 .map(AnnounceImage::getImageUrl)
                                 .collect(Collectors.toList()))
