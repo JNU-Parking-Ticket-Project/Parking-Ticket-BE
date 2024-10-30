@@ -17,9 +17,8 @@ public class AnnounceImageNativeRepository {
 
     private static final String DELETE_NOT_FOUND_IMAGE =
             "DELETE FROM AnnounceImage i WHERE i.imageUrl NOT IN :imageUrl";
-    private static final String INSERT_DUPLICATE_ON =
-            "INSERT INTO ANNOUNCE_IMAGE_TB(URL, ANNOUNCE_ID) VALUES (?,?)"
-                    + "ON DUPLICATE KEY UPDATE URL = VALUES(URL)";
+    private static final String INSERT_IGNORE =
+            "INSERT IGNORE INTO ANNOUNCE_IMAGE_TB(URL, ANNOUNCE_ID) VALUES (?,?)";
 
     @Transactional
     public void deleteNotFoundImage(List<AnnounceImage> announceImages) {
@@ -37,7 +36,7 @@ public class AnnounceImageNativeRepository {
     public void saveAllDuplicateOn(List<AnnounceImage> announceImages) {
         for (AnnounceImage announceImage : announceImages) {
             entityManager
-                    .createNativeQuery(INSERT_DUPLICATE_ON)
+                    .createNativeQuery(INSERT_IGNORE)
                     .setParameter(1, announceImage.getImageUrl())
                     .setParameter(2, announceImage.getAnnounce().getAnnounceId())
                     .executeUpdate();
