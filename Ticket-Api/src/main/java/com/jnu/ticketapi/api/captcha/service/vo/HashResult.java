@@ -1,4 +1,4 @@
-package com.jnu.ticketapi.application;
+package com.jnu.ticketapi.api.captcha.service.vo;
 
 
 import lombok.Getter;
