@@ -1,17 +1,21 @@
-package com.jnu.ticketapi.application.helper;
+package com.jnu.ticketapi.api.captcha.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.jnu.ticketapi.application.HashResult;
+import com.jnu.ticketapi.api.captcha.service.salt.RandomSaltGenerator;
+import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
+import com.jnu.ticketapi.application.helper.Hasher;
 import com.jnu.ticketapi.config.EncryptionProperties;
 import java.util.Base64;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-class EncryptionTest {
+class CaptchaHashProcessorTest {
+    private final EncryptionProperties properties = new EncryptionProperties(16, "SHA-256");
 
-    private final Encryption encryption = new Encryption(new EncryptionProperties(16, "SHA-256"));
+    private final CaptchaHashProcessor hashProcessor =
+            new CaptchaHashProcessor(new RandomSaltGenerator(properties), new Hasher(properties));
 
     @Test
     @DisplayName("평문을 암호화하면 salt와 해시값이 생성된다")
@@ -20,7 +24,7 @@ class EncryptionTest {
         Long plainText = 12345L;
 
         // when
-        HashResult result = encryption.encrypt(plainText);
+        HashResult result = hashProcessor.hash(plainText);
 
         // then
         assertThat(result.getSalt()).isNotNull();
@@ -36,8 +40,8 @@ class EncryptionTest {
         Long plainText = 12345L;
 
         // when
-        HashResult result1 = encryption.encrypt(plainText);
-        HashResult result2 = encryption.encrypt(plainText);
+        HashResult result1 = hashProcessor.hash(plainText);
+        HashResult result2 = hashProcessor.hash(plainText);
 
         // then
         assertThat(result1.getSalt()).isNotEqualTo(result2.getSalt());
@@ -49,13 +53,13 @@ class EncryptionTest {
     void validateCaptchaId_ShouldWorkCorrectly() {
         // given
         Long captchaId = 12345L;
-        HashResult hashResult = encryption.encrypt(captchaId);
+        HashResult hashResult = hashProcessor.hash(captchaId);
         String encryptedCode = hashResult.getCaptchaCode();
         String salt = hashResult.getSalt();
 
         // when
-        boolean isValid = encryption.validateCaptchaId(encryptedCode, captchaId, salt);
-        boolean isInvalid = encryption.validateCaptchaId(encryptedCode, 54321L, salt);
+        boolean isValid = hashProcessor.verify(encryptedCode, captchaId, salt);
+        boolean isInvalid = hashProcessor.verify(encryptedCode, 54321L, salt);
 
         // then
         assertThat(isValid).isTrue();

@@ -48,6 +48,8 @@ web:
 encryption:
   algorithm: ${ENCRYPTION_ALGORITHM}
   length: ${ENCRYPTION_LENGTH}
+  salt-type: ${ENCRYPTION_TYPE}
+
 ---
 spring:
   config:

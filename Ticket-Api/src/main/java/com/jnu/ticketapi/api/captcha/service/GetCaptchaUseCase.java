@@ -2,8 +2,7 @@ package com.jnu.ticketapi.api.captcha.service;
 
 
 import com.jnu.ticketapi.api.captcha.model.response.CaptchaResponse;
-import com.jnu.ticketapi.application.HashResult;
-import com.jnu.ticketapi.application.helper.Encryption;
+import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
@@ -19,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetCaptchaUseCase {
 
     private final CaptchaAdaptor captchaAdaptor;
-    private final Encryption encryption;
+    private final CaptchaHashProcessor captchaHashProcessor;
     private final CaptchaLogPort captchaLogPort;
 
     @Value("${captcha.domain}")
@@ -30,7 +29,7 @@ public class GetCaptchaUseCase {
     @Transactional
     public CaptchaResponse execute() {
         Captcha captcha = captchaAdaptor.findByRandom();
-        HashResult result = encryption.encrypt(captcha.getId());
+        HashResult result = captchaHashProcessor.hash(captcha.getId());
         Long userId = SecurityUtils.getCurrentUserId();
 
         captchaLogPort.save(

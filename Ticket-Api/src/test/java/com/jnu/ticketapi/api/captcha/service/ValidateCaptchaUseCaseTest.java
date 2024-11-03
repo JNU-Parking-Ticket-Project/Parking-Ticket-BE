@@ -6,8 +6,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 import com.jnu.ticketapi.WithCustomMockUser;
-import com.jnu.ticketapi.application.HashResult;
-import com.jnu.ticketapi.application.helper.Encryption;
+import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.config.BaseIntegrationTest;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
@@ -24,7 +23,7 @@ class ValidateCaptchaUseCaseTest extends BaseIntegrationTest {
 
     @Autowired private ValidateCaptchaUseCase validateCaptchaUseCase;
 
-    @Autowired private Encryption encryption;
+    @Autowired private CaptchaHashProcessor hashProcessor;
 
     @MockBean private CaptchaLogAdaptor captchaLogAdaptor;
 
@@ -50,7 +49,7 @@ class ValidateCaptchaUseCaseTest extends BaseIntegrationTest {
     @WithCustomMockUser(id = 1L)
     void validateCaptcha_Success() {
         // given
-        HashResult result = encryption.encrypt(CAPTCHA_ID);
+        HashResult result = hashProcessor.hash(CAPTCHA_ID);
         Captcha captcha = createCaptcha(ANSWER);
         CaptchaLog captchaLog = createCaptchaLog(result.getSalt());
 
@@ -66,7 +65,7 @@ class ValidateCaptchaUseCaseTest extends BaseIntegrationTest {
     @WithCustomMockUser(id = 1L)
     void validateCaptcha_WrongEncryptedCode_ThrowsException() {
         // given
-        HashResult result = encryption.encrypt(CAPTCHA_ID);
+        HashResult result = hashProcessor.hash(CAPTCHA_ID);
         CaptchaLog captchaLog = createCaptchaLog(result.getSalt());
         String wrongCaptchaCode = "wrongCode";
 
@@ -83,7 +82,7 @@ class ValidateCaptchaUseCaseTest extends BaseIntegrationTest {
     @WithCustomMockUser(id = 1L)
     void validateCaptcha_WrongAnswer_ThrowsException() {
         // given
-        HashResult result = encryption.encrypt(CAPTCHA_ID);
+        HashResult result = hashProcessor.hash(CAPTCHA_ID);
         CaptchaLog captchaLog = createCaptchaLog(result.getSalt());
         String captchaAnswer = "differentAnswer";
         Captcha captcha = createCaptcha(captchaAnswer);

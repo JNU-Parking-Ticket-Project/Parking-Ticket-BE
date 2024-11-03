@@ -1,7 +1,6 @@
 package com.jnu.ticketapi.api.captcha.service;
 
 
-import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
@@ -19,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ValidateCaptchaUseCase {
 
-    private final Encryption encryption;
+    private final CaptchaHashProcessor captchaHashProcessor;
     private final CaptchaLogAdaptor captchaLogAdaptor;
     private final CaptchaAdaptor captchaAdaptor;
 
@@ -28,7 +27,7 @@ public class ValidateCaptchaUseCase {
         Long userId = SecurityUtils.getCurrentUserId();
         CaptchaLog captchaLog = captchaLogAdaptor.findLatestByUserId(userId);
 
-        if (!encryption.validateCaptchaId(
+        if (!captchaHashProcessor.verify(
                 encryptedCode, captchaLog.getCaptchaId(), captchaLog.getSalt())) {
             throw WrongCaptchaCodeException.EXCEPTION;
         }
