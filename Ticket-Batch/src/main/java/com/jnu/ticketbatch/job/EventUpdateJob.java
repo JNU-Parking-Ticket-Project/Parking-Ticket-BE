@@ -57,10 +57,10 @@ public class EventUpdateJob implements Job {
         try {
             // JobKey 생성
             JobKey jobKey1 = JobKey.jobKey("RESERVATION_JOB" + eventId, "group1");
-
             JobKey jobKey2 = JobKey.jobKey("EXPIRED_JOB" + eventId, "group1");
-
             JobKey jobKey3 = JobKey.jobKey("PROCESS_QUEUE_DATA_JOB" + eventId, "group1");
+            JobKey jobKey4 = JobKey.jobKey("REGISTRATION_RESULT_EMAIL_JOB" + eventId, "group1");
+
             // 스케줄러에서 작업 삭제
             if (sched.checkExists(jobKey1)) { // 해당 JobKey로 등록된 작업이 존재하는지 확인
                 sched.deleteJob(jobKey1); // 작업 삭제
@@ -73,6 +73,10 @@ public class EventUpdateJob implements Job {
             if (sched.checkExists(jobKey3)) {
                 sched.deleteJob(jobKey3);
                 log.info(">>>>> redis 대기열 데이터 처리 작업 스케줄러에서 삭제");
+            }
+            if (sched.checkExists(jobKey4)) {
+                sched.deleteJob(jobKey4);
+                log.info(">>>>> 신청 결과 이메일 전송 작업 스케줄러에서 삭제");
             }
         } catch (SchedulerException e) {
             log.error(">>>>> 예약 생성 작업 스케줄러에서 삭제 실패" + e.getMessage());

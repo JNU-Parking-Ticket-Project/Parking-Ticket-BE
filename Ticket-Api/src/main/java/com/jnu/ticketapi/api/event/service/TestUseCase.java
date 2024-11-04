@@ -28,7 +28,7 @@ public class TestUseCase {
     private final RegistrationUseCase registrationUseCase;
     private final AtomicInteger counter = new AtomicInteger(0);
     private static final Integer TEST_SCHEDULER_START_TIME_AFTER_NOW = 1;
-    private static final Integer TEST_SCHEDULER_END_TIME_AFTER_NOW = 2;
+    private static final Integer TEST_SCHEDULER_END_TIME_AFTER_NOW = 30;
 
     @Transactional
     public void execute() {

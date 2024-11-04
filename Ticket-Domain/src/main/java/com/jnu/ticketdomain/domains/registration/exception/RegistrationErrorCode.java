@@ -22,7 +22,10 @@ public enum RegistrationErrorCode implements BaseErrorCode {
     SELECT_SECTORID_MUST_POSITIVE_NUMBER(
             400, "BAD_REQUEST", "구간 ID는 " + ValidationMessage.MUST_POSITIVE_NUMBER),
     CAPTCHA_CODE_MUST_NOT_BLANK(400, "BAD_REQUEST", "캡챠 코드를 " + ValidationMessage.MUST_NOT_BLANK),
-    CAPTCHA_ANSWER_MUST_NOT_BLANK(400, "BAD_REQUEST", "캡챠 답변을 " + ValidationMessage.MUST_NOT_BLANK);
+    CAPTCHA_ANSWER_MUST_NOT_BLANK(400, "BAD_REQUEST", "캡챠 답변을 " + ValidationMessage.MUST_NOT_BLANK),
+    NOT_FOUND_REGISTRATION_RESULT_EMAIL_OUTBOX(
+            404, "REGISTRATION_404_2", "존재하지 않는 주차권 결과 이메일 발송 정보입니다.");
+
     private final Integer status;
     private final String code;
     private final String reason;
