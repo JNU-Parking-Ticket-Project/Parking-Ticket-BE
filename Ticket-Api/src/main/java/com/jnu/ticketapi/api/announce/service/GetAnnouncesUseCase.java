@@ -10,6 +10,7 @@ import com.jnu.ticketdomain.domains.announce.adaptor.AnnounceImageAdaptor;
 import com.jnu.ticketdomain.domains.announce.domain.Announce;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ public class GetAnnouncesUseCase {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "announceCache", key = "#announceId", cacheManager = "ehcacheManager")
     public AnnounceDetailsResponse getOneDetails(Long announceId) {
         Announce announce = announceAdaptor.findById(announceId);
         return AnnounceDetailsResponse.from(
