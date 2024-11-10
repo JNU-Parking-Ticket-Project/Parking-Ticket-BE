@@ -6,6 +6,7 @@ import io.github.bucket4j.grid.jcache.JCacheProxyManager;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
+import javax.cache.spi.CachingProvider;
 import lombok.RequiredArgsConstructor;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
@@ -38,7 +39,9 @@ public class RedissonConfig {
     /** for bucket4j */
     @Bean
     public CacheManager cacheManager(RedissonClient redissonClient) {
-        CacheManager manager = Caching.getCachingProvider().getCacheManager();
+        CachingProvider cachingProvider =
+                Caching.getCachingProvider("org.redisson.jcache.JCachingProvider");
+        CacheManager manager = cachingProvider.getCacheManager();
         Cache<Object, Object> bucket4j = manager.getCache("bucket4j");
         if (bucket4j == null) {
             manager.createCache("bucket4j", RedissonConfiguration.fromInstance(redissonClient));
