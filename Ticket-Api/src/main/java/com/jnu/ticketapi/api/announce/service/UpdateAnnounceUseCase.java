@@ -9,6 +9,7 @@ import com.jnu.ticketdomain.domains.announce.adaptor.AnnounceImageAdaptor;
 import com.jnu.ticketdomain.domains.announce.domain.Announce;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -20,6 +21,7 @@ public class UpdateAnnounceUseCase {
     private final AnnounceImageAdaptor announceImageAdaptor;
 
     @Transactional
+    @CachePut(value = "announceCache", key = "#announceId", cacheManager = "ehcacheManager")
     public UpdateAnnounceResponse execute(
             Long announceId, UpdateAnnounceRequest updateAnnounceRequest) {
         Announce announce =
