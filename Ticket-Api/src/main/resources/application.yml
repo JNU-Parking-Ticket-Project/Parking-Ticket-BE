@@ -51,6 +51,11 @@ logging:
     org.springframework.cache: DEBUG
     org.ehcache: DEBUG
     javax.cache: DEBUG
+    
+encryption:
+  algorithm: ${ENCRYPTION_ALGORITHM}
+  length: ${ENCRYPTION_LENGTH}
+  salt-type: ${ENCRYPTION_TYPE}
 
 ---
 spring:
@@ -63,9 +68,6 @@ server:
       charset: UTF-8
       enabled: true
       force: true
-encryption:
-  algorithm: ${ENCRYPTION_ALGORITHM:AES}
-  secret: ${ENCRYPTION_SECRET:jnu-parking-fighting}
 
 captcha:
   domain: dsrps7tt0ew8t.cloudfront.net
