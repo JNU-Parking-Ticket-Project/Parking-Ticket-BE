@@ -153,9 +153,7 @@ public class Registration {
 
     public void finalSave() {
         this.isSaved = true;
-        Instant now = Instant.now();
-        this.savedAt =
-                now.getEpochSecond() * 1_000_000_000L + now.getNano(); // 현재 시간을 나노초 단위 정수로 변환
+        this.savedAt = System.nanoTime();
     }
 
     public void updateIsDeleted(boolean isDeleted) {

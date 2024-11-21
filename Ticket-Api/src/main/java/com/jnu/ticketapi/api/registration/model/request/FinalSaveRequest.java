@@ -8,6 +8,7 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
@@ -47,7 +48,6 @@ public record FinalSaveRequest(
 
     public Registration toEntity(
             FinalSaveRequest requestDto, Sector sector, String email, User user) {
-        Instant now = Instant.now();
         return Registration.builder()
                 .email(email)
                 .name(requestDto.name())
@@ -59,9 +59,7 @@ public record FinalSaveRequest(
                 .sector(sector)
                 .isSaved(true)
                 .user(user)
-                .savedAt(
-                        now.getEpochSecond() * 1_000_000_000L
-                                + now.getNano()) // 현재 시간을 나노초 단위 정수로 변환
+                .savedAt(System.nanoTime())
                 .build();
     }
 }
