@@ -36,5 +36,7 @@ public class ValidateCaptchaUseCase {
         if (!captcha.validate(answer)) {
             throw WrongCaptchaAnswerException.EXCEPTION;
         }
+
+        captchaLog.markSuccess();
     }
 }
