@@ -44,7 +44,7 @@ web:
     url-no-logging:
       - /api/swagger-ui.html
       - /api/actuator/*
-
+    
 encryption:
   algorithm: ${ENCRYPTION_ALGORITHM}
   length: ${ENCRYPTION_LENGTH}

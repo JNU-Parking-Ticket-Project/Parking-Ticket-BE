@@ -41,6 +41,8 @@ dependencies {
     implementation project(':Ticket-Common')
     implementation project(':Ticket-Infrastructure')
     implementation project(':Ticket-Batch')
+    // announce cache
+    implementation 'org.ehcache:ehcache'
 }
 
 
