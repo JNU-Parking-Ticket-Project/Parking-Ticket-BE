@@ -44,13 +44,6 @@ web:
     url-no-logging:
       - /api/swagger-ui.html
       - /api/actuator/*
-
-logging:
-  level:
-    root: INFO
-    org.springframework.cache: DEBUG
-    org.ehcache: DEBUG
-    javax.cache: DEBUG
     
 encryption:
   algorithm: ${ENCRYPTION_ALGORITHM}

@@ -60,6 +60,10 @@ logging:
     org.springframework.transaction: ${LOGGING_LEVEL:DEBUG}
     org.springframework.aop: ${LOGGING_LEVEL:DEBUG}
     org.springframework.orm.jpa.JpaTransactionManager: ${LOGGING_LEVEL:INFO}
+    # cache
+    org.springframework.cache: ${LOGGING_LEVEL:DEBUG}
+    org.ehcache: ${LOGGING_LEVEL:DEBUG}
+    javax.cache: ${LOGGING_LEVEL:DEBUG}
     # HikariCP
     com.zaxxer.hikari.HikariConfig: ${LOGGING_LEVEL:DEBUG}
     com.zaxxer.hikari: ERROR
