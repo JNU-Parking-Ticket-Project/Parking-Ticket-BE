@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import lombok.Builder;
 
 public record UpdateAnnounceResponse(
-        String announceTitle, String announceContent, List<String> imageUrl) {
+        String announceTitle, String announceContent, List<String> imageUrls) {
     @Builder
     public UpdateAnnounceResponse {}
 
@@ -17,7 +17,7 @@ public record UpdateAnnounceResponse(
         return UpdateAnnounceResponse.builder()
                 .announceTitle(announce.getAnnounceTitle())
                 .announceContent(announce.getAnnounceContent())
-                .imageUrl(
+                .imageUrls(
                         announceImages.stream()
                                 .map(AnnounceImage::getImageUrl)
                                 .collect(Collectors.toList()))
