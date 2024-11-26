@@ -15,12 +15,12 @@ public record UpdateAnnounceRequest(
                 String announceTitle,
         @AnnounceContent(message = AnnounceValidationMessage.INVALID_CONTENT_LENGTH)
                 String announceContent,
-        List<String> imageUrl) {
+        List<String> imageUrls) {
     @Builder
     public UpdateAnnounceRequest {}
 
     public List<AnnounceImage> from(Announce announce) {
-        return this.imageUrl.stream()
+        return this.imageUrls.stream()
                 .map(
                         imageUrl ->
                                 AnnounceImage.builder()

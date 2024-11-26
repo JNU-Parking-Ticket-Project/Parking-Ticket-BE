@@ -15,7 +15,7 @@ public record SaveAnnounceRequest(
                 String announceTitle,
         @AnnounceContent(message = AnnounceValidationMessage.INVALID_CONTENT_LENGTH)
                 String announceContent,
-        List<String> announceUrl) {
+        List<String> imageUrls) {
     @Builder
     public SaveAnnounceRequest {}
 
@@ -27,7 +27,7 @@ public record SaveAnnounceRequest(
     }
 
     public List<AnnounceImage> toAnnounceImages(Announce announce) {
-        return announceUrl.stream()
+        return imageUrls.stream()
                 .map(url -> AnnounceImage.builder().imageUrl(url).announce(announce).build())
                 .collect(Collectors.toList());
     }
