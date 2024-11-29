@@ -11,6 +11,8 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConstructorBinding
 @ConfigurationProperties(prefix = "encryption")
 public class EncryptionProperties {
-    private final int length;
-    private final String algorithm;
+    private String key;
+    private String algorithm;
+    private String keySpecAlgorithm;
+    private Long length;
 }
