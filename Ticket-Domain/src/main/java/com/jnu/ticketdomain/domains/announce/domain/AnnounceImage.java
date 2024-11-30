@@ -7,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -32,8 +31,8 @@ public class AnnounceImage {
     @JoinColumn(name = "announce_id")
     private Announce announce;
 
-    @Column(name = "is_deleted", nullable = false)
-    @ColumnDefault("false")
+    // MySQL은 BOOLEAN = tinyint(1), 디폴트값 : false
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "tinyint(1) default 0")
     private boolean isDeleted;
 
     @Column(name = "created_at")
