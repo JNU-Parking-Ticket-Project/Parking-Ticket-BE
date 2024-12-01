@@ -6,6 +6,7 @@ import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketdomain.domains.announce.adaptor.AnnounceAdaptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -15,6 +16,7 @@ public class DeleteAnnounceUseCase {
     private final AnnounceAdaptor announceAdaptor;
 
     @Transactional
+    @CacheEvict(value = "announceCache", key = "#announceId", cacheManager = "ehcacheManager")
     public DeleteAnnounceResponse execute(Long announceId) {
         announceAdaptor.delete(announceId);
         return DeleteAnnounceResponse.of();

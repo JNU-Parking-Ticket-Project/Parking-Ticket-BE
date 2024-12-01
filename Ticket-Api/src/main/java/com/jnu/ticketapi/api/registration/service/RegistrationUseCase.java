@@ -152,21 +152,16 @@ public class RegistrationUseCase {
             User user,
             String email,
             Long eventId) {
-        // 예비 번호가 있거나 합격인 경우
         sector.checkEventLeft();
-        reFinalRegisterProcess(
-                tempRegistration, registration, user, email, sector.getId(), eventId);
-        return FinalSaveResponse.from(tempRegistration);
+        registration.setId(tempRegistration.getId()); // update 치기 위해 Id 값을 채워줌
+        registration.setCreatedAt(
+                tempRegistration.getCreatedAt()); // create_at이 null이 들어가지 않게 하기 위해 값을 채워줌
+        reFinalRegisterProcess(registration, user, email, sector.getId(), eventId);
+        return FinalSaveResponse.from(registration);
     }
 
     private void reFinalRegisterProcess(
-            Registration tempRegistration,
-            Registration registration,
-            User user,
-            String email,
-            Long sectorId,
-            Long eventId) {
-        tempRegistration.update(registration);
+            Registration registration, User user, String email, Long sectorId, Long eventId) {
         eventWithDrawUseCase.issueEvent(registration, user.getId(), sectorId, eventId);
         if (ableRedis) {
             redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);

@@ -5,7 +5,6 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.domainEvent.Events;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -34,8 +33,6 @@ public class ProcessQueueDataJob implements Job {
                 for (TypedTuple<Object> messageWithScore : messagesWithScores) {
                     Double score = messageWithScore.getScore();
                     ChatMessage message = (ChatMessage) messageWithScore.getValue();
-                    waitingQueueService.reRegisterQueue(
-                            REDIS_EVENT_ISSUE_STORE, message, ChatMessageStatus.WAITING, score);
                     Events.raise(EventIssuedEvent.from(message, score));
                 }
             }

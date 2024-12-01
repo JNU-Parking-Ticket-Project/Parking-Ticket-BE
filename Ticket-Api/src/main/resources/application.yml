@@ -44,7 +44,7 @@ web:
     url-no-logging:
       - /api/swagger-ui.html
       - /api/actuator/*
-
+    
 encryption:
   key: ${ENCRYPTION_KEY:secretsecretsecretsecretsecretsecret}
   algorithm: ${ENCRYPTION_ALGORITHM:AES/CBC/PKCS5Padding}
