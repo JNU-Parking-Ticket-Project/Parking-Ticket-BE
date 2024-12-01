@@ -1,17 +1,15 @@
 package com.jnu.ticketapi.application.helper;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.jnu.ticketapi.config.EncryptionProperties;
 import com.jnu.ticketcommon.exception.EncryptionErrorException;
+import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.Base64;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class EncryptionTest {
     private Encryption encryption;
@@ -20,12 +18,13 @@ class EncryptionTest {
 
     @BeforeEach
     void setUp() {
-        properties = new EncryptionProperties(
-                "12345678901234567890123456789012",  // key
-                "AES/CBC/PKCS5Padding",              // algorithm
-                "AES",                               // key-spec-algorithm
-                16L                                  // length
-        );
+        properties =
+                new EncryptionProperties(
+                        "12345678901234567890123456789012", // key
+                        "AES/CBC/PKCS5Padding", // algorithm
+                        "AES", // key-spec-algorithm
+                        16L // length
+                        );
         encryption = new Encryption(properties);
         // Base64로 인코딩된 16바이트 IV
         validIv = Base64.getEncoder().encodeToString(new byte[16]);
@@ -52,8 +51,7 @@ class EncryptionTest {
             String invalidIv = Base64.getEncoder().encodeToString(new byte[8]); // 8바이트 IV
 
             // when & then
-            assertThrows(EncryptionErrorException.class,
-                    () -> encryption.encrypt(data, invalidIv));
+            assertThrows(EncryptionErrorException.class, () -> encryption.encrypt(data, invalidIv));
         }
 
         @Test
@@ -64,8 +62,7 @@ class EncryptionTest {
             String invalidIv = "invalid-iv-format";
 
             // when & then
-            assertThrows(EncryptionErrorException.class,
-                    () -> encryption.encrypt(data, invalidIv));
+            assertThrows(EncryptionErrorException.class, () -> encryption.encrypt(data, invalidIv));
         }
     }
 
@@ -93,7 +90,8 @@ class EncryptionTest {
             String invalidEncryptedData = "invalid-encrypted-data";
 
             // when & then
-            assertThrows(EncryptionErrorException.class,
+            assertThrows(
+                    EncryptionErrorException.class,
                     () -> encryption.decrypt(invalidEncryptedData, validIv));
         }
 
@@ -105,7 +103,8 @@ class EncryptionTest {
             String invalidIv = "invalid-iv-format";
 
             // when & then
-            assertThrows(EncryptionErrorException.class,
+            assertThrows(
+                    EncryptionErrorException.class,
                     () -> encryption.decrypt(encryptedData, invalidIv));
         }
     }
