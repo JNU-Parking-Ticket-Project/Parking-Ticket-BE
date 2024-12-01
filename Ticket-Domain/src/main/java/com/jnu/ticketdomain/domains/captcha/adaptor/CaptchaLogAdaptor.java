@@ -3,6 +3,7 @@ package com.jnu.ticketdomain.domains.captcha.adaptor;
 
 import com.jnu.ticketcommon.annotation.Adaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
+import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
 import com.jnu.ticketdomain.domains.captcha.out.CaptchaLogPort;
 import com.jnu.ticketdomain.domains.captcha.repository.CaptchaLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,6 @@ public class CaptchaLogAdaptor implements CaptchaLogPort {
     @Override
     public CaptchaLog findLatestByUserId(Long userId) {
         return captchaLogRepository.findTopByUserIdAndIsSuccessFalseOrderByTimestampDesc(userId)
-                .orElseThrow(() -> new IllegalArgumentException("dafadsf"));
+                .orElseThrow(() -> WrongCaptchaAnswerException.EXCEPTION);
     }
 }

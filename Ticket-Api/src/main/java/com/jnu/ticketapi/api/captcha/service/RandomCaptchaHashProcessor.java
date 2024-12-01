@@ -10,6 +10,7 @@ import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerExceptio
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -17,6 +18,7 @@ import java.util.Base64;
 @Component
 @ConditionalOnProperty(prefix = "encryption", name = "salt-type", havingValue = "random")
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class RandomCaptchaHashProcessor implements CaptchaHashProcessor {
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -31,6 +33,7 @@ public class RandomCaptchaHashProcessor implements CaptchaHashProcessor {
         return new HashResult(iv, encryptedData);
     }
 
+    @Transactional
     @Override
     public Long verify(String encryptedCode, Long userId) {
         CaptchaLog captchaLog = captchaLogAdaptor.findLatestByUserId(userId);
