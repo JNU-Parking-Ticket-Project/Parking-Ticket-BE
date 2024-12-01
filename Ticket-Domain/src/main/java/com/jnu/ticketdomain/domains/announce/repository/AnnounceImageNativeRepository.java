@@ -18,7 +18,7 @@ public class AnnounceImageNativeRepository {
     private static final String DELETE_NOT_FOUND_IMAGE =
             "DELETE FROM AnnounceImage i WHERE i.imageUrl NOT IN :imageUrl";
     private static final String INSERT_IGNORE =
-            "INSERT IGNORE INTO ANNOUNCE_IMAGE_TB(URL, ANNOUNCE_ID) VALUES (?,?)";
+            "INSERT IGNORE INTO announce_image_tb (URL, ANNOUNCE_ID) VALUES (?,?)";
 
     @Transactional
     public void deleteNotFoundImage(List<AnnounceImage> announceImages) {
