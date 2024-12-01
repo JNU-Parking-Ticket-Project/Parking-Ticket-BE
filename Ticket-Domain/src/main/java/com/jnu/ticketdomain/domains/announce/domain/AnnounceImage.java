@@ -31,8 +31,7 @@ public class AnnounceImage {
     @JoinColumn(name = "announce_id")
     private Announce announce;
 
-    // MySQL은 BOOLEAN = tinyint(1), 디폴트값 : false
-    @Column(name = "is_deleted", nullable = false, columnDefinition = "tinyint(1) default 0")
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "bit(1) default 0")
     private boolean isDeleted;
 
     @Column(name = "created_at")
