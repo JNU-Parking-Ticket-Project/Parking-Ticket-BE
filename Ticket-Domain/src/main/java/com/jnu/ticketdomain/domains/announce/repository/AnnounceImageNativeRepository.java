@@ -2,6 +2,8 @@ package com.jnu.ticketdomain.domains.announce.repository;
 
 
 import com.jnu.ticketdomain.domains.announce.domain.AnnounceImage;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
@@ -18,7 +20,7 @@ public class AnnounceImageNativeRepository {
     private static final String DELETE_NOT_FOUND_IMAGE =
             "DELETE FROM AnnounceImage i WHERE i.imageUrl NOT IN :imageUrl";
     private static final String INSERT_IGNORE =
-            "INSERT IGNORE INTO announce_image_tb (URL, ANNOUNCE_ID) VALUES (?,?)";
+            "INSERT IGNORE INTO announce_image_tb (URL, ANNOUNCE_ID, CREATED_AT) VALUES (?,?,?)";
 
     @Transactional
     public void deleteNotFoundImage(List<AnnounceImage> announceImages) {
@@ -39,6 +41,7 @@ public class AnnounceImageNativeRepository {
                     .createNativeQuery(INSERT_IGNORE)
                     .setParameter(1, announceImage.getImageUrl())
                     .setParameter(2, announceImage.getAnnounce().getAnnounceId())
+                    .setParameter(3, LocalDateTime.now().toString())
                     .executeUpdate();
         }
     }

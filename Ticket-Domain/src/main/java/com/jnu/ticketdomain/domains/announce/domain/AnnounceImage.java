@@ -39,8 +39,9 @@ public class AnnounceImage {
     private LocalDateTime createdAt;
 
     @Builder
-    public AnnounceImage(String imageUrl, Announce announce) {
+    public AnnounceImage(String imageUrl, Announce announce, LocalDateTime createdAt) {
         this.imageUrl = imageUrl;
         this.announce = announce;
+        this.createdAt= createdAt;
     }
 }
