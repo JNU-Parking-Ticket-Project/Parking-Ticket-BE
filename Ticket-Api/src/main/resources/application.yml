@@ -46,9 +46,11 @@ web:
       - /api/actuator/*
     
 encryption:
-  algorithm: ${ENCRYPTION_ALGORITHM}
-  length: ${ENCRYPTION_LENGTH}
-  salt-type: ${ENCRYPTION_TYPE}
+  key: ${ENCRYPTION_KEY:secretsecretsecretsecretsecretsecret}
+  algorithm: ${ENCRYPTION_ALGORITHM:AES/CBC/PKCS5Padding}
+  key-spec-algorithm: ${ENCRYPTION_KEY_ALGORITHM:AES}
+  length:  ${ENCRYPTION_LENGTH:16}
+  salt-type: ${ENCRYPTION_TYPE:random}
 
 ---
 spring:
@@ -65,7 +67,7 @@ server:
 captcha:
   domain: dsrps7tt0ew8t.cloudfront.net
 
-ableDomainEvent : false
+ableDomainEvent: false
 
 web:
   log:

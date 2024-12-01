@@ -3,6 +3,7 @@ package com.jnu.ticketdomain.domains.captcha.domain;
 
 import java.time.LocalDateTime;
 import javax.persistence.*;
+
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -36,4 +37,8 @@ public class CaptchaLog {
     @CreatedDate
     @Column(name = "created_at", nullable = false)
     private LocalDateTime timestamp;
+
+    public void markUse() {
+        this.isSuccess = Boolean.TRUE;
+    }
 }

@@ -19,22 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class ValidateCaptchaUseCase {
 
     private final CaptchaHashProcessor captchaHashProcessor;
-    private final CaptchaLogAdaptor captchaLogAdaptor;
-    private final CaptchaAdaptor captchaAdaptor;
 
     @Transactional
     public void execute(String encryptedCode, String answer) {
         Long userId = SecurityUtils.getCurrentUserId();
-        CaptchaLog captchaLog = captchaLogAdaptor.findLatestByUserId(userId);
-
-        if (!captchaHashProcessor.verify(
-                encryptedCode, captchaLog.getCaptchaId(), captchaLog.getSalt())) {
-            throw WrongCaptchaCodeException.EXCEPTION;
-        }
-
-        Captcha captcha = captchaAdaptor.findById(captchaLog.getCaptchaId());
-        if (!captcha.validate(answer)) {
-            throw WrongCaptchaAnswerException.EXCEPTION;
-        }
+        captchaHashProcessor.verify(encryptedCode, userId);
     }
 }
