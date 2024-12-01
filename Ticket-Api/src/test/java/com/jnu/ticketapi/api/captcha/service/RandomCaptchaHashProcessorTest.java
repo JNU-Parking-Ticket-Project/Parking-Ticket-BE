@@ -1,23 +1,22 @@
 package com.jnu.ticketapi.api.captcha.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.EncryptionProperties;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
+import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.Base64;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class RandomCaptchaHashProcessorTest {
     private EncryptionProperties properties;
@@ -27,12 +26,13 @@ class RandomCaptchaHashProcessorTest {
 
     @BeforeEach
     void setUp() {
-        properties = new EncryptionProperties(
-                "12345678901234567890123456789012",  // key
-                "AES/CBC/PKCS5Padding",              // algorithm
-                "AES",                               // key-spec-algorithm
-                16L                                  // length
-        );
+        properties =
+                new EncryptionProperties(
+                        "12345678901234567890123456789012", // key
+                        "AES/CBC/PKCS5Padding", // algorithm
+                        "AES", // key-spec-algorithm
+                        16L // length
+                        );
         captchaLogAdaptor = mock(CaptchaLogAdaptor.class);
         encryption = new Encryption(properties);
         hashProcessor = new RandomCaptchaHashProcessor(encryption, captchaLogAdaptor, properties);
@@ -109,7 +109,8 @@ class RandomCaptchaHashProcessorTest {
             when(captchaLogAdaptor.findLatestByUserId(userId)).thenReturn(captchaLog);
 
             // when & then
-            assertThrows(WrongCaptchaAnswerException.class,
+            assertThrows(
+                    WrongCaptchaAnswerException.class,
                     () -> hashProcessor.verify(hashResult.getCaptchaCode(), userId));
         }
     }

@@ -1,6 +1,10 @@
 package com.jnu.ticketapi.registration;
 
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
 import com.jnu.ticketapi.api.captcha.service.CaptchaHashProcessor;
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
@@ -12,11 +16,19 @@ import com.jnu.ticketdomain.domains.captcha.exception.CaptchaErrorCode;
 import com.jnu.ticketdomain.domains.events.exception.SectorErrorCode;
 import com.jnu.ticketdomain.domains.user.exception.UserErrorCode;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -25,7 +37,7 @@ import org.springframework.test.context.jdbc.Sql;
 @AutoConfigureRestDocs
 @Sql("classpath:db/teardown.sql")
 public class FinalSaveTest extends RestDocsConfig {
-  
+
     @Autowired private MockMvc mvc;
 
     @Autowired private ObjectMapper om;

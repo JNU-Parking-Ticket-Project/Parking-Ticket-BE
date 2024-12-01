@@ -1,5 +1,7 @@
 package com.jnu.ticketapi.api.captcha.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.EncryptionProperties;
@@ -8,8 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
 class FixedCaptchaHashProcessorTest {
     private EncryptionProperties properties;
     private Encryption encryption;
@@ -17,12 +17,13 @@ class FixedCaptchaHashProcessorTest {
 
     @BeforeEach
     void setUp() {
-        properties = new EncryptionProperties(
-                "12345678901234567890123456789012",  // key
-                "AES/CBC/PKCS5Padding",              // algorithm
-                "AES",                               // key-spec-algorithm
-                16L                                  // length
-        );
+        properties =
+                new EncryptionProperties(
+                        "12345678901234567890123456789012", // key
+                        "AES/CBC/PKCS5Padding", // algorithm
+                        "AES", // key-spec-algorithm
+                        16L // length
+                        );
         encryption = new Encryption(properties);
         hashProcessor = new FixedCaptchaHashProcessor(encryption);
     }
@@ -58,7 +59,8 @@ class FixedCaptchaHashProcessorTest {
 
             // then
             assertThat(result1.getSalt()).isEqualTo(result2.getSalt()); // IV는 동일
-            assertThat(result1.getCaptchaCode()).isNotEqualTo(result2.getCaptchaCode()); // 암호화 값은 다름
+            assertThat(result1.getCaptchaCode())
+                    .isNotEqualTo(result2.getCaptchaCode()); // 암호화 값은 다름
         }
     }
 
