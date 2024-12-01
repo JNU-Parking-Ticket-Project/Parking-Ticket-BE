@@ -42,6 +42,6 @@ public class AnnounceImage {
     public AnnounceImage(String imageUrl, Announce announce, LocalDateTime createdAt) {
         this.imageUrl = imageUrl;
         this.announce = announce;
-        this.createdAt= createdAt;
+        this.createdAt = createdAt;
     }
 }
