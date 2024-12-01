@@ -13,8 +13,6 @@ import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.event.UserReflectStatusEvent;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
-import com.jnu.ticketinfrastructure.model.ChatMessage;
-import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
@@ -65,18 +63,6 @@ public class EventIssuedEventHandler {
             } catch (Exception e) {
                 // 에러가 났을 때 redis에 데이터를 재등록 한다.(Not Waiting 상태로)
                 log.error("EventIssuedEventHandler Exception: ", e);
-                ChatMessage message =
-                        new ChatMessage(
-                                eventIssuedEvent.getMessage().getRegistration(),
-                                eventIssuedEvent.getMessage().getUserId(),
-                                eventIssuedEvent.getMessage().getSectorId(),
-                                eventIssuedEvent.getMessage().getEventId(),
-                                ChatMessageStatus.WAITING.name());
-                waitingQueueService.reRegisterQueue(
-                        REDIS_EVENT_ISSUE_STORE,
-                        message,
-                        ChatMessageStatus.NOT_WAITING,
-                        eventIssuedEvent.getScore());
             }
         }
     }
@@ -86,7 +72,7 @@ public class EventIssuedEventHandler {
         User user = userAdaptor.findById(userId);
         saveRegistration(sector, user, registration);
         Events.raise(UserReflectStatusEvent.of(userId, registration, sector));
-    } // 이진혁 바보 멍청이 말미잘
+    }
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
         if (!sector.isRemainingAmount()) {
@@ -95,7 +81,7 @@ public class EventIssuedEventHandler {
         }
 
         if (!registration.isSaved()) {
-            registration.updateIsSaved(true);
+            registration.finalSave();
             registration.setSector(sector);
             registration.setUser(user);
             registrationAdaptor.save(registration);

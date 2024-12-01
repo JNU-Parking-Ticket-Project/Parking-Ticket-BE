@@ -65,8 +65,15 @@ public interface RegistrationRepository
     List<Registration> findByUser(User user);
 
     @Query(
-            "select count (r) from Registration r where r.id < :id and r.isSaved = true and r.sector.id = :sectorId")
-    Integer findPositionById(@Param("id") Long id, @Param("sectorId") Long sectorId);
+            value =
+                    "SELECT row_num FROM ( "
+                            + "  SELECT r.id, ROW_NUMBER() OVER (ORDER BY r.saved_at) AS row_num "
+                            + "  FROM registration_tb r "
+                            + "  WHERE r.is_saved = true AND r.sector_id = :sectorId "
+                            + ") AS numbered_registrations "
+                            + "WHERE numbered_registrations.id = :id",
+            nativeQuery = true)
+    Integer findPositionBySavedAt(@Param("id") Long id, @Param("sectorId") Long sectorId);
 
     Boolean existsByIdAndIsSavedTrue(Long id);
 }

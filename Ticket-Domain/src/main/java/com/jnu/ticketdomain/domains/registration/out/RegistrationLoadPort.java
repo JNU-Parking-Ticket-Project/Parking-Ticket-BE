@@ -24,7 +24,7 @@ public interface RegistrationLoadPort {
 
     List<Registration> findByEmailAndIsSaved(String email, boolean flag);
 
-    Integer findPositionById(Long id, Long sectorId);
+    Integer findPositionBySavedAt(Long id, Long sectorId);
 
     Boolean existsByIdAndIsSavedTrue(Long id);
 }
