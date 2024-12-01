@@ -32,8 +32,9 @@ public class CacheTestConfiguration {
                         .setExpiryPolicyFactory(
                                 CreatedExpiryPolicy.factoryOf(Duration.TEN_MINUTES));
 
-        ehCacheManager.createCache("myCache", cacheConfig);
-
+        if(ehCacheManager.getCache("myCache") == null){
+            ehCacheManager.createCache("myCache", cacheConfig);
+        }
         return new JCacheCacheManager(ehCacheManager);
     }
 }
