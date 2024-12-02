@@ -2,6 +2,7 @@ package com.jnu.ticketdomain.domains.announce.domain;
 
 
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -42,6 +43,9 @@ public class Announce {
     @Column(name = "created_at")
     @CreatedDate
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "announce", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AnnounceImage> announceImages;
 
     @Builder
     public Announce(String announceTitle, String announceContent) {
