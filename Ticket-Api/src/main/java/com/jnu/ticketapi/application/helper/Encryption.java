@@ -1,15 +1,15 @@
 package com.jnu.ticketapi.application.helper;
 
+
 import com.jnu.ticketapi.config.EncryptionProperties;
 import com.jnu.ticketcommon.exception.EncryptionErrorException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -19,7 +19,9 @@ public class Encryption {
     public String encrypt(String data, String iv) {
         try {
             Cipher cipher = Cipher.getInstance(properties.getAlgorithm());
-            SecretKeySpec keySpec = new SecretKeySpec(properties.getKey().getBytes(), properties.getKeySpecAlgorithm());
+            SecretKeySpec keySpec =
+                    new SecretKeySpec(
+                            properties.getKey().getBytes(), properties.getKeySpecAlgorithm());
             IvParameterSpec ivParamSpec = new IvParameterSpec(Base64.getDecoder().decode(iv));
             cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivParamSpec);
 
@@ -33,7 +35,9 @@ public class Encryption {
     public String decrypt(String encryptedData, String iv) {
         try {
             Cipher cipher = Cipher.getInstance(properties.getAlgorithm());
-            SecretKeySpec keySpec = new SecretKeySpec(properties.getKey().getBytes(), properties.getKeySpecAlgorithm());
+            SecretKeySpec keySpec =
+                    new SecretKeySpec(
+                            properties.getKey().getBytes(), properties.getKeySpecAlgorithm());
             IvParameterSpec ivParamSpec = new IvParameterSpec(Base64.getDecoder().decode(iv));
             cipher.init(Cipher.DECRYPT_MODE, keySpec, ivParamSpec);
 

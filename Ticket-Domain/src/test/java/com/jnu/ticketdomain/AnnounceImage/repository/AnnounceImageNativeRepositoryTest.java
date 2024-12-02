@@ -103,5 +103,32 @@ public class AnnounceImageNativeRepositoryTest {
                         .isEqualTo("http://example.com/image" + (i + 1) + ".jpg");
             }
         }
+
+        @Test
+        @DisplayName("수정시 created_at이 잘 들어온다.")
+        public void insert_created_at_test() {
+            // given
+            AnnounceImage imageToInsert1 =
+                    AnnounceImage.builder()
+                            .imageUrl("http://example.com/image1.jpg")
+                            .announce(announce)
+                            .build();
+            AnnounceImage imageToInsert2 =
+                    AnnounceImage.builder()
+                            .imageUrl("http://example.com/image3.jpg")
+                            .announce(announce)
+                            .build();
+            announceImageNativeRepository.saveAllDuplicateOn(
+                    Arrays.asList(imageToInsert1, imageToInsert2));
+
+            List<AnnounceImage> remainingImages =
+                    entityManager
+                            .createQuery("SELECT i FROM AnnounceImage i", AnnounceImage.class)
+                            .getResultList();
+
+            for (AnnounceImage remainingImage : remainingImages) {
+                assertThat(remainingImage.getCreatedAt()).isNotNull();
+            }
+        }
     }
 }

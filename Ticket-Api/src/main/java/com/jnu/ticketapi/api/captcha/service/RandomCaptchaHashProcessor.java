@@ -1,18 +1,17 @@
 package com.jnu.ticketapi.api.captcha.service;
 
+
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
-
 import com.jnu.ticketapi.config.EncryptionProperties;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
+import java.security.SecureRandom;
+import java.util.Base64;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-
-import java.security.SecureRandom;
-import java.util.Base64;
 
 @Component
 @ConditionalOnProperty(prefix = "encryption", name = "salt-type", havingValue = "random")
