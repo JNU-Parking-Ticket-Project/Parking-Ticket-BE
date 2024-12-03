@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.config.ehcache;
 
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -9,5 +10,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface CacheUpdate {
     String cacheName();
+
     String key();
 }
