@@ -76,7 +76,7 @@ public class ReflectUserTest {
     }
 
     @Test
-    @DisplayName("유저 상태 반영 - 대기")
+    @DisplayName("유저 상태 반영 - 얘비")
     void testHandle_Prepare() throws InterruptedException {
         // Given
         CountDownLatch latch = new CountDownLatch(1);
