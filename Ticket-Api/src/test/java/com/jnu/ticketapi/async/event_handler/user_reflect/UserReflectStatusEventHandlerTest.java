@@ -4,9 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.jnu.ticketapi.api.user.handler.UserReflectStatusEventHandler;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
-import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.event.UserReflectStatusEvent;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;

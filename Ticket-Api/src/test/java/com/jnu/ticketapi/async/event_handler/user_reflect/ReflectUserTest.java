@@ -51,9 +51,9 @@ public class ReflectUserTest {
         // Given
         CountDownLatch latch = new CountDownLatch(1);
 
-        when(sector.getInitSectorCapacity()).thenReturn(100); // 합격 용량
-        when(sector.getIssueAmount()).thenReturn(200); // 총 용량
-        when(registrationAdaptor.findPositionBySavedAt(1L, 1L)).thenReturn(50); // 몇 번째 데이터인지 확인 (50번째)
+        initSector();
+        when(registrationAdaptor.findPositionBySavedAt(1L, 1L))
+                .thenReturn(50); // 몇 번째 데이터인지 확인 (50번째)
         when(userAdaptor.findById(1L))
                 .thenAnswer(
                         invocation -> {
@@ -81,9 +81,9 @@ public class ReflectUserTest {
         // Given
         CountDownLatch latch = new CountDownLatch(1);
 
-        when(sector.getInitSectorCapacity()).thenReturn(100); // 합격 용량
-        when(sector.getIssueAmount()).thenReturn(200); // 총 용량
-        when(registrationAdaptor.findPositionBySavedAt(1L, 1L)).thenReturn(150); // 몇 번째 데이터인지 확인 (150번째)
+        initSector();
+        when(registrationAdaptor.findPositionBySavedAt(1L, 1L))
+                .thenReturn(150); // 몇 번째 데이터인지 확인 (150번째)
         when(userAdaptor.findById(1L))
                 .thenAnswer(
                         invocation -> {
@@ -111,9 +111,9 @@ public class ReflectUserTest {
         // Given
         CountDownLatch latch = new CountDownLatch(1);
 
-        when(sector.getInitSectorCapacity()).thenReturn(100); // 합격 용량
-        when(sector.getIssueAmount()).thenReturn(200); // 총 용량
-        when(registrationAdaptor.findPositionBySavedAt(1L, 1L)).thenReturn(201); // // 몇 번째 데이터인지 확인 (201번째)
+        initSector();
+        when(registrationAdaptor.findPositionBySavedAt(1L, 1L))
+                .thenReturn(201); // // 몇 번째 데이터인지 확인 (201번째)
         when(userAdaptor.findById(1L))
                 .thenAnswer(
                         invocation -> {
@@ -133,5 +133,10 @@ public class ReflectUserTest {
         verify(registrationAdaptor).findPositionBySavedAt(1L, 1L); // Position 조회
         verify(user).fail(); // 유저가 실패 상태로 전환
         verify(userAdaptor).save(user); // 상태 저장
+    }
+
+    private void initSector() {
+        when(sector.getInitSectorCapacity()).thenReturn(100); // 합격 용량
+        when(sector.getIssueAmount()).thenReturn(200); // 총 용량
     }
 }
