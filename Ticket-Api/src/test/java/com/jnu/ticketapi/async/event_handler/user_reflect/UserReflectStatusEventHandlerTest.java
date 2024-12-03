@@ -27,10 +27,6 @@ public class UserReflectStatusEventHandlerTest {
 
     @Autowired PlatformTransactionManager transactionManager;
 
-    @MockBean private RegistrationAdaptor registrationAdaptor;
-
-    @MockBean private UserAdaptor userAdaptor;
-
     @Autowired private ApplicationEventPublisher applicationEventPublisher;
 
     @MockBean private UserReflectStatusEventHandler userReflectStatusEventHandler;
