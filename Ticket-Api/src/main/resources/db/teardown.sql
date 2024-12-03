@@ -1,3 +1,4 @@
+SET MODE MySQL;
 SET
 foreign_key_checks = 0;
 
@@ -48,14 +49,14 @@ values (1, 40, '사회대 / 농대 / 수의대 / 치전원', 40, 0, 40, '1구간
        (5, 30, '자연대 / 약대 / 생활대', 30, 0, 30, '5구간', 1, 2, 2, false);
 
 insert into registration_tb(id, affiliation, car_num, created_at, email, is_light, is_saved, name, student_num,
-                            phone_num, sector_id, user_id, is_deleted)
-values (1, '공과대학', '1234가1234', current_time, 'user@jnu.ac.kr', true, false, '이진혁', '215555', '010-000-0000', 4, 3,
-        false),
-       (2, '경영대학', '가1234', current_time, 'council@jnu.ac.kr', true, true, '박영규', '192155', '010-000-0000', 4, 1,
-        false),
-       (3, '농대', '나1234', current_time, 'user2@jnu.ac.kr', true, true, '임채승', '1821555', '010-000-0000', 4, 4, true),
-       (4, '의대', '다1234', current_time, 'user3@jnu.ac.kr', true, false, '김동완', '172155', '010-000-0000', 4, 5, true),
-       (5, '인문대', '라1234', current_time, 'admin@jnu.ac.kr', true, false, '이윤성', '162155', '010-000-0000', 4, 2,false);
+                            phone_num, sector_id, user_id, is_deleted, saved_at)
+values
+    (1, '공과대학', '1234가1234', current_timestamp, 'user@jnu.ac.kr', true, false, '이진혁', '215555', '010-000-0000', 4, 3, false, null),
+    (2, '경영대학', '가1234', DATEADD('SECOND', -5, CURRENT_TIMESTAMP), 'council@jnu.ac.kr', true, true, '박영규', '192155', '010-000-0000', 4, 1, false, DATEADD('SECOND', -5, CURRENT_TIMESTAMP)),
+    (3, '농대', '나1234', DATEADD('SECOND', -4, CURRENT_TIMESTAMP), 'user2@jnu.ac.kr', true, true, '임채승', '1821555', '010-000-0000', 4, 4, true, DATEADD('SECOND', -4, CURRENT_TIMESTAMP)),
+    (4, '의대', '다1234', CURRENT_TIMESTAMP, 'user3@jnu.ac.kr', true, false, '김동완', '172155', '010-000-0000', 4, 5, true, null),
+    (5, '인문대', '라1234', CURRENT_TIMESTAMP, 'admin@jnu.ac.kr', true, false, '이윤성', '162155', '010-000-0000', 4, 2, false, null);
+
 
 insert into captcha_tb(id, answer, image_name)
 values (1, '1234', '1234.png'), (2, '5678', '5678.png');
