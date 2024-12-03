@@ -11,6 +11,7 @@ import com.jnu.ticketdomain.domains.announce.domain.Announce;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 //import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -22,8 +23,7 @@ public class UpdateAnnounceUseCase {
     private final AnnounceImageAdaptor announceImageAdaptor;
 
     @Transactional
-    @CacheUpdate(cacheName = "announceCache", key = "announceId")
-//    @CacheEvict(value = "announceCache", key = "#announceId", cacheManager = "ehcacheManager")
+    @CacheEvict(value = "announceCache", key = "#announceId", cacheManager = "ehcacheManager")
     public UpdateAnnounceResponse execute(
             Long announceId, UpdateAnnounceRequest updateAnnounceRequest) {
         Announce announce =
