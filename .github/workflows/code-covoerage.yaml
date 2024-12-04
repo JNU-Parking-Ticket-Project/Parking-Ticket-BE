@@ -1,0 +1,134 @@
+name: CI 근데 SonarCloud와 Jacoco를 곁들인
+
+on:
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_DATABASE: 'ticket'
+          MYSQL_ROOT_PASSWORD: 1234
+      redis:
+        image: redis:7.2
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+
+    steps:
+      - name: 코드 체크
+        uses: actions/checkout@v3
+
+      - name: JDK 17 설정
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: gradle
+
+      - name: Gradle 캐싱
+        uses: actions/cache@v3
+        with:
+          arguments: check
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: 권한부여
+        run: chmod +x gradlew
+
+      - name: SonarCloud Set
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: 빌드와 테스트
+        run: ./gradlew clean build -x spotlessApply -x spotlessCheck -x spotlessJavaCheck -x spotlessJavaApply jacocoTestReport # 임시로 테스트 체크 안함
+
+      - name: SonarCloud
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ secrets.PROJECT_KEY_SONAR }}  # SonarCloud 프로젝트 키
+        run: ./gradlew sonar --info --stacktrace
+
+
+
+
+      - name: 테스트 커버리지를 PR에 코멘트로 등록합니다
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.2
+        with:
+          title: 📝 테스트 커버리지 리포트입니다
+          paths: ${{ github.workspace }}/Ticket-Api/build/reports/jacoco.xml
+          token: ${{ secrets.JACOCO_TOKEN }}
+          min-coverage-overall: 0
+          min-coverage-changed-files: 70
+
+
+
+  # deploy 있어야 되긴하는데 일단 스킵(논의 후 작성)
+  notification:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: [build]
+    steps:
+      - uses: martialonline/workflow-status@v3
+        id: check
+      - name: Slack 공지
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ steps.check.outputs.status }} # workflow결과 받아옴
+          author_name: Github Action Bot
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CI }}
+        if: always()
+
+  notificationSonar:
+    name: Sonar Notification
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: [ notification ]
+    steps:
+      - name: SonarCloud 품질 게이트 상태 추출
+        id: sonar_result
+        run: |
+          QUALITY_GATE_STATUS=$(curl -s -X GET "https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ secrets.PROJECT_KEY_SONAR }}" | jq -r '.projectStatus.status')
+          echo "QUALITY_GATE=${QUALITY_GATE_STATUS}" >> $GITHUB_ENV
+      - name: SonarCloud 공지
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          author_name: Github Action Bot
+          custom_payload: |
+            {
+              "text": "SonarCloud Quality Gate 상태",
+              "attachments": [
+                {
+                  "title": "SonarCloud Quality Gate 상태 입니다. 자세한 내용은 PR을 확인해주세요",
+                  "text": "상태 요약 : ${{ env.QUALITY_GATE }}"
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CI }}
+        if: always()
+
