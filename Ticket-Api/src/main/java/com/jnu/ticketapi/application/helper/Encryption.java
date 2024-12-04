@@ -1,69 +1,51 @@
 package com.jnu.ticketapi.application.helper;
 
 
-import com.jnu.ticketcommon.annotation.Helper;
-import com.jnu.ticketcommon.exception.DecryptionErrorException;
+import com.jnu.ticketapi.config.EncryptionProperties;
 import com.jnu.ticketcommon.exception.EncryptionErrorException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.Arrays;
 import java.util.Base64;
 import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-@Helper
-@Slf4j
+@Component
+@RequiredArgsConstructor
 public class Encryption {
-    @Value("${encryption.algorithm}")
-    private String algorithm;
+    private final EncryptionProperties properties;
 
-    @Value("${encryption.secret}")
-    private String secret;
-
-    private SecretKeySpec secretKeySpec;
-
-    private SecretKeySpec generateKey() {
+    public String encrypt(String data, String iv) {
         try {
-            if (secretKeySpec == null) {
-                byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-                MessageDigest sha = MessageDigest.getInstance("SHA-256");
-                keyBytes = sha.digest(keyBytes);
-                keyBytes = Arrays.copyOf(keyBytes, 16); // AES-128을 위한 16바이트 키
-                secretKeySpec = new SecretKeySpec(keyBytes, algorithm);
-            }
-            return secretKeySpec;
-        } catch (Exception e) {
-            log.error("Error during generateKey", e);
-            throw EncryptionErrorException.EXCEPTION;
-        }
-    }
+            Cipher cipher = Cipher.getInstance(properties.getAlgorithm());
+            SecretKeySpec keySpec =
+                    new SecretKeySpec(
+                            properties.getKey().getBytes(), properties.getKeySpecAlgorithm());
+            IvParameterSpec ivParamSpec = new IvParameterSpec(Base64.getDecoder().decode(iv));
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivParamSpec);
 
-    public String encrypt(Long value) {
-        try {
-            Cipher cipher = Cipher.getInstance(algorithm);
-            cipher.init(Cipher.ENCRYPT_MODE, generateKey());
-            byte[] valueBytes = ByteBuffer.allocate(Long.BYTES).putLong(value).array();
-            byte[] encrypted = cipher.doFinal(valueBytes);
+            byte[] encrypted = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(encrypted);
         } catch (Exception e) {
-            log.error("Error during encryption", e);
             throw EncryptionErrorException.EXCEPTION;
         }
     }
 
-    public Long decrypt(final String encryptedValue) {
+    public String decrypt(String encryptedData, String iv) {
         try {
-            Cipher cipher = Cipher.getInstance(algorithm);
-            cipher.init(Cipher.DECRYPT_MODE, generateKey());
-            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedValue);
-            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
-            return ByteBuffer.wrap(decryptedBytes).getLong();
+            Cipher cipher = Cipher.getInstance(properties.getAlgorithm());
+            SecretKeySpec keySpec =
+                    new SecretKeySpec(
+                            properties.getKey().getBytes(), properties.getKeySpecAlgorithm());
+            IvParameterSpec ivParamSpec = new IvParameterSpec(Base64.getDecoder().decode(iv));
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, ivParamSpec);
+
+            byte[] decodedBytes = Base64.getDecoder().decode(encryptedData);
+            byte[] decrypted = cipher.doFinal(decodedBytes);
+            return new String(decrypted, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            log.error("Error during decryption", e);
-            throw DecryptionErrorException.EXCEPTION;
+            throw EncryptionErrorException.EXCEPTION;
         }
     }
 }

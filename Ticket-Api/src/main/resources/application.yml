@@ -24,13 +24,17 @@ server:
   servlet:
     context-path: /api
   forward-headers-strategy: framework
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus,metrics,threadpool
+        include: health,info,prometheus,metrics
+
 
 captcha:
   domain: ${CLOUD_FRONT_URL}
@@ -40,6 +44,14 @@ web:
     url-no-logging:
       - /api/swagger-ui.html
       - /api/actuator/*
+    
+encryption:
+  key: ${ENCRYPTION_KEY:secretsecretsecretsecretsecretsecret}
+  algorithm: ${ENCRYPTION_ALGORITHM:AES/CBC/PKCS5Padding}
+  key-spec-algorithm: ${ENCRYPTION_KEY_ALGORITHM:AES}
+  length:  ${ENCRYPTION_LENGTH:16}
+  salt-type: ${ENCRYPTION_TYPE:random}
+
 ---
 spring:
   config:
@@ -51,14 +63,11 @@ server:
       charset: UTF-8
       enabled: true
       force: true
-encryption:
-  algorithm: ${ENCRYPTION_ALGORITHM:AES}
-  secret: ${ENCRYPTION_SECRET:jnu-parking-fighting}
 
 captcha:
   domain: dsrps7tt0ew8t.cloudfront.net
 
-ableDomainEvent : false
+ableDomainEvent: false
 
 web:
   log:

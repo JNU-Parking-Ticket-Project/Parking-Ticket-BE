@@ -74,6 +74,10 @@ public class Registration {
     @ColumnDefault("false")
     private boolean isDeleted;
 
+    // 최종 저장 시간(nano sec)
+    @Column(name = "saved_at")
+    private Long savedAt;
+
     @JsonBackReference(value = "user-registration")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -85,7 +89,7 @@ public class Registration {
     private Sector sector;
 
     @Builder
-    public Registration(
+    private Registration(
             String email,
             String name,
             String studentNum,
@@ -95,6 +99,7 @@ public class Registration {
             String phoneNum,
             LocalDateTime createdAt,
             boolean isSaved,
+            Long savedAt,
             User user,
             Sector sector) {
         this.email = email;
@@ -106,6 +111,7 @@ public class Registration {
         this.phoneNum = phoneNum;
         this.createdAt = createdAt;
         this.isSaved = isSaved;
+        this.savedAt = savedAt;
         this.user = user;
         this.sector = sector;
     }
@@ -122,8 +128,10 @@ public class Registration {
             @JsonProperty("createdAt") LocalDateTime createdAt,
             @JsonProperty("isSaved") boolean isSaved,
             @JsonProperty("isDeleted") boolean isDeleted,
+            @JsonProperty("savedAt") Long savedAt,
             @JsonProperty("user") User user,
-            @JsonProperty("sector") Sector sector) {
+            @JsonProperty("sector") Sector sector,
+            @JsonProperty("id") Long id) {
         this.email = email;
         this.name = name;
         this.studentNum = studentNum;
@@ -134,14 +142,17 @@ public class Registration {
         this.createdAt = createdAt;
         this.isSaved = isSaved;
         this.isDeleted = isDeleted;
+        this.savedAt = savedAt;
         this.user = user;
         this.sector = sector;
+        this.id = id;
     }
 
     public Registration() {}
 
-    public void updateIsSaved(boolean isSaved) {
-        this.isSaved = isSaved;
+    public void finalSave() {
+        this.isSaved = true;
+        this.savedAt = System.nanoTime();
     }
 
     public void updateIsDeleted(boolean isDeleted) {
@@ -165,5 +176,13 @@ public class Registration {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

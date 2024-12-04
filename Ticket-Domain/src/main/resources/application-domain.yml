@@ -60,6 +60,10 @@ logging:
     org.springframework.transaction: ${LOGGING_LEVEL:DEBUG}
     org.springframework.aop: ${LOGGING_LEVEL:DEBUG}
     org.springframework.orm.jpa.JpaTransactionManager: ${LOGGING_LEVEL:INFO}
+    # cache
+    org.springframework.cache: ${LOGGING_LEVEL:DEBUG}
+    org.ehcache: ${LOGGING_LEVEL:DEBUG}
+    javax.cache: ${LOGGING_LEVEL:DEBUG}
     # HikariCP
     com.zaxxer.hikari.HikariConfig: ${LOGGING_LEVEL:DEBUG}
     com.zaxxer.hikari: ERROR
@@ -88,6 +92,7 @@ spring:
     username: sa
   jpa:
     show-sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
   h2:
     console:
       enabled: true
@@ -132,11 +137,6 @@ spring:
               isClustered: true  # 클러스터링 지원 (필요한 경우)
               tablePrefix: QRTZ_  # 테이블 접두사 (기본값)
               useProperties: false
-
-logging:
-  level:
-    org.springframework.orm.jpa: DEBUG
-    org.springframework.transaction: DEBUG
 
 ableEventLock: true
 ableRedis: ${ABLE_REDIS:true}
@@ -194,9 +194,6 @@ thread:
   max-pool-size: ${THREAD_MAX_POOL_SIZE:20}
   queue-capacity: ${THREAD_QUEUE_CAPACITY:100}
 
-logging:
-  level:
-    root: ${LOGGING_LEVEL:debug}
 ableEventLock: true
 ableRedis: ${ABLE_REDIS:true}
 ableRedisson: ${ABLE_REDISSON:true}

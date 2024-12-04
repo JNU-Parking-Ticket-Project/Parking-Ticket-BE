@@ -1,6 +1,5 @@
 package com.jnu.ticketinfrastructure.config.redis;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import java.time.Duration;
@@ -15,18 +14,15 @@ import org.springframework.data.redis.connection.lettuce.LettuceClientConfigurat
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisKeyValueAdapter;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @EnableRedisRepositories(
         basePackages = "com.jnu",
         enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP,
         keyspaceNotificationsConfigParameter = "")
 @Configuration
-@EnableTransactionManagement
 @Slf4j
 @ConditionalOnExpression("${ableRedis:true}")
 public class RedisConfig {
@@ -69,15 +65,6 @@ public class RedisConfig {
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(serializer);
-        redisTemplate.setEnableTransactionSupport(true);
         return redisTemplate;
-    }
-
-    // 메세지 리스너 설정x
-    // pub/sub 메세지를 받을 채널 설정
-    @Bean
-    @ConditionalOnExpression("${ableRedis:true}")
-    ChannelTopic topic() {
-        return new ChannelTopic(REDIS_EVENT_CHANNEL);
     }
 }

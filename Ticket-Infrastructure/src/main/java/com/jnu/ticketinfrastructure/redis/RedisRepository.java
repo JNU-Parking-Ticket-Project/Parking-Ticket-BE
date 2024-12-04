@@ -3,7 +3,6 @@ package com.jnu.ticketinfrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import com.jnu.ticketinfrastructure.model.ChatMessageStatus;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
@@ -102,18 +101,6 @@ public class RedisRepository {
         if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);
         }
-    }
-
-    public void removeAndAdd(
-            String key, ChatMessage message, ChatMessageStatus newStatus, Double score) {
-        // Remove the message from the set
-        redisTemplate.opsForZSet().remove(key, message);
-
-        // Update the status of the message
-        message.setStatus(newStatus.name());
-
-        // Add the message back to the set with the new status and score
-        redisTemplate.opsForZSet().addIfAbsent(key, message, score);
     }
 
     public Double getScore(String key, Object value) {
