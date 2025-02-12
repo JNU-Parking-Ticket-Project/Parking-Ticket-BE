@@ -10,8 +10,6 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.event.UserReflectStatusEvent;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
-public class ReflectUserTest {
+class ReflectUserTest {
 
     @MockBean private RegistrationAdaptor registrationAdaptor;
 
@@ -43,30 +41,23 @@ public class ReflectUserTest {
 
         when(registration.getId()).thenReturn(1L);
         when(sector.getId()).thenReturn(1L);
+        when(sector.getInitSectorCapacity()).thenReturn(100);
+        when(sector.getIssueAmount()).thenReturn(200);
     }
 
     @Test
     @DisplayName("유저 상태 반영 - 성공")
-    void testHandle_Success() throws InterruptedException {
+    void testHandle_Success() {
         // Given
-        CountDownLatch latch = new CountDownLatch(1);
-
-        initSector();
         when(registrationAdaptor.findPositionBySavedAt(1L, 1L))
                 .thenReturn(50); // 몇 번째 데이터인지 확인 (50번째)
         when(userAdaptor.findById(1L))
-                .thenAnswer(
-                        invocation -> {
-                            latch.countDown();
-                            return user;
-                        });
+                .thenReturn(user);
 
         UserReflectStatusEvent event = UserReflectStatusEvent.of(1L, registration, sector);
 
         // When
         userReflectStatusEventHandler.handle(event);
-
-        latch.await(5, TimeUnit.SECONDS);
 
         // Then
         verify(userAdaptor).findById(1L); // 유저 조회
@@ -76,27 +67,18 @@ public class ReflectUserTest {
     }
 
     @Test
-    @DisplayName("유저 상태 반영 - 얘비")
-    void testHandle_Prepare() throws InterruptedException {
+    @DisplayName("유저 상태 반영 - 예비")
+    void testHandle_Prepare() {
         // Given
-        CountDownLatch latch = new CountDownLatch(1);
-
-        initSector();
         when(registrationAdaptor.findPositionBySavedAt(1L, 1L))
                 .thenReturn(150); // 몇 번째 데이터인지 확인 (150번째)
         when(userAdaptor.findById(1L))
-                .thenAnswer(
-                        invocation -> {
-                            latch.countDown();
-                            return user;
-                        });
+                .thenReturn(user);
 
         UserReflectStatusEvent event = UserReflectStatusEvent.of(1L, registration, sector);
 
         // When
         userReflectStatusEventHandler.handle(event);
-
-        latch.await(5, TimeUnit.SECONDS);
 
         // Then
         verify(userAdaptor).findById(1L); // 유저 조회
@@ -107,36 +89,22 @@ public class ReflectUserTest {
 
     @Test
     @DisplayName("유저 상태 반영 - 불합격")
-    void testHandle_Fail() throws InterruptedException {
+    void testHandle_Fail() {
         // Given
-        CountDownLatch latch = new CountDownLatch(1);
-
-        initSector();
         when(registrationAdaptor.findPositionBySavedAt(1L, 1L))
-                .thenReturn(201); // // 몇 번째 데이터인지 확인 (201번째)
+                .thenReturn(201); // 몇 번째 데이터인지 확인 (201번째)
         when(userAdaptor.findById(1L))
-                .thenAnswer(
-                        invocation -> {
-                            latch.countDown();
-                            return user;
-                        });
+                .thenReturn(user);
 
         UserReflectStatusEvent event = UserReflectStatusEvent.of(1L, registration, sector);
 
         // When
         userReflectStatusEventHandler.handle(event);
 
-        latch.await(5, TimeUnit.SECONDS);
-
         // Then
         verify(userAdaptor).findById(1L); // 유저 조회
         verify(registrationAdaptor).findPositionBySavedAt(1L, 1L); // Position 조회
         verify(user).fail(); // 유저가 실패 상태로 전환
         verify(userAdaptor).save(user); // 상태 저장
-    }
-
-    private void initSector() {
-        when(sector.getInitSectorCapacity()).thenReturn(100); // 합격 용량
-        when(sector.getIssueAmount()).thenReturn(200); // 총 용량
     }
 }
