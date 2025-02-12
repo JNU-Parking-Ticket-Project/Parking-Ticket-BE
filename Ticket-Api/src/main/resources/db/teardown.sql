@@ -60,7 +60,7 @@ values
 
 
 insert into captcha_tb(id, answer, image_name)
-values (1, '1234', '1234.png'), (2, '5678', '5678.png');
+values (1, '1234', '1234.png');
 
 insert into announce_tb(id, content, title, created_at)
 values (1, '공지사항입니다.', '공지사항', CURRENT_TIMESTAMP);
