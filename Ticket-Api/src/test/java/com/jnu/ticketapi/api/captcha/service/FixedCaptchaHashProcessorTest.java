@@ -75,7 +75,7 @@ class FixedCaptchaHashProcessorTest {
             HashResult hashResult = hashProcessor.hash(captchaId);
 
             // when
-            Long decryptedId = hashProcessor.verify(hashResult.getCaptchaCode(), 1L);
+            Long decryptedId = hashProcessor.verify(hashResult.getCaptchaCode(), 1L, "answer");
 
             // then
             assertThat(decryptedId).isEqualTo(captchaId);
