@@ -1,9 +1,10 @@
 SET MODE MySQL;
 SET
-foreign_key_checks = 0;
+    foreign_key_checks = 0;
 
 truncate table announce_tb;
 truncate table captcha_tb;
+truncate table captcha_log_tb;
 truncate table council_tb;
 truncate table credential_code_tb;
 truncate table event;
@@ -13,7 +14,7 @@ truncate table sector;
 truncate table user_tb;
 
 SET
-foreign_key_checks = 1;
+    foreign_key_checks = 1;
 
 
 insert into user_tb(user_id, email, email_confirmed, pwd, sequence, status, role)
