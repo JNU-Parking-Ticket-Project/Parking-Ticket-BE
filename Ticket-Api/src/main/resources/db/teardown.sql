@@ -40,7 +40,7 @@ set role = 'COUNCIL'
 where user_id = 1;
 
 insert into event(event_id, event_code, event_status, end_at, start_at, is_deleted, publish)
-values (1, '596575', 'OPEN', TIMESTAMPADD(MINUTE, 30, current_time), TIMESTAMPADD(MINUTE, -30, current_time), false, true);
+values (1, '596575', 'OPEN', TIMESTAMPADD(MINUTE, 30, CURRENT_TIMESTAMP), TIMESTAMPADD(MINUTE, -30, CURRENT_TIMESTAMP), false, true);
 
 insert into sector(sector_id, issue_amount, name, remaining_amount, reserve, sector_capacity, sector_number, event_id, init_sector_capacity, init_reserve, is_deleted)
 values (1, 40, '사회대 / 농대 / 수의대 / 치전원', 40, 0, 40, '1구간', 1, 2, 2, false),
@@ -52,7 +52,7 @@ values (1, 40, '사회대 / 농대 / 수의대 / 치전원', 40, 0, 40, '1구간
 insert into registration_tb(id, affiliation, car_num, created_at, email, is_light, is_saved, name, student_num,
                             phone_num, sector_id, user_id, is_deleted, saved_at)
 values
-    (1, '공과대학', '1234가1234', current_timestamp, 'user@jnu.ac.kr', true, false, '이진혁', '215555', '010-000-0000', 4, 3, false, null),
+    (1, '공과대학', '1234가1234', CURRENT_TIMESTAMP, 'user@jnu.ac.kr', true, false, '이진혁', '215555', '010-000-0000', 4, 3, false, null),
     (2, '경영대학', '가1234', DATEADD('SECOND', -5, CURRENT_TIMESTAMP), 'council@jnu.ac.kr', true, true, '박영규', '192155', '010-000-0000', 4, 1, false, TIMESTAMPDIFF(SECOND, TIMESTAMP '1970-01-01 00:00:00', DATEADD('SECOND', -5, CURRENT_TIMESTAMP))),
     (3, '농대', '나1234', DATEADD('SECOND', -4, CURRENT_TIMESTAMP), 'user2@jnu.ac.kr', true, true, '임채승', '1821555', '010-000-0000', 4, 4, true, TIMESTAMPDIFF(SECOND, TIMESTAMP '1970-01-01 00:00:00', DATEADD('SECOND', -4, CURRENT_TIMESTAMP))),
     (4, '의대', '다1234', CURRENT_TIMESTAMP, 'user3@jnu.ac.kr', true, false, '김동완', '172155', '010-000-0000', 4, 5, true, null),
@@ -63,8 +63,8 @@ insert into captcha_tb(id, answer, image_name)
 values (1, '1234', '1234.png'), (2, '5678', '5678.png');
 
 insert into announce_tb(id, content, title, created_at)
-values (1, '공지사항입니다.', '공지사항', current_time);
+values (1, '공지사항입니다.', '공지사항', CURRENT_TIMESTAMP);
 
 insert into notice_tb(id, created_at, modified_at, content)
-values (1, current_time, current_time, '안내사항입니다.');
+values (1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '안내사항입니다.');
 
