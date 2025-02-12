@@ -1,16 +1,17 @@
 package com.jnu.ticketapi.registration;
 
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
+import com.jnu.ticketapi.api.captcha.model.response.CaptchaResponse;
 import com.jnu.ticketapi.api.captcha.service.CaptchaHashProcessor;
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.security.JwtGenerator;
-import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.message.ValidationMessage;
 import com.jnu.ticketdomain.domains.captcha.exception.CaptchaErrorCode;
 import com.jnu.ticketdomain.domains.events.exception.SectorErrorCode;
@@ -27,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
@@ -53,14 +55,14 @@ public class FinalSaveTest extends RestDocsConfig {
         void success() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            HashResult result = captchaHashProcessor.hash(1L);
             String captchaAnswer = "1234";
-
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+
+            String captchaCode = getCaptchaCodeRequest(accessToken);
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
+                            .captchaCode(captchaCode)
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -87,6 +89,19 @@ public class FinalSaveTest extends RestDocsConfig {
             resultActions.andExpectAll(status().isOk(), jsonPath("$.email").value(email));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
+        }
+
+        private String getCaptchaCodeRequest(String accessToken) throws Exception {
+            MvcResult captchaResult = mvc.perform(
+                            get("/v1/captcha")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken))
+                    .andExpect(status().isOk())
+                    .andReturn();
+
+            String captchaResponseBody = captchaResult.getResponse().getContentAsString();
+            CaptchaResponse captchaResponse = om.readValue(captchaResponseBody, CaptchaResponse.class);
+            return captchaResponse.captchaCode();
         }
 
         @Test
