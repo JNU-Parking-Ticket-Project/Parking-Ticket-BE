@@ -27,6 +27,9 @@ public record SaveAnnounceRequest(
     }
 
     public List<AnnounceImage> toAnnounceImages(Announce announce) {
+        if (imageUrls == null) {
+            return List.of();
+        }
         return imageUrls.stream()
                 .map(url -> AnnounceImage.builder().imageUrl(url).announce(announce).build())
                 .collect(Collectors.toList());

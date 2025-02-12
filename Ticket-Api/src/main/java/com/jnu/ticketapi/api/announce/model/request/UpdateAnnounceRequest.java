@@ -20,7 +20,10 @@ public record UpdateAnnounceRequest(
     public UpdateAnnounceRequest {}
 
     public List<AnnounceImage> from(Announce announce) {
-        return this.imageUrls.stream()
+        if(imageUrls == null) {
+            return List.of();
+        }
+        return imageUrls.stream()
                 .map(
                         imageUrl ->
                                 AnnounceImage.builder()
