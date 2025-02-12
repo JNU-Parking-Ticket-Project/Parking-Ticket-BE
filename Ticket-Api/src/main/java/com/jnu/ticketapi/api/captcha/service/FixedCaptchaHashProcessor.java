@@ -22,7 +22,7 @@ public class FixedCaptchaHashProcessor implements CaptchaHashProcessor {
     }
 
     @Override
-    public Long verify(String hashedCode, Long userId) {
+    public Long verify(String hashedCode, Long userId, String answer) {
         return Long.parseLong(encryption.decrypt(hashedCode, FIXED_IV));
     }
 }
