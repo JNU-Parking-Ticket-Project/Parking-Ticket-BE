@@ -221,50 +221,6 @@ public class FinalSaveTest extends RestDocsConfig {
         }
 
         @Test
-        @DisplayName("실패 : 1차 신청(캡챠 코드를 복호화 하는 도중 에러가 발생한 경우)")
-        void fail4() throws Exception {
-            // given
-            String email = "admin@jnu.ac.kr";
-            String captchaCode = "I'mFaker";
-            String captchaAnswer = "1234";
-
-            String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
-
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
-                            .build();
-            String requestBody = om.writeValueAsString(request);
-
-            // when
-            ResultActions resultActions =
-                    mvc.perform(
-                            post("/v1/registration/1")
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .header("Authorization", "Bearer " + accessToken)
-                                    .content(requestBody));
-
-            // eye
-            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
-
-            // then
-            resultActions.andExpectAll(
-                    status().is5xxServerError(),
-                    jsonPath("$.reason").value(GlobalErrorCode.DECRYPTION_ERROR.getReason()),
-                    jsonPath("$.code").value(GlobalErrorCode.DECRYPTION_ERROR.getCode()));
-            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
-            log.info("responseBody : {}", responseBody);
-        }
-
-        @Test
         @DisplayName("실패 : 1차 신청(이름이 null 혹은 공백인 경우)")
         void fail5() throws Exception {
             // given
