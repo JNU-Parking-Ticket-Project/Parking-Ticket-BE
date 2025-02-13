@@ -19,11 +19,9 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
 @ComponentScan(basePackages = {"com.jnu.ticketdomain.domains.announce.repository"})
-@ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(TestDataSourceConfig.class)
 public class AnnounceImageNativeRepositoryTest {
@@ -58,7 +56,7 @@ public class AnnounceImageNativeRepositoryTest {
 
         @Test
         @DisplayName("리스트에 들어있는 원소와 일치하지 않으면 삭제한다.")
-        public void shouldDeleteNotFoundImage() {
+        void shouldDeleteNotFoundImage() {
             AnnounceImage imageToDelete =
                     AnnounceImage.builder().imageUrl("http://example.com/image1.jpg").build();
             AnnounceImage imageToDelete2 =
@@ -78,7 +76,7 @@ public class AnnounceImageNativeRepositoryTest {
 
         @Test
         @DisplayName("중복된 원소인 경우 무시하고 삽입한다.")
-        public void ignoreInsertTest() {
+        void ignoreInsertTest() {
             AnnounceImage imageToInsert1 =
                     AnnounceImage.builder()
                             .imageUrl("http://example.com/image1.jpg")
@@ -106,7 +104,7 @@ public class AnnounceImageNativeRepositoryTest {
 
         @Test
         @DisplayName("수정시 created_at이 잘 들어온다.")
-        public void insert_created_at_test() {
+        void insert_created_at_test() {
             // given
             AnnounceImage imageToInsert1 =
                     AnnounceImage.builder()
