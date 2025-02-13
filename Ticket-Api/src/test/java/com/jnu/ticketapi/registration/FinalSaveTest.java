@@ -109,14 +109,14 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            HashResult result = captchaHashProcessor.hash(1L);
             String captchaAnswer = "45";
-
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+
+            String captchaCode = getCaptchaCodeRequest(accessToken);
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
+                            .captchaCode(captchaCode)
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -143,6 +143,43 @@ public class FinalSaveTest extends RestDocsConfig {
             resultActions.andExpectAll(
                     status().is4xxClientError(),
                     jsonPath("$.reason").value(CaptchaErrorCode.WRONG_CAPTCHA_ANSWER.getReason()));
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
+            log.info("responseBody : {}", responseBody);
+        }
+
+        @Test
+        @DisplayName("실패: 1차 신청(캡챠를 요청하지 않은 경우)")
+        void fail15() throws Exception {
+            //given
+            String email = "user@jnu.ac.kr";
+            String accessToken = jwtGenerator.generateAccessToken(email, "USER");
+
+            FinalSaveRequest request = FinalSaveRequest.builder()
+                    .captchaCode("testCaptchaCode")
+                    .captchaAnswer("testCaptchaAnswer")
+                    .name("박영규")
+                    .affiliation("AI융합대")
+                    .studentNum("215551")
+                    .carNum("12나1234")
+                    .isLight(true)
+                    .phoneNum("010-1111-2222")
+                    .selectSectorId(3L)
+                    .build();
+
+            //when
+            ResultActions resultActions = mvc.perform(
+                    post("/v1/registration/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .header("Authorization", "Bearer " + accessToken)
+                            .content(om.writeValueAsString(request)));
+
+            // eye
+            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+
+            //then
+            resultActions.andExpectAll(
+                    status().is4xxClientError(),
+                    jsonPath("$.reason").value(CaptchaErrorCode.NOT_FOUND_CAPTCHA_LOG.getReason()));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
