@@ -4,11 +4,8 @@ package com.jnu.ticketapi.api.captcha.service;
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.EncryptionProperties;
-import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
-import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
-import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaCodeException;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -27,7 +24,6 @@ public class RandomCaptchaHashProcessor implements CaptchaHashProcessor {
     private final Encryption encryption;
     private final CaptchaLogAdaptor captchaLogAdaptor;
     private final EncryptionProperties properties;
-    private final CaptchaAdaptor captchaAdaptor;
 
     @Override
     public HashResult hash(Long captchaId) {
@@ -38,17 +34,12 @@ public class RandomCaptchaHashProcessor implements CaptchaHashProcessor {
 
     @Transactional
     @Override
-    public Long verify(String encryptedCode, Long userId, String answer) {
+    public Long verify(String encryptedCode, Long userId) {
         CaptchaLog captchaLog = captchaLogAdaptor.findLatestByUserId(userId);
         String decryptedCaptchaId = encryption.decrypt(encryptedCode, captchaLog.getSalt());
 
         if (!decryptedCaptchaId.equals(String.valueOf(captchaLog.getCaptchaId()))) {
             throw WrongCaptchaCodeException.EXCEPTION;
-        }
-
-        Captcha captcha = captchaAdaptor.findById(captchaLog.getCaptchaId());
-        if (!captcha.validate(answer)) {
-            throw WrongCaptchaAnswerException.EXCEPTION;
         }
 
         captchaLog.markUse();

@@ -3,19 +3,14 @@ package com.jnu.ticketapi.api.captcha.service;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.EncryptionProperties;
-import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
-import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
-import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaCodeException;
 import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +23,6 @@ class RandomCaptchaHashProcessorTest {
     private CaptchaLogAdaptor captchaLogAdaptor;
     private Encryption encryption;
     private CaptchaHashProcessor hashProcessor;
-    private CaptchaAdaptor captchaAdaptor;
 
     @BeforeEach
     void setUp() {
@@ -40,7 +34,6 @@ class RandomCaptchaHashProcessorTest {
                         16L // length
                         );
         captchaLogAdaptor = mock(CaptchaLogAdaptor.class);
-        captchaAdaptor = mock(CaptchaAdaptor.class);
         encryption = new Encryption(properties);
         hashProcessor = new RandomCaptchaHashProcessor(encryption, captchaLogAdaptor, properties, captchaAdaptor);
     }
@@ -89,52 +82,16 @@ class RandomCaptchaHashProcessorTest {
             // given
             Long userId = 1L;
             Long captchaId = 12345L;
-            String answer = "answer";
             HashResult hashResult = hashProcessor.hash(captchaId);
             String captchaCode = hashResult.getCaptchaCode();
 
             CaptchaLog captchaLog = mock(CaptchaLog.class);
             when(captchaLog.getCaptchaId()).thenReturn(captchaId);
             when(captchaLog.getSalt()).thenReturn(hashResult.getSalt());
-
-            Captcha captcha = mock(Captcha.class);
-            when(captcha.getAnswer()).thenReturn(answer);
-            when(captcha.validate(anyString())).thenAnswer(invocation ->
-                    answer.equals(invocation.getArgument(0, String.class)));
-
-            when(captchaAdaptor.findById(anyLong())).thenReturn(captcha);
             when(captchaLogAdaptor.findLatestByUserId(userId)).thenReturn(captchaLog);
 
             // when & then
-            assertDoesNotThrow(() -> hashProcessor.verify(captchaCode, userId, answer));
-        }
-
-        @Test
-        @DisplayName("잘못된 CAPTCHA 답변이 입력되면 예외가 발생한다")
-        void shouldThrowExceptionWhenAnswerMismatch() {
-            //given
-            Long userId = 1L;
-            Long captchaId = 12345L;
-            String answer = "answer";
-            HashResult hashResult = hashProcessor.hash(captchaId);
-            String captchaCode = hashResult.getCaptchaCode();
-
-            CaptchaLog captchaLog = mock(CaptchaLog.class);
-            when(captchaLog.getCaptchaId()).thenReturn(captchaId);
-            when(captchaLog.getSalt()).thenReturn(hashResult.getSalt());
-
-            Captcha captcha = mock(Captcha.class);
-            when(captcha.getAnswer()).thenReturn(answer);
-            when(captcha.validate(anyString())).thenAnswer(invocation ->
-                    answer.equals(invocation.getArgument(0, String.class)));
-
-            when(captchaAdaptor.findById(anyLong())).thenReturn(captcha);
-            when(captchaLogAdaptor.findLatestByUserId(userId)).thenReturn(captchaLog);
-
-            // when & then
-            assertThrows(
-                    WrongCaptchaAnswerException.class,
-                    () -> hashProcessor.verify(captchaCode, userId, "wrong answer"));
+            assertDoesNotThrow(() -> hashProcessor.verify(captchaCode, userId));
         }
 
         @Test
@@ -144,20 +101,19 @@ class RandomCaptchaHashProcessorTest {
             Long userId = 1L;
             Long captchaId = 12345L;
             Long wrongCaptchaId = 54321L;
-            String answer = "answer";
 
-            HashResult hashResult = hashProcessor.hash(captchaId);
-            String captchaCode = hashResult.getCaptchaCode();
+            HashResult hashResult = hashProcessor.hash(wrongCaptchaId);
+            String wrongCaptchaCode = hashResult.getCaptchaCode();
 
             CaptchaLog captchaLog = mock(CaptchaLog.class);
-            when(captchaLog.getCaptchaId()).thenReturn(wrongCaptchaId);
+            when(captchaLog.getCaptchaId()).thenReturn(captchaId);
             when(captchaLog.getSalt()).thenReturn(hashResult.getSalt());
             when(captchaLogAdaptor.findLatestByUserId(userId)).thenReturn(captchaLog);
 
             // when & then
             assertThrows(
                     WrongCaptchaCodeException.class,
-                    () -> hashProcessor.verify(captchaCode, userId, answer));
+                    () -> hashProcessor.verify(wrongCaptchaCode, userId));
         }
     }
 }
