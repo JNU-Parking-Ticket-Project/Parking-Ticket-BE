@@ -148,7 +148,7 @@ public class FinalSaveTest extends RestDocsConfig {
         }
 
         @Test
-        @DisplayName("실패: 1차 신청(캡챠를 요청하지 않은 경우)")
+        @DisplayName("실패 : 1차 신청(캡챠를 요청하지 않은 경우)")
         void fail15() throws Exception {
             //given
             String email = "user@jnu.ac.kr";
