@@ -35,7 +35,7 @@ class RandomCaptchaHashProcessorTest {
                         );
         captchaLogAdaptor = mock(CaptchaLogAdaptor.class);
         encryption = new Encryption(properties);
-        hashProcessor = new RandomCaptchaHashProcessor(encryption, captchaLogAdaptor, properties, captchaAdaptor);
+        hashProcessor = new RandomCaptchaHashProcessor(encryption, captchaLogAdaptor, properties);
     }
 
     @Nested
