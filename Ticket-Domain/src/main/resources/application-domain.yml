@@ -107,28 +107,6 @@ spring:
 spring:
   config:
     activate:
-      on-profile: test-mysql
-  datasource:
-    url: jdbc:mysql://localhost:3306/ticket?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: 1234
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: create-drop
-  quartz:
-    jdbc:
-      initialize-schema: always
-logging:
-  level:
-    root: info
-
----
-
-spring:
-  config:
-    activate:
       on-profile: dev
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:econovation}?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false

@@ -6,15 +6,10 @@ import com.jnu.ticketdomain.AnnounceImage.config.TestDataSourceConfig;
 import com.jnu.ticketdomain.domains.announce.domain.Announce;
 import com.jnu.ticketdomain.domains.announce.domain.AnnounceImage;
 import com.jnu.ticketdomain.domains.announce.repository.AnnounceImageNativeRepository;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,19 +20,15 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 
 @Slf4j
 @DataJpaTest
 @ComponentScan(basePackages = {"com.jnu.ticketdomain.domains.announce.repository"})
-@ActiveProfiles("test-mysql")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(TestDataSourceConfig.class)
 public class AnnounceImageNativeRepositoryTest {
 
     @Autowired private AnnounceImageNativeRepository announceImageNativeRepository;
-
-    @Autowired private DataSource dataSource;
 
     @PersistenceContext private EntityManager entityManager;
 
@@ -48,44 +39,7 @@ public class AnnounceImageNativeRepositoryTest {
     class ImageUpdateUnitTest {
 
         @BeforeEach
-        public void setUpImages() throws Exception {
-
-            StringBuilder message = new StringBuilder();
-            try (Connection connection = dataSource.getConnection()) {
-                DatabaseMetaData metaData = connection.getMetaData();
-                message.append("Database Product Name: ").append(metaData.getDatabaseProductName()).append("\n");
-                message.append("Database Product Version: ").append(metaData.getDatabaseProductVersion()).append("\n");
-                message.append("Database URL: ").append(metaData.getURL()).append("\n");
-                message.append("Database User: ").append(metaData.getUserName()).append("\n");
-                message.append("Driver Name: ").append(metaData.getDriverName()).append("\n");
-                message.append("Driver Version: ").append(metaData.getDriverVersion()).append("\n");
-
-                ResultSet tables = metaData.getTables(null, null, null, new String[] {"TABLE"});
-                while (tables.next()) {
-                    message.append("Table Name: ").append(tables.getString("TABLE_NAME")).append("\n");
-                }
-
-                ResultSet columns = metaData.getColumns(null, null, "announce_image_tb", null);
-                while (columns.next()) {
-                    message.append("Column Name: ").append(columns.getString("COLUMN_NAME")).append("\n");
-                }
-
-                ResultSet columns2 = metaData.getColumns(null, null, "announce_tb", null);
-                while (columns2.next()) {
-                    message.append("Column Name: ").append(columns2.getString("COLUMN_NAME")).append("\n");
-                }
-            } catch (SQLException e) {
-                // 예외 발생 시 기존 SQLException도 함께 처리할 수 있음
-                message.append("SQLException 발생: ").append(e.getMessage());
-            }
-
-
-            // 누적된 메시지를 포함한 예외를 던짐으로써 로그에 출력되도록 함
-            if (!message.isEmpty()) {
-                throw new RuntimeException(message.toString());
-            }
-
-
+        public void setUpImages() {
             announce = Announce.builder().announceTitle("example").build();
             entityManager.persist(announce);
             AnnounceImage image1 =
