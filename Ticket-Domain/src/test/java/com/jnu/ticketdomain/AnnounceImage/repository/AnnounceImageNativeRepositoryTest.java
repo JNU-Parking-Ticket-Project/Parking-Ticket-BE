@@ -8,11 +8,13 @@ import com.jnu.ticketdomain.domains.announce.domain.AnnounceImage;
 import com.jnu.ticketdomain.domains.announce.repository.AnnounceImageNativeRepository;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.util.Arrays;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,6 +26,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
+@Slf4j
 @DataJpaTest
 @ComponentScan(basePackages = {"com.jnu.ticketdomain.domains.announce.repository"})
 @ActiveProfiles("test-mysql")
@@ -49,10 +52,12 @@ public class AnnounceImageNativeRepositoryTest {
             // DB 연결정보 출력
             try (Connection connection = dataSource.getConnection()) {
                 DatabaseMetaData metaData = connection.getMetaData();
-                System.out.println("Database Product Name: " + metaData.getDatabaseProductName());
-                System.out.println("Database Product Version: " + metaData.getDatabaseProductVersion());
-                System.out.println("Database URL: " + metaData.getURL());
-                System.out.println("Database User: " + metaData.getUserName());
+                log.info("Database Product Name: " + metaData.getDatabaseProductName());
+                log.info("Database Product Version: " + metaData.getDatabaseProductVersion());
+                log.info("Database URL: " + metaData.getURL());
+                log.info("Database User: " + metaData.getUserName());
+                log.info("Driver Name: " + metaData.getDriverName());
+                log.info("Driver Version: " + metaData.getDriverVersion());
             }
 
             announce = Announce.builder().announceTitle("example").build();
