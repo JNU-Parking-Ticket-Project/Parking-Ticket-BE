@@ -58,6 +58,21 @@ public class AnnounceImageNativeRepositoryTest {
                 log.info("Database User: " + metaData.getUserName());
                 log.info("Driver Name: " + metaData.getDriverName());
                 log.info("Driver Version: " + metaData.getDriverVersion());
+
+                ResultSet tables = metaData.getTables(null, null, null, new String[] {"TABLE"});
+                while (tables.next()) {
+                    log.info("Table Name: " + tables.getString("TABLE_NAME"));
+                }
+
+                ResultSet columns = metaData.getColumns(null, null, "announce_image_tb", null);
+                while (columns.next()) {
+                    log.info("Column Name: " + columns.getString("COLUMN_NAME"));
+                }
+
+                ResultSet columns2 = metaData.getColumns(null, null, "announce_tb", null);
+                while (columns2.next()) {
+                    log.info("Column Name: " + columns2.getString("COLUMN_NAME"));
+                }
             }
 
             announce = Announce.builder().announceTitle("example").build();

@@ -117,10 +117,12 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: create-drop
-
   quartz:
     jdbc:
       initialize-schema: always
+logging:
+  level:
+    root: info
 
 ---
 
