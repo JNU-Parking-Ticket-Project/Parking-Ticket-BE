@@ -51,8 +51,7 @@ class ReflectUserTest {
         // Given
         when(registrationAdaptor.findPositionBySavedAt(1L, 1L))
                 .thenReturn(50); // 몇 번째 데이터인지 확인 (50번째)
-        when(userAdaptor.findById(1L))
-                .thenReturn(user);
+        when(userAdaptor.findById(1L)).thenReturn(user);
 
         UserReflectStatusEvent event = UserReflectStatusEvent.of(1L, registration, sector);
 
@@ -72,8 +71,7 @@ class ReflectUserTest {
         // Given
         when(registrationAdaptor.findPositionBySavedAt(1L, 1L))
                 .thenReturn(150); // 몇 번째 데이터인지 확인 (150번째)
-        when(userAdaptor.findById(1L))
-                .thenReturn(user);
+        when(userAdaptor.findById(1L)).thenReturn(user);
 
         UserReflectStatusEvent event = UserReflectStatusEvent.of(1L, registration, sector);
 
@@ -93,8 +91,7 @@ class ReflectUserTest {
         // Given
         when(registrationAdaptor.findPositionBySavedAt(1L, 1L))
                 .thenReturn(201); // 몇 번째 데이터인지 확인 (201번째)
-        when(userAdaptor.findById(1L))
-                .thenReturn(user);
+        when(userAdaptor.findById(1L)).thenReturn(user);
 
         UserReflectStatusEvent event = UserReflectStatusEvent.of(1L, registration, sector);
 
