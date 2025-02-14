@@ -15,7 +15,7 @@ public class TestDataSourceConfig {
         dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
         dataSource.setUrl("jdbc:mysql://localhost:3306/ticket");
         dataSource.setUsername("root");
-        dataSource.setPassword("");
+        dataSource.setPassword("1234");
         return dataSource;
     }
 }
