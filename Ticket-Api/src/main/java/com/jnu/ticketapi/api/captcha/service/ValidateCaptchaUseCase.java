@@ -24,13 +24,12 @@ public class ValidateCaptchaUseCase {
     @Transactional
     public void execute(String encryptedCode, String answer) {
         Long userId = SecurityUtils.getCurrentUserId();
+        captchaHashProcessor.verify(encryptedCode, userId);
 
         CaptchaLog captchaLog = captchaLogAdaptor.findLatestByUserId(userId);
         Captcha captcha = captchaAdaptor.findById(captchaLog.getCaptchaId());
         if (!captcha.validate(answer)) {
             throw WrongCaptchaAnswerException.EXCEPTION;
         }
-
-        captchaHashProcessor.verify(encryptedCode, userId);
     }
 }
