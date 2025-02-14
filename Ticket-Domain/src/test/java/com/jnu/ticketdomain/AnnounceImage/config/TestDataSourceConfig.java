@@ -27,7 +27,7 @@ public class TestDataSourceConfig {
         dataSource.setUrl("jdbc:mysql://localhost:3306/ticket");
         dataSource.setUsername("root");
         dataSource.setPassword("");
-        dataSource.setCatalog("ticket");
+//        dataSource.setCatalog("ticket");
         dataSource.setConnectionProperties(properties);
         return dataSource;
     }
