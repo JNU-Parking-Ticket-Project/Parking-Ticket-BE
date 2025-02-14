@@ -57,6 +57,8 @@ spring:
   config:
     activate:
       on-profile: test
+  quartz:
+    auto-startup: false
 server:
   servlet:
     encoding:
