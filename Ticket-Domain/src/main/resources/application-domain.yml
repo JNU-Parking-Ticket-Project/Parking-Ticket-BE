@@ -98,7 +98,8 @@ spring:
       enabled: true
       path: /h2-console
   quartz:
-    auto-startup: false
+    jdbc:
+      initialize-schema: always
 
 ---
 
