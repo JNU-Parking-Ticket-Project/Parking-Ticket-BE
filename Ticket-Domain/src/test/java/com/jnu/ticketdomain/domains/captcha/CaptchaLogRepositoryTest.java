@@ -74,7 +74,9 @@ class CaptchaLogRepositoryTest {
 
         // when
         CaptchaLog result =
-                captchaLogRepository.findTopByUserIdAndIsSuccessFalseOrderByTimestampDesc(userId).get();
+                captchaLogRepository
+                        .findTopByUserIdAndIsSuccessFalseOrderByTimestampDesc(userId)
+                        .get();
 
         // then
         assertThat(result.getUserId()).isEqualTo(userId);

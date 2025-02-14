@@ -92,15 +92,17 @@ public class FinalSaveTest extends RestDocsConfig {
         }
 
         private String getCaptchaCodeRequest(String accessToken) throws Exception {
-            MvcResult captchaResult = mvc.perform(
-                            get("/v1/captcha")
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .header("Authorization", "Bearer " + accessToken))
-                    .andExpect(status().isOk())
-                    .andReturn();
+            MvcResult captchaResult =
+                    mvc.perform(
+                                    get("/v1/captcha")
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .header("Authorization", "Bearer " + accessToken))
+                            .andExpect(status().isOk())
+                            .andReturn();
 
             String captchaResponseBody = captchaResult.getResponse().getContentAsString();
-            CaptchaResponse captchaResponse = om.readValue(captchaResponseBody, CaptchaResponse.class);
+            CaptchaResponse captchaResponse =
+                    om.readValue(captchaResponseBody, CaptchaResponse.class);
             return captchaResponse.captchaCode();
         }
 
@@ -150,33 +152,35 @@ public class FinalSaveTest extends RestDocsConfig {
         @Test
         @DisplayName("실패 : 1차 신청(캡챠를 요청하지 않은 경우)")
         void fail15() throws Exception {
-            //given
+            // given
             String email = "user@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "USER");
 
-            FinalSaveRequest request = FinalSaveRequest.builder()
-                    .captchaCode("testCaptchaCode")
-                    .captchaAnswer("testCaptchaAnswer")
-                    .name("박영규")
-                    .affiliation("AI융합대")
-                    .studentNum("215551")
-                    .carNum("12나1234")
-                    .isLight(true)
-                    .phoneNum("010-1111-2222")
-                    .selectSectorId(3L)
-                    .build();
+            FinalSaveRequest request =
+                    FinalSaveRequest.builder()
+                            .captchaCode("testCaptchaCode")
+                            .captchaAnswer("testCaptchaAnswer")
+                            .name("박영규")
+                            .affiliation("AI융합대")
+                            .studentNum("215551")
+                            .carNum("12나1234")
+                            .isLight(true)
+                            .phoneNum("010-1111-2222")
+                            .selectSectorId(3L)
+                            .build();
 
-            //when
-            ResultActions resultActions = mvc.perform(
-                    post("/v1/registration/1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .header("Authorization", "Bearer " + accessToken)
-                            .content(om.writeValueAsString(request)));
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            post("/v1/registration/1")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .content(om.writeValueAsString(request)));
 
             // eye
             String responseBody = resultActions.andReturn().getResponse().getContentAsString();
 
-            //then
+            // then
             resultActions.andExpectAll(
                     status().is4xxClientError(),
                     jsonPath("$.reason").value(CaptchaErrorCode.NOT_FOUND_CAPTCHA_LOG.getReason()));
