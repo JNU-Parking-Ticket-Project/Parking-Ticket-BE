@@ -25,7 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 @ComponentScan(basePackages = {"com.jnu.ticketdomain.domains.announce.repository"})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test-mysql")
-//@Import(TestDataSourceConfig.class)
+@Import(TestDataSourceConfig.class)
 public class AnnounceImageNativeRepositoryTest {
 
     @Autowired private AnnounceImageNativeRepository announceImageNativeRepository;
