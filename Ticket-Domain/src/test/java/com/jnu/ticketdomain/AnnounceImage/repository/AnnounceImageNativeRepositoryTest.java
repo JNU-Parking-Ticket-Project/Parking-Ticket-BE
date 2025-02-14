@@ -9,6 +9,7 @@ import com.jnu.ticketdomain.domains.announce.repository.AnnounceImageNativeRepos
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import javax.persistence.EntityManager;
@@ -49,31 +50,41 @@ public class AnnounceImageNativeRepositoryTest {
         @BeforeEach
         public void setUpImages() throws Exception {
 
-            // DB 연결정보 출력
+            StringBuilder message = new StringBuilder();
             try (Connection connection = dataSource.getConnection()) {
                 DatabaseMetaData metaData = connection.getMetaData();
-                log.info("Database Product Name: " + metaData.getDatabaseProductName());
-                log.info("Database Product Version: " + metaData.getDatabaseProductVersion());
-                log.info("Database URL: " + metaData.getURL());
-                log.info("Database User: " + metaData.getUserName());
-                log.info("Driver Name: " + metaData.getDriverName());
-                log.info("Driver Version: " + metaData.getDriverVersion());
+                message.append("Database Product Name: ").append(metaData.getDatabaseProductName()).append("\n");
+                message.append("Database Product Version: ").append(metaData.getDatabaseProductVersion()).append("\n");
+                message.append("Database URL: ").append(metaData.getURL()).append("\n");
+                message.append("Database User: ").append(metaData.getUserName()).append("\n");
+                message.append("Driver Name: ").append(metaData.getDriverName()).append("\n");
+                message.append("Driver Version: ").append(metaData.getDriverVersion()).append("\n");
 
                 ResultSet tables = metaData.getTables(null, null, null, new String[] {"TABLE"});
                 while (tables.next()) {
-                    log.info("Table Name: " + tables.getString("TABLE_NAME"));
+                    message.append("Table Name: ").append(tables.getString("TABLE_NAME")).append("\n");
                 }
 
                 ResultSet columns = metaData.getColumns(null, null, "announce_image_tb", null);
                 while (columns.next()) {
-                    log.info("Column Name: " + columns.getString("COLUMN_NAME"));
+                    message.append("Column Name: ").append(columns.getString("COLUMN_NAME")).append("\n");
                 }
 
                 ResultSet columns2 = metaData.getColumns(null, null, "announce_tb", null);
                 while (columns2.next()) {
-                    log.info("Column Name: " + columns2.getString("COLUMN_NAME"));
+                    message.append("Column Name: ").append(columns2.getString("COLUMN_NAME")).append("\n");
                 }
+            } catch (SQLException e) {
+                // 예외 발생 시 기존 SQLException도 함께 처리할 수 있음
+                message.append("SQLException 발생: ").append(e.getMessage());
             }
+
+
+            // 누적된 메시지를 포함한 예외를 던짐으로써 로그에 출력되도록 함
+            if (!message.isEmpty()) {
+                throw new RuntimeException(message.toString());
+            }
+
 
             announce = Announce.builder().announceTitle("example").build();
             entityManager.persist(announce);
