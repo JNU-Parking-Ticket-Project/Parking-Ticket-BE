@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Import;
 @DataJpaTest
 @ComponentScan(basePackages = {"com.jnu.ticketdomain.domains.announce.repository"})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(TestDataSourceConfig.class)
+//@Import(TestDataSourceConfig.class)
 public class AnnounceImageNativeRepositoryTest {
 
     @Autowired private AnnounceImageNativeRepository announceImageNativeRepository;
