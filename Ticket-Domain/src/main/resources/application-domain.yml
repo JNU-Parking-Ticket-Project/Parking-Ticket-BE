@@ -92,11 +92,8 @@ spring:
     username: sa
   jpa:
     show-sql: true
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    hibernate:
+      ddl-auto: create-drop
   quartz:
     jdbc:
       initialize-schema: always
