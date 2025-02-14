@@ -97,6 +97,14 @@ spring:
     console:
       enabled: true
       path: /h2-console
+  quartz:
+    job-store-type: memory
+    properties:
+      org:
+        quartz:
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            isClustered: false
 
 ---
 
