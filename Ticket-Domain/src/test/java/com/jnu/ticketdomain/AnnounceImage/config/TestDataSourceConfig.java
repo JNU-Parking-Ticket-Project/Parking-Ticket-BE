@@ -44,6 +44,7 @@ public class TestDataSourceConfig {
 
         Properties jpaProperties = new Properties();
         jpaProperties.put("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
+        jpaProperties.put("hibernate.ddl-auto", "create-drop");
         // 필요한 추가 JPA 속성들을 설정
         emf.setJpaProperties(jpaProperties);
 
