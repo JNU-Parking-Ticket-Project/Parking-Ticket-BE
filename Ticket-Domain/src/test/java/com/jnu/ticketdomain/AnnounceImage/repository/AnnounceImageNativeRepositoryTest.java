@@ -6,10 +6,13 @@ import com.jnu.ticketdomain.AnnounceImage.config.TestDataSourceConfig;
 import com.jnu.ticketdomain.domains.announce.domain.Announce;
 import com.jnu.ticketdomain.domains.announce.domain.AnnounceImage;
 import com.jnu.ticketdomain.domains.announce.repository.AnnounceImageNativeRepository;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.util.Arrays;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,6 +33,8 @@ public class AnnounceImageNativeRepositoryTest {
 
     @Autowired private AnnounceImageNativeRepository announceImageNativeRepository;
 
+    @Autowired private DataSource dataSource;
+
     @PersistenceContext private EntityManager entityManager;
 
     private Announce announce;
@@ -39,7 +44,17 @@ public class AnnounceImageNativeRepositoryTest {
     class ImageUpdateUnitTest {
 
         @BeforeEach
-        public void setUpImages() {
+        public void setUpImages() throws Exception {
+
+            // DB 연결정보 출력
+            try (Connection connection = dataSource.getConnection()) {
+                DatabaseMetaData metaData = connection.getMetaData();
+                System.out.println("Database Product Name: " + metaData.getDatabaseProductName());
+                System.out.println("Database Product Version: " + metaData.getDatabaseProductVersion());
+                System.out.println("Database URL: " + metaData.getURL());
+                System.out.println("Database User: " + metaData.getUserName());
+            }
+
             announce = Announce.builder().announceTitle("example").build();
             entityManager.persist(announce);
             AnnounceImage image1 =
