@@ -6,7 +6,7 @@ import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.EncryptionProperties;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
-import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
+import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaCodeException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ public class RandomCaptchaHashProcessor implements CaptchaHashProcessor {
         String decryptedCaptchaId = encryption.decrypt(encryptedCode, captchaLog.getSalt());
 
         if (!decryptedCaptchaId.equals(String.valueOf(captchaLog.getCaptchaId()))) {
-            throw WrongCaptchaAnswerException.EXCEPTION;
+            throw WrongCaptchaCodeException.EXCEPTION;
         }
 
         captchaLog.markUse();

@@ -46,7 +46,7 @@ web:
       - /api/actuator/*
     
 encryption:
-  key: ${ENCRYPTION_KEY:secretsecretsecretsecretsecretsecret}
+  key: ${ENCRYPTION_KEY:12345678901234567890123456789012}
   algorithm: ${ENCRYPTION_ALGORITHM:AES/CBC/PKCS5Padding}
   key-spec-algorithm: ${ENCRYPTION_KEY_ALGORITHM:AES}
   length:  ${ENCRYPTION_LENGTH:16}

@@ -28,6 +28,7 @@ public class Encryption {
             byte[] encrypted = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(encrypted);
         } catch (Exception e) {
+            e.printStackTrace();
             throw EncryptionErrorException.EXCEPTION;
         }
     }
@@ -45,6 +46,7 @@ public class Encryption {
             byte[] decrypted = cipher.doFinal(decodedBytes);
             return new String(decrypted, StandardCharsets.UTF_8);
         } catch (Exception e) {
+            e.printStackTrace();
             throw EncryptionErrorException.EXCEPTION;
         }
     }
