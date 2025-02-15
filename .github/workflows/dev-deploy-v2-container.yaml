@@ -2,13 +2,13 @@ name: 개발 서비스 배포
 on:
   workflow_call:
     secrets:
-      DEV_SSH_HOST:
+      DEV_LOCAL_SSH_HOST:
         required: true
-      DEV_SSH_USERNAME:
+      DEV_LOCAL_SSH_USERNAME:
         required: true
-      DEV_SSH_KEY:
+      DEV_LOCAL_SSH_KEY:
         required: true
-      DEV_SSH_PORT:
+      DEV_LOCAL_SSH_PORT:
         required: true
       SLACK_WEBHOOK_URL:
         required: true
@@ -47,10 +47,10 @@ jobs:
       - name: 배포 스크립트 실행
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.DEV_SSH_HOST }}
-          username: ${{ secrets.DEV_SSH_USERNAME }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          port: ${{ secrets.DEV_SSH_PORT }}
+          host: ${{ secrets.DEV_LOCAL_SSH_HOST }}
+          username: ${{ secrets.DEV_LOCAL_SSH_USERNAME }}
+          key: ${{ secrets.DEV_LOCAL_SSH_KEY }}
+          port: ${{ secrets.DEV_LOCAL_SSH_PORT }}
           script: |
             cd ~/jnu-parking/Parking-Ticket-BE
             sudo docker rm -f $(sudo docker ps -aq --filter "ancestor=${{ inputs.image-name }}")
