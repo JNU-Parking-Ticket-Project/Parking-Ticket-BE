@@ -2,7 +2,7 @@ name: 🧑‍💻 개발 환경 Spring boot CI/CD
 on:
   push:
     branches:
-      - dev
+      - workflow-test
 
 env:
   ENVIRONMENT: dev
