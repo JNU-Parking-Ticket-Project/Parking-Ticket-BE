@@ -58,78 +58,78 @@ jobs:
             sudo docker compose up -d
             sudo docker image prune -f
 
-      - name: Slack CICD 성공 알림
-        if: success()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: custom
-          fields: author, workflowRun, pullRequest
-          custom_payload: |
-            {
-              attachments: [{
-                color: '#59f764',
-                title: `🏃‍♂️‍➡️ 개발 환경 CICD 진행 완료!`,
-                fields: [
-                  {
-                    title: '배포 환경',
-                    value: `${process.env.ENVIRONMENT}`,
-                    short: true,
-                  },
-                  {
-                    title: '배포자',
-                    value: `${process.env.AS_AUTHOR}`,
-                    short: true,
-                  },
-                  {
-                    title: '워크플로 링크',
-                    value: `${process.env.AS_WORKFLOW_RUN}`,
-                    short: true,
-                  },
-                  {
-                    title: 'PR 링크',
-                    value: `${process.env.AS_PULL_REQUEST}`,
-                    short: true,
-                  }
-                ]
-              }]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-      - name: Slack CICD 실패 알림
-        if: failure()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: custom
-          fields: author, workflowRun, pullRequest
-          custom_payload: |
-            {
-              attachments: [{
-                color: '#CA0025',
-                title: `🧎‍♂️‍➡️ 개발 환경 CICD 진행 실패!`,
-                fields: [
-                  {
-                    title: '배포 환경',
-                    value: `${process.env.ENVIRONMENT}`,
-                    short: true,
-                  },
-                  {
-                    title: '배포자',
-                    value: `${process.env.AS_AUTHOR}`,
-                    short: true,
-                  },
-                  {
-                    title: '워크플로 링크',
-                    value: `${process.env.AS_WORKFLOW_RUN}`,
-                    short: true,
-                  },
-                  {
-                    title: 'PR 링크',
-                    value: `${process.env.AS_PULL_REQUEST}`,
-                    short: true,
-                  }
-                ]
-              }]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#      - name: Slack CICD 성공 알림
+#        if: success()
+#        uses: 8398a7/action-slack@v3
+#        with:
+#          status: custom
+#          fields: author, workflowRun, pullRequest
+#          custom_payload: |
+#            {
+#              attachments: [{
+#                color: '#59f764',
+#                title: `🏃‍♂️‍➡️ 개발 환경 CICD 진행 완료!`,
+#                fields: [
+#                  {
+#                    title: '배포 환경',
+#                    value: `${process.env.ENVIRONMENT}`,
+#                    short: true,
+#                  },
+#                  {
+#                    title: '배포자',
+#                    value: `${process.env.AS_AUTHOR}`,
+#                    short: true,
+#                  },
+#                  {
+#                    title: '워크플로 링크',
+#                    value: `${process.env.AS_WORKFLOW_RUN}`,
+#                    short: true,
+#                  },
+#                  {
+#                    title: 'PR 링크',
+#                    value: `${process.env.AS_PULL_REQUEST}`,
+#                    short: true,
+#                  }
+#                ]
+#              }]
+#            }
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#
+#      - name: Slack CICD 실패 알림
+#        if: failure()
+#        uses: 8398a7/action-slack@v3
+#        with:
+#          status: custom
+#          fields: author, workflowRun, pullRequest
+#          custom_payload: |
+#            {
+#              attachments: [{
+#                color: '#CA0025',
+#                title: `🧎‍♂️‍➡️ 개발 환경 CICD 진행 실패!`,
+#                fields: [
+#                  {
+#                    title: '배포 환경',
+#                    value: `${process.env.ENVIRONMENT}`,
+#                    short: true,
+#                  },
+#                  {
+#                    title: '배포자',
+#                    value: `${process.env.AS_AUTHOR}`,
+#                    short: true,
+#                  },
+#                  {
+#                    title: '워크플로 링크',
+#                    value: `${process.env.AS_WORKFLOW_RUN}`,
+#                    short: true,
+#                  },
+#                  {
+#                    title: 'PR 링크',
+#                    value: `${process.env.AS_PULL_REQUEST}`,
+#                    short: true,
+#                  }
+#                ]
+#              }]
+#            }
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
