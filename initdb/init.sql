@@ -1,3 +1,9 @@
+drop database if exists `ticket`;
+
+create database `ticket` default character set utf8mb4 collate utf8mb4_unicode_ci;
+
+use `ticket`;
+
 create table BATCH_JOB_EXECUTION_SEQ
 (
     ID         bigint not null,
