@@ -119,6 +119,213 @@ create table BATCH_STEP_EXECUTION_SEQ
 )
     collate = utf8mb4_unicode_ci;
 
+create table QRTZ_CALENDARS
+(
+    SCHED_NAME    varchar(120) not null,
+    CALENDAR_NAME varchar(190) not null,
+    CALENDAR      blob         not null,
+    primary key (SCHED_NAME, CALENDAR_NAME)
+);
+
+create table QRTZ_FIRED_TRIGGERS
+(
+    SCHED_NAME        varchar(120) not null,
+    ENTRY_ID          varchar(95)  not null,
+    TRIGGER_NAME      varchar(190) not null,
+    TRIGGER_GROUP     varchar(190) not null,
+    INSTANCE_NAME     varchar(190) not null,
+    FIRED_TIME        bigint       not null,
+    SCHED_TIME        bigint       not null,
+    PRIORITY          int          not null,
+    STATE             varchar(16)  not null,
+    JOB_NAME          varchar(190) null,
+    JOB_GROUP         varchar(190) null,
+    IS_NONCONCURRENT  varchar(1)   null,
+    REQUESTS_RECOVERY varchar(1)   null,
+    primary key (SCHED_NAME, ENTRY_ID)
+);
+
+create index IDX_QRTZ_FT_INST_JOB_REQ_RCVRY
+    on QRTZ_FIRED_TRIGGERS (SCHED_NAME, INSTANCE_NAME, REQUESTS_RECOVERY);
+
+create index IDX_QRTZ_FT_JG
+    on QRTZ_FIRED_TRIGGERS (SCHED_NAME, JOB_GROUP);
+
+create index IDX_QRTZ_FT_J_G
+    on QRTZ_FIRED_TRIGGERS (SCHED_NAME, JOB_NAME, JOB_GROUP);
+
+create index IDX_QRTZ_FT_TG
+    on QRTZ_FIRED_TRIGGERS (SCHED_NAME, TRIGGER_GROUP);
+
+create index IDX_QRTZ_FT_TRIG_INST_NAME
+    on QRTZ_FIRED_TRIGGERS (SCHED_NAME, INSTANCE_NAME);
+
+create index IDX_QRTZ_FT_T_G
+    on QRTZ_FIRED_TRIGGERS (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP);
+
+create table QRTZ_JOB_DETAILS
+(
+    SCHED_NAME        varchar(120) not null,
+    JOB_NAME          varchar(190) not null,
+    JOB_GROUP         varchar(190) not null,
+    DESCRIPTION       varchar(250) null,
+    JOB_CLASS_NAME    varchar(250) not null,
+    IS_DURABLE        varchar(1)   not null,
+    IS_NONCONCURRENT  varchar(1)   not null,
+    IS_UPDATE_DATA    varchar(1)   not null,
+    REQUESTS_RECOVERY varchar(1)   not null,
+    JOB_DATA          blob         null,
+    primary key (SCHED_NAME, JOB_NAME, JOB_GROUP)
+);
+
+create index IDX_QRTZ_J_GRP
+    on QRTZ_JOB_DETAILS (SCHED_NAME, JOB_GROUP);
+
+create index IDX_QRTZ_J_REQ_RECOVERY
+    on QRTZ_JOB_DETAILS (SCHED_NAME, REQUESTS_RECOVERY);
+
+create table QRTZ_LOCKS
+(
+    SCHED_NAME varchar(120) not null,
+    LOCK_NAME  varchar(40)  not null,
+    primary key (SCHED_NAME, LOCK_NAME)
+);
+
+create table QRTZ_PAUSED_TRIGGER_GRPS
+(
+    SCHED_NAME    varchar(120) not null,
+    TRIGGER_GROUP varchar(190) not null,
+    primary key (SCHED_NAME, TRIGGER_GROUP)
+);
+
+create table QRTZ_SCHEDULER_STATE
+(
+    SCHED_NAME        varchar(120) not null,
+    INSTANCE_NAME     varchar(190) not null,
+    LAST_CHECKIN_TIME bigint       not null,
+    CHECKIN_INTERVAL  bigint       not null,
+    primary key (SCHED_NAME, INSTANCE_NAME)
+);
+
+create table QRTZ_TRIGGERS
+(
+    SCHED_NAME     varchar(120) not null,
+    TRIGGER_NAME   varchar(190) not null,
+    TRIGGER_GROUP  varchar(190) not null,
+    JOB_NAME       varchar(190) not null,
+    JOB_GROUP      varchar(190) not null,
+    DESCRIPTION    varchar(250) null,
+    NEXT_FIRE_TIME bigint       null,
+    PREV_FIRE_TIME bigint       null,
+    PRIORITY       int          null,
+    TRIGGER_STATE  varchar(16)  not null,
+    TRIGGER_TYPE   varchar(8)   not null,
+    START_TIME     bigint       not null,
+    END_TIME       bigint       null,
+    CALENDAR_NAME  varchar(190) null,
+    MISFIRE_INSTR  smallint     null,
+    JOB_DATA       blob         null,
+    primary key (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP),
+    constraint QRTZ_TRIGGERS_ibfk_1
+        foreign key (SCHED_NAME, JOB_NAME, JOB_GROUP) references QRTZ_JOB_DETAILS (SCHED_NAME, JOB_NAME, JOB_GROUP)
+);
+
+create table QRTZ_BLOB_TRIGGERS
+(
+    SCHED_NAME    varchar(120) not null,
+    TRIGGER_NAME  varchar(190) not null,
+    TRIGGER_GROUP varchar(190) not null,
+    BLOB_DATA     blob         null,
+    primary key (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP),
+    constraint QRTZ_BLOB_TRIGGERS_ibfk_1
+        foreign key (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP) references QRTZ_TRIGGERS (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP)
+);
+
+create index SCHED_NAME
+    on QRTZ_BLOB_TRIGGERS (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP);
+
+create table QRTZ_CRON_TRIGGERS
+(
+    SCHED_NAME      varchar(120) not null,
+    TRIGGER_NAME    varchar(190) not null,
+    TRIGGER_GROUP   varchar(190) not null,
+    CRON_EXPRESSION varchar(120) not null,
+    TIME_ZONE_ID    varchar(80)  null,
+    primary key (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP),
+    constraint QRTZ_CRON_TRIGGERS_ibfk_1
+        foreign key (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP) references QRTZ_TRIGGERS (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP)
+);
+
+create table QRTZ_SIMPLE_TRIGGERS
+(
+    SCHED_NAME      varchar(120) not null,
+    TRIGGER_NAME    varchar(190) not null,
+    TRIGGER_GROUP   varchar(190) not null,
+    REPEAT_COUNT    bigint       not null,
+    REPEAT_INTERVAL bigint       not null,
+    TIMES_TRIGGERED bigint       not null,
+    primary key (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP),
+    constraint QRTZ_SIMPLE_TRIGGERS_ibfk_1
+        foreign key (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP) references QRTZ_TRIGGERS (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP)
+);
+
+create table QRTZ_SIMPROP_TRIGGERS
+(
+    SCHED_NAME    varchar(120)   not null,
+    TRIGGER_NAME  varchar(190)   not null,
+    TRIGGER_GROUP varchar(190)   not null,
+    STR_PROP_1    varchar(512)   null,
+    STR_PROP_2    varchar(512)   null,
+    STR_PROP_3    varchar(512)   null,
+    INT_PROP_1    int            null,
+    INT_PROP_2    int            null,
+    LONG_PROP_1   bigint         null,
+    LONG_PROP_2   bigint         null,
+    DEC_PROP_1    decimal(13, 4) null,
+    DEC_PROP_2    decimal(13, 4) null,
+    BOOL_PROP_1   varchar(1)     null,
+    BOOL_PROP_2   varchar(1)     null,
+    primary key (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP),
+    constraint QRTZ_SIMPROP_TRIGGERS_ibfk_1
+        foreign key (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP) references QRTZ_TRIGGERS (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP)
+);
+
+create index IDX_QRTZ_T_C
+    on QRTZ_TRIGGERS (SCHED_NAME, CALENDAR_NAME);
+
+create index IDX_QRTZ_T_G
+    on QRTZ_TRIGGERS (SCHED_NAME, TRIGGER_GROUP);
+
+create index IDX_QRTZ_T_J
+    on QRTZ_TRIGGERS (SCHED_NAME, JOB_NAME, JOB_GROUP);
+
+create index IDX_QRTZ_T_JG
+    on QRTZ_TRIGGERS (SCHED_NAME, JOB_GROUP);
+
+create index IDX_QRTZ_T_NEXT_FIRE_TIME
+    on QRTZ_TRIGGERS (SCHED_NAME, NEXT_FIRE_TIME);
+
+create index IDX_QRTZ_T_NFT_MISFIRE
+    on QRTZ_TRIGGERS (SCHED_NAME, MISFIRE_INSTR, NEXT_FIRE_TIME);
+
+create index IDX_QRTZ_T_NFT_ST
+    on QRTZ_TRIGGERS (SCHED_NAME, TRIGGER_STATE, NEXT_FIRE_TIME);
+
+create index IDX_QRTZ_T_NFT_ST_MISFIRE
+    on QRTZ_TRIGGERS (SCHED_NAME, MISFIRE_INSTR, NEXT_FIRE_TIME, TRIGGER_STATE);
+
+create index IDX_QRTZ_T_NFT_ST_MISFIRE_GRP
+    on QRTZ_TRIGGERS (SCHED_NAME, MISFIRE_INSTR, NEXT_FIRE_TIME, TRIGGER_GROUP, TRIGGER_STATE);
+
+create index IDX_QRTZ_T_N_G_STATE
+    on QRTZ_TRIGGERS (SCHED_NAME, TRIGGER_GROUP, TRIGGER_STATE);
+
+create index IDX_QRTZ_T_N_STATE
+    on QRTZ_TRIGGERS (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP, TRIGGER_STATE);
+
+create index IDX_QRTZ_T_STATE
+    on QRTZ_TRIGGERS (SCHED_NAME, TRIGGER_STATE);
+
 create table announce_tb
 (
     id         bigint auto_increment
@@ -126,6 +333,31 @@ create table announce_tb
     content    varchar(5000) default '내용을 입력해주세요.' not null,
     title      varchar(255)  default '제목을 입력해주세요.' not null,
     created_at datetime(6)                         null
+);
+
+create table announce_image_tb
+(
+    id          bigint auto_increment
+        primary key,
+    created_at  datetime(6)      null,
+    url         varchar(255)     not null,
+    is_deleted  bit default b'0' not null,
+    announce_id bigint           null,
+    constraint UK_bp1g4e9nn6nad1awugl52y42o
+        unique (url),
+    constraint FKknrfxlwlo3oxdk8y08ewp116k
+        foreign key (announce_id) references announce_tb (id)
+);
+
+create table captcha_log_tb
+(
+    id         bigint auto_increment
+        primary key,
+    captcha_id bigint       not null,
+    is_success bit          not null,
+    salt       varchar(255) not null,
+    created_at datetime(6)  not null,
+    user_id    bigint       not null
 );
 
 create table captcha_tb
@@ -150,13 +382,13 @@ create table event
 (
     event_id     bigint auto_increment
         primary key,
-    event_code   varchar(255)     null,
-    event_status varchar(255)     null,
-    end_at       datetime(6)      null,
-    start_at     datetime(6)      null,
-    title        varchar(255)     null,
-    publish      bit default b'0' null,
-    is_deleted   bit              null
+    end_at       datetime(6)  null,
+    start_at     datetime(6)  null,
+    event_code   varchar(255) null,
+    event_status varchar(255) null,
+    is_deleted   bit          null,
+    publish      bit          null,
+    title        varchar(255) null
 );
 
 create table notice_tb
@@ -172,6 +404,9 @@ create table sector
 (
     sector_id            bigint auto_increment
         primary key,
+    init_reserve         int          not null,
+    init_sector_capacity int          not null,
+    is_deleted           bit          null,
     issue_amount         int          not null,
     name                 varchar(255) not null,
     remaining_amount     int          null,
@@ -179,10 +414,7 @@ create table sector
     sector_capacity      int          not null,
     sector_number        varchar(255) null,
     event_id             bigint       null,
-    init_sector_capacity int          not null,
-    init_reserve         int          not null,
-    is_deleted           bit          null,
-    constraint FKp0a5yto1h1qs48e4ser90pv11
+    constraint FKi8w6ee0oeijw59px2p12cwd66
         foreign key (event_id) references event (event_id)
 );
 
@@ -206,8 +438,8 @@ create table council_tb
         primary key,
     name        varchar(255) not null,
     phone_num   varchar(255) not null,
-    user_id     bigint       null,
     student_num varchar(255) not null,
+    user_id     bigint       null,
     constraint FKfnyqpaioro515ktnam1ygd56x
         foreign key (user_id) references user_tb (user_id)
 );
@@ -220,14 +452,15 @@ create table registration_tb
     car_num     varchar(255)     not null,
     created_at  datetime(6)      not null,
     email       varchar(255)     not null,
+    is_deleted  bit default b'0' not null,
     is_light    bit              not null,
     is_saved    bit              not null,
     name        varchar(255)     not null,
     phone_num   varchar(255)     not null,
+    saved_at    bigint           null,
     student_num varchar(255)     not null,
     sector_id   bigint           not null,
     user_id     bigint           null,
-    is_deleted  bit default b'0' not null,
     constraint FK7p6t377o5h1q0bheapm2t91f5
         foreign key (sector_id) references sector (sector_id),
     constraint FKlfurts4ouptujftlouj21atoe
