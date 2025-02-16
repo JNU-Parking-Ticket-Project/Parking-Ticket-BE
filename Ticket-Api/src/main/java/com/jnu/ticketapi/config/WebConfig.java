@@ -35,7 +35,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "https://apply.jnu-parking.com/",
                         "https://apply.dev.jnu-parking.com",
                         "https://manager.jnu-parking.com/",
-                        "https://manager.dev.jnu-parking.com")
+                        "https://manager.dev.jnu-parking.com",
+                        "http://168.131.34.108:10025")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);
