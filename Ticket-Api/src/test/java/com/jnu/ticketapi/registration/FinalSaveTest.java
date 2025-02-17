@@ -154,11 +154,12 @@ public class FinalSaveTest extends RestDocsConfig {
         void fail15() throws Exception {
             // given
             String email = "user@jnu.ac.kr";
+            HashResult hash = captchaHashProcessor.hash(1L);
             String accessToken = jwtGenerator.generateAccessToken(email, "USER");
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode("testCaptchaCode")
+                            .captchaCode(hash.getCaptchaCode())
                             .captchaAnswer("testCaptchaAnswer")
                             .name("박영규")
                             .affiliation("AI융합대")
