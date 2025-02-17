@@ -43,9 +43,7 @@ class GetCaptchaUseCaseTest extends BaseIntegrationTest {
                         assertEquals(
                                 captchaLogPort.findLatestByUserId(userId).getCaptchaId(),
                                 captchaId),
-                () ->
-                        assertEquals(
-                                captchaLogPort.findLatestByUserId(userId).getUserId(), userId),
+                () -> assertEquals(captchaLogPort.findLatestByUserId(userId).getUserId(), userId),
                 () -> assertFalse(captchaLogPort.findLatestByUserId(userId).getIsSuccess()));
     }
 }

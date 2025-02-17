@@ -29,7 +29,8 @@ public class FixedCaptchaHashProcessor implements CaptchaHashProcessor {
     @Override
     public Long verify(String hashedCode, Long userId) {
         CaptchaLog captchaLog = captchaLogPort.findLatestByUserId(userId);
-        String decryptedCaptchaId = encryption.decrypt(hashedCode, captchaLog.getSalt()); // getSalt() -> FIXED_IV
+        String decryptedCaptchaId =
+                encryption.decrypt(hashedCode, captchaLog.getSalt()); // getSalt() -> FIXED_IV
 
         if (!decryptedCaptchaId.equals(String.valueOf(captchaLog.getCaptchaId()))) {
             throw WrongCaptchaCodeException.EXCEPTION;
