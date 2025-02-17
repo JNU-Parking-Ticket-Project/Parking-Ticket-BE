@@ -36,8 +36,12 @@ public class WebConfig implements WebMvcConfigurer {
                         "https://apply.dev.jnu-parking.com",
                         "https://manager.jnu-parking.com/",
                         "https://manager.dev.jnu-parking.com",
-                        "http://168.131.34.108:10025",
-                        "http://168.131.34.108:10026")
+                        "http://168.131.34.108:10025", // 사용자 페이지
+                        "http://168.131.34.108:10026", // 관리자 페이지
+                        "https://jnu-parking.econovation.kr", // 사용자 페이지
+                        "https://jnu-parking-manager.econovation.kr", // 관리자 페이지
+                        "https://jnu-parking-api.econovation.kr" // API 서버 (swagger 요청 시 허용)
+                        )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);
