@@ -14,7 +14,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum CouncilErrorCode implements BaseErrorCode {
     ALREADY_EXIST_EMAIL(BAD_REQUEST, "COUNCIL_400_1", "이미 존재하는 이메일 입니다."),
-    IS_NOT_COUNCIL(BAD_REQUEST, "COUNCIL_400_2", "권한이 학생회가 아닙니다.");
+    IS_NOT_COUNCIL(BAD_REQUEST, "COUNCIL_400_2", "권한이 학생회가 아닙니다."),
+    FAILED_TO_SEND_EMAIL(BAD_REQUEST,"COUNCIL_400_3" , "이메일 발송에 실패했습니다.");
     private final Integer status;
     private final String code;
     private final String reason;
