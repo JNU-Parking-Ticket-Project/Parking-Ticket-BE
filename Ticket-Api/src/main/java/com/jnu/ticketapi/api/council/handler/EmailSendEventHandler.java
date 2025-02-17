@@ -2,7 +2,7 @@ package com.jnu.ticketapi.api.council.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.MAX_EMAIL_SEND_RETRY;
 
-import com.jnu.ticketdomain.domains.events.event.EventExpiredEvent;
+import com.jnu.ticketdomain.domains.events.event.SendEmailEvent;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketinfrastructure.service.MailService;
@@ -40,10 +40,10 @@ public class EmailSendEventHandler {
     @SneakyThrows
     @Async
     @TransactionalEventListener(
-            classes = EventExpiredEvent.class,
+            classes = SendEmailEvent.class,
             phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handle(EventExpiredEvent eventExpiredEvent) {
+    public void handle(SendEmailEvent sendEmailEvent) {
         int startIndex = 0;
         int batchSize = 14;
         Page<Registration> registrations;
@@ -53,7 +53,7 @@ public class EmailSendEventHandler {
         do {
             registrations =
                     registrationAdaptor.findByIsDeletedFalseAndIsSavedTrueByPage(
-                            eventExpiredEvent.getEventId(), startIndex);
+                            sendEmailEvent.getEventId(), startIndex);
 
             List<Registration> batch = new ArrayList<>(batchSize);
             for (Registration registration : registrations.getContent()) {
