@@ -1,14 +1,16 @@
 package com.jnu.ticketapi.api.captcha.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.jnu.ticketapi.WithCustomMockUser;
 import com.jnu.ticketapi.config.BaseIntegrationTest;
-import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
+import com.jnu.ticketdomain.domains.captcha.out.CaptchaLoadPort;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 class GetCaptchaUseCaseTest extends BaseIntegrationTest {
     @Autowired private GetCaptchaUseCase getCaptchaUseCase;
 
-    @MockBean private CaptchaAdaptor captchaAdaptor;
+    @MockBean private CaptchaLoadPort captchaLoadPort;
 
     @Autowired private CaptchaLogAdaptor captchaLogAdaptor;
 
@@ -30,7 +32,7 @@ class GetCaptchaUseCaseTest extends BaseIntegrationTest {
         Long captchaId = 1L;
         Captcha captcha = mock(Captcha.class);
         when(captcha.getId()).thenReturn(captchaId);
-        when(captchaAdaptor.findByRandom()).thenReturn(captcha);
+        when(captchaLoadPort.findByRandom()).thenReturn(captcha);
 
         // when
         getCaptchaUseCase.execute();
