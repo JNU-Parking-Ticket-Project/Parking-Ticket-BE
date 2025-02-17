@@ -12,7 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "encryption", name = "salt-type", havingValue = "fixed")
 @Adaptor
-public class FixedCaptchaAdaptor implements CaptchaLoadPort {
+class FixedCaptchaAdaptor implements CaptchaLoadPort {
     private final CaptchaRepository captchaRepository;
 
     @Override
