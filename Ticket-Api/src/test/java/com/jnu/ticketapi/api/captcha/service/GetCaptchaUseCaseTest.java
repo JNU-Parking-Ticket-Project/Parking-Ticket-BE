@@ -8,9 +8,9 @@ import static org.mockito.Mockito.when;
 
 import com.jnu.ticketapi.WithCustomMockUser;
 import com.jnu.ticketapi.config.BaseIntegrationTest;
-import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.out.CaptchaLoadPort;
+import com.jnu.ticketdomain.domains.captcha.out.CaptchaLogPort;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ class GetCaptchaUseCaseTest extends BaseIntegrationTest {
 
     @MockBean private CaptchaLoadPort captchaLoadPort;
 
-    @Autowired private CaptchaLogAdaptor captchaLogAdaptor;
+    @Autowired private CaptchaLogPort captchaLogPort;
 
     @Test
     @WithCustomMockUser(id = 1L)
@@ -41,11 +41,11 @@ class GetCaptchaUseCaseTest extends BaseIntegrationTest {
         assertAll(
                 () ->
                         assertEquals(
-                                captchaLogAdaptor.findLatestByUserId(userId).getCaptchaId(),
+                                captchaLogPort.findLatestByUserId(userId).getCaptchaId(),
                                 captchaId),
                 () ->
                         assertEquals(
-                                captchaLogAdaptor.findLatestByUserId(userId).getUserId(), userId),
-                () -> assertFalse(captchaLogAdaptor.findLatestByUserId(userId).getIsSuccess()));
+                                captchaLogPort.findLatestByUserId(userId).getUserId(), userId),
+                () -> assertFalse(captchaLogPort.findLatestByUserId(userId).getIsSuccess()));
     }
 }
