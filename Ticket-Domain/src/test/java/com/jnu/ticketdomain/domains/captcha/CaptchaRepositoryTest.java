@@ -23,7 +23,7 @@ class CaptchaRepositoryTest {
 
     @Test
     @DisplayName("fixed 환경에서 사용할 캡챠 조회 쿼리는 저장된 가장 첫번째 캡챠를 조회한다.")
-    void findFirstTest1() {
+    void findFirstCaptchaTest() {
         // given
         Captcha first = Captcha.builder().answer("answer1").imageName("image1").build();
 
