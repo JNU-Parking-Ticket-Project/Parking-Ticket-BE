@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.domains.council.exception;
 
+
 import com.jnu.ticketcommon.exception.TicketCodeException;
 
 public class SendFailEmailException extends TicketCodeException {

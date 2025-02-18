@@ -38,5 +38,4 @@ public class CouncilController {
     public void sendEmailsByManually(@PathVariable Long eventId) {
         councilUseCase.sendEmail(eventId);
     }
-
 }
