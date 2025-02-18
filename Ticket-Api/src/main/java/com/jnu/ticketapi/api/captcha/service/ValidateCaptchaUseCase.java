@@ -3,9 +3,9 @@ package com.jnu.ticketapi.api.captcha.service;
 
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
-import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
+import com.jnu.ticketdomain.domains.captcha.out.CaptchaLoadPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ValidateCaptchaUseCase {
 
-    private final CaptchaAdaptor captchaAdaptor;
+    private final CaptchaLoadPort captchaLoadPort;
     private final CaptchaHashProcessor captchaHashProcessor;
 
     @Transactional
@@ -23,7 +23,7 @@ public class ValidateCaptchaUseCase {
         Long userId = SecurityUtils.getCurrentUserId();
         Long captchaId = captchaHashProcessor.verify(encryptedCode, userId);
 
-        Captcha captcha = captchaAdaptor.findById(captchaId);
+        Captcha captcha = captchaLoadPort.findById(captchaId);
         if (!captcha.validate(answer)) {
             throw WrongCaptchaAnswerException.EXCEPTION;
         }

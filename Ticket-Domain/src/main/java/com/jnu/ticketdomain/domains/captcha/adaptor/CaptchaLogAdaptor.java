@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Adaptor
-public class CaptchaLogAdaptor implements CaptchaLogPort {
+class CaptchaLogAdaptor implements CaptchaLogPort {
     private final CaptchaLogRepository captchaLogRepository;
 
     @Override

@@ -5,9 +5,9 @@ import com.jnu.ticketapi.api.captcha.model.response.CaptchaResponse;
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
-import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
+import com.jnu.ticketdomain.domains.captcha.out.CaptchaLoadPort;
 import com.jnu.ticketdomain.domains.captcha.out.CaptchaLogPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class GetCaptchaUseCase {
 
-    private final CaptchaAdaptor captchaAdaptor;
+    private final CaptchaLoadPort captchaLoadPort;
     private final CaptchaHashProcessor captchaHashProcessor;
     private final CaptchaLogPort captchaLogPort;
 
@@ -28,7 +28,7 @@ public class GetCaptchaUseCase {
 
     @Transactional
     public CaptchaResponse execute() {
-        Captcha captcha = captchaAdaptor.findByRandom();
+        Captcha captcha = captchaLoadPort.findByRandom();
         HashResult result = captchaHashProcessor.hash(captcha.getId());
         Long userId = SecurityUtils.getCurrentUserId();
 
