@@ -21,5 +21,8 @@ public class ResponseMessage {
 
     public static final String UNPUBLISH_SUCCESS_TRUE_MESSAGE = "성공적으로 게시 해제 되었습니다.";
 
+    public static final String SUCCESS_SEND_EMAIL_MANUALLY = "메일 전송에 성공하셨습니다.";
+    public static final String FAIL_SEND_EMAIL_MANUALLY = "메일 전송에 실패했습니다.";
+
     private ResponseMessage() {}
 }
