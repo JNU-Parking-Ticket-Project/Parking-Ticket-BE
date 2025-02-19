@@ -124,8 +124,8 @@ public class RegistrationUseCase {
         validateEventStatusIsClosed(event);
         validateEventPeriod(event);
 
-        checkDuplicateRegistration(email, eventId, requestDto.studentNum());
         validateCaptchaUseCase.execute(requestDto.captchaCode(), requestDto.captchaAnswer());
+        checkDuplicateRegistration(email, eventId, requestDto.studentNum());
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
 
