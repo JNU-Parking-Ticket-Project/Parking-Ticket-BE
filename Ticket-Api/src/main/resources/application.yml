@@ -56,6 +56,22 @@ encryption:
 spring:
   config:
     activate:
+      on-profile: dev
+mail:
+  url: "https://jnu-parking.econovation.kr/password-reset/"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+mail:
+  url: "https://apply.jnu-parking.com/password-reset/"
+
+---
+spring:
+  config:
+    activate:
       on-profile: test
 server:
   servlet:
