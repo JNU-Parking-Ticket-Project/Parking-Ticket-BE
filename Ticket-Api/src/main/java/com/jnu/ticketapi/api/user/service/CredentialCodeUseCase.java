@@ -53,7 +53,6 @@ public class CredentialCodeUseCase {
         Context context = new Context();
         context.setVariable(
                 MailTemplate.FIND_PASSWORD_CONTEXT, URL + credentialCode.getCode());
-        System.out.println("URL 값 : " + URL);
 
         try {
             boolean result =
