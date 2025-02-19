@@ -4,6 +4,7 @@ package com.jnu.ticketapi.api.council.controller;
 import com.jnu.ticketapi.api.council.docs.CouncilSendEmailException;
 import com.jnu.ticketapi.api.council.docs.CouncilSignUpExceptionDocs;
 import com.jnu.ticketapi.api.council.model.request.SignUpCouncilRequest;
+import com.jnu.ticketapi.api.council.model.response.SendEmailManuallyResponse;
 import com.jnu.ticketapi.api.council.model.response.SignUpCouncilResponse;
 import com.jnu.ticketapi.api.council.service.CouncilUseCase;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
@@ -35,7 +36,9 @@ public class CouncilController {
     @Operation(summary = "메일 수동전송", description = "메일 수동전송")
     @PostMapping("/council/emails/{eventId}")
     @ApiErrorExceptionsExample(CouncilSendEmailException.class)
-    public void sendEmailsByManually(@PathVariable Long eventId) {
-        councilUseCase.sendEmail(eventId);
+    public ResponseEntity<SendEmailManuallyResponse> sendEmailsByManually(
+            @PathVariable Long eventId) {
+        SendEmailManuallyResponse responseDto = councilUseCase.sendEmail(eventId);
+        return ResponseEntity.ok(responseDto);
     }
 }

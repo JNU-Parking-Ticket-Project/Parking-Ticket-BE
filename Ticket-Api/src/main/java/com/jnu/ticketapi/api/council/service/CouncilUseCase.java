@@ -2,6 +2,7 @@ package com.jnu.ticketapi.api.council.service;
 
 
 import com.jnu.ticketapi.api.council.model.request.SignUpCouncilRequest;
+import com.jnu.ticketapi.api.council.model.response.SendEmailManuallyResponse;
 import com.jnu.ticketapi.api.council.model.response.SignUpCouncilResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.message.ResponseMessage;
@@ -43,12 +44,14 @@ public class CouncilUseCase {
     }
 
     @Transactional
-    public void sendEmail(Long eventId) {
+    public SendEmailManuallyResponse sendEmail(Long eventId) {
         try {
             Events.raise(new SendEmailEvent(eventId));
             log.info("SendEmailEvent published for eventId: {}", eventId);
+            return SendEmailManuallyResponse.of(ResponseMessage.SUCCESS_SEND_EMAIL_MANUALLY);
         } catch (Exception e) {
             log.error("Failed to publish SendEmailEvent: {}", e.getMessage());
+            return SendEmailManuallyResponse.of(ResponseMessage.FAIL_SEND_EMAIL_MANUALLY);
         }
     }
 }
