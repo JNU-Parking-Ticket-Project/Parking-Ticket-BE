@@ -27,7 +27,7 @@ import org.thymeleaf.context.Context;
 @UseCase
 @Slf4j
 public class CredentialCodeUseCase {
-    @Value("${mail.url:http://apply.jnu-parking.com/password-reset/}")
+    @Value("${mail.url}")
     private String URL;
 
     private final CredentialCodeAdaptor credentialCodeAdaptor;
