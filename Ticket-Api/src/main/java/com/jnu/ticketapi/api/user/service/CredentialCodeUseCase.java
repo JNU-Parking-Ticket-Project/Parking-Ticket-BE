@@ -13,6 +13,7 @@ import com.jnu.ticketinfrastructure.service.MailService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
 
@@ -26,6 +27,8 @@ import org.thymeleaf.context.Context;
 @UseCase
 @Slf4j
 public class CredentialCodeUseCase {
+    @Value("${mail.passwd-url}")
+    private String URL;
 
     private final CredentialCodeAdaptor credentialCodeAdaptor;
     private final UserAdaptor userAdaptor;
@@ -49,7 +52,7 @@ public class CredentialCodeUseCase {
 
         Context context = new Context();
         context.setVariable(
-                MailTemplate.FIND_PASSWORD_CONTEXT, MailTemplate.URL + credentialCode.getCode());
+                MailTemplate.FIND_PASSWORD_CONTEXT, URL + credentialCode.getCode());
 
         try {
             boolean result =
