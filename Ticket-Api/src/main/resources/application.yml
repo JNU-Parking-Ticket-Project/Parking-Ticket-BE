@@ -58,15 +58,16 @@ spring:
     activate:
       on-profile: dev
 mail:
-  url: ${DEV_MAIL_URL:https://jnu-parking.econovation.kr/password-reset/}
-
+  passwd-url: ${PASSWD-URL:https://jnu-parking.econovation.kr/password-reset/}
+  announcement-url: ${ANNOUNCEMENT_URL:https://jnu-parking.econovation.kr/announcement/}
 ---
 spring:
   config:
     activate:
       on-profile: prod
 mail:
-  url: ${PROD_MAIL_URL:https://apply.jnu-parking.com/password-reset/}
+  passwd-url: ${PASSWD-URL:https://apply.jnu-parking.com/password-reset/}
+  announcement-url: ${ANNOUNCEMENT_URL:https://apply.jnu-parking.com/announcement/}
 
 ---
 spring:
