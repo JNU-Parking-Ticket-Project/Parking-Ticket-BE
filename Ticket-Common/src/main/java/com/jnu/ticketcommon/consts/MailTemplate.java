@@ -11,4 +11,5 @@ public class MailTemplate {
     public static final String REGISTRATION_TEMPLATE = "registration";
     public static final String REGISTRATION_NAME_CONTEXT = "userName";
     public static final String REGISTRATION_PASS_CONTEXT = "pass";
+    public static final String REGISTRATION_ANNOUNCEMENT_CONTEXT = "announcementUrl";
 }
