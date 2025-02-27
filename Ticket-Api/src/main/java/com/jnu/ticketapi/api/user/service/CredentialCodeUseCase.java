@@ -51,8 +51,7 @@ public class CredentialCodeUseCase {
                         findPasswordRequest.toEntity(UUID.randomUUID().toString()));
 
         Context context = new Context();
-        context.setVariable(
-                MailTemplate.FIND_PASSWORD_CONTEXT, URL + credentialCode.getCode());
+        context.setVariable(MailTemplate.FIND_PASSWORD_CONTEXT, URL + credentialCode.getCode());
 
         try {
             boolean result =
