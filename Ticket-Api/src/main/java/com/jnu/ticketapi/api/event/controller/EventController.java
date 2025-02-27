@@ -45,7 +45,7 @@ public class EventController {
     private final EventUpdateUseCase eventUpdateUseCase;
     private final TestUseCase testUseCase;
 
-    @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 잔고)")
+    @Operation(summary = "주차권 설정", description = "주차권 행사 세부 설정(시작일, 종료일, 제목)")
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
     @PostMapping("/events")
     public SuccessResponse setEvent(@RequestBody @Valid EventRegisterRequest eventRegisterRequest) {
