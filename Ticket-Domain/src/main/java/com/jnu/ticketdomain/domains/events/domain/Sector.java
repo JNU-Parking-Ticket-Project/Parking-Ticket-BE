@@ -66,7 +66,7 @@ public class Sector {
 
     @JsonManagedReference(value = "sector-registration")
     @OneToMany(mappedBy = "sector", cascade = CascadeType.ALL)
-    private List<Registration> registrations = new ArrayList<>();
+    private final List<Registration> registrations = new ArrayList<>();
 
     @Builder
     public Sector(String sectorNumber, String name, Integer sectorCapacity, Integer reserve) {
