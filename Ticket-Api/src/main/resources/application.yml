@@ -52,21 +52,8 @@ encryption:
   length:  ${ENCRYPTION_LENGTH:16}
   salt-type: ${ENCRYPTION_TYPE:fixed}
 
----
-spring:
-  config:
-    activate:
-      on-profile: dev
 mail:
-  passwd-url: ${PASSWD-URL:https://jnu-parking.econovation.kr/password-reset/}
-  announcement-url: ${ANNOUNCEMENT_URL:https://jnu-parking.econovation.kr/announcement/}
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-mail:
-  passwd-url: ${PASSWD-URL:https://apply.jnu-parking.com/password-reset/}
+  passwd-url: ${PASSWD_URL:https://apply.jnu-parking.com/password-reset/}
   announcement-url: ${ANNOUNCEMENT_URL:https://apply.jnu-parking.com/announcement/}
 
 ---
