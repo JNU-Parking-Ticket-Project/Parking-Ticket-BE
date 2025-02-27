@@ -33,8 +33,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1")
 public class EventController {
 
-    private final EventRegisterUseCase EventRegisterUseCase;
-    private final EventWithDrawUseCase EventWithDrawUseCase;
+    private final EventRegisterUseCase eventRegisterUseCase;
+    private final EventWithDrawUseCase eventWithDrawUseCase;
     private final UpdateEventStatusUseCase updateEventStatusUseCase;
     private final OpenEventUseCase openEventUseCase;
     private final GetEventDetailUseCase getEventDetailUseCase;
@@ -49,7 +49,7 @@ public class EventController {
     @ApiErrorExceptionsExample(CreateEventExceptionDocs.class)
     @PostMapping("/events")
     public SuccessResponse setEvent(@RequestBody @Valid EventRegisterRequest eventRegisterRequest) {
-        EventRegisterUseCase.registerEvent(eventRegisterRequest);
+        eventRegisterUseCase.registerEvent(eventRegisterRequest);
         return new SuccessResponse(EVENT_SUCCESS_REGISTER_MESSAGE);
     }
 
@@ -66,7 +66,7 @@ public class EventController {
     @Operation(summary = "주차권 리셋", description = "현재 활성화 및 대기중인 이벤트를")
     @DeleteMapping("/events/reset")
     public SuccessResponse resetEvent() {
-        EventWithDrawUseCase.resetEvent();
+        eventWithDrawUseCase.resetEvent();
         return new SuccessResponse(EVENT_SUCCESS_DELETE_MESSAGE);
     }
 
@@ -99,14 +99,14 @@ public class EventController {
     @ApiErrorExceptionsExample(ReadEventPeriodExceptionDocs.class)
     @GetMapping("/events/period")
     public ResponseEntity<GetEventPeriodResponse> getEventPeriod() {
-        return ResponseEntity.ok(EventWithDrawUseCase.getEventPeriod());
+        return ResponseEntity.ok(eventWithDrawUseCase.getEventPeriod());
     }
 
     @Operation(summary = "event별 주차권 신청 기간 조회", description = "event별 주차권 신청 기간 조회")
     @ApiErrorExceptionsExample(ReadEventPeriodExceptionDocs.class)
     @GetMapping("/events/{event-id}/period")
     public ResponseEntity<DateTimePeriod> getEventPeriod(@PathVariable("event-id") Long eventId) {
-        return ResponseEntity.ok(EventWithDrawUseCase.getEventPeriodByEventId(eventId));
+        return ResponseEntity.ok(eventWithDrawUseCase.getEventPeriodByEventId(eventId));
     }
 
     @Operation(
