@@ -97,13 +97,13 @@ public class RegistrationUseCase {
     @Transactional
     public TemporarySaveResponse temporarySave(
             TemporarySaveRequest requestDto, String email, Long eventId) {
-        Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
+        Sector sector = sectorAdaptor.findById(requestDto.selectSectorId()); // 구간
         Event event = eventAdaptor.findById(eventId);
         validateEventPublish(event);
         validateEventStatusIsClosed(event);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
-        Registration registration = requestDto.toEntity(requestDto, sector, email, user);
+        Registration registration = requestDto.toEntity(requestDto, sector, email, user); // 등록을 만듦
         return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration -> {
