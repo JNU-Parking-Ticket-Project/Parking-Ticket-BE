@@ -26,7 +26,7 @@ public record FinalSaveRequest(
                 @NotBlank(message = "소속대학을 " + ValidationMessage.MUST_NOT_BLANK)
                 String affiliation,
         @Schema(defaultValue = "컴퓨터정보통신공학과", description = "소속과")
-                @NotBlank(message = "학과 " + ValidationMessage.MUST_NOT_BLANK)
+                @NotBlank(message = "학과 " + ValidationMessage.MUST_NOT_NULL)
                 String department,
         @Schema(defaultValue = "12가1234", description = "차량번호")
                 @NotBlank(message = "차량번호를 " + ValidationMessage.MUST_NOT_BLANK)
