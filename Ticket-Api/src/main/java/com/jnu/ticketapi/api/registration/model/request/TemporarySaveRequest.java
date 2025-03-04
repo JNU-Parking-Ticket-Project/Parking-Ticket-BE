@@ -22,7 +22,7 @@ public record TemporarySaveRequest(
         @Schema(defaultValue = "공과대학", description = "소속대학")
                 @NotBlank(message = "소속대학을 " + ValidationMessage.MUST_NOT_BLANK)
                 String affiliation,
-        @Schema(defaultValue = "학과", description = "학과")
+        @Schema(defaultValue = "컴퓨터정보통신공학과", description = "학과")
             @NotBlank(message = "학과" + ValidationMessage.MUST_NOT_BLANK)
             String department,
         @Schema(defaultValue = "12가1234", description = "차량번호")
