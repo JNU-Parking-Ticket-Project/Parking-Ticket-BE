@@ -79,6 +79,7 @@ public class Registration {
 
     // 최종 저장 시간(nano sec)
     @Column(name = "saved_at")
+    @ColumnDefault("'(UNIX_TIMESTAMP(NOW(6)))'")
     private Long savedAt;
 
     @JsonBackReference(value = "user-registration")
@@ -159,7 +160,8 @@ public class Registration {
 
     public void finalSave() {
         this.isSaved = true;
-        this.savedAt = System.nanoTime();
+//        this.savedAt = System.nanoTime();
+        this.savedAt = null;
     }
 
     public void updateIsDeleted(boolean isDeleted) {
