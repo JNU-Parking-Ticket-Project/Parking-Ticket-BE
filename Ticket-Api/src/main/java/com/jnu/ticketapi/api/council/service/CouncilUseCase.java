@@ -10,7 +10,11 @@ import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.council.adaptor.CouncilAdaptor;
 import com.jnu.ticketdomain.domains.council.domain.Council;
 import com.jnu.ticketdomain.domains.council.exception.AlreadyExistEmailException;
+import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
+import com.jnu.ticketdomain.domains.events.domain.Event;
+import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.event.SendEmailEvent;
+import com.jnu.ticketdomain.domains.events.exception.StillOpenEventException;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.exception.NotFoundUserException;
@@ -24,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CouncilUseCase {
     private final CouncilAdaptor councilAdaptor;
     private final UserAdaptor userAdaptor;
+    private final EventAdaptor eventAdaptor;
 
     @Transactional(readOnly = true)
     public User findByEmail(String email) {
@@ -45,7 +50,14 @@ public class CouncilUseCase {
 
     @Transactional
     public SendEmailManuallyResponse sendEmail(Long eventId) {
+
         try {
+            Event event = eventAdaptor.findById(eventId);
+
+            if (event.getEventStatus() != EventStatus.CLOSED) {
+                throw StillOpenEventException.EXCEPTION;
+            }
+
             Events.raise(new SendEmailEvent(eventId));
             log.info("SendEmailEvent published for eventId: {}", eventId);
             return SendEmailManuallyResponse.of(ResponseMessage.SUCCESS_SEND_EMAIL_MANUALLY);
