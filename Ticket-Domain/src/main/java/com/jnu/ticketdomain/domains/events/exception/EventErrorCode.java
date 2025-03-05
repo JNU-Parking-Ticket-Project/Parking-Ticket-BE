@@ -39,7 +39,7 @@ public enum EventErrorCode implements BaseErrorCode {
     CANNOT_UPDATE_CLOSED_EVENT(BAD_REQUEST, "EVENT_400_21", "종료된 이벤트는 수정할 수 없습니다."),
     ALREADY_PUBLISHED_EVENT(BAD_REQUEST, "EVENT_400_22", "이미 게시된 이벤트입니다."),
     NOT_PUBLISH_EVENT(BAD_REQUEST, "EVENT_400_23", "게시되지 않는 이벤트입니다."),
-    STILL_OPEN_EVENT(BAD_REQUEST,"EVENT_400_24", "주차권 이벤트가 진행중입니다."),
+    STILL_OPEN_EVENT(BAD_REQUEST, "EVENT_400_24", "주차권 이벤트가 진행중입니다."),
     ;
     private final Integer status;
     private final String code;
