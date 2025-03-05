@@ -34,7 +34,6 @@ public class Converter {
                 .name(registration.getName())
                 .studentNum(registration.getStudentNum())
                 .affiliation(registration.getAffiliation())
-                .department(registration.getDepartment())
                 .carNum(registration.getCarNum())
                 .isLight(registration.isLight())
                 .phoneNum(registration.getPhoneNum())
