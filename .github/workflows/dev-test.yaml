@@ -1,4 +1,4 @@
-name: 🧑‍💻 개발 환경 Spring boot CI/CD
+name: 🧑‍💻 개발 테스트 환경 Spring boot CI/CD
 on:
   push:
     branches:
