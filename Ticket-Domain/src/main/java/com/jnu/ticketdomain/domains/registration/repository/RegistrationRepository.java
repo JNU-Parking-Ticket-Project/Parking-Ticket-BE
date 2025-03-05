@@ -37,6 +37,13 @@ public interface RegistrationRepository
             "select r from Registration r join fetch r.sector join fetch r.user where r.isSaved = true and r.sector.event.id = :eventId")
     List<Registration> findByIsDeletedFalseAndIsSavedTrue(@Param("eventId") Long eventId);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(
+            value = "update registration_tb set saved_at = (UNIX_TIMSTAMP(NOW(6))) where id =: id",
+            nativeQuery = true
+    )
+    Registration updateSavedAt(@Param("id") Long registrationId);
+
     @Query(
             "select r from Registration r where r.isDeleted = false and r.isSaved = true and r.sector.event.id = :eventId")
     Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(

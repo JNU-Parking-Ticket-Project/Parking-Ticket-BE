@@ -46,4 +46,6 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
     private BooleanExpression isSavedAndEqEvent(QRegistration registration, Long eventId) {
         return registration.isSaved.isTrue().and(registration.sector.event.id.eq(eventId));
     }
+
+
 }

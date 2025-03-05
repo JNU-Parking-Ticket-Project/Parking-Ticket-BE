@@ -84,7 +84,8 @@ public class EventIssuedEventHandler {
             registration.finalSave();
             registration.setSector(sector);
             registration.setUser(user);
-            registrationAdaptor.save(registration);
+//            registrationAdaptor.save(registration);
+            registrationAdaptor.updateSavedAt(registration);
             return;
         }
         registration.setSector(sector);
