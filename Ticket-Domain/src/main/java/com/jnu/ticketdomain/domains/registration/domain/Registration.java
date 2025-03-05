@@ -52,9 +52,6 @@ public class Registration {
     // 신청자 단과대학
     @Column(name = "affiliation")
     private String affiliation;
-    // 신청자 학과
-    @Column(name = "department")
-    private String department;
     // 신청자 차량번호
     @Column(name = "car_num", nullable = false)
     private String carNum;
@@ -97,7 +94,6 @@ public class Registration {
             String name,
             String studentNum,
             String affiliation,
-            String department,
             String carNum,
             boolean isLight,
             String phoneNum,
@@ -110,7 +106,6 @@ public class Registration {
         this.name = name;
         this.studentNum = studentNum;
         this.affiliation = affiliation;
-        this.department = department;
         this.carNum = carNum;
         this.isLight = isLight;
         this.phoneNum = phoneNum;
@@ -127,7 +122,6 @@ public class Registration {
             @JsonProperty("name") String name,
             @JsonProperty("studentNum") String studentNum,
             @JsonProperty("affiliation") String affiliation,
-            @JsonProperty("department") String department,
             @JsonProperty("carNum") String carNum,
             @JsonProperty("isLight") boolean isLight,
             @JsonProperty("phoneNum") String phoneNum,
@@ -142,7 +136,6 @@ public class Registration {
         this.name = name;
         this.studentNum = studentNum;
         this.affiliation = affiliation;
-        this.department = department;
         this.carNum = carNum;
         this.isLight = isLight;
         this.phoneNum = phoneNum;
@@ -171,7 +164,6 @@ public class Registration {
         this.name = registration.getName();
         this.studentNum = registration.getStudentNum();
         this.affiliation = registration.getAffiliation();
-        this.department = registration.getDepartment();
         this.carNum = registration.getCarNum();
         this.isLight = registration.isLight();
         this.phoneNum = registration.getPhoneNum();
