@@ -36,6 +36,10 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
         return registrationRepository.save(registration);
     }
 
+    public void updateSavedAt(Registration registration) {
+        registrationRepository.updateSavedAt(registration.getId());
+    }
+
     @Override
     public void delete(Registration registration) {
         registrationRepository.delete(registration);
