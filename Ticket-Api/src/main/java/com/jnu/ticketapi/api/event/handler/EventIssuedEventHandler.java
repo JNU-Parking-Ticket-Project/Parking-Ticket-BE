@@ -17,6 +17,7 @@ import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -75,12 +76,15 @@ public class EventIssuedEventHandler {
     }
 
     private void saveRegistration(Sector sector, User user, Registration registration) {
+        System.out.println("======최종 저장함======");
+        System.out.println(LocalDateTime.now());
         if (!sector.isRemainingAmount()) {
             log.info("[No seats remaining]. Registration: {}", registration);
             throw NoEventStockLeftException.EXCEPTION;
         }
 
         if (!registration.isSaved()) {
+            System.out.println("======TAG======");
             registration.finalSave();
             registration.setSector(sector);
             registration.setUser(user);
