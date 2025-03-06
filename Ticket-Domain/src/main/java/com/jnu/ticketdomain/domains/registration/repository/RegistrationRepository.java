@@ -43,7 +43,7 @@ public interface RegistrationRepository
             value = "update registration_tb set saved_at = (UNIX_TIMESTAMP(NOW(6))*1000000) where id = :id",
             nativeQuery = true
     )
-    Registration updateSavedAt(@Param("id") Long registrationId);
+    void updateSavedAt(@Param("id") Long registrationId);
 
     @Query(
             "select r from Registration r where r.isDeleted = false and r.isSaved = true and r.sector.event.id = :eventId")
