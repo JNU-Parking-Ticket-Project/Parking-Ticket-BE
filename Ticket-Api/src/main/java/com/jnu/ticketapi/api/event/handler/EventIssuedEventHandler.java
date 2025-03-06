@@ -88,13 +88,15 @@ public class EventIssuedEventHandler {
             registration.finalSave();
             registration.setSector(sector);
             registration.setUser(user);
-//            registrationAdaptor.save(registration);
-            registrationAdaptor.updateSavedAt(registration);
+            registrationAdaptor.save(registration);
+            //if문 필요없음.
             return;
         }
+        System.out.println("======GAT======");
         registration.setSector(sector);
         registration.setUser(user);
         registrationAdaptor.saveAndFlush(registration);
+        registrationAdaptor.updateSavedAt(registration);
     }
 
     private boolean isIdleConnectionAvailable() {
