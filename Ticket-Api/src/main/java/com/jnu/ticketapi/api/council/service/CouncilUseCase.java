@@ -51,14 +51,13 @@ public class CouncilUseCase {
     @Transactional
     public SendEmailManuallyResponse sendEmail(Long eventId) {
 
-            Event event = eventAdaptor.findById(eventId);
+        Event event = eventAdaptor.findById(eventId);
 
-            if (event.getEventStatus() != EventStatus.CLOSED) {
-                throw StillOpenEventException.EXCEPTION;
-            }
-            Events.raise(new SendEmailEvent(eventId));
-            log.info("SendEmailEvent published for eventId: {}", eventId);
-            return SendEmailManuallyResponse.of(ResponseMessage.SUCCESS_SEND_EMAIL_MANUALLY);
-
+        if (event.getEventStatus() != EventStatus.CLOSED) {
+            throw StillOpenEventException.EXCEPTION;
+        }
+        Events.raise(new SendEmailEvent(eventId));
+        log.info("SendEmailEvent published for eventId: {}", eventId);
+        return SendEmailManuallyResponse.of(ResponseMessage.SUCCESS_SEND_EMAIL_MANUALLY);
     }
 }

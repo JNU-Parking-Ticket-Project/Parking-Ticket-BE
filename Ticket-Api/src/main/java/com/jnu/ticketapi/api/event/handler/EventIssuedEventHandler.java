@@ -17,7 +17,6 @@ import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -82,7 +81,7 @@ public class EventIssuedEventHandler {
         }
 
         if (!registration.isSaved()) {
-            //if문 사용 안됨.
+            // if문 사용 안됨.
             registration.finalSave();
             registration.setSector(sector);
             registration.setUser(user);
