@@ -26,6 +26,9 @@ public class MailService {
     @Value("${aws.ses.mail-address:centerofjnu@jnu-parking.com}")
     private String mailAddress;
 
+    @Value("${mail.announcement-url}")
+    private String announcementUrl;
+
     private final SesAsyncClient sesAsyncClient;
     private final SpringTemplateEngine htmlTemplateEngine;
 
@@ -64,7 +67,9 @@ public class MailService {
     public boolean sendRegistrationResultMail(
             String email, String name, String status, Integer sequence) {
         try {
-            Context context = newRegistrationContext(name, createMailStatus(status, sequence));
+            Context context =
+                    newRegistrationContext(
+                            name, createMailStatus(status, sequence), announcementUrl);
             boolean result =
                     sendMail(
                             email,
@@ -79,11 +84,12 @@ public class MailService {
         }
     }
 
-    public static Context newRegistrationContext(String userName, String pass) {
+    public static Context newRegistrationContext(
+            String userName, String pass, String announcementUrl) {
         Context context = new Context();
         context.setVariable(MailTemplate.REGISTRATION_NAME_CONTEXT, userName);
         context.setVariable(MailTemplate.REGISTRATION_PASS_CONTEXT, pass);
-
+        context.setVariable(MailTemplate.REGISTRATION_ANNOUNCEMENT_CONTEXT, announcementUrl);
         return context;
     }
 

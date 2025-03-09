@@ -44,7 +44,7 @@ public class EhcacheConfig {
                         .setExpiryPolicyFactory(
                                 CreatedExpiryPolicy.factoryOf(Duration.TEN_MINUTES));
 
-        Cache<Object, Object> cache = ehCacheManager.getCache("myCache");
+        Cache<Object, Object> cache = ehCacheManager.getCache("announceCache");
         if (cache == null) {
             ehCacheManager.createCache("announceCache", cacheConfig);
         }

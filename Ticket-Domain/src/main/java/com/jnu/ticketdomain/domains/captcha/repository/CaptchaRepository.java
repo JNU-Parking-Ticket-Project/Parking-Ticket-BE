@@ -11,6 +11,8 @@ public interface CaptchaRepository extends JpaRepository<Captcha, Long> {
 
     Optional<Captcha> findById(long id);
 
+    Optional<Captcha> findFirstByOrderByIdAsc();
+
     @Query(value = "select * from captcha_tb LIMIT 1 OFFSET :offset", nativeQuery = true)
     Captcha findOneByOffset(@Param("offset") long offset);
 }

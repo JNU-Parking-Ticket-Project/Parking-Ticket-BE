@@ -3,14 +3,15 @@ package com.jnu.ticketdomain.domains.registration.repository;
 
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface RegistrationRepository
         extends JpaRepository<Registration, Long>, RegistrationRepositoryCustom {
@@ -36,6 +37,13 @@ public interface RegistrationRepository
     @Query(
             "select r from Registration r join fetch r.sector join fetch r.user where r.isSaved = true and r.sector.event.id = :eventId")
     List<Registration> findByIsDeletedFalseAndIsSavedTrue(@Param("eventId") Long eventId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(
+            value = "update registration_tb set saved_at = (UNIX_TIMESTAMP(NOW(6))*1000000) where id = :id",
+            nativeQuery = true
+    )
+    void updateSavedAt(@Param("id") Long registrationId);
 
     @Query(
             "select r from Registration r where r.isDeleted = false and r.isSaved = true and r.sector.event.id = :eventId")

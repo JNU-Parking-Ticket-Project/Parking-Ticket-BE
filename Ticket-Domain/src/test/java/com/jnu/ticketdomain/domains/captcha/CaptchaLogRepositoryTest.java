@@ -1,11 +1,11 @@
 package com.jnu.ticketdomain.domains.captcha;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
 import com.jnu.ticketdomain.domains.captcha.repository.CaptchaLogRepository;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -74,7 +74,9 @@ class CaptchaLogRepositoryTest {
 
         // when
         CaptchaLog result =
-                captchaLogRepository.findTopByUserIdAndIsSuccessFalseOrderByTimestampDesc(userId);
+                captchaLogRepository
+                        .findTopByUserIdAndIsSuccessFalseOrderByTimestampDesc(userId)
+                        .get();
 
         // then
         assertThat(result.getUserId()).isEqualTo(userId);
@@ -89,12 +91,12 @@ class CaptchaLogRepositoryTest {
         Long nonExistentUserId = 999L;
 
         // when
-        CaptchaLog result =
+        Optional<CaptchaLog> result =
                 captchaLogRepository.findTopByUserIdAndIsSuccessFalseOrderByTimestampDesc(
                         nonExistentUserId);
 
         // then
-        assertNull(result);
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -122,10 +124,10 @@ class CaptchaLogRepositoryTest {
         captchaLogRepository.saveAll(List.of(successLog1, successLog2));
 
         // when
-        CaptchaLog result =
+        Optional<CaptchaLog> result =
                 captchaLogRepository.findTopByUserIdAndIsSuccessFalseOrderByTimestampDesc(userId);
 
         // then
-        assertNull(result);
+        assertThat(result).isEmpty();
     }
 }

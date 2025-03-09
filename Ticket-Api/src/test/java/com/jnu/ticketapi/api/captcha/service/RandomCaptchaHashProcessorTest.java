@@ -9,9 +9,9 @@ import static org.mockito.Mockito.when;
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.EncryptionProperties;
-import com.jnu.ticketdomain.domains.captcha.adaptor.CaptchaLogAdaptor;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
-import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaAnswerException;
+import com.jnu.ticketdomain.domains.captcha.exception.WrongCaptchaCodeException;
+import com.jnu.ticketdomain.domains.captcha.out.CaptchaLogPort;
 import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 class RandomCaptchaHashProcessorTest {
     private EncryptionProperties properties;
-    private CaptchaLogAdaptor captchaLogAdaptor;
+    private CaptchaLogPort captchaLogPort;
     private Encryption encryption;
     private CaptchaHashProcessor hashProcessor;
 
@@ -33,9 +33,9 @@ class RandomCaptchaHashProcessorTest {
                         "AES", // key-spec-algorithm
                         16L // length
                         );
-        captchaLogAdaptor = mock(CaptchaLogAdaptor.class);
+        captchaLogPort = mock(CaptchaLogPort.class);
         encryption = new Encryption(properties);
-        hashProcessor = new RandomCaptchaHashProcessor(encryption, captchaLogAdaptor, properties);
+        hashProcessor = new RandomCaptchaHashProcessor(encryption, captchaLogPort, properties);
     }
 
     @Nested
@@ -83,35 +83,37 @@ class RandomCaptchaHashProcessorTest {
             Long userId = 1L;
             Long captchaId = 12345L;
             HashResult hashResult = hashProcessor.hash(captchaId);
+            String captchaCode = hashResult.getCaptchaCode();
 
             CaptchaLog captchaLog = mock(CaptchaLog.class);
             when(captchaLog.getCaptchaId()).thenReturn(captchaId);
             when(captchaLog.getSalt()).thenReturn(hashResult.getSalt());
-            when(captchaLogAdaptor.findLatestByUserId(userId)).thenReturn(captchaLog);
+            when(captchaLogPort.findLatestByUserId(userId)).thenReturn(captchaLog);
 
             // when & then
-            assertDoesNotThrow(() -> hashProcessor.verify(hashResult.getCaptchaCode(), userId));
+            assertDoesNotThrow(() -> hashProcessor.verify(captchaCode, userId));
         }
 
         @Test
-        @DisplayName("잘못된 CAPTCHA 값이 입력되면 예외가 발생한다")
-        void shouldThrowExceptionWhenWrongCaptcha() {
+        @DisplayName("잘못된 CAPTCHA 코드가 입력되면 예외가 발생한다")
+        void shouldThrowExceptionWhenCaptchaCodeMismatch() {
             // given
             Long userId = 1L;
             Long captchaId = 12345L;
             Long wrongCaptchaId = 54321L;
 
-            HashResult hashResult = hashProcessor.hash(captchaId);
+            HashResult hashResult = hashProcessor.hash(wrongCaptchaId);
+            String wrongCaptchaCode = hashResult.getCaptchaCode();
 
             CaptchaLog captchaLog = mock(CaptchaLog.class);
-            when(captchaLog.getCaptchaId()).thenReturn(wrongCaptchaId);
+            when(captchaLog.getCaptchaId()).thenReturn(captchaId);
             when(captchaLog.getSalt()).thenReturn(hashResult.getSalt());
-            when(captchaLogAdaptor.findLatestByUserId(userId)).thenReturn(captchaLog);
+            when(captchaLogPort.findLatestByUserId(userId)).thenReturn(captchaLog);
 
             // when & then
             assertThrows(
-                    WrongCaptchaAnswerException.class,
-                    () -> hashProcessor.verify(hashResult.getCaptchaCode(), userId));
+                    WrongCaptchaCodeException.class,
+                    () -> hashProcessor.verify(wrongCaptchaCode, userId));
         }
     }
 }

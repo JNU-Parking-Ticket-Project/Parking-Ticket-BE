@@ -1,16 +1,17 @@
 package com.jnu.ticketapi.registration;
 
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.RestDocsConfig;
+import com.jnu.ticketapi.api.captcha.model.response.CaptchaResponse;
 import com.jnu.ticketapi.api.captcha.service.CaptchaHashProcessor;
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.security.JwtGenerator;
-import com.jnu.ticketcommon.exception.GlobalErrorCode;
 import com.jnu.ticketcommon.message.ValidationMessage;
 import com.jnu.ticketdomain.domains.captcha.exception.CaptchaErrorCode;
 import com.jnu.ticketdomain.domains.events.exception.SectorErrorCode;
@@ -27,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
@@ -53,14 +55,14 @@ public class FinalSaveTest extends RestDocsConfig {
         void success() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            HashResult result = captchaHashProcessor.hash(1L);
             String captchaAnswer = "1234";
-
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+
+            String captchaCode = getCaptchaCodeRequest(accessToken);
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
+                            .captchaCode(captchaCode)
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -89,19 +91,34 @@ public class FinalSaveTest extends RestDocsConfig {
             log.info("responseBody : {}", responseBody);
         }
 
+        private String getCaptchaCodeRequest(String accessToken) throws Exception {
+            MvcResult captchaResult =
+                    mvc.perform(
+                                    get("/v1/captcha")
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .header("Authorization", "Bearer " + accessToken))
+                            .andExpect(status().isOk())
+                            .andReturn();
+
+            String captchaResponseBody = captchaResult.getResponse().getContentAsString();
+            CaptchaResponse captchaResponse =
+                    om.readValue(captchaResponseBody, CaptchaResponse.class);
+            return captchaResponse.captchaCode();
+        }
+
         @Test
         @DisplayName("실패 : 1차 신청(캡챠 정답이 틀렸을 경우)")
         void fail() throws Exception {
             // given
             String email = "admin@jnu.ac.kr";
-            HashResult result = captchaHashProcessor.hash(1L);
             String captchaAnswer = "45";
-
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+
+            String captchaCode = getCaptchaCodeRequest(accessToken);
 
             FinalSaveRequest request =
                     FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
+                            .captchaCode(captchaCode)
                             .captchaAnswer(captchaAnswer)
                             .name("박영규")
                             .affiliation("AI융합대")
@@ -128,6 +145,46 @@ public class FinalSaveTest extends RestDocsConfig {
             resultActions.andExpectAll(
                     status().is4xxClientError(),
                     jsonPath("$.reason").value(CaptchaErrorCode.WRONG_CAPTCHA_ANSWER.getReason()));
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
+            log.info("responseBody : {}", responseBody);
+        }
+
+        @Test
+        @DisplayName("실패 : 1차 신청(캡챠를 요청하지 않은 경우)")
+        void fail15() throws Exception {
+            // given
+            String email = "user@jnu.ac.kr";
+            HashResult hash = captchaHashProcessor.hash(1L);
+            String accessToken = jwtGenerator.generateAccessToken(email, "USER");
+
+            FinalSaveRequest request =
+                    FinalSaveRequest.builder()
+                            .captchaCode(hash.getCaptchaCode())
+                            .captchaAnswer("testCaptchaAnswer")
+                            .name("박영규")
+                            .affiliation("AI융합대")
+                            .studentNum("215551")
+                            .carNum("12나1234")
+                            .isLight(true)
+                            .phoneNum("010-1111-2222")
+                            .selectSectorId(3L)
+                            .build();
+
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            post("/v1/registration/1")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .content(om.writeValueAsString(request)));
+
+            // eye
+            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+
+            // then
+            resultActions.andExpectAll(
+                    status().is4xxClientError(),
+                    jsonPath("$.reason").value(CaptchaErrorCode.NOT_FOUND_CAPTCHA_LOG.getReason()));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
@@ -216,50 +273,6 @@ public class FinalSaveTest extends RestDocsConfig {
                     status().isNotFound(),
                     jsonPath("$.reason").value(SectorErrorCode.NOT_FOUND_SECTOR.getReason()),
                     jsonPath("$.code").value(SectorErrorCode.NOT_FOUND_SECTOR.getCode()));
-            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
-            log.info("responseBody : {}", responseBody);
-        }
-
-        @Test
-        @DisplayName("실패 : 1차 신청(캡챠 코드를 복호화 하는 도중 에러가 발생한 경우)")
-        void fail4() throws Exception {
-            // given
-            String email = "admin@jnu.ac.kr";
-            String captchaCode = "I'mFaker";
-            String captchaAnswer = "1234";
-
-            String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
-
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
-                            .build();
-            String requestBody = om.writeValueAsString(request);
-
-            // when
-            ResultActions resultActions =
-                    mvc.perform(
-                            post("/v1/registration/1")
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .header("Authorization", "Bearer " + accessToken)
-                                    .content(requestBody));
-
-            // eye
-            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
-
-            // then
-            resultActions.andExpectAll(
-                    status().is5xxServerError(),
-                    jsonPath("$.reason").value(GlobalErrorCode.DECRYPTION_ERROR.getReason()),
-                    jsonPath("$.code").value(GlobalErrorCode.DECRYPTION_ERROR.getCode()));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }

@@ -66,7 +66,7 @@ public class Registration {
     @Column(name = "created_at", nullable = false)
     @CreatedDate
     private LocalDateTime createdAt;
-    // 임시저장 여부
+    // 최종 저장 여부
     @Column(name = "is_saved", nullable = false)
     private boolean isSaved;
 
