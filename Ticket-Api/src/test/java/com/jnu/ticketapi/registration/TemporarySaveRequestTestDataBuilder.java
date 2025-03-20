@@ -51,6 +51,11 @@ public class TemporarySaveRequestTestDataBuilder {
         return this;
     }
 
+    public TemporarySaveRequestTestDataBuilder withDepartment(String department) {
+        this.department = department;
+        return this;
+    }
+
     public TemporarySaveRequest build() {
         return TemporarySaveRequest.builder()
                 .name(name)

@@ -366,5 +366,40 @@ public class TemporarySaveTest extends RestDocsConfig {
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
+
+        @Test
+        @DisplayName("실패 : 임시저장(소속학과가 null인 경우)")
+        @Deprecated
+        void fail10() throws Exception {
+            // given
+            String email = "admin@jnu.ac.kr";
+            String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+            String target = "소속학과를 ";
+
+            TemporarySaveRequest request = aRequest()
+                    .withDepartment(" ")
+                    .build();
+            log.info("request : {}", request);
+            String requestBody = om.writeValueAsString(request);
+
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            post("/v1/registration/temporary/1")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .content(requestBody));
+
+            // eye
+            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+
+            // then
+            resultActions.andExpectAll(
+                    status().is4xxClientError(),
+                    jsonPath("$.reason").value(target + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.code").value("BAD_REQUEST"));
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
+            log.info("responseBody : {}", responseBody);
+        }
     }
 }
