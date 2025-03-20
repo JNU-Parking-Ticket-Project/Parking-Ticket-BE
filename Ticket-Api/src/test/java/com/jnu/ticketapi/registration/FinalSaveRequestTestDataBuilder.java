@@ -64,6 +64,11 @@ public class FinalSaveRequestTestDataBuilder {
         return this;
     }
 
+    public FinalSaveRequestTestDataBuilder withDepartment(String department) {
+        this.department = department;
+        return this;
+    }
+
     // 필요한 필드들에 대해 with 메서드를 추가
     public FinalSaveRequest build() {
         return FinalSaveRequest.builder()

@@ -575,5 +575,43 @@ public class FinalSaveTest extends RestDocsConfig {
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
+
+        @Test
+        @DisplayName("실패 : 1차 신청(소속학과가 null 혹은 공백인 경우)")
+        void fail16() throws Exception {
+            // given
+            String email = "admin@jnu.ac.kr";
+            HashResult result = captchaHashProcessor.hash(1L);
+            String captchaAnswer = "1234";
+            String target = "소속학과를 ";
+
+            String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+
+            FinalSaveRequest request = aRequest()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withDepartment(" ")
+                    .build();
+            String requestBody = om.writeValueAsString(request);
+
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            post("/v1/registration/1")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .content(requestBody));
+
+            // eye
+            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+
+            // then
+            resultActions.andExpectAll(
+                    status().is4xxClientError(),
+                    jsonPath("$.reason").value(target + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.code").value("BAD_REQUEST"));
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
+            log.info("responseBody : {}", responseBody);
+        }
     }
 }
