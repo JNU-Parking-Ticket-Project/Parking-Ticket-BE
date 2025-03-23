@@ -1,6 +1,6 @@
 package com.jnu.ticketapi.registration;
 
-import static com.jnu.ticketapi.registration.TemporarySaveRequestTestDataBuilder.aRequest;
+import static com.jnu.ticketapi.registration.TemporarySaveRequestTestDataBuilder.builder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,7 +49,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String email = "admin@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .build();
             String requestBody = om.writeValueAsString(request);
 
@@ -77,7 +77,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String email = "imFaker@T1.com";
             String accessToken = jwtGenerator.generateAccessToken(email, "USER");
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .build();
 
             String requestBody = om.writeValueAsString(request);
@@ -109,7 +109,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String email = "admin@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .withSelectSectorId(100L)
                     .build();
             String requestBody = om.writeValueAsString(request);
@@ -142,7 +142,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
             String target = "이름을 ";
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .withName(" ")
                     .build();
             String requestBody = om.writeValueAsString(request);
@@ -175,7 +175,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
             String target = "소속대학을 ";
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .withAffiliation(" ")
                     .build();
             String requestBody = om.writeValueAsString(request);
@@ -208,7 +208,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
             String target = "학번을 ";
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .withStudentNum(" ")
                     .build();
             String requestBody = om.writeValueAsString(request);
@@ -241,7 +241,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
             String target = "차량번호를 ";
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .withCarNum(" ")
                     .build();
             String requestBody = om.writeValueAsString(request);
@@ -274,7 +274,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
             String target = "구간 ID는 ";
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .withSelectSectorId(-2L)
                     .build();
             String requestBody = om.writeValueAsString(request);
@@ -306,7 +306,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String email = "admin@jnu.ac.kr";
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .withPhoneNum("010")
                     .build();
             String requestBody = om.writeValueAsString(request);
@@ -341,7 +341,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
             String target = "경차 여부를 ";
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .withIsLight(null)
                     .build();
             log.info("request : {}", request);
@@ -376,7 +376,7 @@ public class TemporarySaveTest extends RestDocsConfig {
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
             String target = "소속학과를 ";
 
-            TemporarySaveRequest request = aRequest()
+            TemporarySaveRequest request = builder()
                     .withDepartment(" ")
                     .build();
             log.info("request : {}", request);

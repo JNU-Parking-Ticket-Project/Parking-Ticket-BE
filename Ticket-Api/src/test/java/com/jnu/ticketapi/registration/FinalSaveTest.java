@@ -1,6 +1,6 @@
 package com.jnu.ticketapi.registration;
 
-import static com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder.aRequest;
+import static com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder.builder;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -61,7 +61,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String captchaCode = getCaptchaCodeRequest(accessToken);
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaAnswer(captchaAnswer)
                     .withCaptchaCode(captchaCode)
                     .build();
@@ -109,7 +109,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String captchaCode = getCaptchaCodeRequest(accessToken);
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaAnswer(captchaAnswer)
                     .withCaptchaCode(captchaCode)
                     .build();
@@ -142,7 +142,7 @@ public class FinalSaveTest extends RestDocsConfig {
             HashResult hash = captchaHashProcessor.hash(1L);
             String accessToken = jwtGenerator.generateAccessToken(email, "USER");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(hash.getCaptchaCode())
                     .build();
             String requestBody = om.writeValueAsString(request);
@@ -176,7 +176,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(captchaAnswer)
                     .build();
@@ -212,7 +212,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(captchaAnswer)
                     .withSelectSectorId(100L)
@@ -250,7 +250,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(captchaAnswer)
                     .withName(" ")
@@ -288,7 +288,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(captchaAnswer)
                     .withAffiliation(" ")
@@ -326,7 +326,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(captchaAnswer)
                     .withStudentNum(" ")
@@ -364,7 +364,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(captchaAnswer)
                     .withCarNum(" ")
@@ -402,7 +402,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(captchaAnswer)
                     .withSelectSectorId(-2L)
@@ -439,7 +439,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(captchaAnswer)
                     .withPhoneNumber("010")
@@ -477,7 +477,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(captchaAnswer)
                     .withIsLight(null)
@@ -514,7 +514,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(null)
                     .withCaptchaAnswer(captchaAnswer)
                     .build();
@@ -550,7 +550,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(null)
                     .build();
@@ -587,7 +587,7 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = aRequest()
+            FinalSaveRequest request = builder()
                     .withCaptchaCode(result.getCaptchaCode())
                     .withCaptchaAnswer(captchaAnswer)
                     .withDepartment(" ")

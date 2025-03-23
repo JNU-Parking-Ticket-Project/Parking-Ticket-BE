@@ -15,7 +15,7 @@ public class FinalSaveRequestTestDataBuilder {
     private Long selectSectorId = 3L;
 
 
-    public static FinalSaveRequestTestDataBuilder aRequest() {
+    public static FinalSaveRequestTestDataBuilder builder() {
         return new FinalSaveRequestTestDataBuilder();
     }
 

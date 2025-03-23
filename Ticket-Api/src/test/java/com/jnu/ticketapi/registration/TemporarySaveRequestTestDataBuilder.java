@@ -12,7 +12,7 @@ public class TemporarySaveRequestTestDataBuilder {
     private String phoneNum = "010-1111-2222";
     private Long selectSectorId = 3L;
 
-    public static TemporarySaveRequestTestDataBuilder aRequest() {
+    public static TemporarySaveRequestTestDataBuilder builder() {
         return new TemporarySaveRequestTestDataBuilder();
     }
 
