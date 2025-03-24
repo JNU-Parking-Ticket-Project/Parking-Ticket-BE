@@ -16,6 +16,7 @@ public record RegistrationDto(
         boolean isLight,
         String carNum,
         String affiliation,
+        String department,
         String sectorNum) {
     public static List<RegistrationDto> of(List<Registration> registrations) {
         return registrations.stream()
@@ -30,6 +31,7 @@ public record RegistrationDto(
                                         .isLight(registration.isLight())
                                         .carNum(registration.getCarNum())
                                         .affiliation(registration.getAffiliation())
+                                        .department(registration.getDepartment())
                                         .sectorNum(registration.getSector().getSectorNumber())
                                         .build())
                 .collect(Collectors.toList());
