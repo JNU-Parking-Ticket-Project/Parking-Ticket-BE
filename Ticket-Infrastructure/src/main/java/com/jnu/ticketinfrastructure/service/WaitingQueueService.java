@@ -45,6 +45,7 @@ public class WaitingQueueService {
         registrationJson.put("name", registration.getName());
         registrationJson.put("studentNum", registration.getStudentNum());
         registrationJson.put("affiliation", registration.getAffiliation());
+        registrationJson.put("department", registration.getDepartment());
         registrationJson.put("carNum", registration.getCarNum());
         registrationJson.put("phoneNum", registration.getPhoneNum());
         registrationJson.put("isDeleted", registration.isDeleted());

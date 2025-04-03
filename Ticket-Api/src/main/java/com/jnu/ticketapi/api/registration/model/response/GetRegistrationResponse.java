@@ -11,6 +11,7 @@ public record GetRegistrationResponse(
         String name,
         String studentNum,
         String affiliation,
+        String department,
         String carNum,
         boolean isLight,
         String phoneNum,

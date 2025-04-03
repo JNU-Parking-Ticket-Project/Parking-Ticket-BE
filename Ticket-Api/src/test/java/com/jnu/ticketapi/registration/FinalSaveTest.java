@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.registration;
 
+import static com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder.builder;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -60,18 +61,10 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String captchaCode = getCaptchaCodeRequest(accessToken);
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withCaptchaCode(captchaCode)
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -116,18 +109,10 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String captchaCode = getCaptchaCodeRequest(accessToken);
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(captchaCode)
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withCaptchaCode(captchaCode)
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -157,18 +142,10 @@ public class FinalSaveTest extends RestDocsConfig {
             HashResult hash = captchaHashProcessor.hash(1L);
             String accessToken = jwtGenerator.generateAccessToken(email, "USER");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(hash.getCaptchaCode())
-                            .captchaAnswer("testCaptchaAnswer")
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(hash.getCaptchaCode())
+                    .build();
+            String requestBody = om.writeValueAsString(request);
 
             // when
             ResultActions resultActions =
@@ -199,18 +176,10 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -243,18 +212,11 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(100L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withSelectSectorId(100L)
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -288,18 +250,11 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
-                            .captchaAnswer(captchaAnswer)
-                            .name(" ")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withName(" ")
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -333,18 +288,11 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation(" ")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withAffiliation(" ")
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -378,18 +326,11 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum(" ")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withStudentNum(" ")
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -423,18 +364,11 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum(" ")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withCarNum(" ")
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -468,18 +402,11 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010-1111-2222")
-                            .selectSectorId(-2L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withSelectSectorId(-2L)
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -512,18 +439,11 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withPhoneNumber("010")
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -557,18 +477,11 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(null)
-                            .phoneNum("010")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withIsLight(null)
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -601,18 +514,10 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(null)
-                            .captchaAnswer(captchaAnswer)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(null)
+                    .withCaptchaAnswer(captchaAnswer)
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -645,18 +550,48 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request =
-                    FinalSaveRequest.builder()
-                            .captchaCode(result.getCaptchaCode())
-                            .captchaAnswer(null)
-                            .name("박영규")
-                            .affiliation("AI융합대")
-                            .studentNum("215551")
-                            .carNum("12나1234")
-                            .isLight(true)
-                            .phoneNum("010")
-                            .selectSectorId(3L)
-                            .build();
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(null)
+                    .build();
+            String requestBody = om.writeValueAsString(request);
+
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            post("/v1/registration/1")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .content(requestBody));
+
+            // eye
+            String responseBody = resultActions.andReturn().getResponse().getContentAsString();
+
+            // then
+            resultActions.andExpectAll(
+                    status().is4xxClientError(),
+                    jsonPath("$.reason").value(target + ValidationMessage.MUST_NOT_BLANK),
+                    jsonPath("$.code").value("BAD_REQUEST"));
+            resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
+            log.info("responseBody : {}", responseBody);
+        }
+
+        @Test
+        @DisplayName("실패 : 1차 신청(소속학과가 null 혹은 공백인 경우)")
+        void fail16() throws Exception {
+            // given
+            String email = "admin@jnu.ac.kr";
+            HashResult result = captchaHashProcessor.hash(1L);
+            String captchaAnswer = "1234";
+            String target = "소속학과를 ";
+
+            String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+
+            FinalSaveRequest request = builder()
+                    .withCaptchaCode(result.getCaptchaCode())
+                    .withCaptchaAnswer(captchaAnswer)
+                    .withDepartment(" ")
+                    .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
