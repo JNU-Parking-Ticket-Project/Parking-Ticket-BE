@@ -129,7 +129,7 @@ public class RegistrationUseCase {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
 
-        Registration registration = requestDto.toEntity(requestDto, sector, email, user);
+        Registration registration = requestDto.toEntity(requestDto, sector, email, user, event.getId());
         return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration ->
