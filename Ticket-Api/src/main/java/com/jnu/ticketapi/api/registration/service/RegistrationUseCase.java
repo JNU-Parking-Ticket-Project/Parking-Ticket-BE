@@ -103,7 +103,7 @@ public class RegistrationUseCase {
         validateEventStatusIsClosed(event);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
-        Registration registration = requestDto.toEntity(requestDto, sector, email, user); // 등록을 만듦
+        Registration registration = requestDto.toEntity(requestDto, sector, email, user, event.getId()); // 등록을 만듦
         return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration -> {
