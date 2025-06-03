@@ -21,7 +21,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Component
 public class WebLoggingInterceptor implements HandlerInterceptor {
     private static final String START_TIME_ATTR_NAME = "startTime";
-    private static final String REQUEST_ID_KEY = "requestId";
     private static final String REGISTRATION_PATH = "/api/v1/registration/";
 
     private final WebProperties webProperties;
@@ -30,7 +29,6 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(
             HttpServletRequest request, HttpServletResponse response, Object handler) {
-        MDC.put(REQUEST_ID_KEY, generateRequestId());
         request.setAttribute(START_TIME_ATTR_NAME, System.currentTimeMillis());
         return true;
     }
@@ -47,17 +45,6 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
         createAdditionalLog(request);
 
         MDC.clear();
-    }
-
-    private String generateRequestId() {
-        return IntStream.range(0, 8)
-                .mapToObj(i -> String.valueOf((char) ThreadLocalRandom.current().nextInt(48, 123)))
-                .filter(
-                        ch ->
-                                (ch.charAt(0) >= '0' && ch.charAt(0) <= '9')
-                                        || (ch.charAt(0) >= 'A' && ch.charAt(0) <= 'Z')
-                                        || (ch.charAt(0) >= 'a' && ch.charAt(0) <= 'z'))
-                .collect(Collectors.joining());
     }
 
     private boolean isSkipLogging(HttpServletRequest request) {
