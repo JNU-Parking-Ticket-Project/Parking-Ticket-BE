@@ -2,6 +2,7 @@ package com.jnu.ticketapi.application.helper;
 
 
 import com.jnu.ticketapi.config.EncryptionProperties;
+import com.jnu.ticketcommon.exception.DecryptionErrorException;
 import com.jnu.ticketcommon.exception.EncryptionErrorException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +51,7 @@ public class Encryption {
             return new String(decrypted, StandardCharsets.UTF_8);
         } catch (Exception e) {
             log.info(e.getMessage(), e);
-            throw EncryptionErrorException.EXCEPTION;
+            throw DecryptionErrorException.EXCEPTION;
         }
     }
 }
