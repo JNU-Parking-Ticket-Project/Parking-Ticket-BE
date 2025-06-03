@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.jnu.ticketapi.config.EncryptionProperties;
+import com.jnu.ticketcommon.exception.DecryptionErrorException;
 import com.jnu.ticketcommon.exception.EncryptionErrorException;
 import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
@@ -91,7 +92,7 @@ class EncryptionTest {
 
             // when & then
             assertThrows(
-                    EncryptionErrorException.class,
+                    DecryptionErrorException.class,
                     () -> encryption.decrypt(invalidEncryptedData, validIv));
         }
 
@@ -104,7 +105,7 @@ class EncryptionTest {
 
             // when & then
             assertThrows(
-                    EncryptionErrorException.class,
+                    DecryptionErrorException.class,
                     () -> encryption.decrypt(encryptedData, invalidIv));
         }
     }
