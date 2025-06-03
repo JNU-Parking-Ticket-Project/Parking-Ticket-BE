@@ -1,7 +1,7 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <property name="LOG_PATH" value="./logs" />
-    <property name="LOG_PATTERN" value="%X{requestId} %d{yyyy-MM-dd HH:mm:ss.SSS} %5p --- [%15.15t] %-40.40logger{39} : %m%n%ex{full}" />
+    <property name="LOG_PATTERN" value="%X{requestId} %X{userId} %d{yyyy-MM-dd HH:mm:ss.SSS} %5p --- [%15.15t] %-40.40logger{39} : %m%n%ex{full}" />
 
     <springProperty scope="context" name="LOGGING_LEVEL_ROOT" source="logging.level.root"/>
 
