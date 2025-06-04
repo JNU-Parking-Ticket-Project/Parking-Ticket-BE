@@ -6,30 +6,21 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.user.domain.User;
-import java.time.LocalDateTime;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import javax.persistence.*;
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "registration_tb")
+@Table(
+        name = "registration_tb",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"student_num", "event_id"})}
+)
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @DynamicUpdate
@@ -88,8 +79,11 @@ public class Registration {
 
     @JsonBackReference(value = "sector-registration")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sectorId", nullable = false)
+    @JoinColumn(name = "sector_id", nullable = false)
     private Sector sector;
+
+    @Column(name = "event_id")
+    private Long eventId;
 
     @Builder
     private Registration(
@@ -105,7 +99,8 @@ public class Registration {
             boolean isSaved,
             Long savedAt,
             User user,
-            Sector sector) {
+            Sector sector,
+            Long eventId) {
         this.email = email;
         this.name = name;
         this.studentNum = studentNum;
@@ -119,6 +114,7 @@ public class Registration {
         this.savedAt = savedAt;
         this.user = user;
         this.sector = sector;
+        this.eventId = eventId;
     }
 
     @JsonCreator
@@ -137,7 +133,8 @@ public class Registration {
             @JsonProperty("savedAt") Long savedAt,
             @JsonProperty("user") User user,
             @JsonProperty("sector") Sector sector,
-            @JsonProperty("id") Long id) {
+            @JsonProperty("id") Long id,
+            @JsonProperty("eventId") Long eventId) {
         this.email = email;
         this.name = name;
         this.studentNum = studentNum;
@@ -153,9 +150,11 @@ public class Registration {
         this.user = user;
         this.sector = sector;
         this.id = id;
+        this.eventId = eventId;
     }
 
-    public Registration() {}
+    public Registration() {
+    }
 
     public void finalSave() {
         this.isSaved = true;

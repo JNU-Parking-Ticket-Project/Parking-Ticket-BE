@@ -9,6 +9,7 @@ import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketdomain.domains.user.event.UserReflectStatusEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,6 +54,10 @@ class ReflectUserTest {
                 .thenReturn(50); // 몇 번째 데이터인지 확인 (50번째)
         when(userAdaptor.findById(1L)).thenReturn(user);
 
+        // tmp
+        when(registrationAdaptor.findById(1L)).thenReturn(registration);
+        when(user.getStatus()).thenReturn(UserStatus.SUCCESS);
+
         UserReflectStatusEvent event = UserReflectStatusEvent.of(1L, registration, sector);
 
         // When
@@ -73,6 +78,10 @@ class ReflectUserTest {
                 .thenReturn(150); // 몇 번째 데이터인지 확인 (150번째)
         when(userAdaptor.findById(1L)).thenReturn(user);
 
+        // tmp
+        when(registrationAdaptor.findById(1L)).thenReturn(registration);
+        when(user.getStatus()).thenReturn(UserStatus.PREPARE);
+
         UserReflectStatusEvent event = UserReflectStatusEvent.of(1L, registration, sector);
 
         // When
@@ -92,6 +101,10 @@ class ReflectUserTest {
         when(registrationAdaptor.findPositionBySavedAt(1L, 1L))
                 .thenReturn(201); // 몇 번째 데이터인지 확인 (201번째)
         when(userAdaptor.findById(1L)).thenReturn(user);
+
+        // tmp
+        when(registrationAdaptor.findById(1L)).thenReturn(registration);
+        when(user.getStatus()).thenReturn(UserStatus.FAIL);
 
         UserReflectStatusEvent event = UserReflectStatusEvent.of(1L, registration, sector);
 

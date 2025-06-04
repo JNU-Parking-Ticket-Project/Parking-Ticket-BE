@@ -2,17 +2,21 @@ package com.jnu.ticketapi.application.helper;
 
 
 import com.jnu.ticketapi.config.EncryptionProperties;
+import com.jnu.ticketcommon.exception.DecryptionErrorException;
 import com.jnu.ticketcommon.exception.EncryptionErrorException;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class Encryption {
     private final EncryptionProperties properties;
 
@@ -28,7 +32,7 @@ public class Encryption {
             byte[] encrypted = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(encrypted);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.info(e.getMessage(), e);
             throw EncryptionErrorException.EXCEPTION;
         }
     }
@@ -46,8 +50,8 @@ public class Encryption {
             byte[] decrypted = cipher.doFinal(decodedBytes);
             return new String(decrypted, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            e.printStackTrace();
-            throw EncryptionErrorException.EXCEPTION;
+            log.info(e.getMessage(), e);
+            throw DecryptionErrorException.EXCEPTION;
         }
     }
 }

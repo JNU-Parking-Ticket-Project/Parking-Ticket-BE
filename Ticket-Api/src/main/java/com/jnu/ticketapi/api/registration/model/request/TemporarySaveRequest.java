@@ -40,7 +40,7 @@ public record TemporarySaveRequest(
 
     ///
     public Registration toEntity(
-            TemporarySaveRequest requestDto, Sector sector, String email, User user) {
+            TemporarySaveRequest requestDto, Sector sector, String email, User user, Long eventId) {
         return Registration.builder()
                 .email(email)
                 .name(requestDto.name())
@@ -53,6 +53,7 @@ public record TemporarySaveRequest(
                 .sector(sector)
                 .isSaved(false)
                 .user(user)
+                .eventId(eventId)
                 .build();
     }
 }

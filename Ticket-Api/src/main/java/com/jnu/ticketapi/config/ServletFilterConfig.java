@@ -1,7 +1,6 @@
 package com.jnu.ticketapi.config;
 
 
-import javax.servlet.Filter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -13,6 +12,8 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.ResourceUrlEncodingFilter;
 
+import javax.servlet.Filter;
+
 @Configuration
 @RequiredArgsConstructor
 @Profile({"prod", "dev", "local"})
@@ -22,9 +23,18 @@ public class ServletFilterConfig implements WebMvcConfigurer {
     private final ForwardedHeaderFilter forwardedHeaderFilter;
 
     @Bean
+    public FilterRegistrationBean<Filter> requestIdConfigFilter() {
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new RequestIdConfigFilter());
+        registration.setOrder(Integer.MAX_VALUE - 4);
+        return registration;
+    }
+
+
+    @Bean
     public FilterRegistrationBean<Filter> securityFilterChain(
             @Qualifier(AbstractSecurityWebApplicationInitializer.DEFAULT_FILTER_NAME)
-                    Filter securityFilter) {
+            Filter securityFilter) {
         FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(securityFilter);
         registration.setOrder(Integer.MAX_VALUE - 3);
         registration.setName(AbstractSecurityWebApplicationInitializer.DEFAULT_FILTER_NAME);
