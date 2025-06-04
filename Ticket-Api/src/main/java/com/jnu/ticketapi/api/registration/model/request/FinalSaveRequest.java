@@ -48,7 +48,7 @@ public record FinalSaveRequest(
                 String captchaAnswer) {
 
     public Registration toEntity(
-            FinalSaveRequest requestDto, Sector sector, String email, User user) {
+            FinalSaveRequest requestDto, Sector sector, String email, User user, Long eventId) {
         return Registration.builder()
                 .email(email)
                 .name(requestDto.name())
@@ -62,6 +62,7 @@ public record FinalSaveRequest(
                 .isSaved(true)
                 .user(user)
                 .savedAt(System.nanoTime())
+                .eventId(eventId)
                 .build();
     }
 }

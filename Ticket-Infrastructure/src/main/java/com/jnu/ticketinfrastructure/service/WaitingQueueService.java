@@ -54,6 +54,7 @@ public class WaitingQueueService {
         registrationJson.put("savedAt", registration.getSavedAt());
         registrationJson.put("id", registration.getId());
         registrationJson.put("createdAt", registration.getCreatedAt());
+        registrationJson.put("eventId", registration.getEventId());
         return registrationJson.toString();
     }
 
