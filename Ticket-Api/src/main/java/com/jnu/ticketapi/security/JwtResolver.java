@@ -11,6 +11,7 @@ import io.jsonwebtoken.security.SecurityException;
 import java.security.Key;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -43,6 +44,7 @@ public class JwtResolver {
         }
         String email = claims.get(EMAIL_KEY).toString();
         CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(email);
+        MDC.put("userId", customUserDetails.getUsername());
         return new UsernamePasswordAuthenticationToken(
                 customUserDetails, "", customUserDetails.getAuthorities());
     }

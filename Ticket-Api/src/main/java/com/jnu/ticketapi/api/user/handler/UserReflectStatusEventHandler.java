@@ -7,6 +7,9 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.event.UserReflectStatusEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
@@ -20,6 +23,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 @Slf4j
 public class UserReflectStatusEventHandler {
+
+    private static final Logger tracker = LoggerFactory.getLogger("processTracker");
+
     private final RegistrationAdaptor registrationAdaptor;
     private final UserAdaptor userAdaptor;
 
@@ -34,8 +40,13 @@ public class UserReflectStatusEventHandler {
             backoff = @Backoff(delay = 1000))
     public void handle(UserReflectStatusEvent event) {
         // 새로운 persistence context에서 User를 조회 (User를 영속화 하기 위해)
-        User user = userAdaptor.findById(event.getUserId());
-        reflectUserState(event, user);
+        try {
+            MDC.put("userId", String.valueOf(event.getUserId()));
+            User user = userAdaptor.findById(event.getUserId());
+            reflectUserState(event, user);
+        } finally {
+            MDC.clear();
+        }
 
         // 이메일 발송은 Closed 될때 배치로 돌릴 수 있도록 리펙토링 완료했습니다.
         //        Events.raise(
@@ -57,6 +68,9 @@ public class UserReflectStatusEventHandler {
         } else {
             user.fail();
         }
+
+        Long savedAt = registrationAdaptor.findById(event.getRegistration().getId()).getSavedAt();
+        tracker.info("최종 시간:{}, 최종 순번: {}, 최종 결과: {}", savedAt, position, user.getStatus().getValue());
         userAdaptor.save(user);
     }
 }
