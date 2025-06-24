@@ -8,11 +8,10 @@ import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
 import javax.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -27,8 +26,7 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
         return queryFactory
                         .selectOne()
                         .from(r)
-                        .where(
-                                r.email.eq(email).and(isSavedAndEqEvent(registration, eventId)))
+                        .where(r.email.eq(email).and(isSavedAndEqEvent(registration, eventId)))
                         .fetchFirst()
                 != null;
     }
@@ -39,7 +37,9 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
                         .selectOne()
                         .from(r)
                         .where(
-                                r.studentNum.eq(studentNum).and(isSavedAndEqEvent(registration, eventId)))
+                                r.studentNum
+                                        .eq(studentNum)
+                                        .and(isSavedAndEqEvent(registration, eventId)))
                         .fetchFirst()
                 != null;
     }
@@ -56,24 +56,23 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
                         r.isDeleted.isFalse(),
                         r.isSaved.isTrue(),
                         s.event.id.eq(eventId),
-                        u.status.in(UserStatus.SUCCESS, UserStatus.PREPARE)
-                )
+                        u.status.in(UserStatus.SUCCESS, UserStatus.PREPARE))
                 .orderBy(
                         s.sectorNumber.asc(),
                         // SUCCESS 먼저 오도록 정렬
                         new CaseBuilder()
-                                .when(u.status.eq(UserStatus.SUCCESS)).then(0)
+                                .when(u.status.eq(UserStatus.SUCCESS))
+                                .then(0)
                                 .otherwise(1)
                                 .asc(),
                         // SUCCESS면 r.id, PREPARE면 u.sequence
                         new CaseBuilder()
-                                .when(u.status.eq(UserStatus.SUCCESS)).then(r.id)
+                                .when(u.status.eq(UserStatus.SUCCESS))
+                                .then(r.id)
                                 .otherwise(u.sequence.longValue())
-                                .asc()
-                )
+                                .asc())
                 .fetch();
     }
-
 
     private BooleanExpression isSavedAndEqEvent(QRegistration registration, Long eventId) {
         return registration.isSaved.isTrue().and(registration.sector.event.id.eq(eventId));

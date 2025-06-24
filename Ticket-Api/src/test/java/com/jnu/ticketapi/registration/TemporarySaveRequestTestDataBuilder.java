@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.registration;
 
+
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 
 public class TemporarySaveRequestTestDataBuilder {

@@ -28,15 +28,14 @@ import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationE
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @UseCase
 @RequiredArgsConstructor
@@ -102,7 +101,8 @@ public class RegistrationUseCase {
         validateEventStatusIsClosed(event);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
-        Registration registration = requestDto.toEntity(requestDto, sector, email, user, event.getId()); // 등록을 만듦
+        Registration registration =
+                requestDto.toEntity(requestDto, sector, email, user, event.getId()); // 등록을 만듦
         return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration -> {
@@ -128,7 +128,8 @@ public class RegistrationUseCase {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
 
-        Registration registration = requestDto.toEntity(requestDto, sector, email, user, event.getId());
+        Registration registration =
+                requestDto.toEntity(requestDto, sector, email, user, event.getId());
         return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration ->
@@ -217,7 +218,8 @@ public class RegistrationUseCase {
      */
     @Transactional(readOnly = true)
     public GetRegistrationsResponse getRegistrations(Long eventId) {
-        List<Registration> registrations = registrationAdaptor.findSortedRegistrationsByEventId(eventId);
+        List<Registration> registrations =
+                registrationAdaptor.findSortedRegistrationsByEventId(eventId);
         return GetRegistrationsResponse.of(registrations);
     }
 

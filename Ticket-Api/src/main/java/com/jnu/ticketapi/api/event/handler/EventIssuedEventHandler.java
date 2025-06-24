@@ -1,5 +1,7 @@
 package com.jnu.ticketapi.api.event.handler;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
@@ -24,8 +26,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @Component
 @RequiredArgsConstructor
@@ -59,20 +59,27 @@ public class EventIssuedEventHandler {
                                     eventIssuedEvent.getMessage().getRegistration(),
                                     Registration.class);
 
-                    if (Boolean.TRUE.equals(registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId()))) {
+                    if (Boolean.TRUE.equals(
+                            registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId()))) {
                         tracker.info("Already saved, ignored");
                         return;
                     }
-                    tracker.info("현재구간 정보, sectorId: {}, 정원여석: {}, 예비여석: {}, 총 여석: {},",
-                            sector.getId(), sector.getSectorCapacity(), sector.getReserve(), sector.getRemainingAmount()
-                    );
+                    tracker.info(
+                            "현재구간 정보, sectorId: {}, 정원여석: {}, 예비여석: {}, 총 여석: {},",
+                            sector.getId(),
+                            sector.getSectorCapacity(),
+                            sector.getReserve(),
+                            sector.getRemainingAmount());
 
-                    processQueueData(sector, registration, eventIssuedEvent.getMessage().getUserId());
-                    waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
+                    processQueueData(
+                            sector, registration, eventIssuedEvent.getMessage().getUserId());
+                    waitingQueueService.remove(
+                            REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                     sector.decreaseEventStock();
                 } catch (NoEventStockLeftException e) {
                     tracker.info("해당 구간 잔여 여석이 없습니다.", e);
-                    waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
+                    waitingQueueService.remove(
+                            REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                 } catch (Exception e) {
                     // 에러가 났을 때 redis에 데이터를 재등록 한다.(Not Waiting 상태로)
                     tracker.error("EventIssuedEventHandler Exception: ", e);
@@ -83,9 +90,7 @@ public class EventIssuedEventHandler {
         }
     }
 
-    /**
-     * 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
-     */
+    /** 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다. */
     public void processQueueData(Sector sector, Registration registration, Long userId) {
         User user = userAdaptor.findById(userId);
         saveRegistration(sector, user, registration);
@@ -99,7 +104,7 @@ public class EventIssuedEventHandler {
         }
 
         if (!registration.isSaved()) {
-            //if문 사용 안됨.
+            // if문 사용 안됨.
             registration.finalSave();
             registration.setSector(sector);
             registration.setUser(user);

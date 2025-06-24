@@ -2,9 +2,8 @@ package com.jnu.ticketdomain.domains.registration.repository;
 
 
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RegistrationRepositoryCustom {

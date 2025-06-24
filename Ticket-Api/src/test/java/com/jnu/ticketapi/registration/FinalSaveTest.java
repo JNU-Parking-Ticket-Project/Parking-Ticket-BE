@@ -61,10 +61,8 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String captchaCode = getCaptchaCodeRequest(accessToken);
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withCaptchaCode(captchaCode)
-                    .build();
+            FinalSaveRequest request =
+                    builder().withCaptchaAnswer(captchaAnswer).withCaptchaCode(captchaCode).build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -109,10 +107,8 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String captchaCode = getCaptchaCodeRequest(accessToken);
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withCaptchaCode(captchaCode)
-                    .build();
+            FinalSaveRequest request =
+                    builder().withCaptchaAnswer(captchaAnswer).withCaptchaCode(captchaCode).build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -142,9 +138,7 @@ public class FinalSaveTest extends RestDocsConfig {
             HashResult hash = captchaHashProcessor.hash(1L);
             String accessToken = jwtGenerator.generateAccessToken(email, "USER");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(hash.getCaptchaCode())
-                    .build();
+            FinalSaveRequest request = builder().withCaptchaCode(hash.getCaptchaCode()).build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -176,10 +170,11 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(captchaAnswer)
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(captchaAnswer)
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -212,11 +207,12 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withSelectSectorId(100L)
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(captchaAnswer)
+                            .withSelectSectorId(100L)
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -250,11 +246,12 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withName(" ")
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(captchaAnswer)
+                            .withName(" ")
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -288,11 +285,12 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withAffiliation(" ")
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(captchaAnswer)
+                            .withAffiliation(" ")
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -326,11 +324,12 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withStudentNum(" ")
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(captchaAnswer)
+                            .withStudentNum(" ")
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -364,11 +363,12 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withCarNum(" ")
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(captchaAnswer)
+                            .withCarNum(" ")
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -402,11 +402,12 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withSelectSectorId(-2L)
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(captchaAnswer)
+                            .withSelectSectorId(-2L)
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -439,11 +440,12 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withPhoneNumber("010")
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(captchaAnswer)
+                            .withPhoneNumber("010")
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -477,11 +479,12 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withIsLight(null)
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(captchaAnswer)
+                            .withIsLight(null)
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -514,10 +517,8 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(null)
-                    .withCaptchaAnswer(captchaAnswer)
-                    .build();
+            FinalSaveRequest request =
+                    builder().withCaptchaCode(null).withCaptchaAnswer(captchaAnswer).build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -550,10 +551,11 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(null)
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(null)
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
@@ -587,11 +589,12 @@ public class FinalSaveTest extends RestDocsConfig {
 
             String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
 
-            FinalSaveRequest request = builder()
-                    .withCaptchaCode(result.getCaptchaCode())
-                    .withCaptchaAnswer(captchaAnswer)
-                    .withDepartment(" ")
-                    .build();
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaCode(result.getCaptchaCode())
+                            .withCaptchaAnswer(captchaAnswer)
+                            .withDepartment(" ")
+                            .build();
             String requestBody = om.writeValueAsString(request);
 
             // when
