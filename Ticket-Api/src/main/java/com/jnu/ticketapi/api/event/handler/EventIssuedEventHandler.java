@@ -70,6 +70,7 @@ public class EventIssuedEventHandler {
                     processQueueData(sector, registration, eventIssuedEvent.getMessage().getUserId());
                     waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                     sector.decreaseEventStock();
+                    sectorAdaptor.save(sector);
                 } catch (NoEventStockLeftException e) {
                     tracker.info("해당 구간 잔여 여석이 없습니다.", e);
                     waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
