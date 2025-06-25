@@ -1,17 +1,20 @@
 package com.jnu.ticketdomain.domains.registration.repository;
 
-import static com.jnu.ticketdomain.domains.registration.domain.QRegistration.registration;
-
+import com.jnu.ticketdomain.domains.events.domain.QSector;
 import com.jnu.ticketdomain.domains.registration.domain.QRegistration;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.user.domain.QUser;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.util.List;
-import javax.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+
+import javax.persistence.EntityManager;
+import java.util.List;
+
+import static com.jnu.ticketdomain.domains.registration.domain.QRegistration.registration;
 
 @Repository
 @RequiredArgsConstructor
@@ -19,14 +22,12 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
     private final EntityManager em;
     private final JPAQueryFactory queryFactory;
 
-    QRegistration r = QRegistration.registration;
-
     @Override
     public Boolean existsByEmailAndIsSavedTrueAndEvent(String email, Long eventId) {
         return queryFactory
                         .selectOne()
-                        .from(r)
-                        .where(r.email.eq(email).and(isSavedAndEqEvent(registration, eventId)))
+                        .from(registration)
+                        .where(registration.email.eq(email).and(isSavedAndEqEvent(registration, eventId)))
                         .fetchFirst()
                 != null;
     }
@@ -35,9 +36,9 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
     public Boolean existsByStudentNumAndIsSavedTrue(String studentNum, Long eventId) {
         return queryFactory
                         .selectOne()
-                        .from(r)
+                        .from(registration)
                         .where(
-                                r.studentNum
+                                registration.studentNum
                                         .eq(studentNum)
                                         .and(isSavedAndEqEvent(registration, eventId)))
                         .fetchFirst()
@@ -47,29 +48,29 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
     @Override
     public List<Registration> findSortedRegistrationsByEventId(Long eventId) {
 
-        var u = r.user;
-        var s = r.sector;
+        QUser user = registration.user;
+        QSector sector = registration.sector;
 
         return queryFactory
-                .selectFrom(r)
+                .selectFrom(registration)
                 .where(
-                        r.isDeleted.isFalse(),
-                        r.isSaved.isTrue(),
-                        s.event.id.eq(eventId),
-                        u.status.in(UserStatus.SUCCESS, UserStatus.PREPARE))
+                        registration.isDeleted.isFalse(),
+                        registration.isSaved.isTrue(),
+                        sector.event.id.eq(eventId),
+                        user.status.in(UserStatus.SUCCESS, UserStatus.PREPARE))
                 .orderBy(
-                        s.sectorNumber.asc(),
+                        sector.sectorNumber.asc(),
                         // SUCCESS 먼저 오도록 정렬
                         new CaseBuilder()
-                                .when(u.status.eq(UserStatus.SUCCESS))
+                                .when(user.status.eq(UserStatus.SUCCESS))
                                 .then(0)
                                 .otherwise(1)
                                 .asc(),
                         // SUCCESS면 r.id, PREPARE면 u.sequence
                         new CaseBuilder()
-                                .when(u.status.eq(UserStatus.SUCCESS))
-                                .then(r.id)
-                                .otherwise(u.sequence.longValue())
+                                .when(user.status.eq(UserStatus.SUCCESS))
+                                .then(registration.id)
+                                .otherwise(user.sequence.longValue())
                                 .asc())
                 .fetch();
     }
