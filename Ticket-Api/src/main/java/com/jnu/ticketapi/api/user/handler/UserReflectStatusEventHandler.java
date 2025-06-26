@@ -70,7 +70,8 @@ public class UserReflectStatusEventHandler {
         }
 
         Long savedAt = registrationAdaptor.findById(event.getRegistration().getId()).getSavedAt();
-        tracker.info("최종 시간:{}, 최종 순번: {}, 최종 결과: {}", savedAt, position, user.getStatus().getValue());
+        tracker.info(
+                "최종 시간:{}, 최종 순번: {}, 최종 결과: {}", savedAt, position, user.getStatus().getValue());
         userAdaptor.save(user);
     }
 }

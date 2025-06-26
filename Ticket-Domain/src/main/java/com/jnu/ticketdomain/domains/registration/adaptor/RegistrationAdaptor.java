@@ -114,4 +114,9 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     public Boolean existsByIdAndIsSavedTrue(Long id) {
         return registrationRepository.existsByIdAndIsSavedTrue(id);
     }
+
+    @Override
+    public List<Registration> findSortedRegistrationsByEventId(Long eventId) {
+        return registrationRepository.findSortedRegistrationsByEventId(eventId);
+    }
 }

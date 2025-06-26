@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.registration;
 
+
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 
 public class FinalSaveRequestTestDataBuilder {
@@ -13,7 +14,6 @@ public class FinalSaveRequestTestDataBuilder {
     private Boolean isLight = true;
     private String phoneNum = "010-1111-2222";
     private Long selectSectorId = 3L;
-
 
     public static FinalSaveRequestTestDataBuilder builder() {
         return new FinalSaveRequestTestDataBuilder();
@@ -85,4 +85,3 @@ public class FinalSaveRequestTestDataBuilder {
                 .build();
     }
 }
-

@@ -1,9 +1,17 @@
 package com.jnu.ticketapi.config.response;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.*;
+
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.jnu.ticketapi.api.slack.sender.SlackInternalErrorSender;
 import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.exception.*;
+import java.io.IOException;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -23,15 +31,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.ConstraintViolationException;
-import java.io.IOException;
-import java.time.format.DateTimeParseException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.*;
-
 @RestControllerAdvice
 @Slf4j
 @RequiredArgsConstructor
@@ -41,9 +40,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @Autowired(required = false)
     private SlackInternalErrorSender slackInternalErrorSender;
 
-    /**
-     * Json 날짜 형식 파싱에 대한 에러 핸들러 내부에서 변환할 때 발생하는 에러입니다.
-     */
+    /** Json 날짜 형식 파싱에 대한 에러 핸들러 내부에서 변환할 때 발생하는 에러입니다. */
     @ExceptionHandler({InvalidFormatException.class, DateTimeParseException.class})
     public ResponseEntity<ErrorResponse> jsonParseExceptionHandler(
             DateTimeParseException e, HttpServletRequest request) {
@@ -122,9 +119,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(errorResponse);
     }
 
-    /**
-     * Request Param Validation 예외 처리
-     */
+    /** Request Param Validation 예외 처리 */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> constraintViolationExceptionHandler(
             ConstraintViolationException e, HttpServletRequest request) {
