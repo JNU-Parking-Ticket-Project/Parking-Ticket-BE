@@ -472,6 +472,8 @@ create table registration_tb
     constraint FK7p6t377o5h1q0bheapm2t91f5
         foreign key (sector_id) references sector (sector_id),
     constraint FKlfurts4ouptujftlouj21atoe
-        foreign key (user_id) references user_tb (user_id)
+        foreign key (user_id) references user_tb (user_id),
+    constraint uniq_event_email_student_num
+        unique (event_id, email, student_num)
 );
 
