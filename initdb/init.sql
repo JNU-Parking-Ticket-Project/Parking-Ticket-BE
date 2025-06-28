@@ -467,6 +467,8 @@ create table registration_tb
     student_num varchar(255)     not null,
     sector_id   bigint           not null,
     user_id     bigint           null,
+    department  varchar(255)     null,
+    event_id    bigint           null,
     constraint FK7p6t377o5h1q0bheapm2t91f5
         foreign key (sector_id) references sector (sector_id),
     constraint FKlfurts4ouptujftlouj21atoe
