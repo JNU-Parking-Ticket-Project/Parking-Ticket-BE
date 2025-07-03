@@ -18,7 +18,14 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Table(
         name = "registration_tb",
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"student_num", "event_id"})})
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    columnNames = {
+                        "event_id",
+                        "email",
+                        "student_num",
+                    })
+        })
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @DynamicUpdate
