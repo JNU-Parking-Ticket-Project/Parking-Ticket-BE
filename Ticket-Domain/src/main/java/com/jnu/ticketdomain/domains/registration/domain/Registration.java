@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import java.time.LocalDateTime;
+import javax.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicUpdate;
@@ -13,14 +15,17 @@ import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
-import java.time.LocalDateTime;
-
 @Entity
 @Table(
         name = "registration_tb",
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"student_num", "event_id"})}
-)
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    columnNames = {
+                        "event_id",
+                        "email",
+                        "student_num",
+                    })
+        })
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @DynamicUpdate
@@ -153,8 +158,7 @@ public class Registration {
         this.eventId = eventId;
     }
 
-    public Registration() {
-    }
+    public Registration() {}
 
     public void finalSave() {
         this.isSaved = true;

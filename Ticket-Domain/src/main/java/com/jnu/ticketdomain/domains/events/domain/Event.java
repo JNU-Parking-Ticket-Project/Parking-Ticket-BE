@@ -61,15 +61,6 @@ public class Event {
     @Column(name = "is_deleted")
     private boolean isDeleted;
 
-    @Builder
-    public Event(DateTimePeriod dateTimePeriod, List<Sector> sector) {
-        this.eventCode = UUID.randomUUID().toString().substring(0, 6);
-        this.dateTimePeriod = dateTimePeriod;
-        this.sector = sector;
-        this.eventStatus = EventStatus.READY;
-        this.publish = false;
-        this.isDeleted = false;
-    }
 
     @Builder
     public Event(DateTimePeriod dateTimePeriod, List<Sector> sector, String title) {

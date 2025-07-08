@@ -17,7 +17,6 @@ import org.hibernate.annotations.Where;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
 @Getter
 @Where(clause = "is_deleted = false")
 @JsonIgnoreProperties("registrations")

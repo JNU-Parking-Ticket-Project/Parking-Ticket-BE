@@ -27,10 +27,8 @@ import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrat
 import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationException;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
-import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.redis.RedisService;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -103,7 +101,8 @@ public class RegistrationUseCase {
         validateEventStatusIsClosed(event);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
-        Registration registration = requestDto.toEntity(requestDto, sector, email, user, event.getId()); // 등록을 만듦
+        Registration registration =
+                requestDto.toEntity(requestDto, sector, email, user, event.getId()); // 등록을 만듦
         return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration -> {
@@ -129,7 +128,8 @@ public class RegistrationUseCase {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
 
-        Registration registration = requestDto.toEntity(requestDto, sector, email, user, event.getId());
+        Registration registration =
+                requestDto.toEntity(requestDto, sector, email, user, event.getId());
         return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration ->
@@ -219,29 +219,7 @@ public class RegistrationUseCase {
     @Transactional(readOnly = true)
     public GetRegistrationsResponse getRegistrations(Long eventId) {
         List<Registration> registrations =
-                registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(eventId).stream()
-                        .filter(
-                                registration -> {
-                                    UserStatus status = registration.getUser().getStatus();
-                                    return status.equals(UserStatus.SUCCESS)
-                                            || status.equals(UserStatus.PREPARE);
-                                })
-                        .sorted(
-                                Comparator.comparing(
-                                                (Registration r) -> r.getSector().getSectorNumber())
-                                        .thenComparing(r -> r.getUser().getStatus())
-                                        .thenComparing(
-                                                r ->
-                                                        r.getUser()
-                                                                        .getStatus()
-                                                                        .equals(UserStatus.SUCCESS)
-                                                                ? r.getId()
-                                                                : r.getUser().getSequence())
-                                        .thenComparing(
-                                                registration ->
-                                                        registration.getSector().getSectorNumber()))
-                        .toList();
-
+                registrationAdaptor.findSortedRegistrationsByEventId(eventId);
         return GetRegistrationsResponse.of(registrations);
     }
 

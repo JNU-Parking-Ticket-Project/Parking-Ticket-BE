@@ -27,4 +27,6 @@ public interface RegistrationLoadPort {
     Integer findPositionBySavedAt(Long id, Long sectorId);
 
     Boolean existsByIdAndIsSavedTrue(Long id);
+
+    List<Registration> findSortedRegistrationsByEventId(Long eventId);
 }
