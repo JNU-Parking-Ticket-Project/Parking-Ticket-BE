@@ -12,6 +12,7 @@ import org.slf4j.MDC;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -85,9 +86,9 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
         }
     }
 
-    private String getRequestBody(HttpServletRequest request) throws IOException {
-        CacheAccessRequestFilter wrapRequest = (CacheAccessRequestFilter) request;
-        byte[] contents = wrapRequest.getContents();
+    private String getRequestBody(HttpServletRequest request) {
+        ContentCachingRequestWrapper wrapRequest = (ContentCachingRequestWrapper) request;
+        byte[] contents = wrapRequest.getContentAsByteArray();
         return new String(contents, StandardCharsets.UTF_8);
     }
 
