@@ -76,7 +76,8 @@ public class EventIssuedEventHandler {
                     waitingQueueService.remove(
                             REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                     sector.decreaseEventStock();
-                    sectorAdaptor.save(sector);
+
+                    // sectorAdaptor.save(sector); 데드락 문제 임시 해결
                 } catch (NoEventStockLeftException e) {
                     tracker.info("해당 구간 잔여 여석이 없습니다.", e);
                     waitingQueueService.remove(
