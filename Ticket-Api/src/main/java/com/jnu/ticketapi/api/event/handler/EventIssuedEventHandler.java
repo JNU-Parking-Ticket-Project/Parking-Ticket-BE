@@ -1,7 +1,5 @@
 package com.jnu.ticketapi.api.event.handler;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
@@ -22,10 +20,14 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @Component
 @RequiredArgsConstructor
@@ -45,6 +47,7 @@ public class EventIssuedEventHandler {
     private final HikariDataSource hikariDataSource;
 
     @Async
+    @Retryable(recover = "test1")
     @EventListener(classes = EventIssuedEvent.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
@@ -91,7 +94,15 @@ public class EventIssuedEventHandler {
         }
     }
 
-    /** 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다. */
+    @Recover
+    public void test1() {
+        tracker.info("============retry 적용됨============");
+    }
+
+
+    /**
+     * 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
+     */
     public void processQueueData(Sector sector, Registration registration, Long userId) {
         User user = userAdaptor.findById(userId);
         saveRegistration(sector, user, registration);
