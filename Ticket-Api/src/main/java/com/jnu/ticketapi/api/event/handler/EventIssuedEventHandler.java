@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -46,6 +48,10 @@ public class EventIssuedEventHandler {
 
     @Async
     @EventListener(classes = EventIssuedEvent.class)
+    @Retryable(
+            retryFor = {Exception.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 2000))
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
         try {
