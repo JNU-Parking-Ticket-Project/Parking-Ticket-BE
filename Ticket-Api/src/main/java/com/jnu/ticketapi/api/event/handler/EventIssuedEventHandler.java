@@ -95,8 +95,9 @@ public class EventIssuedEventHandler {
     }
 
     @Recover
-    public void test1() {
+    public void test1(Exception e) {
         tracker.info("============retry 적용됨============");
+        tracker.error("에러발생", e);
     }
 
 
