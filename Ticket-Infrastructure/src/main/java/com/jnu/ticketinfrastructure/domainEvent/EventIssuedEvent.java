@@ -14,4 +14,12 @@ public class EventIssuedEvent extends InfrastructureEvent {
     public static EventIssuedEvent from(ChatMessage message, Double score) {
         return EventIssuedEvent.builder().message(message).score(score).build();
     }
+
+    @Override
+    public String toString() {
+        return "EventIssuedEvent{" +
+                "message=" + message +
+                ", score=" + score +
+                '}';
+    }
 }
