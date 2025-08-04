@@ -15,4 +15,14 @@ public class ChatMessage {
     private Long userId;
     private Long sectorId;
     private Long eventId;
+
+    @Override
+    public String toString() {
+        return "ChatMessage{" +
+                "registration='" + registration + '\'' +
+                ", userId=" + userId +
+                ", sectorId=" + sectorId +
+                ", eventId=" + eventId +
+                '}';
+    }
 }
