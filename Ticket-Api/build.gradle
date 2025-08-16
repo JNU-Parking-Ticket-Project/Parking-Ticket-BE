@@ -47,8 +47,11 @@ dependencies {
     // logback json 변환 라이브러리
     implementation 'net.logstash.logback:logstash-logback-encoder:6.6'
 
+    // 테스트 컨테이너 라이브러리
+    testImplementation "org.testcontainers:testcontainers:1.21.3"
+    testImplementation "org.testcontainers:junit-jupiter:1.21.3"
+    testImplementation "org.testcontainers:mysql:1.21.3"
 }
-
 
 jib {
     def serverPort = "8080"
