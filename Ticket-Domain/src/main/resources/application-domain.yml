@@ -101,7 +101,6 @@ spring:
   quartz:
     jdbc:
       initialize-schema: always
-
 ---
 
 spring:
@@ -207,3 +206,17 @@ management:
     redis:
       enabled: ${ABLE_REDIS:true}
 
+---
+spring:
+  config:
+    activate:
+      on-profile: integration-test
+  jpa:
+    show-sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: create-drop
+
+  quartz:
+    jdbc:
+      initialize-schema: always
