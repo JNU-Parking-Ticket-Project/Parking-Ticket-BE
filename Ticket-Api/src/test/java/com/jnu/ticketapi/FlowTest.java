@@ -1,26 +1,61 @@
 package com.jnu.ticketapi;
 
-import org.junit.jupiter.api.BeforeEach;
+import com.jnu.ticketapi.api.captcha.model.response.CaptchaResponse;
+import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
+import com.jnu.ticketapi.api.event.model.request.UpdateEventPublishRequest;
+import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
+import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
+import com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder;
+import com.jnu.ticketapi.security.JwtGenerator;
+import com.jnu.ticketbatch.config.ProcessQueueDataJob;
+import com.jnu.ticketbatch.config.QuartzJobLauncher;
+import com.jnu.ticketdomain.common.vo.DateTimePeriod;
+import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
+import com.jnu.ticketdomain.domains.captcha.repository.CaptchaRepository;
+import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.registration.repository.RegistrationRepository;
+import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.domain.UserRole;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
+import com.jnu.ticketdomain.domains.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
+import org.quartz.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.test.web.servlet.client.MockMvcWebTestClient;
-import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static com.jnu.ticketdomain.domains.user.domain.UserStatus.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.quartz.JobBuilder.newJob;
+import static org.quartz.TriggerBuilder.newTrigger;
+
+@Slf4j
 @ActiveProfiles("integration-test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 public class FlowTest {
 
-    public static final int REDIS_PORT = 6379;
-    public static final int MYSQL_PORT = 3306;
+    private static final int REDIS_PORT = 6379;
+    private static final int MYSQL_PORT = 3306;
+    private static final Long EVENT_VALUE = 1L;
+    private static final String BEARER_PREFIX = "Bearer ";
 
     @Container
     static MySQLContainer mysqlContainer = new MySQLContainer<>(DockerImageName.parse("mysql:8.0.40"))
@@ -33,7 +68,7 @@ public class FlowTest {
             .withExposedPorts(REDIS_PORT);
 
     @DynamicPropertySource
-    static void redisProperties(DynamicPropertyRegistry registry) {
+    static void containerProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.redis.host", redisContainer::getHost);
         registry.add("spring.redis.port", () -> redisContainer.getMappedPort(REDIS_PORT));
         registry.add("spring.datasource.url", () -> String.format(
@@ -43,11 +78,182 @@ public class FlowTest {
         registry.add("spring.datasource.password", mysqlContainer::getPassword);
     }
 
+    @Autowired
     WebTestClient client;
 
-    @BeforeEach
-    void setup(WebApplicationContext context) {
-        client = MockMvcWebTestClient.bindToApplicationContext(context).build();
+    @Autowired
+    Scheduler scheduler;
+
+    @Autowired
+    JwtGenerator jwtGenerator;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    CaptchaRepository captchaRepository;
+
+    @Autowired
+    RegistrationRepository registrationRepository;
+
+    @Test
+    void flowTest() throws Exception {
+        // given
+        int userSize = 60;
+        int sectorCapacity = 10;
+        int reserve = 10;
+
+        Map<User, String> usersWithToken = setUpTestData(userSize);
+
+        String captchaAnswer = "1";
+        captchaRepository.save(new Captcha(captchaAnswer, "imageUrl"));
+
+        String tempAccessToken = usersWithToken.values().stream().findFirst().get();
+
+        client = client.mutate()
+                .defaultHeader(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + tempAccessToken)
+                .build();
+
+        LocalDateTime now = LocalDateTime.now();
+        DateTimePeriod dateTimePeriod = new DateTimePeriod(now.plusSeconds(5), now.plusMinutes(10));
+
+        EventRegisterRequest registerRequest = new EventRegisterRequest(dateTimePeriod, "주차권 이벤트");
+        client.post().uri("/v1/events")
+                .bodyValue(registerRequest)
+                .exchange().expectStatus().isOk();
+
+        List<SectorRegisterRequest> request1 = List.of(new SectorRegisterRequest("1구간", "테스트", sectorCapacity, reserve));
+
+        client.post().uri("/v1/sectors")
+                .bodyValue(request1)
+                .exchange().expectStatus().isOk();
+
+        client.put().uri("/v1/events/publish/{event-id}", EVENT_VALUE)
+                .bodyValue(new UpdateEventPublishRequest(true))
+                .exchange().expectStatus().isOk();
+
+        rescheduleJob();
+        Thread.sleep(1000);
+
+        // when
+        ExecutorService executorService = Executors.newCachedThreadPool();
+
+        for (Map.Entry<User, String> entrySet : usersWithToken.entrySet()) {
+            executorService.execute(() -> {
+                String accessToken = entrySet.getValue();
+
+                WebTestClient newClient = client.mutate()
+                        .defaultHeader(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
+                        .build();
+
+                String captchaCode = newClient.get().uri("/v1/captcha")
+                        .exchange().expectStatus().isOk()
+                        .expectBody(CaptchaResponse.class)
+                        .returnResult().getResponseBody().captchaCode();
+
+                FinalSaveRequest request2 = FinalSaveRequestTestDataBuilder
+                        .builder()
+                        .withSelectSectorId(1L)
+                        .withCaptchaCode(captchaCode)
+                        .withCaptchaAnswer("1")
+                        .build();
+
+                newClient.post().uri("/v1/registration/{event-id}", EVENT_VALUE)
+                        .bodyValue(request2)
+                        .exchange().expectStatus().isOk();
+            });
+        }
+
+
+        Thread.sleep(30000);
+
+        // then
+        List<User> usersWithResult = userRepository.findAll();
+        List<Registration> registrations = registrationRepository.findAll();
+        Map<UserStatus, List<User>> resultByGroup = usersWithResult.stream()
+                .collect(Collectors.groupingBy(User::getStatus, Collectors.toList()));
+        List<Integer> preparedNumbers = resultByGroup.get(PREPARE).stream().map(User::getSequence).toList();
+
+        assertThat(registrations).hasSize(userSize);
+        assertThat(resultByGroup.getOrDefault(SUCCESS, Collections.emptyList())).hasSize(sectorCapacity);
+        assertThat(resultByGroup.getOrDefault(PREPARE, Collections.emptyList())).hasSize(reserve);
+        assertThat(resultByGroup.getOrDefault(FAIL, Collections.emptyList())).hasSize(userSize - (sectorCapacity + reserve));
+        assertThat(preparedNumbers).containsExactlyInAnyOrderElementsOf(IntStream.rangeClosed(1, reserve).boxed().toList());
+    }
+
+    private void rescheduleJob() throws SchedulerException {
+        scheduler.clear();
+
+        JobDetail openJob = createEventOpenJob();
+        Trigger openTrigger = createEventOpenTrigger(openJob);
+
+        JobDetail processJob = createRegistrationProcessingJob();
+        Trigger processTrigger = createRegistrationProcessingTrigger(processJob);
+
+        scheduler.scheduleJob(processJob, processTrigger);
+        scheduler.scheduleJob(openJob, openTrigger);
+        scheduler.start();
+    }
+
+    private SimpleTrigger createRegistrationProcessingTrigger(JobDetail processJob) {
+        return newTrigger()
+                .withIdentity("REGISTRATION_PROCESSING_TRIGGER" + EVENT_VALUE, "testGroup")
+                .startNow()
+                .withSchedule(
+                        SimpleScheduleBuilder.simpleSchedule()
+                                .withIntervalInMilliseconds(400)
+                                .repeatForever())
+                .forJob(processJob)
+                .build();
+    }
+
+    private JobDetail createRegistrationProcessingJob() {
+        return newJob(ProcessQueueDataJob.class)
+                .withIdentity("REGISTRATION_PROCESSING_JOB" + EVENT_VALUE, "testGroup")
+                .usingJobData("eventId", EVENT_VALUE)
+                .build();
+    }
+
+    private Trigger createEventOpenTrigger(JobDetail eventOpenJob) {
+        return newTrigger()
+                .withIdentity("EVENT_OPEN_TRIGGER" + EVENT_VALUE, "testGroup")
+                .startNow()
+                .forJob(eventOpenJob)
+                .build();
+    }
+
+    private JobDetail createEventOpenJob() {
+        return newJob(QuartzJobLauncher.class)
+                .withIdentity("EVENT_OPEN_JOB" + EVENT_VALUE, "testGroup")
+                .usingJobData("eventId", EVENT_VALUE)
+                .build();
+    }
+
+    private Map<User, String> setUpTestData(int userSize) {
+        List<User> users = saveUsers(userSize);
+        return generateToken(users);
+    }
+
+    private List<User> saveUsers(int size) {
+        List<User> users = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            User user = User.builder()
+                    .email("user" + i + "@test.ac.kr")
+                    .pwd("password" + i)
+                    .userRole(UserRole.ADMIN)
+                    .build();
+            users.add(userRepository.save(user));
+        }
+        return users;
+    }
+
+    private Map<User, String> generateToken(List<User> users) {
+        Map<User, String> usersWithToken = new HashMap<>();
+        for (User user : users) {
+            String accessToken = jwtGenerator.generateAccessToken(user.getEmail(), user.getUserRole().name());
+            usersWithToken.put(user, accessToken);
+        }
+        return usersWithToken;
     }
 
 }

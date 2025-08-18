@@ -93,7 +93,7 @@ server:
 captcha:
   domain: dsrps7tt0ew8t.cloudfront.net
 
-ableDomainEvent: false
+ableDomainEvent: true
 
 web:
   log:
