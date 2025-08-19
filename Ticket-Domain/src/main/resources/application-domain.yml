@@ -220,3 +220,8 @@ spring:
   quartz:
     jdbc:
       initialize-schema: always
+
+thread:
+  core-pool-size: 10
+  max-pool-size: 20
+  queue-capacity: 100

@@ -52,6 +52,11 @@ import static org.quartz.TriggerBuilder.newTrigger;
 @Testcontainers
 public class FlowTest {
 
+    private static final int ASYNC_CORE_POOL_SIZE = 1000;
+    private static final int ASYNC_MAX_POOL_SIZE = 1000;
+    private static final int ASYNC_QUEUE_CAPACITY = 50000;
+    private static final int HIKARI_MAXIMUM_POOL_SIZE = 2000;
+
     private static final int REDIS_PORT = 6379;
     private static final int MYSQL_PORT = 3306;
     private static final Long EVENT_VALUE = 1L;
@@ -76,6 +81,18 @@ public class FlowTest {
         );
         registry.add("spring.datasource.username", mysqlContainer::getUsername);
         registry.add("spring.datasource.password", mysqlContainer::getPassword);
+    }
+
+    @DynamicPropertySource
+    static void asyncTheadProperties(DynamicPropertyRegistry registry) {
+        registry.add("thread.core-pool-size", () -> ASYNC_CORE_POOL_SIZE);
+        registry.add("thread.max-pool-size", () -> ASYNC_MAX_POOL_SIZE);
+        registry.add("thread.queue-capacity", () -> ASYNC_QUEUE_CAPACITY);
+    }
+
+    @DynamicPropertySource
+    static void hikariProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.hikari.maximum-pool-size", () -> HIKARI_MAXIMUM_POOL_SIZE);
     }
 
     @Autowired
