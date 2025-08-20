@@ -31,4 +31,8 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     @Query("update Sector s SET s.isDeleted = true where s.id = :sectorId")
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     void delete(Long sectorId);
+
+    @Modifying
+    @Query("UPDATE Sector s SET s.remainingAmount = s.remainingAmount -1  WHERE s.id = :sectorId AND s.remainingAmount > 0 ")
+    void decreaseRemainingAmount(@Param("sectorId") Long sectorId);
 }

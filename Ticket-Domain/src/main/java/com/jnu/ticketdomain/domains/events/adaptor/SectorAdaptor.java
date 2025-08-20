@@ -127,4 +127,9 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
     public void deleteByEvent(Long eventId) {
         sectorRepository.deleteByEventId(eventId);
     }
+
+    @Override
+    public void decreaseRemainingAmount(Long sectorId) {
+        sectorRepository.decreaseRemainingAmount(sectorId);
+    }
 }

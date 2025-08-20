@@ -94,7 +94,7 @@ public class EventIssuedEventHandler {
 
             // 5. 등록 처리
             processQueueData(sector, registration, eventIssuedEvent.getMessage().getUserId());
-            sector.decreaseEventStock();
+            sectorAdaptor.decreaseRemainingAmount(sector.getId());
 
             // 6. 성공적으로 처리된 경우 트랜잭션 커밋 후 Redis에서 제거
             registerTransactionSynchronization(eventIssuedEvent, true);
@@ -197,14 +197,12 @@ public class EventIssuedEventHandler {
     private boolean isIdleConnectionAvailable() {
         try {
             int idleConnections = hikariDataSource.getHikariPoolMXBean().getIdleConnections();
-            int minimumIdle = hikariDataSource.getHikariConfigMXBean().getMinimumIdle();
 
             // 최소 2개 이상의 여유 연결 확보
-            boolean available = idleConnections >= Math.max(2, minimumIdle);
+            boolean available = idleConnections >= 2;
 
             if (!available) {
-                tracker.warn("DB 연결 부족 - 현재: {}, 최소 필요: {}",
-                        idleConnections, Math.max(2, minimumIdle));
+                tracker.warn("DB 연결 부족 - 현재: {}", idleConnections);
             }
 
             return available;

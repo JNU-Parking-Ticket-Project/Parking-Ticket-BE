@@ -16,4 +16,6 @@ public interface SectorRecordPort {
     void delete(Long sectorId);
 
     void deleteByEvent(Long eventId);
+
+    void decreaseRemainingAmount(Long sectorId);
 }
