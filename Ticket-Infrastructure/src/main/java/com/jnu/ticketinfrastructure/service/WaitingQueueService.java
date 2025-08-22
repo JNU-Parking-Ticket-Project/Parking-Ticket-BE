@@ -1,24 +1,24 @@
 package com.jnu.ticketinfrastructure.service;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 
 @Service
 @Slf4j
@@ -26,9 +26,11 @@ import org.springframework.stereotype.Service;
 public class WaitingQueueService {
 
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
+    public static final String STREAM_KEY_SECTOR = "stream-key-sector-";
 
     private final RedisRepository redisRepository;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public WaitingQueueService(RedisRepository redisRepository) {
         this.redisRepository = redisRepository;
@@ -43,6 +45,37 @@ public class WaitingQueueService {
         checkDuplicateData(key, message);
         redisRepository.zAddIfAbsent(key, message, score);
         tracker.info("Added to the queue, score:{}", score);
+    }
+
+    public void registerToStream(Registration registration, Long userId, Long sectorId, Long eventId) {
+        String streamKey = STREAM_KEY_SECTOR + sectorId;
+        Map<String, String> content = createRegistrationContent(registration, userId, sectorId, eventId);
+        redisRepository.streamAdd(streamKey, content);
+    }
+
+    public List<MapRecord<String, String, String>> readFromStream(String key, String lastId, int count) {
+        return redisRepository.streamRead(key, lastId, count);
+    }
+
+    private Map<String, String> createRegistrationContent(Registration registration, Long userId, Long sectorId, Long eventId) {
+        Map<String, String> content = new HashMap<>();
+        content.put("userId", String.valueOf(userId));
+        content.put("eventId", String.valueOf(eventId));
+        content.put("sectorId", String.valueOf(sectorId));
+        content.put("email", registration.getEmail());
+        content.put("name", registration.getName());
+        content.put("studentNum", registration.getStudentNum());
+        content.put("affiliation", registration.getAffiliation());
+        content.put("department", registration.getDepartment());
+        content.put("carNum", registration.getCarNum());
+        content.put("phoneNum", registration.getPhoneNum());
+        content.put("isDeleted", String.valueOf(registration.isDeleted()));
+        content.put("isLight", String.valueOf(registration.isLight()));
+        content.put("isSaved", String.valueOf(registration.isSaved()));
+        content.put("savedAt", String.valueOf(registration.getSavedAt()));
+        content.put("id", String.valueOf(registration.getId()));
+        content.put("createdAt", String.valueOf(registration.getCreatedAt()));
+        return content;
     }
 
     public String convertRegistrationJSON(Registration registration) {

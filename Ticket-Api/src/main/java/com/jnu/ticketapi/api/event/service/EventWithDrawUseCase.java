@@ -51,8 +51,7 @@ public class EventWithDrawUseCase {
                 (error) -> {
                     throw NotReadyEventStatusException.EXCEPTION;
                 });
-        waitingQueueService.registerQueue(
-                REDIS_EVENT_ISSUE_STORE, registration, userId, sectorId, eventId);
+        waitingQueueService.registerToStream(registration, userId, sectorId, eventId);
     }
 
     public GetEventPeriodResponse getEventPeriod() {

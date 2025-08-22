@@ -3,27 +3,52 @@ package com.jnu.ticketinfrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.ReadOffset;
+import org.springframework.data.redis.connection.stream.StreamOffset;
+import org.springframework.data.redis.connection.stream.StreamReadOptions;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
+
+import java.time.Duration;
+import java.util.*;
 
 @Repository
 @Slf4j
 @ConditionalOnExpression("${ableRedis:true}")
 public class RedisRepository {
+
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplateForStream;
     private final ObjectMapper objectMapper;
 
-    public RedisRepository(RedisTemplate<String, Object> redisTemplate) {
+    public RedisRepository(RedisTemplate<String, Object> redisTemplate, RedisTemplate<String, String> redisTemplateForStream
+    ) {
         this.redisTemplate = redisTemplate;
+        this.redisTemplateForStream = redisTemplateForStream;
         this.objectMapper = new ObjectMapper();
+    }
+
+
+    public void streamAdd(String key, Map<?, ?> content) {
+        redisTemplateForStream.opsForStream().add(key, content);
+    }
+
+    public List<MapRecord<String, String, String>> streamRead(String key, String lastId, int count) {
+        StreamReadOptions readOption = StreamReadOptions
+                .empty()
+                .block(Duration.ofMinutes(1))
+                .count(count);
+        StreamOffset<String> offset = StreamOffset.create(key, ReadOffset.from(lastId));
+
+        StreamOperations<String, String, String> streamOps = redisTemplateForStream.opsForStream();
+        return streamOps.read(readOption, offset);
     }
 
     public Boolean zAdd(String key, Object value, Double score) {

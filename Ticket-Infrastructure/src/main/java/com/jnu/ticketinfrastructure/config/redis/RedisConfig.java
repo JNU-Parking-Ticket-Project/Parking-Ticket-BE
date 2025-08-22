@@ -53,9 +53,9 @@ public class RedisConfig {
         return new LettuceConnectionFactory(redisConfig, clientConfig);
     }
 
-    @Bean(name = "redisTemplate")
+    @Bean(name = "customRedisTemplate")
     @ConditionalOnExpression("${ableRedis:true}")
-    public RedisTemplate<String, Object> redisTemplate() {
+    public RedisTemplate<String, Object> customRedisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
 
@@ -65,6 +65,20 @@ public class RedisConfig {
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(serializer);
+        return redisTemplate;
+    }
+
+
+    @ConditionalOnExpression("${ableRedis:true}")
+    public RedisTemplate<String, String> redisTemplate() {
+        RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory());
+
+        StringRedisSerializer stringSerializer = new StringRedisSerializer();
+        redisTemplate.setKeySerializer(stringSerializer);
+        redisTemplate.setValueSerializer(stringSerializer);
+        redisTemplate.setHashKeySerializer(stringSerializer);
+        redisTemplate.setHashValueSerializer(stringSerializer);
         return redisTemplate;
     }
 }
