@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -35,7 +36,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -121,7 +125,6 @@ public class FlowTest {
     @Test
     void flowTest() throws Exception {
         // given
-
         List<Setting> settings = List.of(
                 new Setting(10, 30, 40),
                 new Setting(10, 30, 40),
@@ -147,12 +150,37 @@ public class FlowTest {
         Thread.sleep(1000);
 
         // when
-        ExecutorService executorService = Executors.newCachedThreadPool();
+        ExecutorService executorServiceForSector = Executors.newFixedThreadPool(settings.size());
+        ExecutorService executorServiceInSector = Executors.newCachedThreadPool();
 
-        for (Map.Entry<User, String> entrySet : usersWithToken.entrySet()) {
+        for (int i = 0; i < settings.size(); i++) {
+            int sectorId = i + 1;
+            List<String> accessTokensPerSector = userAccessTokens.get(i);
+            executorServiceForSector.submit(() -> finalSaveRequestToSector(sectorId, accessTokensPerSector, executorServiceInSector));
+        }
+
+        Thread.sleep(30000);
+
+        // then
+        List<User> usersWithResult = userRepository.findAll(Sort.by("id"));
+        List<Registration> registrations = registrationRepository.findAll();
+
+        Map<UserStatus, List<User>> resultByGroup = usersWithResult.stream()
+                .collect(Collectors.groupingBy(User::getStatus, Collectors.toList()));
+
+        assertThat(registrations).hasSize(userCountSum);
+        assertThat(resultByGroup.getOrDefault(SUCCESS, Collections.emptyList())).hasSize(capacityCountSum);
+        assertThat(resultByGroup.getOrDefault(PREPARE, Collections.emptyList())).hasSize(reserveCountSum);
+        assertThat(resultByGroup.getOrDefault(FAIL, Collections.emptyList())).hasSize(userCountSum - (capacityCountSum + reserveCountSum));
+
+        assertPreparePerSector(usersWithResult, settings);
+
+
+    }
+
+    private void finalSaveRequestToSector(long sectorId, List<String> accessTokens, ExecutorService executorService) {
+        for (String accessToken : accessTokens) {
             executorService.execute(() -> {
-                String accessToken = entrySet.getValue();
-
                 WebTestClient newClient = client.mutate()
                         .defaultHeader(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
                         .build();
@@ -164,7 +192,7 @@ public class FlowTest {
 
                 FinalSaveRequest request2 = FinalSaveRequestTestDataBuilder
                         .builder()
-                        .withSelectSectorId(1L)
+                        .withSelectSectorId(sectorId)
                         .withCaptchaCode(captchaCode)
                         .withCaptchaAnswer("1")
                         .build();
@@ -174,22 +202,36 @@ public class FlowTest {
                         .exchange().expectStatus().isOk();
             });
         }
+    }
 
+    private void assertPreparePerSector(List<User> usersWithResult, List<Setting> settings) {
+        List<List<User>> usersGroupBySector = groupBySector(usersWithResult, settings);
+        int i = 0;
+        for (List<User> withResult : usersGroupBySector) {
+            Map<UserStatus, List<User>> resultByGroup = withResult.stream()
+                    .collect(Collectors.groupingBy(User::getStatus, Collectors.toList()));
 
-        Thread.sleep(30000);
+            List<Integer> preparedNumbers = resultByGroup.get(PREPARE).stream().map(User::getSequence).toList();
 
-        // then
-        List<User> usersWithResult = userRepository.findAll();
-        List<Registration> registrations = registrationRepository.findAll();
-        Map<UserStatus, List<User>> resultByGroup = usersWithResult.stream()
-                .collect(Collectors.groupingBy(User::getStatus, Collectors.toList()));
-        List<Integer> preparedNumbers = resultByGroup.get(PREPARE).stream().map(User::getSequence).toList();
+            assertThat(preparedNumbers).containsExactlyInAnyOrderElementsOf(IntStream.rangeClosed(1, settings.get(i).reserve).boxed().toList());
+            i++;
+        }
+    }
 
-        assertThat(registrations).hasSize(userSize);
-        assertThat(resultByGroup.getOrDefault(SUCCESS, Collections.emptyList())).hasSize(sectorCapacity);
-        assertThat(resultByGroup.getOrDefault(PREPARE, Collections.emptyList())).hasSize(reserve);
-        assertThat(resultByGroup.getOrDefault(FAIL, Collections.emptyList())).hasSize(userSize - (sectorCapacity + reserve));
-        assertThat(preparedNumbers).containsExactlyInAnyOrderElementsOf(IntStream.rangeClosed(1, reserve).boxed().toList());
+    private List<List<User>> groupBySector(List<User> usersWithResult, List<Setting> settings) {
+        List<Integer> count = settings.stream()
+                .map(Setting::requestCount)
+                .toList();
+
+        int from = 0;
+        List<List<User>> usersGroupBySector = new ArrayList<>();
+        for (int i = 0; i < count.size(); i++) {
+            Integer to = count.get(i);
+            List<User> users = usersWithResult.subList(from, from + to);
+            usersGroupBySector.add(users);
+            from = from + to;
+        }
+        return usersGroupBySector;
     }
 
     private void rescheduleJob() throws SchedulerException {
