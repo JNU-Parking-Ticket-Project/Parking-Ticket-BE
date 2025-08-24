@@ -43,7 +43,7 @@ public class RedisRepository {
     public List<MapRecord<String, String, String>> streamRead(String key, String lastId, int count) {
         StreamReadOptions readOption = StreamReadOptions
                 .empty()
-                .block(Duration.ofMinutes(1))
+                .block(Duration.ofSeconds(3))
                 .count(count);
         StreamOffset<String> offset = StreamOffset.create(key, ReadOffset.from(lastId));
 
