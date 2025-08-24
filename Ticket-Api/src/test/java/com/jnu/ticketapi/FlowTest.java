@@ -167,12 +167,14 @@ public class FlowTest {
         Map<UserStatus, List<User>> resultByGroup = usersWithResult.stream()
                 .collect(Collectors.groupingBy(User::getStatus, Collectors.toList()));
 
-        assertThat(registrations).hasSize(userCountSum);
-        assertThat(resultByGroup.getOrDefault(SUCCESS, Collections.emptyList())).hasSize(capacityCountSum);
-        assertThat(resultByGroup.getOrDefault(PREPARE, Collections.emptyList())).hasSize(reserveCountSum);
-        assertThat(resultByGroup.getOrDefault(FAIL, Collections.emptyList())).hasSize(userCountSum - (capacityCountSum + reserveCountSum));
+        assertSoftly(softly -> {
+            softly.assertThat(registrations).hasSize(userCountSum);
+            softly.assertThat(resultByGroup.getOrDefault(SUCCESS, Collections.emptyList())).hasSize(capacityCountSum);
+            softly.assertThat(resultByGroup.getOrDefault(PREPARE, Collections.emptyList())).hasSize(reserveCountSum);
+            softly.assertThat(resultByGroup.getOrDefault(FAIL, Collections.emptyList())).hasSize(userCountSum - (capacityCountSum + reserveCountSum));
+        });
 
-        assertPreparePerSector(usersWithResult, settings);
+        assertPerSector(usersWithResult, settings);
 
 
     }
@@ -210,16 +212,25 @@ public class FlowTest {
         }
     }
 
-    private void assertPreparePerSector(List<User> usersWithResult, List<Setting> settings) {
+    private void assertPerSector(List<User> usersWithResult, List<Setting> settings) {
         List<List<User>> usersGroupBySector = groupBySector(usersWithResult, settings);
         int i = 0;
-        for (List<User> withResult : usersGroupBySector) {
-            Map<UserStatus, List<User>> resultByGroup = withResult.stream()
+        for (List<User> users : usersGroupBySector) {
+            Map<UserStatus, List<User>> resultByGroup = users.stream()
                     .collect(Collectors.groupingBy(User::getStatus, Collectors.toList()));
 
-            List<Integer> preparedNumbers = resultByGroup.get(PREPARE).stream().map(User::getSequence).toList();
+            int capacity = settings.get(i).capacity();
+            int reserve = settings.get(i).reserve();
 
-            assertThat(preparedNumbers).containsExactlyInAnyOrderElementsOf(IntStream.rangeClosed(1, settings.get(i).reserve).boxed().toList());
+            List<Integer> preparedNumbers = resultByGroup.get(PREPARE).stream().map(User::getSequence).toList();
+            List<Integer> expectedPreparedNumbers = IntStream.rangeClosed(1, reserve).boxed().toList();
+
+            assertSoftly(softly -> {
+                softly.assertThat(resultByGroup.getOrDefault(SUCCESS, Collections.emptyList())).hasSize(capacity);
+                softly.assertThat(resultByGroup.getOrDefault(PREPARE, Collections.emptyList())).hasSize(reserve);
+                softly.assertThat(resultByGroup.getOrDefault(FAIL, Collections.emptyList())).hasSize(users.size() - (capacity + reserve));
+                softly.assertThat(preparedNumbers).containsExactlyInAnyOrderElementsOf(expectedPreparedNumbers);
+            });
             i++;
         }
     }
