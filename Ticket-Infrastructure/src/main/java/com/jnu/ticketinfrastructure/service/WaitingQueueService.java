@@ -16,6 +16,7 @@ import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
@@ -73,8 +74,14 @@ public class WaitingQueueService {
         content.put("isLight", String.valueOf(registration.isLight()));
         content.put("isSaved", String.valueOf(registration.isSaved()));
         content.put("savedAt", String.valueOf(registration.getSavedAt()));
-        content.put("id", String.valueOf(registration.getId()));
-        content.put("createdAt", String.valueOf(registration.getCreatedAt()));
+        Long id = registration.getId();
+        if (id != null) {
+            content.put("id", String.valueOf(id));
+        }
+        LocalDateTime createdAt = registration.getCreatedAt();
+        if (createdAt != null) {
+            content.put("createdAt", createdAt.toString());
+        }
         return content;
     }
 
