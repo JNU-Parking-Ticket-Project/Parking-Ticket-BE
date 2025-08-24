@@ -51,6 +51,14 @@ public class RedisRepository {
         return streamOps.read(readOption, offset);
     }
 
+    public Long increment(String key) {
+        return redisTemplate.opsForValue().increment(key);
+    }
+
+    public Long decrement(String key) {
+        return redisTemplate.opsForValue().decrement(key);
+    }
+
     public Boolean zAdd(String key, Object value, Double score) {
         return redisTemplate.opsForZSet().add(key, value, score);
     }
