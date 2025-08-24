@@ -4,8 +4,10 @@ import com.jnu.ticketapi.api.captcha.model.response.CaptchaResponse;
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventPublishRequest;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
+import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
 import com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder;
+import com.jnu.ticketapi.registration.TemporarySaveRequestTestDataBuilder;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketbatch.config.ProcessQueueDataJob;
 import com.jnu.ticketbatch.config.QuartzJobLauncher;
@@ -36,10 +38,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -47,6 +46,7 @@ import java.util.stream.IntStream;
 
 import static com.jnu.ticketdomain.domains.user.domain.UserStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
@@ -145,6 +145,8 @@ public class FlowTest {
         createSectors(settings);
         setEventPublic();
 
+        temporalSaveRequest(userAccessTokens);
+
         rescheduleJob();
         Thread.sleep(1000);
 
@@ -176,6 +178,34 @@ public class FlowTest {
 
         assertPerSector(usersWithResult, settings);
 
+
+    }
+
+    private void temporalSaveRequest(List<List<String>> userAccessTokens) {
+        int count = userAccessTokens.size() * (9 / 10);
+        Random random = new Random();
+
+        for (int i = 0; i < count; i++) {
+            int groupIndex = random.nextInt(userAccessTokens.size());
+            int sectorId = groupIndex + 1;
+            List<String> accessTokens = userAccessTokens.get(groupIndex);
+            int userIndex = random.nextInt(accessTokens.size());
+
+            String accessToken = accessTokens.get(userIndex);
+
+            WebTestClient newClient = client.mutate()
+                    .defaultHeader(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
+                    .build();
+
+            TemporarySaveRequest request = TemporarySaveRequestTestDataBuilder
+                    .builder()
+                    .withSelectSectorId((long) sectorId)
+                    .build();
+
+            newClient.post().uri("/v1/registration/temporary/{event-id}", EVENT_VALUE)
+                    .bodyValue(request)
+                    .exchange().expectStatus().isOk();
+        }
 
     }
 
