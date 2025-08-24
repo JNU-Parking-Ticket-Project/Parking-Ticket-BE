@@ -131,14 +131,13 @@ public class FlowTest {
                 new Setting(10, 30, 40)
         );
 
+        int resultWaitingSecond = 20;
+
         Integer capacityCountSum = settings.stream().map(Setting::capacity).reduce(0, Integer::sum);
         Integer reserveCountSum = settings.stream().map(Setting::reserve).reduce(0, Integer::sum);
         Integer userCountSum = settings.stream().map(Setting::requestCount).reduce(0, Integer::sum);
 
-        List<List<String>> userAccessTokens = settings.stream()
-                .map(Setting::requestCount)
-                .map(this::setUpUserData)
-                .toList();
+        List<List<String>> userAccessTokens = setUpAccessTokensPerSector(settings);
 
         String tempAccessToken = userAccessTokens.get(0).get(0);
         createEvent(tempAccessToken);
@@ -159,7 +158,7 @@ public class FlowTest {
             executorServiceForSector.submit(() -> finalSaveRequestToSector(sectorId, accessTokensPerSector, executorServiceInSector));
         }
 
-        Thread.sleep(30000);
+        Thread.sleep(resultWaitingSecond * 1000);
 
         // then
         List<User> usersWithResult = userRepository.findAll(Sort.by("id"));
@@ -176,6 +175,13 @@ public class FlowTest {
         assertPreparePerSector(usersWithResult, settings);
 
 
+    }
+
+    private List<List<String>> setUpAccessTokensPerSector(List<Setting> settings) {
+        return settings.stream()
+                .map(Setting::requestCount)
+                .map(this::setUpUserData)
+                .toList();
     }
 
     private void finalSaveRequestToSector(long sectorId, List<String> accessTokens, ExecutorService executorService) {
