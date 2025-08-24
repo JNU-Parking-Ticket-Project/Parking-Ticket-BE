@@ -113,41 +113,35 @@ public class FlowTest {
     @Autowired
     RegistrationRepository registrationRepository;
 
+    private record Setting(int capacity, int reserve, int requestCount) {
+    }
+
+    private Long USER_IDENTIFIER = 1L;
+
     @Test
     void flowTest() throws Exception {
         // given
-        int userSize = 60;
-        int sectorCapacity = 10;
-        int reserve = 10;
 
-        Map<User, String> usersWithToken = setUpTestData(userSize);
+        List<Setting> settings = List.of(
+                new Setting(10, 30, 40),
+                new Setting(10, 30, 40),
+                new Setting(10, 30, 40)
+        );
 
-        String captchaAnswer = "1";
-        captchaRepository.save(new Captcha(captchaAnswer, "imageUrl"));
+        Integer capacityCountSum = settings.stream().map(Setting::capacity).reduce(0, Integer::sum);
+        Integer reserveCountSum = settings.stream().map(Setting::reserve).reduce(0, Integer::sum);
+        Integer userCountSum = settings.stream().map(Setting::requestCount).reduce(0, Integer::sum);
 
-        String tempAccessToken = usersWithToken.values().stream().findFirst().get();
+        List<Map<User, String>> usersWithToken = settings.stream()
+                .map(Setting::requestCount)
+                .map(this::setUpUserData)
+                .toList();
 
-        client = client.mutate()
-                .defaultHeader(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + tempAccessToken)
-                .build();
-
-        LocalDateTime now = LocalDateTime.now();
-        DateTimePeriod dateTimePeriod = new DateTimePeriod(now.plusSeconds(5), now.plusMinutes(10));
-
-        EventRegisterRequest registerRequest = new EventRegisterRequest(dateTimePeriod, "주차권 이벤트");
-        client.post().uri("/v1/events")
-                .bodyValue(registerRequest)
-                .exchange().expectStatus().isOk();
-
-        List<SectorRegisterRequest> request1 = List.of(new SectorRegisterRequest("1구간", "테스트", sectorCapacity, reserve));
-
-        client.post().uri("/v1/sectors")
-                .bodyValue(request1)
-                .exchange().expectStatus().isOk();
-
-        client.put().uri("/v1/events/publish/{event-id}", EVENT_VALUE)
-                .bodyValue(new UpdateEventPublishRequest(true))
-                .exchange().expectStatus().isOk();
+        String tempAccessToken = usersWithToken.get(0).values().stream().findFirst().get();
+        createEvent(tempAccessToken);
+        createCaptcha();
+        createSectors(settings);
+        setEventPublic();
 
         rescheduleJob();
         Thread.sleep(1000);
@@ -246,7 +240,7 @@ public class FlowTest {
                 .build();
     }
 
-    private Map<User, String> setUpTestData(int userSize) {
+    private Map<User, String> setUpUserData(int userSize) {
         List<User> users = saveUsers(userSize);
         return generateToken(users);
     }
@@ -255,11 +249,12 @@ public class FlowTest {
         List<User> users = new ArrayList<>();
         for (int i = 0; i < size; i++) {
             User user = User.builder()
-                    .email("user" + i + "@test.ac.kr")
-                    .pwd("password" + i)
+                    .email("user" + USER_IDENTIFIER + "@test.ac.kr")
+                    .pwd("password" + USER_IDENTIFIER)
                     .userRole(UserRole.ADMIN)
                     .build();
             users.add(userRepository.save(user));
+            USER_IDENTIFIER++;
         }
         return users;
     }
@@ -271,6 +266,46 @@ public class FlowTest {
             usersWithToken.put(user, accessToken);
         }
         return usersWithToken;
+    }
+
+    private void setEventPublic() {
+        client.put().uri("/v1/events/publish/{event-id}", EVENT_VALUE)
+                .bodyValue(new UpdateEventPublishRequest(true))
+                .exchange().expectStatus().isOk();
+    }
+
+    private void createEvent(String accessToken) {
+        client = client.mutate()
+                .defaultHeader(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
+                .build();
+
+        LocalDateTime now = LocalDateTime.now();
+        DateTimePeriod dateTimePeriod = new DateTimePeriod(now.plusSeconds(5), now.plusMinutes(10));
+
+        EventRegisterRequest registerRequest = new EventRegisterRequest(dateTimePeriod, "주차권 이벤트");
+        client.post().uri("/v1/events")
+                .bodyValue(registerRequest)
+                .exchange().expectStatus().isOk();
+    }
+
+    private void createCaptcha() {
+        String captchaAnswer = "1";
+        captchaRepository.save(new Captcha(captchaAnswer, "imageUrl"));
+    }
+
+    private void createSectors(List<Setting> settings) {
+        int sectorIdentifier = 1;
+        for (Setting setting : settings) {
+            Integer capacity = setting.capacity();
+            Integer reserve = setting.reserve();
+            List<SectorRegisterRequest> request = List.of(
+                    new SectorRegisterRequest(sectorIdentifier + "구간", "테스트" + sectorIdentifier, capacity, reserve)
+            );
+            client.post().uri("/v1/sectors")
+                    .bodyValue(request)
+                    .exchange().expectStatus().isOk();
+            sectorIdentifier++;
+        }
     }
 
 }
