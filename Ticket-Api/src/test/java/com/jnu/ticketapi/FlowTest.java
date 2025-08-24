@@ -132,12 +132,12 @@ public class FlowTest {
         Integer reserveCountSum = settings.stream().map(Setting::reserve).reduce(0, Integer::sum);
         Integer userCountSum = settings.stream().map(Setting::requestCount).reduce(0, Integer::sum);
 
-        List<Map<User, String>> usersWithToken = settings.stream()
+        List<List<String>> userAccessTokens = settings.stream()
                 .map(Setting::requestCount)
                 .map(this::setUpUserData)
                 .toList();
 
-        String tempAccessToken = usersWithToken.get(0).values().stream().findFirst().get();
+        String tempAccessToken = userAccessTokens.get(0).get(0);
         createEvent(tempAccessToken);
         createCaptcha();
         createSectors(settings);
@@ -240,7 +240,7 @@ public class FlowTest {
                 .build();
     }
 
-    private Map<User, String> setUpUserData(int userSize) {
+    private List<String> setUpUserData(int userSize) {
         List<User> users = saveUsers(userSize);
         return generateToken(users);
     }
@@ -259,13 +259,10 @@ public class FlowTest {
         return users;
     }
 
-    private Map<User, String> generateToken(List<User> users) {
-        Map<User, String> usersWithToken = new HashMap<>();
-        for (User user : users) {
-            String accessToken = jwtGenerator.generateAccessToken(user.getEmail(), user.getUserRole().name());
-            usersWithToken.put(user, accessToken);
-        }
-        return usersWithToken;
+    private List<String> generateToken(List<User> users) {
+        return users.stream()
+                .map(user -> jwtGenerator.generateAccessToken(user.getEmail(), user.getUserRole().name()))
+                .toList();
     }
 
     private void setEventPublic() {
