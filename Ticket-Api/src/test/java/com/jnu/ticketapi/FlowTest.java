@@ -21,6 +21,7 @@ import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,11 +32,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -45,7 +41,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.jnu.ticketdomain.domains.user.domain.UserStatus.*;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
@@ -55,36 +50,14 @@ import static org.quartz.TriggerBuilder.newTrigger;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class FlowTest implements UsingContainers {
 
+    // production 환경변수 값
     private static final int ASYNC_CORE_POOL_SIZE = 1000;
     private static final int ASYNC_MAX_POOL_SIZE = 1000;
     private static final int ASYNC_QUEUE_CAPACITY = 50000;
     private static final int HIKARI_MAXIMUM_POOL_SIZE = 2000;
 
-    private static final int REDIS_PORT = 6379;
-    private static final int MYSQL_PORT = 3306;
     private static final Long EVENT_VALUE = 1L;
     private static final String BEARER_PREFIX = "Bearer ";
-
-    @Container
-    static MySQLContainer mysqlContainer = new MySQLContainer<>(DockerImageName.parse("mysql:8.0.40"))
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test");
-
-    @Container
-    static GenericContainer redisContainer = new GenericContainer<>(DockerImageName.parse("redis:7"))
-            .withExposedPorts(REDIS_PORT);
-
-    @DynamicPropertySource
-    static void containerProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.redis.host", redisContainer::getHost);
-        registry.add("spring.redis.port", () -> redisContainer.getMappedPort(REDIS_PORT));
-        registry.add("spring.datasource.url", () -> String.format(
-                "jdbc:mysql://%s:%d/%s", mysqlContainer.getHost(), mysqlContainer.getMappedPort(MYSQL_PORT), mysqlContainer.getDatabaseName())
-        );
-        registry.add("spring.datasource.username", mysqlContainer::getUsername);
-        registry.add("spring.datasource.password", mysqlContainer::getPassword);
-    }
 
     @DynamicPropertySource
     static void asyncTheadProperties(DynamicPropertyRegistry registry) {
@@ -121,7 +94,12 @@ public class FlowTest implements UsingContainers {
 
     private Long USER_IDENTIFIER = 1L;
 
+
+    /**
+     *  Setting record 통해서 구간별 여석, 예비, 요청 수 설정 가능
+     */
     @Test
+    @DisplayName("여러 사용자의 최종 저장 요청 신청시, 여석에 맞게 합격, 예비, 불합격 수와 각 구간별 예비번호를 검증한다.")
     void flowTest() throws Exception {
         // given
         List<Setting> settings = List.of(
@@ -176,8 +154,6 @@ public class FlowTest implements UsingContainers {
         });
 
         assertPerSector(usersWithResult, settings);
-
-
     }
 
     private void temporalSaveRequest(List<List<String>> userAccessTokens) {
