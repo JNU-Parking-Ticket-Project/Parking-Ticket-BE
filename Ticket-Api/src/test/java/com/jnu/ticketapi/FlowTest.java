@@ -53,8 +53,7 @@ import static org.quartz.TriggerBuilder.newTrigger;
 @Slf4j
 @ActiveProfiles("integration-test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
-public class FlowTest {
+public class FlowTest implements UsingContainers {
 
     private static final int ASYNC_CORE_POOL_SIZE = 1000;
     private static final int ASYNC_MAX_POOL_SIZE = 1000;
