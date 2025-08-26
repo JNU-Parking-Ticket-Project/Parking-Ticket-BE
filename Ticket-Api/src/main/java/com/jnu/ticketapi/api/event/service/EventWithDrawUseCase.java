@@ -1,7 +1,5 @@
 package com.jnu.ticketapi.api.event.service;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
-
 import com.jnu.ticketapi.api.event.model.response.GetEventPeriodResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.utils.Result;
@@ -12,6 +10,7 @@ import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.*;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketinfrastructure.service.RedisStreamRegistrationBroker;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +26,8 @@ public class EventWithDrawUseCase {
 
     @Autowired(required = false)
     private WaitingQueueService waitingQueueService;
+
+    private final RedisStreamRegistrationBroker redisStreamRegistrationBroker;
 
     private final EventAdaptor eventAdaptor;
 
@@ -51,7 +52,7 @@ public class EventWithDrawUseCase {
                 (error) -> {
                     throw NotReadyEventStatusException.EXCEPTION;
                 });
-        waitingQueueService.registerToStream(registration, userId, sectorId, eventId);
+        redisStreamRegistrationBroker.send(registration, userId, sectorId, eventId);
     }
 
     public GetEventPeriodResponse getEventPeriod() {

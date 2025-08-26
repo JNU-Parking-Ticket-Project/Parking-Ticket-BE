@@ -27,7 +27,6 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 public class WaitingQueueService {
 
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
-    public static final String STREAM_KEY_SECTOR = "stream-key-sector-";
 
     private final RedisRepository redisRepository;
     @Autowired
@@ -48,42 +47,6 @@ public class WaitingQueueService {
         tracker.info("Added to the queue, score:{}", score);
     }
 
-    public void registerToStream(Registration registration, Long userId, Long sectorId, Long eventId) {
-        String streamKey = STREAM_KEY_SECTOR + sectorId;
-        Map<String, String> content = createRegistrationContent(registration, userId, sectorId, eventId);
-        redisRepository.streamAdd(streamKey, content);
-    }
-
-    public List<MapRecord<String, String, String>> readFromStream(String key, String lastId, int count) {
-        return redisRepository.streamRead(key, lastId, count);
-    }
-
-    private Map<String, String> createRegistrationContent(Registration registration, Long userId, Long sectorId, Long eventId) {
-        Map<String, String> content = new HashMap<>();
-        content.put("userId", String.valueOf(userId));
-        content.put("eventId", String.valueOf(eventId));
-        content.put("sectorId", String.valueOf(sectorId));
-        content.put("email", registration.getEmail());
-        content.put("name", registration.getName());
-        content.put("studentNum", registration.getStudentNum());
-        content.put("affiliation", registration.getAffiliation());
-        content.put("department", registration.getDepartment());
-        content.put("carNum", registration.getCarNum());
-        content.put("phoneNum", registration.getPhoneNum());
-        content.put("isDeleted", String.valueOf(registration.isDeleted()));
-        content.put("isLight", String.valueOf(registration.isLight()));
-        content.put("isSaved", String.valueOf(registration.isSaved()));
-        content.put("savedAt", String.valueOf(registration.getSavedAt()));
-        Long id = registration.getId();
-        if (id != null) {
-            content.put("id", String.valueOf(id));
-        }
-        LocalDateTime createdAt = registration.getCreatedAt();
-        if (createdAt != null) {
-            content.put("createdAt", createdAt.toString());
-        }
-        return content;
-    }
 
     public String convertRegistrationJSON(Registration registration) {
         JSONObject registrationJson = new JSONObject();
