@@ -43,7 +43,6 @@ public class RegistrationSavingProcessor {
         registration.finalSave();
 
         registrationAdaptor.save(registration);
-        registrationAdaptor.updateSavedAt(registration);
     }
 
     private Registration createRegistration(RegistrationInfo registrationInfo, Sector sector, User user) {

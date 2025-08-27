@@ -58,7 +58,8 @@ public class RedisRepository {
         List<RegistrationInFoRecord> result = new ArrayList<>();
         for (MapRecord<String, String, RegistrationInfo> mapRecord : mapRecords) {
             RegistrationInfo registrationInfo = mapRecord.getValue().get(REGISTRATION_INFO_KEY);
-            result.add(new RegistrationInFoRecord(mapRecord.getId(), registrationInfo));
+            RegistrationInfo newRegistrationInfo = registrationInfo.setSavedAt(mapRecord.getId());
+            result.add(new RegistrationInFoRecord(mapRecord.getId(), newRegistrationInfo));
         }
         return result;
     }

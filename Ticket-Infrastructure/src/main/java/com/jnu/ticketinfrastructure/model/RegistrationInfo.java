@@ -3,6 +3,7 @@ package com.jnu.ticketinfrastructure.model;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import lombok.Getter;
 import lombok.ToString;
+import org.springframework.data.redis.connection.stream.RecordId;
 
 import java.time.LocalDateTime;
 
@@ -49,10 +50,34 @@ public class RegistrationInfo {
         this.eventId = registration.getEventId();
     }
 
+    private RegistrationInfo(RegistrationInfo registrationInfo, Long savedAt) {
+        this.id = registrationInfo.getId();
+        this.email = registrationInfo.getEmail();
+        this.name = registrationInfo.getName();
+        this.studentNum = registrationInfo.getStudentNum();
+        this.affiliation = registrationInfo.getAffiliation();
+        this.department = registrationInfo.getDepartment();
+        this.carNum = registrationInfo.getCarNum();
+        this.light = registrationInfo.isLight();
+        this.phoneNum = registrationInfo.getPhoneNum();
+        this.createdAt = registrationInfo.getCreatedAt();
+        this.saved = registrationInfo.isSaved();
+        this.deleted = registrationInfo.isDeleted();
+        this.savedAt = savedAt;
+        this.userId = registrationInfo.getUserId();
+        this.sectorId = registrationInfo.getSectorId();
+        this.eventId = registrationInfo.getEventId();
+    }
+
     private String getCreatedAt(LocalDateTime localDateTime) {
         if (localDateTime == null) {
             return null;
         }
         return localDateTime.toString();
+    }
+
+    public RegistrationInfo setSavedAt(RecordId recordId) {
+        String savedAt = recordId.getValue().split("-")[0];
+        return new RegistrationInfo(this, Long.parseLong(savedAt));
     }
 }
