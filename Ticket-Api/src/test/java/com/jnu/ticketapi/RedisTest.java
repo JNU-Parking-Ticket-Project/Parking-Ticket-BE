@@ -4,7 +4,7 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
-import com.jnu.ticketinfrastructure.model.RegistrationInFoMapRecord;
+import com.jnu.ticketinfrastructure.model.RegistrationInFoRecord;
 import com.jnu.ticketinfrastructure.model.RegistrationInfo;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,7 +87,7 @@ public class RedisTest {
         redisRepository.streamAdd(key, registrationDto);
 
         // when
-        List<RegistrationInFoMapRecord> mapRecords = redisRepository.streamReadAfterId(key, RecordId.of("0-0"), 1);
+        List<RegistrationInFoRecord> mapRecords = redisRepository.streamReadAfterId(key, RecordId.of("0-0"), 1);
 
         // then
         RegistrationInfo registrationInfo = mapRecords.get(0).registrationInfo();

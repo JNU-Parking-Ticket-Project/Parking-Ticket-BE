@@ -1,7 +1,7 @@
 package com.jnu.ticketinfrastructure.service;
 
 
-import com.jnu.ticketinfrastructure.model.RegistrationInFoMapRecord;
+import com.jnu.ticketinfrastructure.model.RegistrationInFoRecord;
 import com.jnu.ticketinfrastructure.model.RegistrationInfo;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class RedisStreamRegistrationBroker {
         redisRepository.streamAdd(streamKey, registrationDto);
     }
 
-    public List<RegistrationInFoMapRecord> readAfterId(Long sectorId, RecordId id, int count) {
+    public List<RegistrationInFoRecord> readAfterId(Long sectorId, RecordId id, int count) {
         return redisRepository.streamReadAfterId(STREAM_KEY_SECTOR + sectorId, id, count);
     }
 

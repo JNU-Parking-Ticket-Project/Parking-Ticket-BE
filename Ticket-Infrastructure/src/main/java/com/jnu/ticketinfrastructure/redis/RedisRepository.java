@@ -3,7 +3,7 @@ package com.jnu.ticketinfrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import com.jnu.ticketinfrastructure.model.RegistrationInFoMapRecord;
+import com.jnu.ticketinfrastructure.model.RegistrationInFoRecord;
 import com.jnu.ticketinfrastructure.model.RegistrationInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -42,7 +42,7 @@ public class RedisRepository {
     }
 
 
-    public List<RegistrationInFoMapRecord> streamReadAfterId(String key, RecordId id, int count) {
+    public List<RegistrationInFoRecord> streamReadAfterId(String key, RecordId id, int count) {
         StreamReadOptions readOption = StreamReadOptions
                 .empty()
                 .block(Duration.ofSeconds(3))
@@ -54,11 +54,11 @@ public class RedisRepository {
         return convertToRegistrationInfoRecord(mapRecords);
     }
 
-    private List<RegistrationInFoMapRecord> convertToRegistrationInfoRecord(List<MapRecord<String, String, RegistrationInfo>> mapRecords) {
-        List<RegistrationInFoMapRecord> result = new ArrayList<>();
+    private List<RegistrationInFoRecord> convertToRegistrationInfoRecord(List<MapRecord<String, String, RegistrationInfo>> mapRecords) {
+        List<RegistrationInFoRecord> result = new ArrayList<>();
         for (MapRecord<String, String, RegistrationInfo> mapRecord : mapRecords) {
             RegistrationInfo registrationInfo = mapRecord.getValue().get(REGISTRATION_INFO_KEY);
-            result.add(new RegistrationInFoMapRecord(mapRecord.getId(), registrationInfo));
+            result.add(new RegistrationInFoRecord(mapRecord.getId(), registrationInfo));
         }
         return result;
     }

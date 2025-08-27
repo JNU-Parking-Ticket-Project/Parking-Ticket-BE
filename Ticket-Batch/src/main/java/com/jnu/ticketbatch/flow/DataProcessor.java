@@ -1,6 +1,6 @@
 package com.jnu.ticketbatch.flow;
 
-import com.jnu.ticketinfrastructure.model.RegistrationInFoMapRecord;
+import com.jnu.ticketinfrastructure.model.RegistrationInFoRecord;
 import com.jnu.ticketinfrastructure.model.RegistrationInfo;
 import com.jnu.ticketinfrastructure.service.RedisStreamRegistrationBroker;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,8 @@ public class DataProcessor {
         RecordId recordId = RecordId.of("0-0");
 
         while (true) {
-            List<RegistrationInFoMapRecord> records = broker.readAfterId(sectorId, recordId, DATA_BATCH_SIZE);
-            for (RegistrationInFoMapRecord record : records) {
+            List<RegistrationInFoRecord> records = broker.readAfterId(sectorId, recordId, DATA_BATCH_SIZE);
+            for (RegistrationInFoRecord record : records) {
                 RegistrationInfo registrationInfo = record.registrationInfo();
                 registrationProcessor.process(registrationInfo);
                 recordId = record.recordId();
