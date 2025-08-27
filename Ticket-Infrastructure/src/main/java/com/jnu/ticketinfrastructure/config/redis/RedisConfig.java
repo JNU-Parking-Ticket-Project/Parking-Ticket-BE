@@ -3,6 +3,8 @@ package com.jnu.ticketinfrastructure.config.redis;
 
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import java.time.Duration;
+
+import com.jnu.ticketinfrastructure.model.RegistrationInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -68,17 +70,17 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-
-    @ConditionalOnExpression("${ableRedis:true}")
-    public RedisTemplate<String, String> redisTemplate() {
-        RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
+    @Bean
+    public RedisTemplate<String, RegistrationInfo> redisTemplateForStream() {
+        RedisTemplate<String, RegistrationInfo> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
 
-        StringRedisSerializer stringSerializer = new StringRedisSerializer();
-        redisTemplate.setKeySerializer(stringSerializer);
-        redisTemplate.setValueSerializer(stringSerializer);
-        redisTemplate.setHashKeySerializer(stringSerializer);
-        redisTemplate.setHashValueSerializer(stringSerializer);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        Jackson2JsonRedisSerializer<RegistrationInfo> serializer =
+                new Jackson2JsonRedisSerializer<>(RegistrationInfo.class);
+        redisTemplate.setValueSerializer(serializer);
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(serializer);
         return redisTemplate;
     }
 }
