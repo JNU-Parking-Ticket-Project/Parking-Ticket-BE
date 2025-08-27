@@ -6,10 +6,7 @@ import com.jnu.ticketinfrastructure.model.ChatMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.redis.connection.ReturnType;
-import org.springframework.data.redis.connection.stream.MapRecord;
-import org.springframework.data.redis.connection.stream.ReadOffset;
-import org.springframework.data.redis.connection.stream.StreamOffset;
-import org.springframework.data.redis.connection.stream.StreamReadOptions;
+import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StreamOperations;
@@ -40,13 +37,12 @@ public class RedisRepository {
         redisTemplateForStream.opsForStream().add(key, content);
     }
 
-    public List<MapRecord<String, String, String>> streamRead(String key, String lastId, int count) {
+    public List<MapRecord<String, String, String>> streamReadAfterId(String key, RecordId id, int count) {
         StreamReadOptions readOption = StreamReadOptions
                 .empty()
                 .block(Duration.ofSeconds(3))
                 .count(count);
-        StreamOffset<String> offset = StreamOffset.create(key, ReadOffset.from(lastId));
-
+        StreamOffset<String> offset = StreamOffset.create(key, ReadOffset.from(id));
         StreamOperations<String, String, String> streamOps = redisTemplateForStream.opsForStream();
         return streamOps.read(readOption, offset);
     }

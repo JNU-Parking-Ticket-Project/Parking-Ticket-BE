@@ -1,7 +1,6 @@
 package com.jnu.ticketapi;
 
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -65,7 +64,7 @@ public class RedisTest {
         redisRepository.streamAdd(key, Map.of("eventId", "2"));
 
         // when
-        List<MapRecord<String, String, String>> mapRecords = redisRepository.streamRead(key, "0", 1);
+        List<MapRecord<String, String, String>> mapRecords = redisRepository.streamReadAfterId(key, RecordId.of("0-0"), 1);
 
 
         // then
@@ -84,11 +83,11 @@ public class RedisTest {
         redisRepository.streamAdd(key, Map.of("eventId", "1"));
         redisRepository.streamAdd(key, Map.of("eventId", "2"));
 
-        List<MapRecord<String, String, String>> mapRecords = redisRepository.streamRead(key, "0", 1);
+        List<MapRecord<String, String, String>> mapRecords = redisRepository.streamReadAfterId(key, RecordId.of("0-0"), 1);
         RecordId lastId = mapRecords.get(0).getId();
 
         // when
-        List<MapRecord<String, String, String>> results = redisRepository.streamRead(key, lastId.getValue(), 1);
+        List<MapRecord<String, String, String>> results = redisRepository.streamReadAfterId(key, lastId, 1);
 
         // then
         MapRecord<String, String, String> result = results.get(0);

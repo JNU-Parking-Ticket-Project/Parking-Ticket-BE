@@ -4,6 +4,7 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class RedisStreamRegistrationBroker  {
+public class RedisStreamRegistrationBroker {
 
     public static final String STREAM_KEY_SECTOR = "stream-key-sector-";
 
@@ -26,8 +27,8 @@ public class RedisStreamRegistrationBroker  {
         redisRepository.streamAdd(streamKey, content);
     }
 
-    public List<MapRecord<String, String, String>> read(Long sectorId, String lastId, int count) {
-        return redisRepository.streamRead(STREAM_KEY_SECTOR + sectorId, lastId, count);
+    public List<MapRecord<String, String, String>> readAfterId(Long sectorId, RecordId id, int count) {
+        return redisRepository.streamReadAfterId(STREAM_KEY_SECTOR + sectorId, id, count);
     }
 
     private Map<String, String> createRegistrationContent(Registration registration, Long userId, Long sectorId, Long eventId) {
