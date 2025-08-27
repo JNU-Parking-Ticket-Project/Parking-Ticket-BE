@@ -42,11 +42,7 @@ public class RedisRepository {
     }
 
 
-    public void streamAdd(String key, Map<?, ?> content) {
-        redisTemplateForStream.opsForStream().add(key, content);
-    }
-
-    public List<RegistrationInFoMapRecord> streamReadAfterId1(String key, RecordId id, int count) {
+    public List<RegistrationInFoMapRecord> streamReadAfterId(String key, RecordId id, int count) {
         StreamReadOptions readOption = StreamReadOptions
                 .empty()
                 .block(Duration.ofSeconds(3))
@@ -70,17 +66,6 @@ public class RedisRepository {
     public void streamAdd(String key, RegistrationInfo registrationDto) {
         Map<String, RegistrationInfo> content = Map.of(REGISTRATION_INFO_KEY, registrationDto);
         redisTemplateForRegistration.opsForStream().add(key, content);
-    }
-
-
-    public List<MapRecord<String, String, String>> streamReadAfterId(String key, RecordId id, int count) {
-        StreamReadOptions readOption = StreamReadOptions
-                .empty()
-                .block(Duration.ofSeconds(3))
-                .count(count);
-        StreamOffset<String> offset = StreamOffset.create(key, ReadOffset.from(id));
-        StreamOperations<String, String, String> streamOps = redisTemplateForStream.opsForStream();
-        return streamOps.read(readOption, offset);
     }
 
     public Long increment(String key) {

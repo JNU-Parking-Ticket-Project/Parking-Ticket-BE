@@ -27,6 +27,7 @@ import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrat
 import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationException;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketinfrastructure.model.RegistrationInfo;
 import com.jnu.ticketinfrastructure.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -134,61 +135,43 @@ public class RegistrationUseCase {
         return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration ->
-                                reFinalRegister(
-                                        tempRegistration,
-                                        registration,
-                                        sector,
-                                        user,
-                                        email,
-                                        eventId),
+                                reFinalRegister(tempRegistration, registration),
                         emptyCase ->
-                                saveRegistration(
-                                        registration, sector, currentUserId, email, eventId));
+                                saveRegistration(registration));
     }
 
-    private FinalSaveResponse reFinalRegister(
-            Registration tempRegistration,
-            Registration registration,
-            Sector sector,
-            User user,
-            String email,
-            Long eventId) {
+    private FinalSaveResponse reFinalRegister(Registration tempRegistration, Registration registration) {
+        Sector sector = registration.getSector();
         sector.checkEventLeft();
         registration.setId(tempRegistration.getId()); // update 치기 위해 Id 값을 채워줌
         registration.setCreatedAt(
                 tempRegistration.getCreatedAt()); // create_at이 null이 들어가지 않게 하기 위해 값을 채워줌
-        reFinalRegisterProcess(registration, user, email, sector.getId(), eventId);
+        RegistrationInfo registrationInfo = new RegistrationInfo(registration);
+
+
+        reFinalRegisterProcess(registrationInfo);
         return FinalSaveResponse.from(registration);
     }
 
-    private void reFinalRegisterProcess(
-            Registration registration, User user, String email, Long sectorId, Long eventId) {
-        eventWithDrawUseCase.issueEvent(registration, user.getId(), sectorId, eventId);
+    private void reFinalRegisterProcess(RegistrationInfo registrationInfo) {
+        eventWithDrawUseCase.issueEvent(registrationInfo);
         if (ableRedis) {
-            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
+            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + registrationInfo.getEmail());
         }
     }
 
-    private FinalSaveResponse saveRegistration(
-            Registration registration,
-            Sector sector,
-            Long currentUserId,
-            String email,
-            Long eventId) {
+    private FinalSaveResponse saveRegistration(Registration registration){
+        Sector sector = registration.getSector();
         sector.checkEventLeft();
-        return saveRegistrationProcess(registration, sector, currentUserId, email, eventId);
+        return saveRegistrationProcess(registration);
     }
 
-    private FinalSaveResponse saveRegistrationProcess(
-            Registration registration,
-            Sector sector,
-            Long currentUserId,
-            String email,
-            Long eventId) {
+    private FinalSaveResponse saveRegistrationProcess(Registration registration) {
         //        Registration saveReg = saveAndFlush(registration);
-        eventWithDrawUseCase.issueEvent(registration, currentUserId, sector.getId(), eventId);
+        RegistrationInfo registrationInfo = new RegistrationInfo(registration);
+        eventWithDrawUseCase.issueEvent(registrationInfo);
         if (ableRedis) {
-            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
+            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + registrationInfo.getEmail());
         }
         //        Events.raise(new EventIssuedEvent())
         return FinalSaveResponse.from(registration);

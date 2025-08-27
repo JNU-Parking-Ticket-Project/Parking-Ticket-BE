@@ -5,17 +5,17 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
+import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketinfrastructure.model.RegistrationInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -34,37 +34,40 @@ public class RegistrationSavingProcessor {
     )
 
     @Transactional
-    public void process(Map<String, String> RegistrationDto) {
-        long sectorId = Long.parseLong(RegistrationDto.get("sectorId"));
+    public void process(RegistrationInfo registrationInfo) {
+        Long sectorId = registrationInfo.getSectorId();
         Sector sector = sectorAdaptor.findById(sectorId);
-        Registration registration = Registration.builder()
-                .eventId(Long.valueOf(RegistrationDto.get("eventId")))
-                .email(RegistrationDto.get("email"))
-                .name(RegistrationDto.get("name"))
-                .studentNum(RegistrationDto.get("studentNum"))
-                .affiliation(RegistrationDto.get("affiliation"))
-                .department(RegistrationDto.get("department"))
-                .carNum(RegistrationDto.get("carNum"))
-                .phoneNum(RegistrationDto.get("phoneNum"))
-                .isLight(Boolean.parseBoolean(RegistrationDto.get("isLight")))
-                .isSaved(Boolean.parseBoolean(RegistrationDto.get("isSaved")))
-                .savedAt(Long.valueOf(RegistrationDto.get("savedAt")))
-                .build();
-        String registrationId = RegistrationDto.get("id");
-        registration.setSector(sector);
+        User user = userAdaptor.findById(registrationInfo.getUserId());
 
-        String createAt = RegistrationDto.get("createAt");
-        if (createAt != null) {
-            registration.setCreatedAt(LocalDateTime.parse(createAt));
-        }
-        if (registrationId != null) {
-            registration.setId(Long.valueOf(registrationId));
-        }
-        registration.setUser(userAdaptor.findById(Long.valueOf(RegistrationDto.get("userId"))));
+        Registration registration = createRegistration(registrationInfo, sector, user);
         registration.finalSave();
 
         registrationAdaptor.save(registration);
         registrationAdaptor.updateSavedAt(registration);
+    }
+
+    private Registration createRegistration(RegistrationInfo registrationInfo, Sector sector, User user) {
+        Registration registration = Registration.builder()
+                .eventId(registrationInfo.getEventId())
+                .email(registrationInfo.getEmail())
+                .name(registrationInfo.getName())
+                .studentNum(registrationInfo.getStudentNum())
+                .affiliation(registrationInfo.getAffiliation())
+                .department(registrationInfo.getDepartment())
+                .carNum(registrationInfo.getCarNum())
+                .phoneNum(registrationInfo.getPhoneNum())
+                .isLight(registrationInfo.isLight())
+                .isSaved(registrationInfo.isSaved())
+                .savedAt(registrationInfo.getSavedAt())
+                .build();
+        String createdAt = registrationInfo.getCreatedAt();
+        if (createdAt != null) {
+            registration.setCreatedAt(LocalDateTime.parse(createdAt));
+        }
+        registration.setId(registrationInfo.getId());
+        registration.setSector(sector);
+        registration.setUser(user);
+        return registration;
     }
 
 }

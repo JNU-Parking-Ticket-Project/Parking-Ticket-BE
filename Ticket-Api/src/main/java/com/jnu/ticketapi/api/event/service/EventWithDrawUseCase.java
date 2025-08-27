@@ -9,7 +9,7 @@ import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.*;
-import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketinfrastructure.model.RegistrationInfo;
 import com.jnu.ticketinfrastructure.service.RedisStreamRegistrationBroker;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.List;
@@ -31,7 +31,9 @@ public class EventWithDrawUseCase {
 
     private final EventAdaptor eventAdaptor;
 
-    /** 재고 감소 */
+    /**
+     * 재고 감소
+     */
     //    @RedissonLock(
     //            LockName = "주차권_발급",
     //            identifier = "userId",
@@ -39,7 +41,7 @@ public class EventWithDrawUseCase {
     //            leaseTime = 10000,
     //            timeUnit = TimeUnit.MILLISECONDS)
     @SneakyThrows
-    public void issueEvent(Registration registration, Long userId, Long sectorId, Long eventId) {
+    public void issueEvent(RegistrationInfo registrationDto) {
         // 재고 감소 로직 구현
         Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
         readyEvent.fold(
@@ -52,7 +54,7 @@ public class EventWithDrawUseCase {
                 (error) -> {
                     throw NotReadyEventStatusException.EXCEPTION;
                 });
-        redisStreamRegistrationBroker.send(registration, userId, sectorId, eventId);
+        redisStreamRegistrationBroker.send(registrationDto);
     }
 
     public GetEventPeriodResponse getEventPeriod() {
