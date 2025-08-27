@@ -9,11 +9,12 @@ import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
 import com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder;
 import com.jnu.ticketapi.registration.TemporarySaveRequestTestDataBuilder;
 import com.jnu.ticketapi.security.JwtGenerator;
-import com.jnu.ticketbatch.config.ProcessQueueDataJob;
-import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.repository.CaptchaRepository;
+import com.jnu.ticketdomain.domains.events.domain.Event;
+import com.jnu.ticketdomain.domains.events.domain.EventStatus;
+import com.jnu.ticketdomain.domains.events.out.EventLoadPort;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.repository.RegistrationRepository;
 import com.jnu.ticketdomain.domains.user.domain.User;
@@ -23,7 +24,7 @@ import com.jnu.ticketdomain.domains.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.quartz.*;
+import org.quartz.Scheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
@@ -42,8 +43,6 @@ import java.util.stream.IntStream;
 
 import static com.jnu.ticketdomain.domains.user.domain.UserStatus.*;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
-import static org.quartz.JobBuilder.newJob;
-import static org.quartz.TriggerBuilder.newTrigger;
 
 @Slf4j
 @ActiveProfiles("integration-test")
@@ -75,9 +74,6 @@ public class FlowTest implements UsingContainers {
     WebTestClient client;
 
     @Autowired
-    Scheduler scheduler;
-
-    @Autowired
     JwtGenerator jwtGenerator;
 
     @Autowired
@@ -89,6 +85,9 @@ public class FlowTest implements UsingContainers {
     @Autowired
     RegistrationRepository registrationRepository;
 
+    @Autowired
+    EventLoadPort eventLoadPort;
+
     private record Setting(int capacity, int reserve, int requestCount) {
     }
 
@@ -96,19 +95,21 @@ public class FlowTest implements UsingContainers {
 
 
     /**
-     *  Setting record 통해서 구간별 여석, 예비, 요청 수 설정 가능
+     * Setting record 통해서 구간별 여석, 예비, 요청 수 설정 가능
      */
     @Test
     @DisplayName("여러 사용자의 최종 저장 요청 신청시, 여석에 맞게 합격, 예비, 불합격 수와 각 구간별 예비번호를 검증한다.")
     void flowTest() throws Exception {
         // given
         List<Setting> settings = List.of(
-                new Setting(10, 30, 40),
-                new Setting(10, 30, 40),
-                new Setting(10, 30, 40)
+                new Setting(10, 30, 80),
+                new Setting(10, 30, 80),
+                new Setting(10, 30, 80),
+                new Setting(10, 30, 80),
+                new Setting(10, 30, 80)
         );
 
-        int resultWaitingSecond = 20;
+        int resultWaitingSecond = 25;
 
         Integer capacityCountSum = settings.stream().map(Setting::capacity).reduce(0, Integer::sum);
         Integer reserveCountSum = settings.stream().map(Setting::reserve).reduce(0, Integer::sum);
@@ -117,15 +118,16 @@ public class FlowTest implements UsingContainers {
         List<List<String>> userAccessTokens = setUpAccessTokensPerSector(settings);
 
         String tempAccessToken = userAccessTokens.get(0).get(0);
-        createEvent(tempAccessToken);
+        int startAfterSec = 7;
+
+        createEvent(tempAccessToken, startAfterSec);
         createCaptcha();
         createSectors(settings);
         setEventPublic();
 
         temporalSaveRequest(userAccessTokens);
 
-        rescheduleJob();
-        Thread.sleep(1000);
+        waitingForEventOpen();
 
         // when
         ExecutorService executorServiceForSector = Executors.newFixedThreadPool(settings.size());
@@ -154,6 +156,19 @@ public class FlowTest implements UsingContainers {
         });
 
         assertPerSector(usersWithResult, settings);
+    }
+
+    private void waitingForEventOpen() throws InterruptedException {
+        while (true) {
+            try {
+                Event event = eventLoadPort.findById(EVENT_VALUE);
+                if (event.getEventStatus().equals(EventStatus.OPEN)) {
+                    break;
+                }
+            } catch (Exception e) {
+            }
+            Thread.sleep(5000);
+        }
     }
 
     private void temporalSaveRequest(List<List<String>> userAccessTokens) {
@@ -256,54 +271,6 @@ public class FlowTest implements UsingContainers {
         return usersGroupBySector;
     }
 
-    private void rescheduleJob() throws SchedulerException {
-        scheduler.clear();
-
-        JobDetail openJob = createEventOpenJob();
-        Trigger openTrigger = createEventOpenTrigger(openJob);
-
-        JobDetail processJob = createRegistrationProcessingJob();
-        Trigger processTrigger = createRegistrationProcessingTrigger(processJob);
-
-        scheduler.scheduleJob(processJob, processTrigger);
-        scheduler.scheduleJob(openJob, openTrigger);
-        scheduler.start();
-    }
-
-    private SimpleTrigger createRegistrationProcessingTrigger(JobDetail processJob) {
-        return newTrigger()
-                .withIdentity("REGISTRATION_PROCESSING_TRIGGER" + EVENT_VALUE, "testGroup")
-                .startNow()
-                .withSchedule(
-                        SimpleScheduleBuilder.simpleSchedule()
-                                .withIntervalInMilliseconds(400)
-                                .repeatForever())
-                .forJob(processJob)
-                .build();
-    }
-
-    private JobDetail createRegistrationProcessingJob() {
-        return newJob(ProcessQueueDataJob.class)
-                .withIdentity("REGISTRATION_PROCESSING_JOB" + EVENT_VALUE, "testGroup")
-                .usingJobData("eventId", EVENT_VALUE)
-                .build();
-    }
-
-    private Trigger createEventOpenTrigger(JobDetail eventOpenJob) {
-        return newTrigger()
-                .withIdentity("EVENT_OPEN_TRIGGER" + EVENT_VALUE, "testGroup")
-                .startNow()
-                .forJob(eventOpenJob)
-                .build();
-    }
-
-    private JobDetail createEventOpenJob() {
-        return newJob(QuartzJobLauncher.class)
-                .withIdentity("EVENT_OPEN_JOB" + EVENT_VALUE, "testGroup")
-                .usingJobData("eventId", EVENT_VALUE)
-                .build();
-    }
-
     private List<String> setUpUserData(int userSize) {
         List<User> users = saveUsers(userSize);
         return generateToken(users);
@@ -335,13 +302,13 @@ public class FlowTest implements UsingContainers {
                 .exchange().expectStatus().isOk();
     }
 
-    private void createEvent(String accessToken) {
+    private void createEvent(String accessToken, int startAfterSec) {
         client = client.mutate()
                 .defaultHeader(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
                 .build();
 
         LocalDateTime now = LocalDateTime.now();
-        DateTimePeriod dateTimePeriod = new DateTimePeriod(now.plusSeconds(5), now.plusMinutes(10));
+        DateTimePeriod dateTimePeriod = new DateTimePeriod(now.plusSeconds(startAfterSec), now.plusMinutes(10));
 
         EventRegisterRequest registerRequest = new EventRegisterRequest(dateTimePeriod, "주차권 이벤트");
         client.post().uri("/v1/events")
