@@ -17,9 +17,6 @@ public class EventIssuedEvent extends InfrastructureEvent {
 
     @Override
     public String toString() {
-        return "EventIssuedEvent{" +
-                "message=" + message +
-                ", score=" + score +
-                '}';
+        return "EventIssuedEvent{" + "message=" + message + ", score=" + score + '}';
     }
 }

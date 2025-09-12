@@ -1,5 +1,7 @@
 package com.jnu.ticketdomain.domains.registration.repository;
 
+import static com.jnu.ticketdomain.domains.registration.domain.QRegistration.registration;
+
 import com.jnu.ticketdomain.domains.events.domain.QSector;
 import com.jnu.ticketdomain.domains.registration.domain.QRegistration;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
@@ -8,13 +10,10 @@ import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
+import javax.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-
-import javax.persistence.EntityManager;
-import java.util.List;
-
-import static com.jnu.ticketdomain.domains.registration.domain.QRegistration.registration;
 
 @Repository
 @RequiredArgsConstructor
@@ -27,7 +26,11 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
         return queryFactory
                         .selectOne()
                         .from(registration)
-                        .where(registration.email.eq(email).and(isSavedAndEqEvent(registration, eventId)))
+                        .where(
+                                registration
+                                        .email
+                                        .eq(email)
+                                        .and(isSavedAndEqEvent(registration, eventId)))
                         .fetchFirst()
                 != null;
     }
@@ -38,7 +41,8 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
                         .selectOne()
                         .from(registration)
                         .where(
-                                registration.studentNum
+                                registration
+                                        .studentNum
                                         .eq(studentNum)
                                         .and(isSavedAndEqEvent(registration, eventId)))
                         .fetchFirst()

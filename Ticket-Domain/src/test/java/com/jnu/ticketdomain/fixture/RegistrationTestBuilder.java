@@ -1,9 +1,9 @@
 package com.jnu.ticketdomain.fixture;
 
+
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
-
 import java.time.LocalDateTime;
 
 public class RegistrationTestBuilder {

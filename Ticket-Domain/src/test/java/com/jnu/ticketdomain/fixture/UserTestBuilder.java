@@ -1,5 +1,6 @@
 package com.jnu.ticketdomain.fixture;
 
+
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
@@ -45,11 +46,7 @@ public class UserTestBuilder {
     }
 
     public User build() {
-        User user = User.builder()
-                .email(email)
-                .pwd(pwd)
-                .userRole(userRole)
-                .build();
+        User user = User.builder().email(email).pwd(pwd).userRole(userRole).build();
 
         // 상태 세팅
         switch (status) {
