@@ -185,15 +185,6 @@ public class EventIssuedEventHandler {
             throw NoEventStockLeftException.EXCEPTION;
         }
 
-        if (!registration.isSaved()) {
-            registration.finalSave();
-            registration.setSector(sector);
-            registration.setUser(user);
-            registrationAdaptor.save(registration);
-            tracker.info("신규 등록 저장 완료 - RegistrationId: {}", registration.getId());
-            return;
-        }
-
         registration.setSector(sector);
         registration.setUser(user);
         registrationAdaptor.saveAndFlush(registration);
