@@ -98,7 +98,7 @@ public class EventIssuedEventHandler {
                     sector.getRemainingAmount());
 
             // 5. 등록 처리
-            processQueueData(sector, registration, eventIssuedEvent.getMessage().getUserId());
+            processQueueData(sector, registration, eventIssuedEvent);
             sectorAdaptor.decreaseRemainingAmount(sector.getId());
 
             // 6. 성공적으로 처리된 경우 트랜잭션 커밋 후 Redis에서 제거
@@ -172,14 +172,15 @@ public class EventIssuedEventHandler {
     }
 
     /** 대기열에서 추출한 등록정보를 저장하고 사용자 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다. */
-    public void processQueueData(Sector sector, Registration registration, Long userId) {
+    public void processQueueData(Sector sector, Registration registration, EventIssuedEvent event) {
+        Long userId = event.getMessage().getUserId();
         User user = userAdaptor.findById(userId);
-        saveRegistration(sector, user, registration);
+        saveRegistration(sector, user, registration, event.getScore());
         Events.raise(UserReflectStatusEvent.of(userId, registration, sector));
     }
 
     /** 등록 정보를 데이터베이스에 저장 */
-    private void saveRegistration(Sector sector, User user, Registration registration) {
+    private void saveRegistration(Sector sector, User user, Registration registration, Double score) {
         if (!sector.isRemainingAmount()) {
             tracker.info("[잔여 좌석 없음]. RegistrationId: {}", registration.getId());
             throw NoEventStockLeftException.EXCEPTION;
@@ -187,8 +188,8 @@ public class EventIssuedEventHandler {
 
         registration.setSector(sector);
         registration.setUser(user);
+        registration.setSavedAt(score.longValue());
         registrationAdaptor.saveAndFlush(registration);
-        registrationAdaptor.updateSavedAt(registration);
         tracker.info("기존 등록 정보 업데이트 완료 - RegistrationId: {}", registration.getId());
     }
 
