@@ -8,6 +8,7 @@ import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
+import com.jnu.ticketinfrastructure.service.queue.SectorThreadPoolManager;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -30,6 +31,7 @@ public class BatchQuartzJob extends QuartzJobBean {
     @Autowired RedisRepository redisRepository;
     @Autowired RegistrationAdaptor registrationAdaptor;
     @Autowired EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
+    @Autowired private SectorThreadPoolManager sectorThreadPoolManager;
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
@@ -38,6 +40,7 @@ public class BatchQuartzJob extends QuartzJobBean {
         Event event = eventAdaptor.findById(eventId);
         redisRepository.delete(REDIS_EVENT_ISSUE_STORE);
         eventAdaptor.updateEventStatus(event, EventStatus.CLOSED);
+        sectorThreadPoolManager.shutdownSectorThreadPools(eventId);
 
         JobParameters jobParameters =
                 new JobParametersBuilder(this.jobExplorer)
