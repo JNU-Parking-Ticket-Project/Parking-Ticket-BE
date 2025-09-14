@@ -1,5 +1,7 @@
 package com.jnu.ticketapi.api.event.handler;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
@@ -27,8 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -45,7 +45,6 @@ public class EventIssuedEventHandler {
     private final SectorAdaptor sectorAdaptor;
     private final ObjectMapper objectMapper;
     private final HikariDataSource hikariDataSource;
-
 
     @EventListener(classes = EventIssuedEvent.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -179,7 +178,8 @@ public class EventIssuedEventHandler {
     }
 
     /** 등록 정보를 데이터베이스에 저장 */
-    private void saveRegistration(Sector sector, User user, Registration registration, Double score) {
+    private void saveRegistration(
+            Sector sector, User user, Registration registration, Double score) {
         if (!sector.isRemainingAmount()) {
             tracker.info("[잔여 좌석 없음]. RegistrationId: {}", registration.getId());
             throw NoEventStockLeftException.EXCEPTION;

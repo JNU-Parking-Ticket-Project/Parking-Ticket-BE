@@ -160,7 +160,6 @@ public class Registration {
 
     public Registration() {}
 
-
     public void updateIsDeleted(boolean isDeleted) {
         this.isDeleted = isDeleted;
     }
