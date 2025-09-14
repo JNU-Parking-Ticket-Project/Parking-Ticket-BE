@@ -13,6 +13,8 @@ import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
@@ -25,6 +27,8 @@ public class ProcessQueueDataJob implements Job {
     @Autowired private WaitingQueueService waitingQueueService;
 
     @Autowired private SectorThreadPoolManager sectorThreadPoolManager;
+    private static final Logger tracker = LoggerFactory.getLogger("processTracker");
+
 
     private final int batchSize = 10;
 
@@ -37,11 +41,8 @@ public class ProcessQueueDataJob implements Job {
                     waitingQueueService.peekBatch(REDIS_EVENT_ISSUE_STORE, batchSize);
 
             if (batch.isEmpty()) {
-                log.info("No messages in the queue to process.");
                 return;
             }
-
-            log.info("Found {} messages to process", batch.size());
 
             // 2. 각 메시지를 해당하는 구간의 미리 생성된 스레드풀에 개별 분배
             for (TypedTuple<Object> messageWithScore : batch) {
@@ -59,10 +60,10 @@ public class ProcessQueueDataJob implements Job {
                         });
             }
 
-            log.info("All {} messages distributed to sector thread pools", batch.size());
+            tracker.info("{} 개의 메시지를 처리 대기열에 제출함", batch.size());
 
         } catch (Exception e) {
-            log.error("ProcessQueueDataJob Exception: {}", e.getMessage(), e);
+            log.error("ProcessQueueDataJob 실행 중 오류 발생", e);
         }
     }
 }
