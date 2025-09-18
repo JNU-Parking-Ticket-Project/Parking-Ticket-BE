@@ -46,11 +46,15 @@ public class EventIssuedEventHandler {
     private final ObjectMapper objectMapper;
     private final HikariDataSource hikariDataSource;
 
+    private static final String JSON_PARSE_FAIL_COUNT_KEY = "json_parse_fail_count:";
+    private static final int MAX_JSON_PARSE_FAIL_COUNT = 3;
+
     @EventListener(classes = EventIssuedEvent.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EventIssuedEvent eventIssuedEvent) {
+        Long userId = eventIssuedEvent.getMessage().getUserId();
         try {
-            MDC.put("userId", String.valueOf(eventIssuedEvent.getMessage().getUserId()));
+            MDC.put("userId", String.valueOf(userId));
             tracker.info(
                     "이벤트 처리 시작 - 사용자Id: {}, 구간Id: {}",
                     eventIssuedEvent.getMessage().getUserId(),
@@ -70,11 +74,25 @@ public class EventIssuedEventHandler {
                                 eventIssuedEvent.getMessage().getRegistration(),
                                 Registration.class);
             } catch (JsonProcessingException e) {
-                tracker.error(
-                        "등록 JSON 파싱 실패 (서버 문제일 수 있음), 재처리를 위해 큐에 유지: {}",
-                        eventIssuedEvent.getMessage().getRegistration(),
-                        e);
-                return; // 파싱 실패 시에도 Redis에서 제거하지 않음 (서버 문제일 수 있음)
+                String registrationMessage = eventIssuedEvent.getMessage().getRegistration();
+                String key = JSON_PARSE_FAIL_COUNT_KEY + userId;
+                int failCount = waitingQueueService.incrementFailCount(key);
+                if(failCount >= MAX_JSON_PARSE_FAIL_COUNT) {
+                    tracker.error(
+                            "JSON 파싱 {}회 연속 실패, 큐에서 제거 - UserId: {}, 데이터: {}",
+                            failCount, userId, eventIssuedEvent.getMessage().getRegistration());
+                    waitingQueueService.clearFailCount(key); // 실패 횟수 초기화
+                    waitingQueueService.remove(
+                            REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage()); // 큐에서 제거
+                    return;
+                }
+                else {
+                    tracker.error(
+                            "JSON 파싱 실패 ({}/{}회), 재처리를 위해 큐에 유지 - UserId: {}, 데이터: {}",
+                            failCount, MAX_JSON_PARSE_FAIL_COUNT, userId,
+                            eventIssuedEvent.getMessage().getRegistration(), e);
+                    return;
+                }
             }
 
             // 3. 중복 처리 확인

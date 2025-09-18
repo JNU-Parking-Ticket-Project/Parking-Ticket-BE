@@ -8,7 +8,10 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
+
+import java.time.Duration;
 import java.util.*;
+
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -26,7 +29,9 @@ public class WaitingQueueService {
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
 
     private final RedisRepository redisRepository;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
+
 
     public WaitingQueueService(RedisRepository redisRepository) {
         this.redisRepository = redisRepository;
@@ -114,10 +119,23 @@ public class WaitingQueueService {
         return redisRepository.zRangeWithScores(key, 0L, -1L);
     }
 
-    /** 배치로 데이터를 가져오되 Redis에서 제거하지 않음 (peek) */
+    /**
+     * 배치로 데이터를 가져오되 Redis에서 제거하지 않음 (peek)
+     */
     public List<ZSetOperations.TypedTuple<Object>> peekBatch(String key, int batchSize) {
         Set<ZSetOperations.TypedTuple<Object>> batch =
                 redisRepository.zRangeWithScores(key, 0L, (long) batchSize - 1);
         return new ArrayList<>(batch);
+    }
+
+    public int incrementFailCount(String key) {
+        Long count = redisRepository.increment(key);
+        // TTL 설정 (1시간 후 자동 삭제)
+        redisRepository.expire(key, Duration.ofHours(1));
+        return count.intValue();
+    }
+
+    public void clearFailCount(String key) {
+        redisRepository.delete(key);
     }
 }
