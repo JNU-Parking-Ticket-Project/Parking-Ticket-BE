@@ -80,7 +80,9 @@ public class EventIssuedEventHandler {
                 if (failCount >= MAX_JSON_PARSE_FAIL_COUNT) {
                     tracker.error(
                             "JSON 파싱 {}회 연속 실패, 큐에서 제거 - UserId: {}, 데이터: {}",
-                            failCount, userId, eventIssuedEvent.getMessage().getRegistration());
+                            failCount,
+                            userId,
+                            eventIssuedEvent.getMessage().getRegistration());
                     waitingQueueService.clearFailCount(key); // 실패 횟수 초기화
                     waitingQueueService.remove(
                             REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage()); // 큐에서 제거
@@ -88,8 +90,11 @@ public class EventIssuedEventHandler {
                 } else {
                     tracker.error(
                             "JSON 파싱 실패 ({}/{}회), 재처리를 위해 큐에 유지 - UserId: {}, 데이터: {}",
-                            failCount, MAX_JSON_PARSE_FAIL_COUNT, userId,
-                            eventIssuedEvent.getMessage().getRegistration(), e);
+                            failCount,
+                            MAX_JSON_PARSE_FAIL_COUNT,
+                            userId,
+                            eventIssuedEvent.getMessage().getRegistration(),
+                            e);
                     return;
                 }
             }
@@ -145,7 +150,7 @@ public class EventIssuedEventHandler {
      * 트랜잭션 커밋/롤백 후 Redis 큐 처리를 위한 콜백 등록
      *
      * @param eventIssuedEvent 처리할 이벤트
-     * @param removeOnSuccess  성공 시 제거 여부
+     * @param removeOnSuccess 성공 시 제거 여부
      */
     private void registerTransactionSynchronization(
             EventIssuedEvent eventIssuedEvent, boolean removeOnSuccess) {
@@ -179,9 +184,7 @@ public class EventIssuedEventHandler {
         }
     }
 
-    /**
-     * 대기열에서 추출한 등록정보를 저장하고 사용자 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
-     */
+    /** 대기열에서 추출한 등록정보를 저장하고 사용자 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다. */
     public void processQueueData(Sector sector, Registration registration, EventIssuedEvent event) {
         Long userId = event.getMessage().getUserId();
         User user = userAdaptor.findById(userId);
@@ -189,9 +192,7 @@ public class EventIssuedEventHandler {
         Events.raise(UserReflectStatusEvent.of(userId, registration, sector));
     }
 
-    /**
-     * 등록 정보를 데이터베이스에 저장
-     */
+    /** 등록 정보를 데이터베이스에 저장 */
     private void saveRegistration(
             Sector sector, User user, Registration registration, Double score) {
         if (!sector.isRemainingAmount()) {

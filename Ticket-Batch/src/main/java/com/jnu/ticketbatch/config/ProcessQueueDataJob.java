@@ -29,7 +29,6 @@ public class ProcessQueueDataJob implements Job {
     @Autowired private SectorThreadPoolManager sectorThreadPoolManager;
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
 
-
     private final int batchSize = 10;
 
     @Override
