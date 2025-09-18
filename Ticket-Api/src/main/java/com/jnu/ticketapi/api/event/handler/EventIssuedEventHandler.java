@@ -77,7 +77,7 @@ public class EventIssuedEventHandler {
                 String registrationMessage = eventIssuedEvent.getMessage().getRegistration();
                 String key = JSON_PARSE_FAIL_COUNT_KEY + userId;
                 int failCount = waitingQueueService.incrementFailCount(key);
-                if(failCount >= MAX_JSON_PARSE_FAIL_COUNT) {
+                if (failCount >= MAX_JSON_PARSE_FAIL_COUNT) {
                     tracker.error(
                             "JSON 파싱 {}회 연속 실패, 큐에서 제거 - UserId: {}, 데이터: {}",
                             failCount, userId, eventIssuedEvent.getMessage().getRegistration());
@@ -85,8 +85,7 @@ public class EventIssuedEventHandler {
                     waitingQueueService.remove(
                             REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage()); // 큐에서 제거
                     return;
-                }
-                else {
+                } else {
                     tracker.error(
                             "JSON 파싱 실패 ({}/{}회), 재처리를 위해 큐에 유지 - UserId: {}, 데이터: {}",
                             failCount, MAX_JSON_PARSE_FAIL_COUNT, userId,
@@ -98,7 +97,7 @@ public class EventIssuedEventHandler {
             // 3. 중복 처리 확인
             if (Boolean.TRUE.equals(
                     registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId()))) {
-                tracker.info("이미 저장된 등록정보, 큐에서 제거 - RegistrationId: {}", registration.getId());
+                tracker.info("이미 저장된 등록정보, 큐에서 제거 시작 - RegistrationId: {}", registration.getId());
                 registerTransactionSynchronization(eventIssuedEvent, true);
                 return;
             }
@@ -146,7 +145,7 @@ public class EventIssuedEventHandler {
      * 트랜잭션 커밋/롤백 후 Redis 큐 처리를 위한 콜백 등록
      *
      * @param eventIssuedEvent 처리할 이벤트
-     * @param removeOnSuccess 성공 시 제거 여부
+     * @param removeOnSuccess  성공 시 제거 여부
      */
     private void registerTransactionSynchronization(
             EventIssuedEvent eventIssuedEvent, boolean removeOnSuccess) {
@@ -187,7 +186,9 @@ public class EventIssuedEventHandler {
         }
     }
 
-    /** 대기열에서 추출한 등록정보를 저장하고 사용자 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다. */
+    /**
+     * 대기열에서 추출한 등록정보를 저장하고 사용자 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
+     */
     public void processQueueData(Sector sector, Registration registration, EventIssuedEvent event) {
         Long userId = event.getMessage().getUserId();
         User user = userAdaptor.findById(userId);
@@ -195,7 +196,9 @@ public class EventIssuedEventHandler {
         Events.raise(UserReflectStatusEvent.of(userId, registration, sector));
     }
 
-    /** 등록 정보를 데이터베이스에 저장 */
+    /**
+     * 등록 정보를 데이터베이스에 저장
+     */
     private void saveRegistration(
             Sector sector, User user, Registration registration, Double score) {
         if (!sector.isRemainingAmount()) {
@@ -207,7 +210,6 @@ public class EventIssuedEventHandler {
         registration.setUser(user);
         registration.setSavedAt(score.longValue());
         registrationAdaptor.saveAndFlush(registration);
-        tracker.info("기존 등록 정보 업데이트 완료 - RegistrationId: {}", registration.getId());
     }
 
     /**
