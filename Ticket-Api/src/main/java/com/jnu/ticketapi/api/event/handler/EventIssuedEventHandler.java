@@ -177,10 +177,6 @@ public class EventIssuedEventHandler {
                             }
                         }
                     });
-        } else {
-            tracker.error(
-                    "트랜잭션 롤백됨, 재시도를 위해 Redis 큐에 데이터 유지 - UserId: {}",
-                    eventIssuedEvent.getMessage().getUserId());
         }
     }
 
