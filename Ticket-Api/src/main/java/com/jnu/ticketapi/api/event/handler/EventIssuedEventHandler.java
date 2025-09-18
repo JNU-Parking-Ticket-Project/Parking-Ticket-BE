@@ -155,18 +155,11 @@ public class EventIssuedEventHandler {
                         @Override
                         public void afterCommit() {
                             if (removeOnSuccess) {
+                                waitingQueueService.remove(
+                                        REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                                 tracker.info(
                                         "트랜잭션 커밋 성공, Redis 큐에서 제거 - UserId: {}",
                                         eventIssuedEvent.getMessage().getUserId());
-                                try {
-                                    waitingQueueService.remove(
-                                            REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
-                                } catch (Exception e) {
-                                    tracker.error(
-                                            "커밋 성공 후 Redis 큐 제거 실패 - UserId: {}",
-                                            eventIssuedEvent.getMessage().getUserId(),
-                                            e);
-                                }
                             }
                         }
 
