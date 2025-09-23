@@ -210,14 +210,12 @@ public class EventIssuedEventHandler {
     private boolean isIdleConnectionAvailable() {
         try {
             int idleConnections = hikariDataSource.getHikariPoolMXBean().getIdleConnections();
-            int minimumIdle = hikariDataSource.getHikariConfigMXBean().getMinimumIdle();
 
             // 최소 2개 이상의 여유 연결 확보
-            boolean available = idleConnections >= Math.max(2, minimumIdle);
+            boolean available = idleConnections >= 2;
 
             if (!available) {
-                tracker.warn(
-                        "DB 연결 부족 - 현재: {}, 최소 필요: {}", idleConnections, Math.max(2, minimumIdle));
+                tracker.warn("DB 연결 부족 - 현재: {}", idleConnections);
             }
 
             return available;
