@@ -95,7 +95,8 @@ public class EventIssuedEventHandler {
 
             // 3. 중복 처리 확인
             if (Boolean.TRUE.equals(
-                    registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId()))) {
+                    registrationAdaptor.existsByEmailAndIsSavedTrue(
+                            registration.getEmail(), eventIssuedEvent.getMessage().getEventId()))) {
                 tracker.info("이미 저장된 등록정보, 큐에서 제거 시작 - RegistrationId: {}", registration.getId());
                 waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                 return;
