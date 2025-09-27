@@ -53,10 +53,7 @@ public class EventIssuedEventHandler {
         Long userId = eventIssuedEvent.getMessage().getUserId();
         try {
             MDC.put("userId", String.valueOf(userId));
-            tracker.info(
-                    "이벤트 처리 시작 - 사용자Id: {}, 구간Id: {}",
-                    eventIssuedEvent.getMessage().getUserId(),
-                    eventIssuedEvent.getMessage().getSectorId());
+            tracker.info("이벤트 처리 시작 - SectorId: {}", eventIssuedEvent.getMessage().getSectorId());
 
             // 1. 데이터베이스 연결 풀 확인
             if (!isIdleConnectionAvailable()) {
@@ -124,9 +121,9 @@ public class EventIssuedEventHandler {
 
         } catch (NoEventStockLeftException e) {
             // 좌석 부족은 정상적인 비즈니스 로직이므로 Redis에서 제거
+            waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
             tracker.info(
                     "잔여 좌석 없음, 큐에서 제거 - SectorId: {}", eventIssuedEvent.getMessage().getSectorId());
-            waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
 
         } catch (Exception e) {
             // 시스템 예외 발생 시 로깅만 하고 Redis에서 제거하지 않음
@@ -155,7 +152,6 @@ public class EventIssuedEventHandler {
     private void saveRegistration(
             Sector sector, User user, Registration registration, Double score) {
         if (!sector.isRemainingAmount()) {
-            tracker.info("[잔여 좌석 없음]. RegistrationId: {}", registration.getId());
             throw NoEventStockLeftException.EXCEPTION;
         }
 
