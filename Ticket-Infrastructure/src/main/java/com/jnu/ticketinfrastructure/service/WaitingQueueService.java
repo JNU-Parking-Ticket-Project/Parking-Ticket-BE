@@ -44,6 +44,10 @@ public class WaitingQueueService {
         tracker.info("Added to the queue, score:{}", score);
     }
 
+    public void registerQueue(String key, Object value, Double score) {
+        redisRepository.zAddIfAbsent(key, value, score);
+    }
+
     public String convertRegistrationJSON(Registration registration) {
         JSONObject registrationJson = new JSONObject();
         registrationJson.put("email", registration.getEmail());

@@ -80,7 +80,7 @@ public enum GlobalErrorCode implements BaseErrorCode {
     TOO_MANY_REQUEST(TOO_MANY_REQUESTS, "GLOBAL_429_1", "과도한 요청을 보내셨습니다. 잠시 기다려 주세요."),
     INVALID_PASSWORD(BAD_REQUEST, "GLOBAL_400_4", "비밀번호는 10자 이상 숫자, 특수문자를 포함해야 합니다."),
     GLOBAL_FORBIDDEN(FORBIDDEN, "GLOBAL_403_1", "Global Forbidden"),
-    ;
+    JSON_PROCESSING_ERROR(INTERNAL_SERVER, "GLOBAL_500_4", "JSON 객체 변환중 오류가 발생했습니다.");
     private Integer status;
     private String code;
     private String reason;

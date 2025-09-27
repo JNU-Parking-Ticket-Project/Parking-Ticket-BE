@@ -4,6 +4,8 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketapi.common.aop.QueueFailureHandling;
+import com.jnu.ticketcommon.exception.JsonProcessErrorException;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
@@ -44,11 +46,9 @@ public class EventIssuedEventHandler {
     private final ObjectMapper objectMapper;
     private final HikariDataSource hikariDataSource;
 
-    private static final String JSON_PARSE_FAIL_COUNT_KEY = "json_parse_fail_count:";
-    private static final int MAX_JSON_PARSE_FAIL_COUNT = 3;
-
     @EventListener(classes = EventIssuedEvent.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @QueueFailureHandling(removeImmediatelyExceptions = NoEventStockLeftException.class)
     public void handle(EventIssuedEvent eventIssuedEvent) {
         Long userId = eventIssuedEvent.getMessage().getUserId();
         try {
@@ -69,28 +69,8 @@ public class EventIssuedEventHandler {
                                 eventIssuedEvent.getMessage().getRegistration(),
                                 Registration.class);
             } catch (JsonProcessingException e) {
-                String key = JSON_PARSE_FAIL_COUNT_KEY + userId;
-                int failCount = waitingQueueService.incrementFailCount(key);
-                if (failCount >= MAX_JSON_PARSE_FAIL_COUNT) {
-                    tracker.error(
-                            "JSON 파싱 {}회 연속 실패, 큐에서 제거 - UserId: {}, 데이터: {}",
-                            failCount,
-                            userId,
-                            eventIssuedEvent.getMessage().getRegistration());
-                    waitingQueueService.clearFailCount(key); // 실패 횟수 초기화
-                    waitingQueueService.remove(
-                            REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage()); // 큐에서 제거
-                    return;
-                } else {
-                    tracker.error(
-                            "JSON 파싱 실패 ({}/{}회), 재처리를 위해 큐에 유지 - UserId: {}, 데이터: {}",
-                            failCount,
-                            MAX_JSON_PARSE_FAIL_COUNT,
-                            userId,
-                            eventIssuedEvent.getMessage().getRegistration(),
-                            e);
-                    return;
-                }
+                tracker.error("등록정보 JSON 파싱 실패 - UserId: {}, 오류: {}", userId, e.getMessage());
+                throw JsonProcessErrorException.EXCEPTION;
             }
 
             // 3. 중복 처리 확인
@@ -119,22 +99,6 @@ public class EventIssuedEventHandler {
             // 6. 성공적으로 처리된 경우 트랜잭션 커밋 후 Redis에서 제거
             waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
             tracker.info("등록 처리 완료 - RegistrationId: {}", registration.getId());
-
-        } catch (NoEventStockLeftException e) {
-            // 좌석 부족은 정상적인 비즈니스 로직이므로 Redis에서 제거
-            waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
-            tracker.info(
-                    "잔여 좌석 없음, 큐에서 제거 - SectorId: {}", eventIssuedEvent.getMessage().getSectorId());
-
-        } catch (Exception e) {
-            // 시스템 예외 발생 시 로깅만 하고 Redis에서 제거하지 않음
-            // 다음 스케줄러 실행 시 재처리됨
-            tracker.error(
-                    "시스템 예외 발생, 다음 스케줄러 실행시 재처리를 위해 큐에 유지 - UserId: {}, 오류: {}",
-                    eventIssuedEvent.getMessage().getUserId(),
-                    e.getMessage(),
-                    e);
-            // Redis에서 제거하지 않으므로 registerTransactionSynchronization 호출하지 않음
 
         } finally {
             MDC.clear();
