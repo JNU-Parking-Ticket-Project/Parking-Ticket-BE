@@ -26,8 +26,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Component
 @RequiredArgsConstructor
@@ -74,7 +72,6 @@ public class EventIssuedEventHandler {
                                 eventIssuedEvent.getMessage().getRegistration(),
                                 Registration.class);
             } catch (JsonProcessingException e) {
-                String registrationMessage = eventIssuedEvent.getMessage().getRegistration();
                 String key = JSON_PARSE_FAIL_COUNT_KEY + userId;
                 int failCount = waitingQueueService.incrementFailCount(key);
                 if (failCount >= MAX_JSON_PARSE_FAIL_COUNT) {
@@ -103,7 +100,7 @@ public class EventIssuedEventHandler {
             if (Boolean.TRUE.equals(
                     registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId()))) {
                 tracker.info("이미 저장된 등록정보, 큐에서 제거 시작 - RegistrationId: {}", registration.getId());
-                registerTransactionSynchronization(eventIssuedEvent, true);
+                waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
                 return;
             }
 
@@ -122,14 +119,14 @@ public class EventIssuedEventHandler {
             sectorAdaptor.decreaseRemainingAmount(sector.getId());
 
             // 6. 성공적으로 처리된 경우 트랜잭션 커밋 후 Redis에서 제거
-            registerTransactionSynchronization(eventIssuedEvent, true);
+            waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
             tracker.info("등록 처리 완료 - RegistrationId: {}", registration.getId());
 
         } catch (NoEventStockLeftException e) {
             // 좌석 부족은 정상적인 비즈니스 로직이므로 Redis에서 제거
             tracker.info(
                     "잔여 좌석 없음, 큐에서 제거 - SectorId: {}", eventIssuedEvent.getMessage().getSectorId());
-            registerTransactionSynchronization(eventIssuedEvent, true);
+            waitingQueueService.remove(REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
 
         } catch (Exception e) {
             // 시스템 예외 발생 시 로깅만 하고 Redis에서 제거하지 않음
@@ -143,40 +140,6 @@ public class EventIssuedEventHandler {
 
         } finally {
             MDC.clear();
-        }
-    }
-
-    /**
-     * 트랜잭션 커밋/롤백 후 Redis 큐 처리를 위한 콜백 등록
-     *
-     * @param eventIssuedEvent 처리할 이벤트
-     * @param removeOnSuccess 성공 시 제거 여부
-     */
-    private void registerTransactionSynchronization(
-            EventIssuedEvent eventIssuedEvent, boolean removeOnSuccess) {
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                        @Override
-                        public void afterCommit() {
-                            if (removeOnSuccess) {
-                                waitingQueueService.remove(
-                                        REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
-                                tracker.info(
-                                        "트랜잭션 커밋 성공, Redis 큐에서 제거 - UserId: {}",
-                                        eventIssuedEvent.getMessage().getUserId());
-                            }
-                        }
-
-                        @Override
-                        public void afterCompletion(int status) {
-                            if (status == STATUS_ROLLED_BACK) {
-                                tracker.error(
-                                        "트랜잭션 롤백됨, 재시도를 위해 Redis 큐에 데이터 유지 - UserId: {}",
-                                        eventIssuedEvent.getMessage().getUserId());
-                            }
-                        }
-                    });
         }
     }
 
