@@ -3,7 +3,7 @@
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=JNU-Parking-Ticket-Project_Parking-Ticket-BE&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=JNU-Parking-Ticket-Project_Parking-Ticket-BE)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=JNU-Parking-Ticket-Project_Parking-Ticket-BE&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=JNU-Parking-Ticket-Project_Parking-Ticket-BE)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=JNU-Parking-Ticket-Project_Parking-Ticket-BE&metric=coverage)](https://sonarcloud.io/summary/new_code?id=JNU-Parking-Ticket-Project_Parking-Ticket-BE)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=JNU-Parking-Ticket-Project_Parking-Ticket-BE&metric=bugs)](https://sonarcloud.io/summary/new_code?id=JNU-Parking-Ticket-Project_Parking-Ticket-BE)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=JNU-Parking-Ticket-Project_Parking-Ticket-BE&metric=bugs)](https://sonarcloud.io/summary/new_code?id=JNU-Parking-Ticket-Project_Parking-Ticket-BE)   
 
 이 서비스는 전남대학교 학생들을 위한 주차권 선착순 발행 서비스입니다.
 
@@ -37,6 +37,7 @@ JNU 주차권 백엔드 프로젝트에 많은 관심을 가져주셔서 감사�
 4. Ticket-Api 모듈을 실행합니다.
 
 ---
-# Architecture
-![TO_BE2](https://github.com/user-attachments/assets/2f5e3a3a-4f9c-4b04-afab-1d6dff0eeb39)
+# Architecture   
+*updated at 2025.11.17*
+![TO_BE2](https://github.com/user-attachments/assets/94cf0769-1317-4fa6-bba8-d1e3f5c0eb48)
 
