@@ -3,6 +3,8 @@ package com.jnu.ticketinfrastructure.config.redis;
 
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import java.time.Duration;
+
+import com.jnu.ticketinfrastructure.model.RegistrationInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -47,21 +49,35 @@ public class RedisConfig {
 
         LettuceClientConfiguration clientConfig =
                 LettuceClientConfiguration.builder()
-                        .commandTimeout(Duration.ofSeconds(1))
+                        .commandTimeout(Duration.ofSeconds(10))
                         .shutdownTimeout(Duration.ZERO)
                         .build();
         return new LettuceConnectionFactory(redisConfig, clientConfig);
     }
 
-    @Bean(name = "redisTemplate")
+    @Bean(name = "customRedisTemplate")
     @ConditionalOnExpression("${ableRedis:true}")
-    public RedisTemplate<String, Object> redisTemplate() {
+    public RedisTemplate<String, Object> customRedisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
 
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         Jackson2JsonRedisSerializer<ChatMessage> serializer =
                 new Jackson2JsonRedisSerializer<>(ChatMessage.class);
+        redisTemplate.setValueSerializer(serializer);
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(serializer);
+        return redisTemplate;
+    }
+
+    @Bean
+    public RedisTemplate<String, RegistrationInfo> redisTemplateForStream() {
+        RedisTemplate<String, RegistrationInfo> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory());
+
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        Jackson2JsonRedisSerializer<RegistrationInfo> serializer =
+                new Jackson2JsonRedisSerializer<>(RegistrationInfo.class);
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(serializer);

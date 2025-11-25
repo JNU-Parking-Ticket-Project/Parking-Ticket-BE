@@ -1,24 +1,25 @@
 package com.jnu.ticketinfrastructure.service;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.*;
+
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
 
 @Service
 @Slf4j
@@ -28,7 +29,8 @@ public class WaitingQueueService {
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
 
     private final RedisRepository redisRepository;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public WaitingQueueService(RedisRepository redisRepository) {
         this.redisRepository = redisRepository;
@@ -44,6 +46,7 @@ public class WaitingQueueService {
         redisRepository.zAddIfAbsent(key, message, score);
         tracker.info("Added to the queue, score:{}", score);
     }
+
 
     public String convertRegistrationJSON(Registration registration) {
         JSONObject registrationJson = new JSONObject();

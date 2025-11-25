@@ -3,27 +3,78 @@ package com.jnu.ticketinfrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import com.jnu.ticketinfrastructure.model.RegistrationInFoRecord;
+import com.jnu.ticketinfrastructure.model.RegistrationInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
+
+import java.time.Duration;
+import java.util.*;
 
 @Repository
 @Slf4j
 @ConditionalOnExpression("${ableRedis:true}")
 public class RedisRepository {
+
+    private static final String REGISTRATION_INFO_KEY = "registrationInfo";
+
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplateForStream;
+    private final RedisTemplate<String, RegistrationInfo> redisTemplateForRegistration;
     private final ObjectMapper objectMapper;
 
-    public RedisRepository(RedisTemplate<String, Object> redisTemplate) {
+    public RedisRepository(
+            RedisTemplate<String, Object> redisTemplate,
+            RedisTemplate<String, String> redisTemplateForStream,
+            RedisTemplate<String, RegistrationInfo> redisTemplateForRegistration
+    ) {
         this.redisTemplate = redisTemplate;
+        this.redisTemplateForStream = redisTemplateForStream;
         this.objectMapper = new ObjectMapper();
+        this.redisTemplateForRegistration = redisTemplateForRegistration;
+    }
+
+
+    public List<RegistrationInFoRecord> streamReadAfterId(String key, RecordId id, int count) {
+        StreamReadOptions readOption = StreamReadOptions
+                .empty()
+                .block(Duration.ofSeconds(3))
+                .count(count);
+        StreamOffset<String> offset = StreamOffset.create(key, ReadOffset.from(id));
+
+        StreamOperations<String, String, RegistrationInfo> streamOps = redisTemplateForRegistration.opsForStream();
+        List<MapRecord<String, String, RegistrationInfo>> mapRecords = streamOps.read(readOption, offset);
+        return convertToRegistrationInfoRecord(mapRecords);
+    }
+
+    private List<RegistrationInFoRecord> convertToRegistrationInfoRecord(List<MapRecord<String, String, RegistrationInfo>> mapRecords) {
+        List<RegistrationInFoRecord> result = new ArrayList<>();
+        for (MapRecord<String, String, RegistrationInfo> mapRecord : mapRecords) {
+            RegistrationInfo registrationInfo = mapRecord.getValue().get(REGISTRATION_INFO_KEY);
+            RegistrationInfo newRegistrationInfo = registrationInfo.setSavedAt(mapRecord.getId());
+            result.add(new RegistrationInFoRecord(mapRecord.getId(), newRegistrationInfo));
+        }
+        return result;
+    }
+
+    public void streamAdd(String key, RegistrationInfo registrationDto) {
+        Map<String, RegistrationInfo> content = Map.of(REGISTRATION_INFO_KEY, registrationDto);
+        redisTemplateForRegistration.opsForStream().add(key, content);
+    }
+
+    public Long increment(String key) {
+        return redisTemplate.opsForValue().increment(key);
+    }
+
+    public Long decrement(String key) {
+        return redisTemplate.opsForValue().decrement(key);
     }
 
     public Boolean zAdd(String key, Object value, Double score) {

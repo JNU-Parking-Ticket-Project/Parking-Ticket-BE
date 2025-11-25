@@ -3,7 +3,7 @@ package com.jnu.ticketbatch.job;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
-import com.jnu.ticketbatch.config.ProcessQueueDataJob;
+import com.jnu.ticketbatch.config.DataProcessingJob;
 import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketbatch.expired.BatchQuartzJob;
 import com.jnu.ticketdomain.domains.events.EventExpiredEventRaiseGateway;
@@ -104,36 +104,32 @@ public class EventRegisterJob implements Job {
         scheduler.scheduleJob(expiredEventQuartzJob, reserveTrigger);
     }
 
-    public void processQueueDataJob(Long eventId, LocalDateTime startAt, LocalDateTime endAt)
+    public void dataProcessingJob(Long eventId, LocalDateTime startAt, LocalDateTime endAt)
             throws Exception {
         scheduler.start();
 
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put(EVENT_ID, eventId);
 
-        JobDetail processQueueDataJob =
-                newJob(ProcessQueueDataJob.class)
-                        .withIdentity("PROCESS_QUEUE_DATA_JOB" + eventId, GROUP)
+        JobDetail dataProcessingJob =
+                newJob(DataProcessingJob.class)
+                        .withIdentity("DATA_PROCESSING_JOB" + eventId, GROUP)
                         .usingJobData(jobDataMap) // eventId만 JobDataMap에 추가
                         .build();
 
         Date start = Date.from(startAt.atZone(ZoneId.of(ASIA_SEOUL)).toInstant());
         Date end = Date.from(endAt.atZone(ZoneId.of(ASIA_SEOUL)).toInstant());
 
-        Trigger reserveTrigger =
+        Trigger dataProcessingTrigger =
                 newTrigger()
-                        .withIdentity("PROCESS_QUEUE_DATA_TRIGGER" + eventId, GROUP)
+                        .withIdentity("DATA_PROCESSING_TRIGGER" + eventId, GROUP)
                         .startAt(start)
                         .endAt(end)
-                        .withSchedule(
-                                SimpleScheduleBuilder.simpleSchedule()
-                                        .withIntervalInMilliseconds(400)
-                                        .repeatForever())
-                        .forJob(processQueueDataJob)
+                        .forJob(dataProcessingJob)
                         .build();
 
         log.info(">>>>> ProcessQueueData 스케줄링 등록");
 
-        scheduler.scheduleJob(processQueueDataJob, reserveTrigger);
+        scheduler.scheduleJob(dataProcessingJob, dataProcessingTrigger);
     }
 }
