@@ -20,6 +20,7 @@ import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.AlreadyCloseStatusException;
+import com.jnu.ticketdomain.domains.events.exception.NotIssuingEventPeriodException;
 import com.jnu.ticketdomain.domains.events.exception.NotPublishEventException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
@@ -206,8 +207,11 @@ public class RegistrationUseCase {
     }
 
     private void validateEventPeriod(Event event) {
-        if (event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())
-                && event.getDateTimePeriod().isBeforeStartAt(LocalDateTime.now())) {
+        LocalDateTime now = LocalDateTime.now();
+        if (event.getDateTimePeriod().isBeforeStartAt(now)) {
+            throw NotIssuingEventPeriodException.EXCEPTION;
+        }
+        if (event.getDateTimePeriod().isAfterEndAt(now)) {
             throw AlreadyCloseStatusException.EXCEPTION;
         }
     }
