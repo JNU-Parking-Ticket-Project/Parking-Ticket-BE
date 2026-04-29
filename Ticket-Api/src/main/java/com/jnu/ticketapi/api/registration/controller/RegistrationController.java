@@ -1,6 +1,5 @@
 package com.jnu.ticketapi.api.registration.controller;
 
-
 import com.jnu.ticketapi.api.registration.docs.FinalSaveExceptionDocs;
 import com.jnu.ticketapi.api.registration.docs.TemporarySaveExceptionFDocs;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
@@ -10,13 +9,16 @@ import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse
 import com.jnu.ticketapi.api.registration.model.response.GetRegistrationsResponse;
 import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
 import com.jnu.ticketapi.api.registration.service.RegistrationUseCase;
+import com.jnu.ticketapi.api.user.ResultAssignment;
 import com.jnu.ticketapi.common.aop.GetEmail;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import javax.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 public class RegistrationController {
 
     private final RegistrationUseCase registrationUseCase;
+    private final ResultAssignment resultAssignment;
 
     @Operation(
             summary = "임시 저장 조회",
@@ -69,5 +72,12 @@ public class RegistrationController {
             @PathVariable("eventId") Long eventId) {
         GetRegistrationsResponse responseDto = registrationUseCase.getRegistrations(eventId);
         return ResponseEntity.ok(responseDto);
+    }
+
+    @Operation(summary = "신청 결과 집계", description = "신청 결과 집계")
+    @PatchMapping("/registrations/assign/result/{eventId}")
+    public ResponseEntity<Void> assignResult(@PathVariable("eventId") Long eventId) {
+        resultAssignment.assign(eventId);
+        return ResponseEntity.ok().build();
     }
 }
