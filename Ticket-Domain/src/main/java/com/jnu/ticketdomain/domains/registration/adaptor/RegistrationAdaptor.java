@@ -82,6 +82,11 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
         return registrationRepository.findByIsDeletedFalseAndIsSavedTrue(eventId);
     }
 
+    @Override
+    public List<Registration> findSavedByEventIdOrderBySavedAt(Long eventId) {
+        return registrationRepository.findSavedByEventIdOrderBySavedAt(eventId);
+    }
+
     public Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(Long eventId, int page) {
         Pageable pageable = PageRequest.of(page, REGISTRATION_SIZE);
         return registrationRepository.findByIsDeletedFalseAndIsSavedTrueByPage(eventId, pageable);

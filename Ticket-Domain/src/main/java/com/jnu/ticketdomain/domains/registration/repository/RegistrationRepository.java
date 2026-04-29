@@ -37,6 +37,14 @@ public interface RegistrationRepository
             "select r from Registration r join fetch r.sector join fetch r.user where r.isSaved = true and r.sector.event.id = :eventId")
     List<Registration> findByIsDeletedFalseAndIsSavedTrue(@Param("eventId") Long eventId);
 
+    @Query(
+            "select r from Registration r "
+                    + "join fetch r.sector "
+                    + "join fetch r.user "
+                    + "where r.isDeleted = false and r.isSaved = true and r.eventId = :eventId "
+                    + "order by r.savedAt asc")
+    List<Registration> findSavedByEventIdOrderBySavedAt(@Param("eventId") Long eventId);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
             value =
