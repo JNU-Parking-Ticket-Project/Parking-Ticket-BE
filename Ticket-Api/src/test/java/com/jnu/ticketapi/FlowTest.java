@@ -6,6 +6,7 @@ import com.jnu.ticketapi.api.event.model.request.UpdateEventPublishRequest;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
+import com.jnu.ticketapi.api.user.ResultAssignment;
 import com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder;
 import com.jnu.ticketapi.registration.TemporarySaveRequestTestDataBuilder;
 import com.jnu.ticketapi.security.JwtGenerator;
@@ -14,12 +15,16 @@ import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.repository.CaptchaRepository;
+import com.jnu.ticketdomain.domains.events.domain.Event;
+import com.jnu.ticketdomain.domains.events.domain.EventStatus;
+import com.jnu.ticketdomain.domains.events.repository.EventRepository;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.repository.RegistrationRepository;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;
+import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +38,9 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,7 +48,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.jnu.ticketdomain.domains.user.domain.UserStatus.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.awaitility.Awaitility.await;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
@@ -89,6 +99,15 @@ public class FlowTest implements UsingContainers {
     @Autowired
     RegistrationRepository registrationRepository;
 
+    @Autowired
+    EventRepository eventRepository;
+
+    @Autowired
+    RedisRepository redisRepository;
+
+    @Autowired
+    ResultAssignment resultAssignment;
+
     private record Setting(int capacity, int reserve, int requestCount) {
     }
 
@@ -96,19 +115,22 @@ public class FlowTest implements UsingContainers {
 
 
     /**
-     *  Setting record 통해서 구간별 여석, 예비, 요청 수 설정 가능
+     * Setting record 통해서 구간별 여석, 예비, 요청 수 설정 가능
+     * user id 순으로 각 sector에 요청보냄.
+     * sector 랑 event는 새로 만들어져야함 id = 1부터 시작해야함.
      */
     @Test
     @DisplayName("여러 사용자의 최종 저장 요청 신청시, 여석에 맞게 합격, 예비, 불합격 수와 각 구간별 예비번호를 검증한다.")
     void flowTest() throws Exception {
         // given
         List<Setting> settings = List.of(
-                new Setting(10, 30, 40),
-                new Setting(10, 30, 40),
-                new Setting(10, 30, 40)
+                new Setting(50, 10, 80),
+                new Setting(25, 10, 80),
+                new Setting(55, 10, 80),
+                new Setting(80, 10, 100),
+                new Setting(40, 10, 80)
         );
 
-        int resultWaitingSecond = 20;
 
         Integer capacityCountSum = settings.stream().map(Setting::capacity).reduce(0, Integer::sum);
         Integer reserveCountSum = settings.stream().map(Setting::reserve).reduce(0, Integer::sum);
@@ -125,7 +147,7 @@ public class FlowTest implements UsingContainers {
         temporalSaveRequest(userAccessTokens);
 
         rescheduleJob();
-        Thread.sleep(1000);
+        awaitEventOpen();
 
         // when
         ExecutorService executorServiceForSector = Executors.newFixedThreadPool(settings.size());
@@ -136,8 +158,14 @@ public class FlowTest implements UsingContainers {
             List<String> accessTokensPerSector = userAccessTokens.get(i);
             executorServiceForSector.submit(() -> finalSaveRequestToSector(sectorId, accessTokensPerSector, executorServiceInSector));
         }
+        executorServiceForSector.shutdown();
+        executorServiceForSector.awaitTermination(60, SECONDS);
+        executorServiceInSector.shutdown();
+        executorServiceInSector.awaitTermination(60, SECONDS);
 
-        Thread.sleep(resultWaitingSecond * 1000);
+        awaitAllRegistrationsSaved(userCountSum);
+
+        resultAssignment.assign(EVENT_VALUE);
 
         // then
         List<User> usersWithResult = userRepository.findAll(Sort.by("id"));
@@ -145,6 +173,8 @@ public class FlowTest implements UsingContainers {
 
         Map<UserStatus, List<User>> resultByGroup = usersWithResult.stream()
                 .collect(Collectors.groupingBy(User::getStatus, Collectors.toList()));
+
+        printRegistrationsWithUserStatus(registrations, usersWithResult);
 
         assertSoftly(softly -> {
             softly.assertThat(registrations).hasSize(userCountSum);
@@ -156,8 +186,48 @@ public class FlowTest implements UsingContainers {
         assertPerSector(usersWithResult, settings);
     }
 
+    private void printRegistrationsWithUserStatus(List<Registration> registrations, List<User> usersWithResult) {
+        Map<String, User> usersByEmail = usersWithResult.stream()
+                .collect(Collectors.toMap(User::getEmail, u -> u, (a, b) -> a));
+
+        List<Registration> sorted = registrations.stream()
+                .sorted(Comparator.comparing((Registration r) -> r.getSector().getId())
+                        .thenComparing(Registration::getSavedAt))
+                .toList();
+
+        System.out.println("============ 신청서 결과 (savedAt 오름차순) ============");
+        System.out.printf("%-6s | %-30s | %-23s | %-8s | %-8s%n",
+                "regId", "email", "savedAt", "status", "sequence");
+        System.out.println("-".repeat(95));
+
+        for (Registration r : sorted) {
+            Long savedAt = r.getSavedAt();
+            LocalDateTime localDateTime = LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(savedAt),
+                    ZoneId.systemDefault()
+            );
+
+            User user = usersByEmail.get(r.getEmail());
+            String status = user != null ? String.valueOf(user.getStatus()) : "N/A";
+            String sequence = user != null ? String.valueOf(user.getSequence()) : "N/A";
+
+            // 날짜 형식이 너무 길면 칸이 깨지므로, 길이에 맞춰 너비를 조절했습니다.
+            System.out.printf("%-6d | %-35s | %-25s | %-10s | %-8s | %-10s%n",
+                    r.getId(),
+                    r.getEmail(),
+                    localDateTime,
+                    status,
+                    sequence,
+                    r.getSector().getId());
+        }
+        System.out.println("=".repeat(95));
+    }
+
     private void temporalSaveRequest(List<List<String>> userAccessTokens) {
-        int count = userAccessTokens.size() * (9 / 10);
+        List<String> flatTokens = userAccessTokens.stream()
+                .flatMap(List::stream)
+                .toList();
+        int count = (int) (flatTokens.size() * (0.9));
         Random random = new Random();
 
         for (int i = 0; i < count; i++) {
@@ -367,6 +437,28 @@ public class FlowTest implements UsingContainers {
                     .exchange().expectStatus().isOk();
             sectorIdentifier++;
         }
+    }
+
+    private void awaitAllRegistrationsSaved(int expectedSavedCount) {
+        await().atMost(60, SECONDS)
+                .pollInterval(200, MILLISECONDS)
+                .until(() -> registrationRepository.findAll().stream()
+                        .filter(Registration::isSaved)
+                        .count() == expectedSavedCount);
+        System.out.println("============데이터 처리 완료===============");
+    }
+
+    private void awaitEventOpen() {
+        await().atMost(60, SECONDS)
+                .pollInterval(1, SECONDS)
+                .until(
+                        () -> {
+                            // 매번 findById를 통해 DB를 조회 시도
+                            Event event = eventRepository.findFirstByOrderByIdDesc().orElseThrow();
+                            log.info("현재 이벤트 상태: {}", event.getEventStatus());
+                            return event.getEventStatus() == EventStatus.OPEN;
+                        });
+        System.out.println("============이벤트 오픈 완료===============");
     }
 
 }

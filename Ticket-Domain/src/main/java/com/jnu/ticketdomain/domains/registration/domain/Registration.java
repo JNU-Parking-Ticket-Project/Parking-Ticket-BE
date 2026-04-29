@@ -161,7 +161,7 @@ public class Registration {
 
     public void finalSave() {
         this.isSaved = true;
-        this.savedAt = System.nanoTime();
+//        this.savedAt = System.nanoTime();
     }
 
     public void updateIsDeleted(boolean isDeleted) {
@@ -216,5 +216,9 @@ public class Registration {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setSavedAt(Long savedAt) {
+        this.savedAt = savedAt;
     }
 }

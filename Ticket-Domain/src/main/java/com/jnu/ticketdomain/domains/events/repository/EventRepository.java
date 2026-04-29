@@ -35,4 +35,6 @@ public interface EventRepository extends JpaRepository<Event, Long>, CustomEvent
     Page<Event> findAllByOrderByIdDesc(Pageable pageable);
 
     Boolean existsByPublishTrue();
+
+    Optional<Event> findFirstByOrderByIdDesc();
 }
