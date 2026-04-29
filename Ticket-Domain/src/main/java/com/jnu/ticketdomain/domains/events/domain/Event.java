@@ -92,8 +92,9 @@ public class Event {
 
     public void validateIssuePeriod() {
         LocalDateTime nowTime = LocalDateTime.now();
-        // 과거 시간을 포함하기로 기획을 변경했습니다.
-        // if (dateTimePeriod.contains(nowTime)
+        if (dateTimePeriod.getStartAt().isAfter(nowTime)) {
+            throw NotIssuingEventPeriodException.EXCEPTION;
+        }
         if (dateTimePeriod.getEndAt().isBefore(nowTime)
                 || dateTimePeriod.getEndAt().isBefore(dateTimePeriod.getStartAt())) {
             throw InvalidPeriodEventException.EXCEPTION;
