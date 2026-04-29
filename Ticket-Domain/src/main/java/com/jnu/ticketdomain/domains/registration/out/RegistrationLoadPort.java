@@ -18,6 +18,8 @@ public interface RegistrationLoadPort {
 
     List<Registration> findByIsDeletedFalseAndIsSavedTrue(Long eventId);
 
+    List<Registration> findSavedByEventIdOrderBySavedAt(Long eventId);
+
     Boolean existsByEmailAndIsSavedTrue(String email, Long eventId);
 
     Boolean existsByStudentNumAndIsSavedTrue(String studentNum, Long eventId);
