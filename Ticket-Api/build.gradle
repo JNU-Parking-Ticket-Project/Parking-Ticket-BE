@@ -82,6 +82,7 @@ jib {
         jvmFlags = [
                 '-Dspring.profiles.active=' + environment,
                 '-Dserver.port=' + serverPort,
+                '-Duser.timezone=Asia/Seoul',
                 '-Xms2G', '-Xmx2G',
                 '-XX:+UseG1GC',
                 '-XX:+UseContainerSupport',
