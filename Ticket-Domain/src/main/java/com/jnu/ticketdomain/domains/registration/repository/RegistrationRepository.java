@@ -42,7 +42,7 @@ public interface RegistrationRepository
                     + "join fetch r.sector "
                     + "join fetch r.user "
                     + "where r.isDeleted = false and r.isSaved = true and r.eventId = :eventId "
-                    + "order by r.savedAt asc")
+                    + "order by r.savedAt asc, r.id asc")
     List<Registration> findSavedByEventIdOrderBySavedAt(@Param("eventId") Long eventId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
