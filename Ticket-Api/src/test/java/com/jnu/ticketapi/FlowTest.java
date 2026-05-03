@@ -1,5 +1,4 @@
 package com.jnu.ticketapi;
-
 import com.jnu.ticketapi.api.captcha.model.response.CaptchaResponse;
 import com.jnu.ticketapi.api.event.model.request.EventRegisterRequest;
 import com.jnu.ticketapi.api.event.model.request.UpdateEventPublishRequest;
@@ -169,7 +168,7 @@ public class FlowTest implements UsingContainers {
 
         // then
         List<User> usersWithResult = userRepository.findAll(Sort.by("id"));
-        List<Registration> registrations = registrationRepository.findAll();
+        List<Registration> registrations = registrationRepository.findSortedRegistrationsByEventId(EVENT_VALUE);
 
         Map<UserStatus, List<User>> resultByGroup = usersWithResult.stream()
                 .collect(Collectors.groupingBy(User::getStatus, Collectors.toList()));
@@ -190,17 +189,12 @@ public class FlowTest implements UsingContainers {
         Map<String, User> usersByEmail = usersWithResult.stream()
                 .collect(Collectors.toMap(User::getEmail, u -> u, (a, b) -> a));
 
-        List<Registration> sorted = registrations.stream()
-                .sorted(Comparator.comparing((Registration r) -> r.getSector().getId())
-                        .thenComparing(Registration::getSavedAt))
-                .toList();
-
         System.out.println("============ 신청서 결과 (savedAt 오름차순) ============");
         System.out.printf("%-6s | %-30s | %-23s | %-8s | %-8s%n",
                 "regId", "email", "savedAt", "status", "sequence");
         System.out.println("-".repeat(95));
 
-        for (Registration r : sorted) {
+        for (Registration r : registrations) {
             Long savedAt = r.getSavedAt();
             LocalDateTime localDateTime = LocalDateTime.ofInstant(
                     Instant.ofEpochMilli(savedAt),
