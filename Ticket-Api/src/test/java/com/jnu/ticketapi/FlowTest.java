@@ -168,12 +168,13 @@ public class FlowTest implements UsingContainers {
 
         // then
         List<User> usersWithResult = userRepository.findAll(Sort.by("id"));
-        List<Registration> registrations = registrationRepository.findSortedRegistrationsByEventId(EVENT_VALUE);
+        List<Registration> resultRegistration = registrationRepository.findSortedRegistrationsByEventId(EVENT_VALUE);
+        List<Registration> registrations = registrationRepository.findAll();
 
         Map<UserStatus, List<User>> resultByGroup = usersWithResult.stream()
                 .collect(Collectors.groupingBy(User::getStatus, Collectors.toList()));
 
-        printRegistrationsWithUserStatus(registrations, usersWithResult);
+        printRegistrationsWithUserStatus(resultRegistration, usersWithResult);
 
         assertSoftly(softly -> {
             softly.assertThat(registrations).hasSize(userCountSum);
@@ -194,6 +195,7 @@ public class FlowTest implements UsingContainers {
                 "regId", "email", "savedAt", "status", "sequence");
         System.out.println("-".repeat(95));
 
+        int i = 1;
         for (Registration r : registrations) {
             Long savedAt = r.getSavedAt();
             LocalDateTime localDateTime = LocalDateTime.ofInstant(
@@ -206,13 +208,15 @@ public class FlowTest implements UsingContainers {
             String sequence = user != null ? String.valueOf(user.getSequence()) : "N/A";
 
             // 날짜 형식이 너무 길면 칸이 깨지므로, 길이에 맞춰 너비를 조절했습니다.
-            System.out.printf("%-6d | %-35s | %-25s | %-10s | %-8s | %-10s%n",
+            System.out.printf("%-6d | %-35s | %-25s | %-10s | %-8s | %-10s| %-2d%n",
                     r.getId(),
                     r.getEmail(),
                     localDateTime,
                     status,
                     sequence,
-                    r.getSector().getId());
+                    r.getSector().getId(),
+                    i);
+            i++;
         }
         System.out.println("=".repeat(95));
     }
