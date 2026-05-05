@@ -60,6 +60,7 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
                         user.status.in(UserStatus.SUCCESS, UserStatus.PREPARE))
                 .orderBy(
                         sector.sectorNumber.asc(),
+                        registration.savedAt.asc(),
                         // SUCCESS 먼저 오도록 정렬
                         new CaseBuilder()
                                 .when(user.status.eq(UserStatus.SUCCESS))

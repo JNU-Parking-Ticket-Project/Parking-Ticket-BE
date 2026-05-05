@@ -31,7 +31,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @DynamicUpdate
 @AllArgsConstructor(access = AccessLevel.PUBLIC) // 생성자를 public으로 변경
 @Where(clause = "is_deleted = false")
-@ToString
 public class Registration {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -162,7 +161,7 @@ public class Registration {
 
     public void finalSave() {
         this.isSaved = true;
-        this.savedAt = System.nanoTime();
+//        this.savedAt = System.nanoTime();
     }
 
     public void updateIsDeleted(boolean isDeleted) {
@@ -181,6 +180,28 @@ public class Registration {
         this.sector = registration.getSector();
     }
 
+    @Override
+    public String toString() {
+        return "Registration{" +
+                "id=" + id +
+                ", email='" + email + '\'' +
+                ", name='" + name + '\'' +
+                ", studentNum='" + studentNum + '\'' +
+                ", affiliation='" + affiliation + '\'' +
+                ", department='" + department + '\'' +
+                ", carNum='" + carNum + '\'' +
+                ", isLight=" + isLight +
+                ", phoneNum='" + phoneNum + '\'' +
+                ", createdAt=" + createdAt +
+                ", isSaved=" + isSaved +
+                ", isDeleted=" + isDeleted +
+                ", savedAt=" + savedAt +
+                ", user=" + user.getId() +
+                ", sector=" + sector.getId() +
+                ", eventId=" + eventId +
+                '}';
+    }
+
     public void setSector(Sector sector) {
         this.sector = sector;
     }
@@ -195,5 +216,9 @@ public class Registration {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setSavedAt(Long savedAt) {
+        this.savedAt = savedAt;
     }
 }
