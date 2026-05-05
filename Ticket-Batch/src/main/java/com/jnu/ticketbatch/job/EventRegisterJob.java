@@ -37,6 +37,7 @@ public class EventRegisterJob implements Job {
     private static final String EVENT_ID = "eventId";
     private static final String GROUP = "group1";
     private static final String ASIA_SEOUL = "Asia/Seoul";
+    private static final long OPEN_LEAD_SECONDS = 5L;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -64,7 +65,11 @@ public class EventRegisterJob implements Job {
                         .setJobData(jobDataMap)
                         .build();
 
-        Date date = Date.from(startAt.atZone(ZoneId.of(ASIA_SEOUL)).toInstant());
+        Date date =
+                Date.from(
+                        startAt.minusSeconds(OPEN_LEAD_SECONDS)
+                                .atZone(ZoneId.of(ASIA_SEOUL))
+                                .toInstant());
 
         Trigger reserveTrigger =
                 newTrigger()

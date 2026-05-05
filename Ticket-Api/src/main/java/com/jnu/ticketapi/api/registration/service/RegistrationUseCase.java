@@ -20,6 +20,7 @@ import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.AlreadyCloseStatusException;
+import com.jnu.ticketdomain.domains.events.exception.NotOpenEventStatusException;
 import com.jnu.ticketdomain.domains.events.exception.NotPublishEventException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
@@ -28,14 +29,15 @@ import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationE
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @UseCase
 @RequiredArgsConstructor
@@ -124,7 +126,7 @@ public class RegistrationUseCase {
         validateEventPeriod(event);
 
         validateCaptchaUseCase.execute(requestDto.captchaCode(), requestDto.captchaAnswer());
-        checkDuplicateRegistration(email, eventId, requestDto.studentNum());
+        checkDuplicateRegistration(email, eventId);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
 
@@ -206,8 +208,11 @@ public class RegistrationUseCase {
     }
 
     private void validateEventPeriod(Event event) {
-        if (event.getDateTimePeriod().isAfterEndAt(LocalDateTime.now())
-                && event.getDateTimePeriod().isBeforeStartAt(LocalDateTime.now())) {
+        LocalDateTime now = LocalDateTime.now();
+        if (event.getDateTimePeriod().isBeforeStartAt(now)) {
+            throw NotOpenEventStatusException.EXCEPTION;
+        }
+        if (event.getDateTimePeriod().isAfterEndAt(now)) {
             throw AlreadyCloseStatusException.EXCEPTION;
         }
     }
@@ -223,9 +228,8 @@ public class RegistrationUseCase {
         return GetRegistrationsResponse.of(registrations);
     }
 
-    private void checkDuplicateRegistration(String email, Long eventId, String studentNum) {
-        if (registrationAdaptor.existsByEmailAndIsSavedTrue(email, eventId)
-                || registrationAdaptor.existsByStudentNumAndIsSavedTrue(studentNum, eventId)) {
+    private void checkDuplicateRegistration(String email, Long eventId) {
+        if (registrationAdaptor.existsByEmailAndIsSavedTrue(email, eventId)) {
             throw AlreadyExistRegistrationException.EXCEPTION;
         }
     }

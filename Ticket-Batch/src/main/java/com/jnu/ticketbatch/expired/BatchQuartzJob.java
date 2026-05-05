@@ -45,7 +45,7 @@ public class BatchQuartzJob extends QuartzJobBean {
                         .addLong("eventId", eventId)
                         .toJobParameters();
         log.info("EventThrow in BatchQuartzJob");
-        eventExpiredEventRaiseGateway.handle(eventId);
+//        eventExpiredEventRaiseGateway.handle(eventId);
         try {
             this.jobLauncher.run(this.job, jobParameters);
         } catch (Exception e) {

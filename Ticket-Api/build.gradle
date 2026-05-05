@@ -47,8 +47,17 @@ dependencies {
     // logback json 변환 라이브러리
     implementation 'net.logstash.logback:logstash-logback-encoder:6.6'
 
-}
+    // 테스트 컨테이너 라이브러리
+    testImplementation "org.testcontainers:testcontainers:1.21.3"
+    testImplementation "org.testcontainers:junit-jupiter:1.21.3"
+    testImplementation "org.testcontainers:mysql:1.21.3"
 
+    //WebTestClient 사용
+    testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-quartz'
+    testImplementation 'org.awaitility:awaitility:4.2.2'
+}
 
 jib {
     def serverPort = "8080"
@@ -73,6 +82,7 @@ jib {
         jvmFlags = [
                 '-Dspring.profiles.active=' + environment,
                 '-Dserver.port=' + serverPort,
+                '-Duser.timezone=Asia/Seoul',
                 '-Xms2G', '-Xmx2G',
                 '-XX:+UseG1GC',
                 '-XX:+UseContainerSupport',

@@ -1,7 +1,5 @@
 package com.jnu.ticketapi.api.event.handler;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
@@ -28,6 +26,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @Component
 @RequiredArgsConstructor
@@ -60,6 +60,8 @@ public class EventIssuedEventHandler {
                 Sector sector = sectorAdaptor.findById(eventIssuedEvent.getMessage().getSectorId());
 
                 try {
+                    Double score = eventIssuedEvent.getScore();
+
                     Registration registration =
                             objectMapper.readValue(
                                     eventIssuedEvent.getMessage().getRegistration(),
@@ -78,10 +80,10 @@ public class EventIssuedEventHandler {
                             sector.getRemainingAmount());
 
                     processQueueData(
-                            sector, registration, eventIssuedEvent.getMessage().getUserId());
+                            sector, registration, eventIssuedEvent.getMessage().getUserId(), score);
                     waitingQueueService.remove(
                             REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
-                    sector.decreaseEventStock();
+//                    sector.decreaseEventStock();
 
                     // sectorAdaptor.save(sector); 데드락 문제 임시 해결
                 } catch (NoEventStockLeftException e) {
@@ -98,14 +100,16 @@ public class EventIssuedEventHandler {
         }
     }
 
-    /** 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다. */
-    public void processQueueData(Sector sector, Registration registration, Long userId) {
+    /**
+     * 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
+     */
+    public void processQueueData(Sector sector, Registration registration, Long userId, Double score) {
         User user = userAdaptor.findById(userId);
-        saveRegistration(sector, user, registration);
-        Events.raise(UserReflectStatusEvent.of(userId, registration, sector));
+        saveRegistration(sector, user, registration, score);
+//        Events.raise(UserReflectStatusEvent.of(userId, registration, sector));
     }
 
-    private void saveRegistration(Sector sector, User user, Registration registration) {
+    private void saveRegistration(Sector sector, User user, Registration registration, Double score) {
         if (!sector.isRemainingAmount()) {
             tracker.info("[No seats remaining]. Registration: {}", registration);
             throw NoEventStockLeftException.EXCEPTION;
@@ -116,13 +120,17 @@ public class EventIssuedEventHandler {
             registration.finalSave();
             registration.setSector(sector);
             registration.setUser(user);
+            registration.setSavedAt(score.longValue());
             registrationAdaptor.save(registration);
             return;
         }
+
         registration.setSector(sector);
         registration.setUser(user);
+//        registrationAdaptor.updateSavedAt(registration);
+        registration.setSavedAt(score.longValue());
         registrationAdaptor.saveAndFlush(registration);
-        registrationAdaptor.updateSavedAt(registration);
+
         tracker.info("Registration saved");
     }
 
