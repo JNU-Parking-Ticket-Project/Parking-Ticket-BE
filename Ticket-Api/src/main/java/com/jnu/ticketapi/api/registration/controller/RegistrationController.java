@@ -4,10 +4,7 @@ import com.jnu.ticketapi.api.registration.docs.FinalSaveExceptionDocs;
 import com.jnu.ticketapi.api.registration.docs.TemporarySaveExceptionFDocs;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
-import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
-import com.jnu.ticketapi.api.registration.model.response.GetRegistrationResponse;
-import com.jnu.ticketapi.api.registration.model.response.GetRegistrationsResponse;
-import com.jnu.ticketapi.api.registration.model.response.TemporarySaveResponse;
+import com.jnu.ticketapi.api.registration.model.response.*;
 import com.jnu.ticketapi.api.registration.service.RegistrationUseCase;
 import com.jnu.ticketapi.api.user.ResultAssignment;
 import com.jnu.ticketapi.common.aop.GetEmail;
@@ -76,8 +73,8 @@ public class RegistrationController {
 
     @Operation(summary = "신청 결과 집계", description = "신청 결과 집계")
     @PostMapping("/registrations/assign/result/{eventId}")
-    public ResponseEntity<Void> assignResult(@PathVariable("eventId") Long eventId) {
+    public ResponseEntity<AssignResultResponse> assignResult(@PathVariable("eventId") Long eventId) {
         resultAssignment.assign(eventId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(new AssignResultResponse("성공"));
     }
 }
