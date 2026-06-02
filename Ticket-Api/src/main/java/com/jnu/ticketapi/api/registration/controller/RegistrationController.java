@@ -75,7 +75,7 @@ public class RegistrationController {
     }
 
     @Operation(summary = "신청 결과 집계", description = "신청 결과 집계")
-    @PatchMapping("/registrations/assign/result/{eventId}")
+    @PostMapping("/registrations/assign/result/{eventId}")
     public ResponseEntity<Void> assignResult(@PathVariable("eventId") Long eventId) {
         resultAssignment.assign(eventId);
         return ResponseEntity.ok().build();
