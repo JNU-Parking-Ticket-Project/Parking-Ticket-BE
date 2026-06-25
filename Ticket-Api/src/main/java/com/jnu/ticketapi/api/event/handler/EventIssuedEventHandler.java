@@ -3,6 +3,7 @@ package com.jnu.ticketapi.api.event.handler;
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketdomain.domains.email.adaptor.EmailOutboxAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
@@ -10,6 +11,7 @@ import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class EventIssuedEventHandler {
 
     private final RegistrationAdaptor registrationAdaptor;
     private final UserAdaptor userAdaptor;
+    private final EmailOutboxAdaptor emailOutboxAdaptor;
 
     @Autowired(required = false)
     private WaitingQueueService waitingQueueService;
@@ -55,7 +58,8 @@ public class EventIssuedEventHandler {
         try {
             MDC.put("userId", String.valueOf(eventIssuedEvent.getMessage().getUserId()));
 
-            Sector sector = sectorAdaptor.findById(eventIssuedEvent.getMessage().getSectorId());
+            Sector sector =
+                    sectorAdaptor.findByIdForUpdate(eventIssuedEvent.getMessage().getSectorId());
 
             try {
                 Registration registration =
@@ -96,7 +100,11 @@ public class EventIssuedEventHandler {
         }
     }
 
-    /** 대기열에서 pop한 registration을 저장하고 savedAt 기준 순서를 보존한다. */
+    /** 대기열에서 pop한 registration을 저장하는 시점에 순번과 결과를 확정하고 메일 outbox를 생성한다. */
+    public void processQueueData(Sector sector, Registration registration, Long userId) {
+        processQueueData(sector, registration, userId, (double) System.currentTimeMillis());
+    }
+
     public void processQueueData(
             Sector sector, Registration registration, Long userId, Double score) {
         User user = userAdaptor.findById(userId);
@@ -105,27 +113,61 @@ public class EventIssuedEventHandler {
 
     private void saveRegistration(
             Sector sector, User user, Registration registration, Double score) {
-        if (!sector.isRemainingAmount()) {
-            tracker.info("[No seats remaining]. Registration: {}", registration);
-            throw NoEventStockLeftException.EXCEPTION;
+        int position =
+                Math.toIntExact(registrationAdaptor.countSavedBySectorId(sector.getId())) + 1;
+        RegistrationDecision decision = decideResult(sector, position);
+
+        if (!decision.isFail()) {
+            sector.decreaseEventStock();
         }
+
+        reflectUserState(user, decision);
 
         if (!registration.isSaved()) {
             // if문 사용 안됨.
-            registration.finalSave();
+            registration.finalSave(position, decision.resultStatus, decision.sequence);
             registration.setSector(sector);
             registration.setUser(user);
             registration.setSavedAt(score.longValue());
-            registrationAdaptor.save(registration);
-            return;
+            Registration savedRegistration = registrationAdaptor.save(registration);
+            emailOutboxAdaptor.saveRegistrationResultIfAbsent(savedRegistration);
+        } else {
+            registration.finalSave(position, decision.resultStatus, decision.sequence);
+            registration.setSector(sector);
+            registration.setUser(user);
+            registration.setSavedAt(score.longValue());
+            Registration savedRegistration = registrationAdaptor.saveAndFlush(registration);
+            emailOutboxAdaptor.saveRegistrationResultIfAbsent(savedRegistration);
         }
 
-        registration.setSector(sector);
-        registration.setUser(user);
-        registration.setSavedAt(score.longValue());
-        registrationAdaptor.saveAndFlush(registration);
+        tracker.info(
+                "Registration saved. position: {}, status: {}, sequence: {}",
+                position,
+                decision.resultStatus.getValue(),
+                decision.sequence);
+    }
 
-        tracker.info("Registration saved");
+    private RegistrationDecision decideResult(Sector sector, int position) {
+        if (position <= sector.getInitSectorCapacity()) {
+            return new RegistrationDecision(UserStatus.SUCCESS, -2);
+        }
+        if (position <= sector.getIssueAmount()) {
+            return new RegistrationDecision(
+                    UserStatus.PREPARE, position - sector.getInitSectorCapacity());
+        }
+        return new RegistrationDecision(UserStatus.FAIL, -1);
+    }
+
+    private void reflectUserState(User user, RegistrationDecision decision) {
+        if (decision.resultStatus == UserStatus.SUCCESS) {
+            user.success();
+            return;
+        }
+        if (decision.resultStatus == UserStatus.PREPARE) {
+            user.prepare(decision.sequence);
+            return;
+        }
+        user.fail();
     }
 
     private Double resolveScore(EventIssuedEvent eventIssuedEvent) {
@@ -136,7 +178,7 @@ public class EventIssuedEventHandler {
         if (streamRecordId != null && streamRecordId.contains("-")) {
             return Double.valueOf(streamRecordId.substring(0, streamRecordId.indexOf('-')));
         }
-        return (double) System.nanoTime();
+        return (double) System.currentTimeMillis();
     }
 
     private boolean isAlreadySaved(Registration registration) {
@@ -190,5 +232,19 @@ public class EventIssuedEventHandler {
             return eventIssuedEvent.getStreamKey();
         }
         return waitingQueueService.eventStreamKey(eventIssuedEvent.getMessage().getEventId());
+    }
+
+    private static class RegistrationDecision {
+        private final UserStatus resultStatus;
+        private final Integer sequence;
+
+        private RegistrationDecision(UserStatus resultStatus, Integer sequence) {
+            this.resultStatus = resultStatus;
+            this.sequence = sequence;
+        }
+
+        private boolean isFail() {
+            return resultStatus == UserStatus.FAIL;
+        }
     }
 }
