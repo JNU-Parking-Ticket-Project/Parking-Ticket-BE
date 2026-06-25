@@ -1,6 +1,9 @@
 package com.jnu.ticketapi;
 
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
+
+import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +27,7 @@ public class RestDocsConfig {
     public void setup(
             WebApplicationContext webApplicationContext,
             RestDocumentationContextProvider restDocumentation) {
+        clearRedisState(webApplicationContext);
         this.document =
                 MockMvcRestDocumentation.document(
                         "{class-name}/{method-name}",
@@ -39,5 +43,15 @@ public class RestDocsConfig {
                         // .apply(SecurityMockMvcConfigurers.springSecurity())
                         .alwaysDo(document)
                         .build();
+    }
+
+    private void clearRedisState(WebApplicationContext webApplicationContext) {
+        webApplicationContext
+                .getBeanProvider(RedisRepository.class)
+                .ifAvailable(
+                        redisRepository -> {
+                            redisRepository.delete(REDIS_EVENT_ISSUE_STREAM);
+                            redisRepository.deleteKeysByPrefix("parking-ticket:event:");
+                        });
     }
 }
