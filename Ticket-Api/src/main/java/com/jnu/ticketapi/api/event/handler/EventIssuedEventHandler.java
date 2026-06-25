@@ -13,7 +13,6 @@ import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
-import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -43,7 +42,6 @@ public class EventIssuedEventHandler {
 
     private final SectorAdaptor sectorAdaptor;
     private final ObjectMapper objectMapper;
-    private final HikariDataSource hikariDataSource;
 
     @Async
     @EventListener(classes = EventIssuedEvent.class)
@@ -55,9 +53,6 @@ public class EventIssuedEventHandler {
     public void handle(EventIssuedEvent eventIssuedEvent) {
         try {
             MDC.put("userId", String.valueOf(eventIssuedEvent.getMessage().getUserId()));
-            if (!isIdleConnectionAvailable()) {
-                return;
-            }
 
             Sector sector = sectorAdaptor.findById(eventIssuedEvent.getMessage().getSectorId());
 
@@ -151,8 +146,4 @@ public class EventIssuedEventHandler {
         }
     }
 
-    private boolean isIdleConnectionAvailable() {
-        int idleConnections = hikariDataSource.getHikariPoolMXBean().getIdleConnections();
-        return idleConnections > 0;
-    }
 }
