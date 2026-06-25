@@ -103,6 +103,10 @@ spring:
       initialize-schema: always
       platform: h2
 
+mail:
+  outbox:
+    enabled: false
+
 ---
 
 spring:
@@ -227,3 +231,7 @@ thread:
   core-pool-size: 10
   max-pool-size: 20
   queue-capacity: 100
+
+mail:
+  outbox:
+    enabled: false
