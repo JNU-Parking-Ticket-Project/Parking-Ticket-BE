@@ -13,6 +13,7 @@ import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
+import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,9 +58,9 @@ public class EventIssuedEventHandler {
     public void handle(EventIssuedEvent eventIssuedEvent) {
         try {
             MDC.put("userId", String.valueOf(eventIssuedEvent.getMessage().getUserId()));
+            ChatMessage message = eventIssuedEvent.getMessage();
 
-            Sector sector =
-                    sectorAdaptor.findByIdForUpdate(eventIssuedEvent.getMessage().getSectorId());
+            Sector sector = findSector(message);
 
             try {
                 Registration registration =
@@ -79,11 +80,7 @@ public class EventIssuedEventHandler {
                         sector.getReserve(),
                         sector.getRemainingAmount());
 
-                processQueueData(
-                        sector,
-                        registration,
-                        eventIssuedEvent.getMessage().getUserId(),
-                        resolveScore(eventIssuedEvent));
+                processQueueData(sector, registration, message, resolveScore(eventIssuedEvent));
                 acknowledgeAfterCommit(eventIssuedEvent);
 
                 // sectorAdaptor.save(sector); 데드락 문제 임시 해결
@@ -107,17 +104,40 @@ public class EventIssuedEventHandler {
 
     public void processQueueData(
             Sector sector, Registration registration, Long userId, Double score) {
-        User user = userAdaptor.findById(userId);
-        saveRegistration(sector, user, registration, score);
+        processQueueData(
+                sector,
+                registration,
+                new ChatMessage(null, userId, sector.getId(), registration.getEventId()),
+                score);
+    }
+
+    public void processQueueData(Sector sector, Registration registration, ChatMessage message) {
+        processQueueData(sector, registration, message, (double) System.currentTimeMillis());
+    }
+
+    public void processQueueData(
+            Sector sector, Registration registration, ChatMessage message, Double score) {
+        User user = userAdaptor.findById(message.getUserId());
+        saveRegistration(sector, user, registration, message, score);
+    }
+
+    private Sector findSector(ChatMessage message) {
+        if (message.hasDecision()) {
+            return sectorAdaptor.findById(message.getSectorId());
+        }
+        return sectorAdaptor.findByIdForUpdate(message.getSectorId());
     }
 
     private void saveRegistration(
-            Sector sector, User user, Registration registration, Double score) {
-        int position =
-                Math.toIntExact(registrationAdaptor.countSavedBySectorId(sector.getId())) + 1;
-        RegistrationDecision decision = decideResult(sector, position);
+            Sector sector,
+            User user,
+            Registration registration,
+            ChatMessage message,
+            Double score) {
+        RegistrationDecision decision = resolveDecision(sector, message);
+        int position = decision.position;
 
-        if (!decision.isFail()) {
+        if (!message.hasDecision() && !decision.isFail()) {
             sector.decreaseEventStock();
         }
 
@@ -147,15 +167,25 @@ public class EventIssuedEventHandler {
                 decision.sequence);
     }
 
+    private RegistrationDecision resolveDecision(Sector sector, ChatMessage message) {
+        if (message.hasDecision()) {
+            return new RegistrationDecision(
+                    message.getPosition(), message.getResultStatus(), message.getSequence());
+        }
+        int position =
+                Math.toIntExact(registrationAdaptor.countSavedBySectorId(sector.getId())) + 1;
+        return decideResult(sector, position);
+    }
+
     private RegistrationDecision decideResult(Sector sector, int position) {
         if (position <= sector.getInitSectorCapacity()) {
-            return new RegistrationDecision(UserStatus.SUCCESS, -2);
+            return new RegistrationDecision(position, UserStatus.SUCCESS, -2);
         }
         if (position <= sector.getIssueAmount()) {
             return new RegistrationDecision(
-                    UserStatus.PREPARE, position - sector.getInitSectorCapacity());
+                    position, UserStatus.PREPARE, position - sector.getInitSectorCapacity());
         }
-        return new RegistrationDecision(UserStatus.FAIL, -1);
+        return new RegistrationDecision(position, UserStatus.FAIL, -1);
     }
 
     private void reflectUserState(User user, RegistrationDecision decision) {
@@ -235,10 +265,12 @@ public class EventIssuedEventHandler {
     }
 
     private static class RegistrationDecision {
+        private final Integer position;
         private final UserStatus resultStatus;
         private final Integer sequence;
 
-        private RegistrationDecision(UserStatus resultStatus, Integer sequence) {
+        private RegistrationDecision(Integer position, UserStatus resultStatus, Integer sequence) {
+            this.position = position;
             this.resultStatus = resultStatus;
             this.sequence = sequence;
         }

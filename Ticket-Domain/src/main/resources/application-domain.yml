@@ -107,6 +107,10 @@ mail:
   outbox:
     enabled: false
 
+redis:
+  stock-sync:
+    enabled: false
+
 ---
 
 spring:

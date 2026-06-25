@@ -6,6 +6,7 @@ import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
+import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -25,6 +26,7 @@ public class BatchQuartzJob extends QuartzJobBean {
     @Autowired private JobExplorer jobExplorer;
 
     @Autowired EventAdaptor eventAdaptor;
+    @Autowired WaitingQueueService waitingQueueService;
     @Autowired RegistrationAdaptor registrationAdaptor;
     @Autowired EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
 
@@ -33,6 +35,7 @@ public class BatchQuartzJob extends QuartzJobBean {
         // JobDataMap에서 eventId를 가져옵니다.
         Long eventId = (Long) context.getJobDetail().getJobDataMap().get("eventId");
         Event event = eventAdaptor.findById(eventId);
+        waitingQueueService.deleteEventStockKeys(eventId);
         eventAdaptor.updateEventStatus(event, EventStatus.CLOSED);
 
         JobParameters jobParameters =

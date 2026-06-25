@@ -86,6 +86,17 @@ public class Sector {
         this.reserve = this.initReserve;
     }
 
+    public void syncRemainingAmount(Integer remainingAmount) {
+        int normalizedRemainingAmount = Math.max(0, Math.min(remainingAmount, this.issueAmount));
+        int issuedAmount = this.issueAmount - normalizedRemainingAmount;
+        int issuedCapacityAmount = Math.min(issuedAmount, this.initSectorCapacity);
+        int issuedReserveAmount = Math.max(0, issuedAmount - this.initSectorCapacity);
+
+        this.sectorCapacity = Math.max(0, this.initSectorCapacity - issuedCapacityAmount);
+        this.reserve = Math.max(0, this.initReserve - issuedReserveAmount);
+        this.remainingAmount = normalizedRemainingAmount;
+    }
+
     public void decreaseEventStock() {
         checkEventLeft();
         if (isSectorCapacityRemaining()) {
