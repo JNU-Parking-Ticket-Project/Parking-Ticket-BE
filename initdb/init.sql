@@ -464,6 +464,9 @@ create table registration_tb
     name        varchar(255)     not null,
     phone_num   varchar(255)     not null,
     saved_at    bigint           null,
+    position    int              null,
+    result_status varchar(255)   null,
+    sequence    int              null,
     student_num varchar(255)     not null,
     sector_id   bigint           not null,
     user_id     bigint           null,
@@ -477,3 +480,22 @@ create table registration_tb
         unique (event_id, email, student_num)
 );
 
+create table email_outbox
+(
+    id              bigint auto_increment
+        primary key,
+    event_id        bigint       not null,
+    registration_id bigint       not null,
+    email           varchar(255) not null,
+    name            varchar(255) not null,
+    result_status   varchar(255) not null,
+    sequence        int          not null,
+    created_at      datetime(6)  not null,
+    processing_at   datetime(6)  null,
+    sent_at         datetime(6)  null,
+    retry_count     int          not null,
+    constraint uk_email_outbox_registration_id
+        unique (registration_id),
+    constraint FK_email_outbox_registration
+        foreign key (registration_id) references registration_tb (id)
+);

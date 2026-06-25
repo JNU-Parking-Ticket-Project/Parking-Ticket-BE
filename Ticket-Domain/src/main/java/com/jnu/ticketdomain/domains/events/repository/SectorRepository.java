@@ -4,7 +4,9 @@ package com.jnu.ticketdomain.domains.events.repository;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import java.util.List;
 import java.util.Optional;
+import javax.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +18,10 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
 
     @Query("select s from Sector s where s.event.id = :eventId")
     List<Sector> findByEventId(@Param("eventId") Long eventId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from Sector s where s.id = :sectorId")
+    Optional<Sector> findByIdForUpdate(@Param("sectorId") Long sectorId);
 
     @Query(
             "select s from Sector s join fetch s.event where s.event.eventStatus = 'OPEN' or s.event.eventStatus = 'READY'")

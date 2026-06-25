@@ -7,6 +7,7 @@ truncate table captcha_tb;
 truncate table captcha_log_tb;
 truncate table council_tb;
 truncate table credential_code_tb;
+truncate table email_outbox;
 truncate table event;
 truncate table notice_tb;
 truncate table registration_tb;
@@ -69,4 +70,3 @@ values (1, '공지사항입니다.', '공지사항', CURRENT_TIMESTAMP);
 
 insert into notice_tb(id, created_at, modified_at, content)
 values (1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '안내사항입니다.');
-

@@ -27,6 +27,13 @@ public class SectorAdaptor implements SectorRecordPort, SectorLoadPort {
     }
 
     @Override
+    public Sector findByIdForUpdate(Long sectorId) {
+        return sectorRepository
+                .findByIdForUpdate(sectorId)
+                .orElseThrow(() -> NotFoundSectorException.EXCEPTION);
+    }
+
+    @Override
     public List<Sector> findAll() {
         return sectorRepository.findAll();
     }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import java.time.LocalDateTime;
 import javax.persistence.*;
 import lombok.*;
@@ -76,6 +77,15 @@ public class Registration {
     @Column(name = "saved_at")
     private Long savedAt;
 
+    @Column(name = "position")
+    private Integer position;
+
+    @Column(name = "result_status")
+    private UserStatus resultStatus;
+
+    @Column(name = "sequence")
+    private Integer sequence;
+
     @JsonBackReference(value = "user-registration")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -102,6 +112,9 @@ public class Registration {
             LocalDateTime createdAt,
             boolean isSaved,
             Long savedAt,
+            Integer position,
+            UserStatus resultStatus,
+            Integer sequence,
             User user,
             Sector sector,
             Long eventId) {
@@ -116,6 +129,9 @@ public class Registration {
         this.createdAt = createdAt;
         this.isSaved = isSaved;
         this.savedAt = savedAt;
+        this.position = position;
+        this.resultStatus = resultStatus;
+        this.sequence = sequence;
         this.user = user;
         this.sector = sector;
         this.eventId = eventId;
@@ -135,6 +151,9 @@ public class Registration {
             @JsonProperty("isSaved") boolean isSaved,
             @JsonProperty("isDeleted") boolean isDeleted,
             @JsonProperty("savedAt") Long savedAt,
+            @JsonProperty("position") Integer position,
+            @JsonProperty("resultStatus") UserStatus resultStatus,
+            @JsonProperty("sequence") Integer sequence,
             @JsonProperty("user") User user,
             @JsonProperty("sector") Sector sector,
             @JsonProperty("id") Long id,
@@ -151,6 +170,9 @@ public class Registration {
         this.isSaved = isSaved;
         this.isDeleted = isDeleted;
         this.savedAt = savedAt;
+        this.position = position;
+        this.resultStatus = resultStatus;
+        this.sequence = sequence;
         this.user = user;
         this.sector = sector;
         this.id = id;
@@ -162,6 +184,13 @@ public class Registration {
     public void finalSave() {
         this.isSaved = true;
 //        this.savedAt = System.nanoTime();
+    }
+
+    public void finalSave(Integer position, UserStatus resultStatus, Integer sequence) {
+        this.position = position;
+        this.resultStatus = resultStatus;
+        this.sequence = sequence;
+        finalSave();
     }
 
     public void updateIsDeleted(boolean isDeleted) {

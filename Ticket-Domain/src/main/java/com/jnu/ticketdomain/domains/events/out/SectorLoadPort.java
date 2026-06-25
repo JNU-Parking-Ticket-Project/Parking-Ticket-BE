@@ -9,6 +9,8 @@ import java.util.List;
 public interface SectorLoadPort {
     Sector findById(Long sectorId);
 
+    Sector findByIdForUpdate(Long sectorId);
+
     List<Sector> findAll();
 
     List<Sector> findByEventId(Long eventId);
