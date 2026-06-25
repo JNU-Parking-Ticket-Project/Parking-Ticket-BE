@@ -87,7 +87,7 @@ spring:
     activate:
       on-profile: test
   datasource:
-    url: jdbc:h2:~/test;DB_CLOSE_DELAY=-1;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
   jpa:
@@ -101,6 +101,8 @@ spring:
   quartz:
     jdbc:
       initialize-schema: always
+      platform: h2
+
 ---
 
 spring:
