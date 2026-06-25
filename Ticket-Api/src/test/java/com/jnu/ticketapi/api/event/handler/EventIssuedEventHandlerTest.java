@@ -1,20 +1,27 @@
 package com.jnu.ticketapi.api.event.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketdomain.domains.email.adaptor.EmailOutboxAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
+import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.domain.UserRole;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,10 +41,11 @@ class EventIssuedEventHandlerTest {
 
     @Mock private RegistrationAdaptor registrationAdaptor;
     @Mock private UserAdaptor userAdaptor;
+    @Mock private EmailOutboxAdaptor emailOutboxAdaptor;
     @Mock private SectorAdaptor sectorAdaptor;
     @Mock private WaitingQueueService waitingQueueService;
     @Mock private Sector sector;
-    @Mock private User user;
+    @Mock private User queuedUser;
 
     private EventIssuedEventHandler eventIssuedEventHandler;
 
@@ -45,7 +53,11 @@ class EventIssuedEventHandlerTest {
     void setUp() {
         eventIssuedEventHandler =
                 new EventIssuedEventHandler(
-                        registrationAdaptor, userAdaptor, sectorAdaptor, new ObjectMapper());
+                        registrationAdaptor,
+                        userAdaptor,
+                        emailOutboxAdaptor,
+                        sectorAdaptor,
+                        new ObjectMapper());
         ReflectionTestUtils.setField(
                 eventIssuedEventHandler, "waitingQueueService", waitingQueueService);
     }
@@ -62,9 +74,10 @@ class EventIssuedEventHandlerTest {
     @DisplayName("DB 트랜잭션이 커밋된 뒤에만 Stream record를 ACK하고 삭제한다")
     void handleAcknowledgesStreamRecordAfterCommit() {
         EventIssuedEvent event = event("1-0", registrationJson());
-        when(sectorAdaptor.findById(2L)).thenReturn(sector);
-        when(sector.isRemainingAmount()).thenReturn(true);
-        when(userAdaptor.findById(1L)).thenReturn(user);
+        givenQueuedRegistrationSector();
+        when(userAdaptor.findById(1L)).thenReturn(queuedUser);
+        when(registrationAdaptor.save(any(Registration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         beginTransactionSynchronization();
 
         eventIssuedEventHandler.handle(event);
@@ -82,7 +95,7 @@ class EventIssuedEventHandlerTest {
     @DisplayName("처리에 실패하면 예외를 다시 던지고 Stream record를 ACK하지 않는다")
     void handleKeepsStreamRecordPendingOnFailure() {
         EventIssuedEvent event = event("2-0", "not-json");
-        when(sectorAdaptor.findById(2L)).thenReturn(sector);
+        when(sectorAdaptor.findByIdForUpdate(2L)).thenReturn(sector);
 
         assertThatThrownBy(() -> eventIssuedEventHandler.handle(event))
                 .isInstanceOf(IllegalStateException.class);
@@ -95,16 +108,94 @@ class EventIssuedEventHandlerTest {
     @DisplayName("ID가 없는 신규 신청도 같은 이벤트와 이메일로 이미 저장됐다면 재처리하지 않는다")
     void handleSkipsRedeliveredRegistrationWithoutId() {
         EventIssuedEvent event = event("3-0", registrationJson());
-        when(sectorAdaptor.findById(2L)).thenReturn(sector);
+        when(sectorAdaptor.findByIdForUpdate(2L)).thenReturn(sector);
         when(registrationAdaptor.existsByEmailAndIsSavedTrue("student@jnu.ac.kr", 3L))
                 .thenReturn(true);
 
         eventIssuedEventHandler.handle(event);
 
         verify(userAdaptor, never()).findById(1L);
-        verify(registrationAdaptor, never()).save(org.mockito.ArgumentMatchers.any());
+        verify(registrationAdaptor, never()).save(any());
         verify(waitingQueueService)
                 .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "3-0");
+    }
+
+    @Test
+    @DisplayName("정원 이내 position이면 합격으로 확정하고 outbox를 생성한다")
+    void processQueueDataDecidesSuccess() {
+        Registration registration = registration();
+        User user = user();
+        givenSector(2, 4);
+        when(registrationAdaptor.countSavedBySectorId(1L)).thenReturn(0L);
+        when(userAdaptor.findById(100L)).thenReturn(user);
+        when(registrationAdaptor.save(registration)).thenReturn(registration);
+
+        eventIssuedEventHandler.processQueueData(sector, registration, 100L, 1_234D);
+
+        assertThat(registration.getPosition()).isEqualTo(1);
+        assertThat(registration.getResultStatus()).isEqualTo(UserStatus.SUCCESS);
+        assertThat(registration.getSequence()).isEqualTo(-2);
+        assertThat(registration.getSavedAt()).isEqualTo(1_234L);
+        assertThat(user.getStatus()).isEqualTo(UserStatus.SUCCESS);
+        assertThat(user.getSequence()).isEqualTo(-2);
+        verify(sector).decreaseEventStock();
+        verify(emailOutboxAdaptor).saveRegistrationResultIfAbsent(registration);
+    }
+
+    @Test
+    @DisplayName("정원 초과 예비 정원 이내 position이면 예비 번호로 확정한다")
+    void processQueueDataDecidesPrepare() {
+        Registration registration = registration();
+        User user = user();
+        givenSector(2, 4);
+        when(registrationAdaptor.countSavedBySectorId(1L)).thenReturn(2L);
+        when(userAdaptor.findById(100L)).thenReturn(user);
+        when(registrationAdaptor.save(registration)).thenReturn(registration);
+
+        eventIssuedEventHandler.processQueueData(sector, registration, 100L);
+
+        assertThat(registration.getPosition()).isEqualTo(3);
+        assertThat(registration.getResultStatus()).isEqualTo(UserStatus.PREPARE);
+        assertThat(registration.getSequence()).isEqualTo(1);
+        assertThat(user.getStatus()).isEqualTo(UserStatus.PREPARE);
+        assertThat(user.getSequence()).isEqualTo(1);
+        verify(sector).decreaseEventStock();
+        verify(emailOutboxAdaptor).saveRegistrationResultIfAbsent(registration);
+    }
+
+    @Test
+    @DisplayName("예비 정원까지 초과한 position이면 불합격으로 저장하고 재고는 차감하지 않는다")
+    void processQueueDataDecidesFailWithoutDecreasingStock() {
+        Registration registration = registration();
+        User user = user();
+        givenSector(2, 4);
+        when(registrationAdaptor.countSavedBySectorId(1L)).thenReturn(4L);
+        when(userAdaptor.findById(100L)).thenReturn(user);
+        when(registrationAdaptor.save(registration)).thenReturn(registration);
+
+        eventIssuedEventHandler.processQueueData(sector, registration, 100L);
+
+        assertThat(registration.getPosition()).isEqualTo(5);
+        assertThat(registration.getResultStatus()).isEqualTo(UserStatus.FAIL);
+        assertThat(registration.getSequence()).isEqualTo(-1);
+        assertThat(user.getStatus()).isEqualTo(UserStatus.FAIL);
+        assertThat(user.getSequence()).isEqualTo(-1);
+        verify(sector, never()).decreaseEventStock();
+        verify(emailOutboxAdaptor).saveRegistrationResultIfAbsent(registration);
+    }
+
+    private void givenQueuedRegistrationSector() {
+        when(sectorAdaptor.findByIdForUpdate(2L)).thenReturn(sector);
+        when(sector.getId()).thenReturn(2L);
+        when(sector.getInitSectorCapacity()).thenReturn(1);
+        when(sector.getIssueAmount()).thenReturn(2);
+        when(registrationAdaptor.countSavedBySectorId(2L)).thenReturn(0L);
+    }
+
+    private void givenSector(int initSectorCapacity, int issueAmount) {
+        when(sector.getId()).thenReturn(1L);
+        when(sector.getInitSectorCapacity()).thenReturn(initSectorCapacity);
+        org.mockito.Mockito.lenient().when(sector.getIssueAmount()).thenReturn(issueAmount);
     }
 
     private void beginTransactionSynchronization() {
@@ -133,5 +224,32 @@ class EventIssuedEventHandlerTest {
                 + "\"isSaved\":false,"
                 + "\"isDeleted\":false,"
                 + "\"eventId\":3}";
+    }
+
+    private Registration registration() {
+        Registration registration =
+                Registration.builder()
+                        .email("student@jnu.ac.kr")
+                        .name("학생")
+                        .studentNum("20240001")
+                        .affiliation("공과대학")
+                        .department("컴퓨터공학과")
+                        .carNum("12가3456")
+                        .isLight(false)
+                        .phoneNum("010-0000-0000")
+                        .createdAt(LocalDateTime.of(2026, 6, 25, 10, 0))
+                        .isSaved(false)
+                        .eventId(10L)
+                        .build();
+        registration.setId(10L);
+        return registration;
+    }
+
+    private User user() {
+        return User.builder()
+                .email("student@jnu.ac.kr")
+                .pwd("encoded-password")
+                .userRole(UserRole.USER)
+                .build();
     }
 }
