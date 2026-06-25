@@ -184,6 +184,28 @@ class EventIssuedEventHandlerTest {
         verify(emailOutboxAdaptor).saveRegistrationResultIfAbsent(registration);
     }
 
+    @Test
+    @DisplayName("Redis에서 확정된 position과 결과가 있으면 DB count 없이 그대로 저장한다")
+    void processQueueDataUsesRedisDecisionWithoutCountingOrDecreasingStock() {
+        Registration registration = registration();
+        User user = user();
+        ChatMessage message = new ChatMessage("{}", 100L, 1L, 10L, 3, UserStatus.PREPARE, 1);
+        when(userAdaptor.findById(100L)).thenReturn(user);
+        when(registrationAdaptor.save(registration)).thenReturn(registration);
+
+        eventIssuedEventHandler.processQueueData(sector, registration, message);
+
+        assertThat(registration.getPosition()).isEqualTo(3);
+        assertThat(registration.getResultStatus()).isEqualTo(UserStatus.PREPARE);
+        assertThat(registration.getSequence()).isEqualTo(1);
+        assertThat(user.getStatus()).isEqualTo(UserStatus.PREPARE);
+        assertThat(user.getSequence()).isEqualTo(1);
+        verify(registrationAdaptor, never())
+                .countSavedBySectorId(org.mockito.ArgumentMatchers.any());
+        verify(sector, never()).decreaseEventStock();
+        verify(emailOutboxAdaptor).saveRegistrationResultIfAbsent(registration);
+    }
+
     private void givenQueuedRegistrationSector() {
         when(sectorAdaptor.findByIdForUpdate(2L)).thenReturn(sector);
         when(sector.getId()).thenReturn(2L);
