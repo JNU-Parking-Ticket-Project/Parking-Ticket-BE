@@ -1,7 +1,9 @@
 package com.jnu.ticketapi.api.event.handler;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
@@ -9,7 +11,6 @@ import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
-import com.jnu.ticketdomain.domains.user.event.UserReflectStatusEvent;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.zaxxer.hikari.HikariDataSource;
@@ -26,8 +27,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 @Component
 @RequiredArgsConstructor
@@ -56,57 +55,56 @@ public class EventIssuedEventHandler {
     public void handle(EventIssuedEvent eventIssuedEvent) {
         try {
             MDC.put("userId", String.valueOf(eventIssuedEvent.getMessage().getUserId()));
-            if (isIdleConnectionAvailable()) {
-                Sector sector = sectorAdaptor.findById(eventIssuedEvent.getMessage().getSectorId());
+            if (!isIdleConnectionAvailable()) {
+                return;
+            }
 
-                try {
-                    Double score = eventIssuedEvent.getScore();
+            Sector sector = sectorAdaptor.findById(eventIssuedEvent.getMessage().getSectorId());
 
-                    Registration registration =
-                            objectMapper.readValue(
-                                    eventIssuedEvent.getMessage().getRegistration(),
-                                    Registration.class);
+            try {
+                Registration registration =
+                        objectMapper.readValue(
+                                eventIssuedEvent.getMessage().getRegistration(), Registration.class);
 
-                    if (Boolean.TRUE.equals(
-                            registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId()))) {
-                        tracker.info("Already saved, ignored");
-                        return;
-                    }
-                    tracker.info(
-                            "현재구간 정보, sectorId: {}, 정원여석: {}, 예비여석: {}, 총 여석: {},",
-                            sector.getId(),
-                            sector.getSectorCapacity(),
-                            sector.getReserve(),
-                            sector.getRemainingAmount());
-
-                    processQueueData(
-                            sector, registration, eventIssuedEvent.getMessage().getUserId(), score);
-                    waitingQueueService.remove(
-                            REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
-//                    sector.decreaseEventStock();
-
-                    // sectorAdaptor.save(sector); 데드락 문제 임시 해결
-                } catch (NoEventStockLeftException e) {
-                    tracker.info("해당 구간 잔여 여석이 없습니다.", e);
-                    waitingQueueService.remove(
-                            REDIS_EVENT_ISSUE_STORE, eventIssuedEvent.getMessage());
-                } catch (Exception e) {
-                    // 에러가 났을 때 redis에 데이터를 재등록 한다.(Not Waiting 상태로)
-                    tracker.error("EventIssuedEventHandler Exception: ", e);
+                if (registration.getId() != null
+                        && Boolean.TRUE.equals(
+                                registrationAdaptor.existsByIdAndIsSavedTrue(
+                                        registration.getId()))) {
+                    tracker.info("Already saved, ignored");
+                    acknowledge(eventIssuedEvent);
+                    return;
                 }
+                tracker.info(
+                        "현재구간 정보, sectorId: {}, 정원여석: {}, 예비여석: {}, 총 여석: {},",
+                        sector.getId(),
+                        sector.getSectorCapacity(),
+                        sector.getReserve(),
+                        sector.getRemainingAmount());
+
+                processQueueData(
+                        sector,
+                        registration,
+                        eventIssuedEvent.getMessage().getUserId(),
+                        resolveScore(eventIssuedEvent));
+                acknowledge(eventIssuedEvent);
+
+                // sectorAdaptor.save(sector); 데드락 문제 임시 해결
+            } catch (NoEventStockLeftException e) {
+                tracker.info("해당 구간 잔여 여석이 없습니다.", e);
+                acknowledge(eventIssuedEvent);
+            } catch (Exception e) {
+                // ack 하지 않으면 Redis Stream pending entry로 남아 재처리할 수 있다.
+                tracker.error("EventIssuedEventHandler Exception: ", e);
             }
         } finally {
             MDC.clear();
         }
     }
 
-    /**
-     * 대기열에서 pop한 registration을 저장하고 유저 신청 결과 상태 정보를 메일 전송하는 이벤트를 발행한다.
-     */
+    /** 대기열에서 pop한 registration을 저장하고 savedAt 기준 순서를 보존한다. */
     public void processQueueData(Sector sector, Registration registration, Long userId, Double score) {
         User user = userAdaptor.findById(userId);
         saveRegistration(sector, user, registration, score);
-//        Events.raise(UserReflectStatusEvent.of(userId, registration, sector));
     }
 
     private void saveRegistration(Sector sector, User user, Registration registration, Double score) {
@@ -127,11 +125,30 @@ public class EventIssuedEventHandler {
 
         registration.setSector(sector);
         registration.setUser(user);
-//        registrationAdaptor.updateSavedAt(registration);
         registration.setSavedAt(score.longValue());
         registrationAdaptor.saveAndFlush(registration);
 
         tracker.info("Registration saved");
+    }
+
+    private Double resolveScore(EventIssuedEvent eventIssuedEvent) {
+        if (eventIssuedEvent.getScore() != null) {
+            return eventIssuedEvent.getScore();
+        }
+        String streamRecordId = eventIssuedEvent.getStreamRecordId();
+        if (streamRecordId != null && streamRecordId.contains("-")) {
+            return Double.valueOf(streamRecordId.substring(0, streamRecordId.indexOf('-')));
+        }
+        return (double) System.nanoTime();
+    }
+
+    private void acknowledge(EventIssuedEvent eventIssuedEvent) {
+        if (eventIssuedEvent.getStreamRecordId() != null) {
+            waitingQueueService.acknowledge(
+                    REDIS_EVENT_ISSUE_STREAM,
+                    REDIS_EVENT_ISSUE_GROUP,
+                    eventIssuedEvent.getStreamRecordId());
+        }
     }
 
     private boolean isIdleConnectionAvailable() {

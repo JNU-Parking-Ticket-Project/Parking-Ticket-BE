@@ -1,6 +1,6 @@
 package com.jnu.ticketbatch.expired;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
 
 import com.jnu.ticketdomain.domains.events.EventExpiredEventRaiseGateway;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
@@ -36,7 +36,7 @@ public class BatchQuartzJob extends QuartzJobBean {
         // JobDataMap에서 eventId를 가져옵니다.
         Long eventId = (Long) context.getJobDetail().getJobDataMap().get("eventId");
         Event event = eventAdaptor.findById(eventId);
-        redisRepository.delete(REDIS_EVENT_ISSUE_STORE);
+        redisRepository.delete(REDIS_EVENT_ISSUE_STREAM);
         eventAdaptor.updateEventStatus(event, EventStatus.CLOSED);
 
         JobParameters jobParameters =

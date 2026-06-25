@@ -3,12 +3,23 @@ package com.jnu.ticketinfrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.connection.stream.Consumer;
+import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.ReadOffset;
+import org.springframework.data.redis.connection.stream.RecordId;
+import org.springframework.data.redis.connection.stream.StreamOffset;
+import org.springframework.data.redis.connection.stream.StreamReadOptions;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -18,6 +29,7 @@ import org.springframework.stereotype.Repository;
 @Slf4j
 @ConditionalOnExpression("${ableRedis:true}")
 public class RedisRepository {
+    private static final String STREAM_PAYLOAD_KEY = "payload";
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -107,6 +119,53 @@ public class RedisRepository {
         return redisTemplate.opsForZSet().score(key, value);
     }
 
+    public RecordId xAdd(String key, ChatMessage message) {
+        try {
+            Map<String, String> body =
+                    Map.of(STREAM_PAYLOAD_KEY, objectMapper.writeValueAsString(message));
+            return redisTemplate.opsForStream().add(key, body);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to add message to Redis Stream", e);
+        }
+    }
+
+    public void createConsumerGroupIfAbsent(String key, String group) {
+        try {
+            redisTemplate.execute(
+                    (RedisCallback<String>)
+                            connection ->
+                                    connection.xGroupCreate(
+                                            key.getBytes(StandardCharsets.UTF_8),
+                                            group,
+                                            ReadOffset.from("0-0"),
+                                            true));
+        } catch (DataAccessException e) {
+            if (!isAlreadyCreatedGroup(e)) {
+                throw e;
+            }
+        }
+    }
+
+    public List<StreamQueueMessage> xReadGroup(
+            String key, String group, String consumer, long count) {
+        createConsumerGroupIfAbsent(key, group);
+        List<MapRecord<String, Object, Object>> records =
+                redisTemplate
+                        .opsForStream()
+                        .read(
+                                Consumer.from(group, consumer),
+                                StreamReadOptions.empty().count(count),
+                                StreamOffset.create(key, ReadOffset.lastConsumed()));
+        if (records == null || records.isEmpty()) {
+            return List.of();
+        }
+        return records.stream().map(this::toStreamQueueMessage).toList();
+    }
+
+    public Long xAck(String key, String group, String recordId) {
+        return redisTemplate.opsForStream().acknowledge(key, group, recordId);
+    }
+
     public Long remove(String key, Object value) {
         return redisTemplate.opsForZSet().remove(key, value);
     }
@@ -127,5 +186,21 @@ public class RedisRepository {
             // Set is empty, return null or handle accordingly
             return null;
         }
+    }
+
+    private StreamQueueMessage toStreamQueueMessage(MapRecord<String, Object, Object> record) {
+        Object payload = record.getValue().get(STREAM_PAYLOAD_KEY);
+        try {
+            return new StreamQueueMessage(
+                    record.getId().getValue(),
+                    objectMapper.readValue(String.valueOf(payload), ChatMessage.class));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to parse Redis Stream message", e);
+        }
+    }
+
+    private boolean isAlreadyCreatedGroup(Exception e) {
+        String message = e.getMessage();
+        return message != null && message.contains("BUSYGROUP");
     }
 }

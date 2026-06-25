@@ -7,8 +7,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +42,8 @@ public class WaitingQueueService {
         Double score = (double) System.currentTimeMillis();
         String registrationString = convertRegistrationJSON(registration);
         ChatMessage message = new ChatMessage(registrationString, userId, sectorId, eventId);
-        checkDuplicateData(key, message);
-        redisRepository.zAddIfAbsent(key, message, score);
-        tracker.info("Added to the queue, score:{}", score);
+        redisRepository.xAdd(key, message);
+        tracker.info("Added to the stream, score:{}", score);
     }
 
     public String convertRegistrationJSON(Registration registration) {
@@ -114,5 +115,14 @@ public class WaitingQueueService {
 
     public Set<ZSetOperations.TypedTuple<Object>> findAllWithScore(String key) {
         return redisRepository.zRangeWithScores(key, 0L, -1L);
+    }
+
+    public List<StreamQueueMessage> readGroup(
+            String key, String group, String consumer, long count) {
+        return redisRepository.xReadGroup(key, group, consumer, count);
+    }
+
+    public Long acknowledge(String key, String group, String recordId) {
+        return redisRepository.xAck(key, group, recordId);
     }
 }
