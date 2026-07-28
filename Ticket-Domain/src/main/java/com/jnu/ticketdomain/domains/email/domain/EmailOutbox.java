@@ -3,8 +3,10 @@ package com.jnu.ticketdomain.domains.email.domain;
 
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
+import com.jnu.ticketdomain.domains.user.domain.UserStatusConverter;
 import java.time.LocalDateTime;
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
@@ -47,6 +49,7 @@ public class EmailOutbox {
     private String name;
 
     @Column(name = "result_status", nullable = false)
+    @Convert(converter = UserStatusConverter.class)
     private UserStatus resultStatus;
 
     @Column(name = "sequence", nullable = false)

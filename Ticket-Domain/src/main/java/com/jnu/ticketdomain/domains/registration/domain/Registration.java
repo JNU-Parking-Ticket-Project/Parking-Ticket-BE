@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
+import com.jnu.ticketdomain.domains.user.domain.UserStatusConverter;
 import java.time.LocalDateTime;
 import javax.persistence.*;
 import lombok.*;
@@ -81,6 +82,7 @@ public class Registration {
     private Integer position;
 
     @Column(name = "result_status")
+    @Convert(converter = UserStatusConverter.class)
     private UserStatus resultStatus;
 
     @Column(name = "sequence")
