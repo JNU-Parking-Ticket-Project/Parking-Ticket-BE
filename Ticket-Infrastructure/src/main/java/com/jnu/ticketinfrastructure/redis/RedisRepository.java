@@ -301,11 +301,14 @@ public class RedisRepository {
     }
 
     public Optional<Integer> getIntegerValue(String key) {
-        Object value = redisTemplate.opsForValue().get(key);
+        byte[] value =
+                redisTemplate.execute(
+                        (RedisCallback<byte[]>)
+                                connection -> connection.get(key.getBytes(StandardCharsets.UTF_8)));
         if (value == null) {
             return Optional.empty();
         }
-        return Optional.of(Integer.parseInt(String.valueOf(value)));
+        return Optional.of(Integer.parseInt(new String(value, StandardCharsets.UTF_8)));
     }
 
     public Long remove(String key, Object value) {

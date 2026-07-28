@@ -12,6 +12,7 @@ import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -199,6 +200,15 @@ class RedisRepositoryStreamTest {
         assertThat(result.isReserved()).isFalse();
         assertThat(result.isNoStock()).isTrue();
         assertThat(result.getRemainingAmount()).isZero();
+    }
+
+    @Test
+    @DisplayName("getIntegerValue는 Lua가 저장한 raw 숫자 문자열을 serializer 없이 조회한다")
+    void getIntegerValueReadsRawLuaValue() {
+        when(redisTemplate.execute(any(RedisCallback.class)))
+                .thenReturn("239".getBytes(StandardCharsets.UTF_8));
+
+        assertThat(redisRepository.getIntegerValue("stock")).contains(239);
     }
 
     @Test
