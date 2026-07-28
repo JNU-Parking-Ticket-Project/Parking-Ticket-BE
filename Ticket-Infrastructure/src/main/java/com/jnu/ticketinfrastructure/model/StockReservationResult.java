@@ -9,6 +9,7 @@ public class StockReservationResult {
     private static final String RESERVED = "RESERVED";
     private static final String DUPLICATE = "DUPLICATE";
     private static final String NO_STOCK = "NO_STOCK";
+    private static final String CLOSED = "CLOSED";
 
     private final boolean reserved;
     private final String reason;
@@ -46,11 +47,19 @@ public class StockReservationResult {
         return new StockReservationResult(false, NO_STOCK, null, null, null, remainingAmount);
     }
 
+    public static StockReservationResult closed(Integer remainingAmount) {
+        return new StockReservationResult(false, CLOSED, null, null, null, remainingAmount);
+    }
+
     public boolean isDuplicate() {
         return DUPLICATE.equals(reason);
     }
 
     public boolean isNoStock() {
         return NO_STOCK.equals(reason);
+    }
+
+    public boolean isClosed() {
+        return CLOSED.equals(reason);
     }
 }

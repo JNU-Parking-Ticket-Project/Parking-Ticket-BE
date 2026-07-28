@@ -71,6 +71,7 @@ public class WaitingQueueService {
                         sequenceKey(eventId, sector.getId()),
                         reservedEmailKey(eventId),
                         key,
+                        closedKey(eventId),
                         registrationString,
                         userId,
                         sector.getId(),
@@ -202,6 +203,14 @@ public class WaitingQueueService {
         redisRepository.deleteKeysByPrefix(eventStockPrefix(eventId));
     }
 
+    public void expireEventStockKeys(Long eventId, Duration timeout) {
+        redisRepository.expireKeysByPrefix(eventStockPrefix(eventId), timeout);
+    }
+
+    public void markEventStockClosed(Long eventId, Duration timeout) {
+        redisRepository.set(closedKey(eventId), true, timeout);
+    }
+
     public String eventStockPrefix(Long eventId) {
         return "parking-ticket:event:{" + eventId + "}:";
     }
@@ -216,5 +225,9 @@ public class WaitingQueueService {
 
     public String reservedEmailKey(Long eventId) {
         return eventStockPrefix(eventId) + "reserved:email";
+    }
+
+    public String closedKey(Long eventId) {
+        return eventStockPrefix(eventId) + "closed";
     }
 }

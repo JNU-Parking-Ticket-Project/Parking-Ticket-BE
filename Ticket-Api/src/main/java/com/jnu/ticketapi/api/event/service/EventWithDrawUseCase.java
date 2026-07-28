@@ -64,6 +64,9 @@ public class EventWithDrawUseCase {
         if (result.isNoStock()) {
             throw NoEventStockLeftException.EXCEPTION;
         }
+        if (result.isClosed()) {
+            throw NotOpenEventStatusException.EXCEPTION;
+        }
         return result;
     }
 

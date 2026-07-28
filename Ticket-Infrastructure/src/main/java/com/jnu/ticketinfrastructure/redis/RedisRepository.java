@@ -48,7 +48,12 @@ public class RedisRepository {
     private static final String STREAM_RESULT_STATUS_KEY = "resultStatus";
     private static final String STREAM_SEQUENCE_KEY = "sequence";
     private static final String RESERVE_STOCK_SCRIPT =
-            "local stock = redis.call('GET', KEYS[1]) "
+            "if redis.call('EXISTS', KEYS[5]) == 1 then "
+                    + "  local closedStock = redis.call('GET', KEYS[1]) "
+                    + "  if not closedStock then closedStock = 0 end "
+                    + "  return {0, 'CLOSED', -1, '', -1, tonumber(closedStock)} "
+                    + "end "
+                    + "local stock = redis.call('GET', KEYS[1]) "
                     + "if not stock then "
                     + "  stock = tonumber(ARGV[1]) "
                     + "  redis.call('SET', KEYS[1], stock) "
@@ -167,6 +172,17 @@ public class RedisRepository {
         }
     }
 
+    public void expireKeysByPrefix(String prefix, Duration timeout) {
+        Set<String> keys = redisTemplate.keys(prefix + "*");
+        if (keys != null) {
+            keys.forEach(key -> redisTemplate.expire(key, timeout));
+        }
+    }
+
+    public void set(String key, Object value, Duration timeout) {
+        redisTemplate.opsForValue().set(key, value, timeout);
+    }
+
     public Double getScore(String key, Object value) {
         return redisTemplate.opsForZSet().score(key, value);
     }
@@ -186,6 +202,7 @@ public class RedisRepository {
             String sequenceKey,
             String reservedEmailKey,
             String streamKey,
+            String closedKey,
             String registration,
             Long userId,
             Long sectorId,
@@ -203,12 +220,13 @@ public class RedisRepository {
                                                         RESERVE_STOCK_SCRIPT.getBytes(
                                                                 StandardCharsets.UTF_8),
                                                         ReturnType.MULTI,
-                                                        4,
+                                                        5,
                                                         redisArgs(
                                                                 stockKey,
                                                                 sequenceKey,
                                                                 reservedEmailKey,
                                                                 streamKey,
+                                                                closedKey,
                                                                 String.valueOf(
                                                                         initialRemainingAmount),
                                                                 String.valueOf(issueAmount),
@@ -380,6 +398,9 @@ public class RedisRepository {
         }
         if ("NO_STOCK".equals(reason)) {
             return StockReservationResult.noStock(remainingAmount);
+        }
+        if ("CLOSED".equals(reason)) {
+            return StockReservationResult.closed(remainingAmount);
         }
         throw new IllegalStateException("Unknown Redis stock reservation result: " + reason);
     }
