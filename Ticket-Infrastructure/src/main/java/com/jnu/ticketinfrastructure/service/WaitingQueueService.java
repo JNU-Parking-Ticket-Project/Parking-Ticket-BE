@@ -125,4 +125,12 @@ public class WaitingQueueService {
     public Long acknowledge(String key, String group, String recordId) {
         return redisRepository.xAck(key, group, recordId);
     }
+
+    public Long acknowledgeAndDelete(String key, String group, String recordId) {
+        Long acknowledged = redisRepository.xAck(key, group, recordId);
+        if (acknowledged != null && acknowledged > 0) {
+            redisRepository.xDelete(key, recordId);
+        }
+        return acknowledged;
+    }
 }

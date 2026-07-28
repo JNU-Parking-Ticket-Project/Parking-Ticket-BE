@@ -86,6 +86,27 @@ class WaitingQueueServiceTest {
         assertThat(acknowledged).isEqualTo(1L);
     }
 
+    @Test
+    @DisplayName("ACK에 성공한 Stream record는 원본 entry도 삭제한다")
+    void acknowledgeAndDeleteRemovesAcknowledgedRecord() {
+        when(redisRepository.xAck(STREAM_KEY, "group", "1-0")).thenReturn(1L);
+
+        Long acknowledged = waitingQueueService.acknowledgeAndDelete(STREAM_KEY, "group", "1-0");
+
+        assertThat(acknowledged).isEqualTo(1L);
+        verify(redisRepository).xDelete(STREAM_KEY, "1-0");
+    }
+
+    @Test
+    @DisplayName("ACK하지 못한 Stream record는 삭제하지 않는다")
+    void acknowledgeAndDeleteKeepsUnacknowledgedRecord() {
+        when(redisRepository.xAck(STREAM_KEY, "group", "1-0")).thenReturn(0L);
+
+        waitingQueueService.acknowledgeAndDelete(STREAM_KEY, "group", "1-0");
+
+        verify(redisRepository, never()).xDelete(STREAM_KEY, "1-0");
+    }
+
     private Registration registration() {
         Registration registration =
                 Registration.builder()

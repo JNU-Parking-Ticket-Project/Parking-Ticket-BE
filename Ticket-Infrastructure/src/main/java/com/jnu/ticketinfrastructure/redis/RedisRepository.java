@@ -166,6 +166,10 @@ public class RedisRepository {
         return redisTemplate.opsForStream().acknowledge(key, group, recordId);
     }
 
+    public Long xDelete(String key, String recordId) {
+        return redisTemplate.opsForStream().delete(key, recordId);
+    }
+
     public Long remove(String key, Object value) {
         return redisTemplate.opsForZSet().remove(key, value);
     }

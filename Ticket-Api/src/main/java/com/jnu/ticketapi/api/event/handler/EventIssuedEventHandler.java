@@ -26,6 +26,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Component
 @RequiredArgsConstructor
@@ -59,14 +61,12 @@ public class EventIssuedEventHandler {
             try {
                 Registration registration =
                         objectMapper.readValue(
-                                eventIssuedEvent.getMessage().getRegistration(), Registration.class);
+                                eventIssuedEvent.getMessage().getRegistration(),
+                                Registration.class);
 
-                if (registration.getId() != null
-                        && Boolean.TRUE.equals(
-                                registrationAdaptor.existsByIdAndIsSavedTrue(
-                                        registration.getId()))) {
+                if (isAlreadySaved(registration)) {
                     tracker.info("Already saved, ignored");
-                    acknowledge(eventIssuedEvent);
+                    acknowledgeAfterCommit(eventIssuedEvent);
                     return;
                 }
                 tracker.info(
@@ -81,15 +81,16 @@ public class EventIssuedEventHandler {
                         registration,
                         eventIssuedEvent.getMessage().getUserId(),
                         resolveScore(eventIssuedEvent));
-                acknowledge(eventIssuedEvent);
+                acknowledgeAfterCommit(eventIssuedEvent);
 
                 // sectorAdaptor.save(sector); 데드락 문제 임시 해결
             } catch (NoEventStockLeftException e) {
                 tracker.info("해당 구간 잔여 여석이 없습니다.", e);
-                acknowledge(eventIssuedEvent);
+                acknowledgeAfterCommit(eventIssuedEvent);
             } catch (Exception e) {
                 // ack 하지 않으면 Redis Stream pending entry로 남아 재처리할 수 있다.
                 tracker.error("EventIssuedEventHandler Exception: ", e);
+                throw new IllegalStateException(e);
             }
         } finally {
             MDC.clear();
@@ -97,12 +98,14 @@ public class EventIssuedEventHandler {
     }
 
     /** 대기열에서 pop한 registration을 저장하고 savedAt 기준 순서를 보존한다. */
-    public void processQueueData(Sector sector, Registration registration, Long userId, Double score) {
+    public void processQueueData(
+            Sector sector, Registration registration, Long userId, Double score) {
         User user = userAdaptor.findById(userId);
         saveRegistration(sector, user, registration, score);
     }
 
-    private void saveRegistration(Sector sector, User user, Registration registration, Double score) {
+    private void saveRegistration(
+            Sector sector, User user, Registration registration, Double score) {
         if (!sector.isRemainingAmount()) {
             tracker.info("[No seats remaining]. Registration: {}", registration);
             throw NoEventStockLeftException.EXCEPTION;
@@ -137,13 +140,49 @@ public class EventIssuedEventHandler {
         return (double) System.nanoTime();
     }
 
+    private boolean isAlreadySaved(Registration registration) {
+        if (registration.getId() != null
+                && Boolean.TRUE.equals(
+                        registrationAdaptor.existsByIdAndIsSavedTrue(registration.getId()))) {
+            return true;
+        }
+        return registration.getEventId() != null
+                && Boolean.TRUE.equals(
+                        registrationAdaptor.existsByEmailAndIsSavedTrue(
+                                registration.getEmail(), registration.getEventId()));
+    }
+
+    private void acknowledgeAfterCommit(EventIssuedEvent eventIssuedEvent) {
+        if (eventIssuedEvent.getStreamRecordId() == null) {
+            return;
+        }
+
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            acknowledge(eventIssuedEvent);
+                        }
+                    });
+            return;
+        }
+
+        acknowledge(eventIssuedEvent);
+    }
+
     private void acknowledge(EventIssuedEvent eventIssuedEvent) {
-        if (eventIssuedEvent.getStreamRecordId() != null) {
-            waitingQueueService.acknowledge(
+        try {
+            waitingQueueService.acknowledgeAndDelete(
                     REDIS_EVENT_ISSUE_STREAM,
                     REDIS_EVENT_ISSUE_GROUP,
                     eventIssuedEvent.getStreamRecordId());
+        } catch (Exception e) {
+            tracker.error(
+                    "Redis Stream ACK failed. recordId: {}",
+                    eventIssuedEvent.getStreamRecordId(),
+                    e);
         }
     }
-
 }

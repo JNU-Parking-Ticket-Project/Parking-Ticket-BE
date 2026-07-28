@@ -121,4 +121,15 @@ class RedisRepositoryStreamTest {
 
         assertThat(acknowledged).isEqualTo(1L);
     }
+
+    @Test
+    @DisplayName("xDelete는 처리 완료된 Stream record 삭제를 Redis에 위임한다")
+    void xDeleteDelegatesToStreamOperations() {
+        when(redisTemplate.opsForStream()).thenReturn(streamOperations);
+        when(streamOperations.delete(STREAM_KEY, "1-0")).thenReturn(1L);
+
+        Long deleted = redisRepository.xDelete(STREAM_KEY, "1-0");
+
+        assertThat(deleted).isEqualTo(1L);
+    }
 }
