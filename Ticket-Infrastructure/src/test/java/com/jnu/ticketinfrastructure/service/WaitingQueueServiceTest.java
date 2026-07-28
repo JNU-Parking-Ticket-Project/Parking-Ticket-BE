@@ -68,11 +68,12 @@ class WaitingQueueServiceTest {
     }
 
     @Test
-    @DisplayName("Redis 예약 대기열 등록은 stock/sequence/중복 키와 Stream 저장을 한 번에 위임한다")
+    @DisplayName("Redis 예약은 DB 잔여여석과 이메일 중복 키, Stream 저장을 한 번에 위임한다")
     void reserveAndRegisterQueueDelegatesAtomicStockReservation() throws Exception {
         Registration registration = registration();
         Sector sector = org.mockito.Mockito.mock(Sector.class);
         when(sector.getId()).thenReturn(2L);
+        when(sector.getRemainingAmount()).thenReturn(240);
         when(sector.getIssueAmount()).thenReturn(300);
         when(sector.getInitSectorCapacity()).thenReturn(250);
         StockReservationResult reservationResult =
@@ -81,14 +82,13 @@ class WaitingQueueServiceTest {
                         eq("parking-ticket:event:{3}:sector:2:stock"),
                         eq("parking-ticket:event:{3}:sector:2:sequence"),
                         eq("parking-ticket:event:{3}:reserved:email"),
-                        eq("parking-ticket:event:{3}:reserved:student"),
                         eq(STREAM_KEY),
                         anyString(),
                         eq(1L),
                         eq(2L),
                         eq(3L),
                         eq("student@jnu.ac.kr"),
-                        eq("20240001"),
+                        eq(240),
                         eq(300),
                         eq(250)))
                 .thenReturn(reservationResult);
@@ -104,14 +104,13 @@ class WaitingQueueServiceTest {
                         eq("parking-ticket:event:{3}:sector:2:stock"),
                         eq("parking-ticket:event:{3}:sector:2:sequence"),
                         eq("parking-ticket:event:{3}:reserved:email"),
-                        eq("parking-ticket:event:{3}:reserved:student"),
                         eq(STREAM_KEY),
                         registrationPayloadCaptor.capture(),
                         eq(1L),
                         eq(2L),
                         eq(3L),
                         eq("student@jnu.ac.kr"),
-                        eq("20240001"),
+                        eq(240),
                         eq(300),
                         eq(250));
         JSONObject payload = new JSONObject(registrationPayloadCaptor.getValue());

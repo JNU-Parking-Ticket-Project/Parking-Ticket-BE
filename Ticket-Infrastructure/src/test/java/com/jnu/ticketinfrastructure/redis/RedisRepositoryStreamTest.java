@@ -158,14 +158,13 @@ class RedisRepositoryStreamTest {
                         "stock",
                         "sequence",
                         "reserved-email",
-                        "reserved-student",
                         STREAM_KEY,
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        "20240001",
+                        300,
                         300,
                         250);
 
@@ -187,14 +186,13 @@ class RedisRepositoryStreamTest {
                         "stock",
                         "sequence",
                         "reserved-email",
-                        "reserved-student",
                         STREAM_KEY,
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        "20240001",
+                        300,
                         300,
                         250);
 

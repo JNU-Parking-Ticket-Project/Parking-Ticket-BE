@@ -57,20 +57,27 @@ public class WaitingQueueService {
             String key, Registration registration, Long userId, Sector sector, Long eventId)
             throws JsonProcessingException {
         String registrationString = convertRegistrationJSON(registration);
+        int issueAmount = sector.getIssueAmount();
+        int initialRemainingAmount =
+                Math.max(
+                        0,
+                        Math.min(
+                                Optional.ofNullable(sector.getRemainingAmount())
+                                        .orElse(issueAmount),
+                                issueAmount));
         StockReservationResult result =
                 redisRepository.reserveStockAndAddToStream(
                         stockKey(eventId, sector.getId()),
                         sequenceKey(eventId, sector.getId()),
                         reservedEmailKey(eventId),
-                        reservedStudentKey(eventId),
                         key,
                         registrationString,
                         userId,
                         sector.getId(),
                         eventId,
                         registration.getEmail(),
-                        registration.getStudentNum(),
-                        sector.getIssueAmount(),
+                        initialRemainingAmount,
+                        issueAmount,
                         sector.getInitSectorCapacity());
         tracker.info(
                 "Reserved Redis stock. sectorId: {}, reserved: {}, position: {}, status: {}, remaining: {}",
@@ -209,9 +216,5 @@ public class WaitingQueueService {
 
     public String reservedEmailKey(Long eventId) {
         return eventStockPrefix(eventId) + "reserved:email";
-    }
-
-    public String reservedStudentKey(Long eventId) {
-        return eventStockPrefix(eventId) + "reserved:student";
     }
 }

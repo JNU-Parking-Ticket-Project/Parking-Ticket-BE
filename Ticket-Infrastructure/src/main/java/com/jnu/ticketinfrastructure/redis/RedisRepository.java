@@ -56,10 +56,9 @@ public class RedisRepository {
                     + "  stock = tonumber(stock) "
                     + "end "
                     + "if not redis.call('GET', KEYS[2]) then "
-                    + "  redis.call('SET', KEYS[2], tonumber(ARGV[1]) - stock) "
+                    + "  redis.call('SET', KEYS[2], tonumber(ARGV[2]) - stock) "
                     + "end "
-                    + "if redis.call('SISMEMBER', KEYS[3], ARGV[7]) == 1 "
-                    + "or redis.call('SISMEMBER', KEYS[4], ARGV[8]) == 1 then "
+                    + "if redis.call('SISMEMBER', KEYS[3], ARGV[8]) == 1 then "
                     + "  return {0, 'DUPLICATE', -1, '', -1, stock} "
                     + "end "
                     + "if stock <= 0 then "
@@ -67,19 +66,18 @@ public class RedisRepository {
                     + "end "
                     + "local position = redis.call('INCR', KEYS[2]) "
                     + "local status = 'PREPARE' "
-                    + "local sequence = position - tonumber(ARGV[2]) "
-                    + "if position <= tonumber(ARGV[2]) then "
+                    + "local sequence = position - tonumber(ARGV[3]) "
+                    + "if position <= tonumber(ARGV[3]) then "
                     + "  status = 'SUCCESS' "
                     + "  sequence = -2 "
                     + "end "
                     + "local remaining = redis.call('DECR', KEYS[1]) "
-                    + "redis.call('SADD', KEYS[3], ARGV[7]) "
-                    + "redis.call('SADD', KEYS[4], ARGV[8]) "
-                    + "redis.call('XADD', KEYS[5], '*', "
-                    + "  'registration', ARGV[3], "
-                    + "  'userId', ARGV[4], "
-                    + "  'sectorId', ARGV[5], "
-                    + "  'eventId', ARGV[6], "
+                    + "redis.call('SADD', KEYS[3], ARGV[8]) "
+                    + "redis.call('XADD', KEYS[4], '*', "
+                    + "  'registration', ARGV[4], "
+                    + "  'userId', ARGV[5], "
+                    + "  'sectorId', ARGV[6], "
+                    + "  'eventId', ARGV[7], "
                     + "  'position', tostring(position), "
                     + "  'resultStatus', status, "
                     + "  'sequence', tostring(sequence)) "
@@ -187,14 +185,13 @@ public class RedisRepository {
             String stockKey,
             String sequenceKey,
             String reservedEmailKey,
-            String reservedStudentKey,
             String streamKey,
             String registration,
             Long userId,
             Long sectorId,
             Long eventId,
             String email,
-            String studentNum,
+            Integer initialRemainingAmount,
             Integer issueAmount,
             Integer initSectorCapacity) {
         List<Object> rawResult =
@@ -206,21 +203,21 @@ public class RedisRepository {
                                                         RESERVE_STOCK_SCRIPT.getBytes(
                                                                 StandardCharsets.UTF_8),
                                                         ReturnType.MULTI,
-                                                        5,
+                                                        4,
                                                         redisArgs(
                                                                 stockKey,
                                                                 sequenceKey,
                                                                 reservedEmailKey,
-                                                                reservedStudentKey,
                                                                 streamKey,
+                                                                String.valueOf(
+                                                                        initialRemainingAmount),
                                                                 String.valueOf(issueAmount),
                                                                 String.valueOf(initSectorCapacity),
                                                                 registration,
                                                                 String.valueOf(userId),
                                                                 String.valueOf(sectorId),
                                                                 String.valueOf(eventId),
-                                                                email,
-                                                                studentNum)));
+                                                                email)));
         return toStockReservationResult(rawResult);
     }
 
