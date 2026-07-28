@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,8 +21,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.RedisSystemException;
+import org.springframework.data.redis.connection.stream.ByteRecord;
 import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.PendingMessage;
+import org.springframework.data.redis.connection.stream.PendingMessages;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.connection.stream.StreamReadOptions;
@@ -38,6 +42,7 @@ class RedisRepositoryStreamTest {
 
     @Mock private RedisTemplate<String, Object> redisTemplate;
     @Mock private StreamOperations<String, Object, Object> streamOperations;
+    @Mock private ByteRecord byteRecord;
 
     private RedisRepository redisRepository;
     private ObjectMapper objectMapper;
@@ -109,6 +114,44 @@ class RedisRepositoryStreamTest {
 
         assertThatCode(() -> redisRepository.createConsumerGroupIfAbsent(STREAM_KEY, GROUP))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("xClaimStale은 idle 기준을 넘긴 pending record를 현재 consumer로 가져온다")
+    void xClaimStaleClaimsRecoverablePendingRecord() throws Exception {
+        ChatMessage message = new ChatMessage("{\"id\":10}", 1L, 2L, 3L);
+        MapRecord<String, Object, Object> record =
+                MapRecord.create(
+                                STREAM_KEY,
+                                Map.<Object, Object>of(
+                                        "payload", objectMapper.writeValueAsString(message)))
+                        .withId(RecordId.of("1-0"));
+        PendingMessage pendingMessage =
+                new PendingMessage(
+                        RecordId.of("1-0"),
+                        Consumer.from(GROUP, "stopped-consumer"),
+                        Duration.ofMinutes(1),
+                        2L);
+        PendingMessages pendingMessages = new PendingMessages(GROUP, List.of(pendingMessage));
+        when(redisTemplate.opsForStream()).thenReturn(streamOperations);
+        when(redisTemplate.execute(any(RedisCallback.class)))
+                .thenReturn("OK")
+                .thenReturn(List.of(byteRecord));
+        when(streamOperations.pending(
+                        eq(STREAM_KEY),
+                        eq(GROUP),
+                        any(org.springframework.data.domain.Range.class),
+                        eq(10L)))
+                .thenReturn(pendingMessages);
+        when(streamOperations.deserializeRecord(byteRecord)).thenReturn(record);
+
+        List<StreamQueueMessage> result =
+                redisRepository.xClaimStale(
+                        STREAM_KEY, GROUP, CONSUMER, 10L, Duration.ofSeconds(30));
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getRecordId()).isEqualTo("1-0");
+        assertThat(result.get(0).getMessage().getUserId()).isEqualTo(1L);
     }
 
     @Test

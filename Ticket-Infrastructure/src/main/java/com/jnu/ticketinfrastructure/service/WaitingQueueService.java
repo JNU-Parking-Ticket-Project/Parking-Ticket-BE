@@ -9,6 +9,8 @@ import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrat
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -28,6 +30,7 @@ import org.springframework.stereotype.Service;
 public class WaitingQueueService {
 
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
+    private static final Duration STREAM_PENDING_MIN_IDLE_TIME = Duration.ofSeconds(30);
 
     private final RedisRepository redisRepository;
     @Autowired private ObjectMapper objectMapper;
@@ -119,7 +122,16 @@ public class WaitingQueueService {
 
     public List<StreamQueueMessage> readGroup(
             String key, String group, String consumer, long count) {
-        return redisRepository.xReadGroup(key, group, consumer, count);
+        List<StreamQueueMessage> recovered =
+                redisRepository.xClaimStale(
+                        key, group, consumer, count, STREAM_PENDING_MIN_IDLE_TIME);
+        if (recovered.size() >= count) {
+            return recovered;
+        }
+
+        List<StreamQueueMessage> messages = new ArrayList<>(recovered);
+        messages.addAll(redisRepository.xReadGroup(key, group, consumer, count - recovered.size()));
+        return messages;
     }
 
     public Long acknowledge(String key, String group, String recordId) {

@@ -5,17 +5,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Range;
 import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.connection.stream.ByteRecord;
 import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.PendingMessage;
+import org.springframework.data.redis.connection.stream.PendingMessages;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamOffset;
@@ -162,6 +168,44 @@ public class RedisRepository {
         return records.stream().map(this::toStreamQueueMessage).toList();
     }
 
+    public List<StreamQueueMessage> xClaimStale(
+            String key, String group, String consumer, long count, Duration minIdleTime) {
+        createConsumerGroupIfAbsent(key, group);
+        PendingMessages pendingMessages =
+                redisTemplate.opsForStream().pending(key, group, Range.unbounded(), count);
+        if (pendingMessages == null || pendingMessages.isEmpty()) {
+            return List.of();
+        }
+
+        RecordId[] staleRecordIds =
+                StreamSupport.stream(pendingMessages.spliterator(), false)
+                        .filter(pendingMessage -> isStale(pendingMessage, minIdleTime))
+                        .map(PendingMessage::getId)
+                        .toArray(RecordId[]::new);
+        if (staleRecordIds.length == 0) {
+            return List.of();
+        }
+
+        List<ByteRecord> claimedRecords =
+                redisTemplate.execute(
+                        (RedisCallback<List<ByteRecord>>)
+                                connection ->
+                                        connection.xClaim(
+                                                key.getBytes(StandardCharsets.UTF_8),
+                                                group,
+                                                consumer,
+                                                minIdleTime,
+                                                staleRecordIds));
+        if (claimedRecords == null || claimedRecords.isEmpty()) {
+            return List.of();
+        }
+
+        return claimedRecords.stream()
+                .map(redisTemplate.opsForStream()::deserializeRecord)
+                .map(this::toStreamQueueMessage)
+                .toList();
+    }
+
     public Long xAck(String key, String group, String recordId) {
         return redisTemplate.opsForStream().acknowledge(key, group, recordId);
     }
@@ -206,5 +250,9 @@ public class RedisRepository {
     private boolean isAlreadyCreatedGroup(Exception e) {
         String message = e.getMessage();
         return message != null && message.contains("BUSYGROUP");
+    }
+
+    private boolean isStale(PendingMessage pendingMessage, Duration minIdleTime) {
+        return pendingMessage.getElapsedTimeSinceLastDelivery().compareTo(minIdleTime) >= 0;
     }
 }

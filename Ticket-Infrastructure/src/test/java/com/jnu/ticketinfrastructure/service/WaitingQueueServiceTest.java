@@ -13,6 +13,7 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.json.JSONObject;
@@ -67,13 +68,35 @@ class WaitingQueueServiceTest {
     void readGroupDelegatesToRedisStreamRepository() {
         List<StreamQueueMessage> messages =
                 List.of(new StreamQueueMessage("1-0", new ChatMessage("{}", 1L, 2L, 3L)));
+        when(redisRepository.xClaimStale(
+                        STREAM_KEY, "group", "consumer", 100L, Duration.ofSeconds(30)))
+                .thenReturn(List.of());
         when(redisRepository.xReadGroup(STREAM_KEY, "group", "consumer", 100L))
                 .thenReturn(messages);
 
         List<StreamQueueMessage> result =
                 waitingQueueService.readGroup(STREAM_KEY, "group", "consumer", 100L);
 
-        assertThat(result).isSameAs(messages);
+        assertThat(result).containsExactlyElementsOf(messages);
+    }
+
+    @Test
+    @DisplayName("stale pending record를 먼저 복구하고 남은 수만큼 새 메시지를 읽는다")
+    void readGroupRecoversStalePendingBeforeNewMessages() {
+        StreamQueueMessage recovered =
+                new StreamQueueMessage("1-0", new ChatMessage("{}", 1L, 2L, 3L));
+        StreamQueueMessage newMessage =
+                new StreamQueueMessage("2-0", new ChatMessage("{}", 2L, 2L, 3L));
+        when(redisRepository.xClaimStale(
+                        STREAM_KEY, "group", "consumer", 2L, Duration.ofSeconds(30)))
+                .thenReturn(List.of(recovered));
+        when(redisRepository.xReadGroup(STREAM_KEY, "group", "consumer", 1L))
+                .thenReturn(List.of(newMessage));
+
+        List<StreamQueueMessage> result =
+                waitingQueueService.readGroup(STREAM_KEY, "group", "consumer", 2L);
+
+        assertThat(result).containsExactly(recovered, newMessage);
     }
 
     @Test
