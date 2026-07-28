@@ -38,6 +38,7 @@ public class EventRegisterJob implements Job {
     private static final String GROUP = "group1";
     private static final String ASIA_SEOUL = "Asia/Seoul";
     private static final long OPEN_LEAD_SECONDS = 5L;
+    private static final long QUEUE_DRAIN_GRACE_MINUTES = 5L;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -123,7 +124,11 @@ public class EventRegisterJob implements Job {
                         .build();
 
         Date start = Date.from(startAt.atZone(ZoneId.of(ASIA_SEOUL)).toInstant());
-        Date end = Date.from(endAt.atZone(ZoneId.of(ASIA_SEOUL)).toInstant());
+        Date end =
+                Date.from(
+                        endAt.plusMinutes(QUEUE_DRAIN_GRACE_MINUTES)
+                                .atZone(ZoneId.of(ASIA_SEOUL))
+                                .toInstant());
 
         Trigger reserveTrigger =
                 newTrigger()

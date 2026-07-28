@@ -1,7 +1,6 @@
 package com.jnu.ticketapi.api.event.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -30,6 +29,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 @ExtendWith(MockitoExtension.class)
 class EventIssuedEventHandlerTest {
+
+    private static final String EVENT_STREAM_KEY = "쿠폰 발급 스트림:{3}";
 
     @Mock private RegistrationAdaptor registrationAdaptor;
     @Mock private UserAdaptor userAdaptor;
@@ -69,12 +70,12 @@ class EventIssuedEventHandlerTest {
         eventIssuedEventHandler.handle(event);
 
         verify(waitingQueueService, never())
-                .acknowledgeAndDelete(REDIS_EVENT_ISSUE_STREAM, REDIS_EVENT_ISSUE_GROUP, "1-0");
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "1-0");
 
         commitSynchronizations();
 
         verify(waitingQueueService)
-                .acknowledgeAndDelete(REDIS_EVENT_ISSUE_STREAM, REDIS_EVENT_ISSUE_GROUP, "1-0");
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "1-0");
     }
 
     @Test
@@ -87,7 +88,7 @@ class EventIssuedEventHandlerTest {
                 .isInstanceOf(IllegalStateException.class);
 
         verify(waitingQueueService, never())
-                .acknowledgeAndDelete(REDIS_EVENT_ISSUE_STREAM, REDIS_EVENT_ISSUE_GROUP, "2-0");
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "2-0");
     }
 
     @Test
@@ -103,7 +104,7 @@ class EventIssuedEventHandlerTest {
         verify(userAdaptor, never()).findById(1L);
         verify(registrationAdaptor, never()).save(org.mockito.ArgumentMatchers.any());
         verify(waitingQueueService)
-                .acknowledgeAndDelete(REDIS_EVENT_ISSUE_STREAM, REDIS_EVENT_ISSUE_GROUP, "3-0");
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "3-0");
     }
 
     private void beginTransactionSynchronization() {
@@ -118,7 +119,8 @@ class EventIssuedEventHandlerTest {
     }
 
     private EventIssuedEvent event(String recordId, String registration) {
-        return EventIssuedEvent.from(new ChatMessage(registration, 1L, 2L, 3L), recordId);
+        return EventIssuedEvent.from(
+                new ChatMessage(registration, 1L, 2L, 3L), recordId, EVENT_STREAM_KEY);
     }
 
     private String registrationJson() {

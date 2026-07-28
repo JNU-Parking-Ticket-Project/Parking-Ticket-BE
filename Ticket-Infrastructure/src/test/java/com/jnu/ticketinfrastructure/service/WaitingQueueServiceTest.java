@@ -130,6 +130,20 @@ class WaitingQueueServiceTest {
         verify(redisRepository, never()).xDelete(STREAM_KEY, "1-0");
     }
 
+    @Test
+    @DisplayName("이벤트별 Stream key는 Redis Cluster hash tag에 eventId를 사용한다")
+    void eventStreamKeyUsesEventHashTag() {
+        assertThat(waitingQueueService.eventStreamKey(3L)).isEqualTo("쿠폰 발급 스트림:{3}");
+    }
+
+    @Test
+    @DisplayName("이벤트 삭제는 해당 이벤트의 Stream만 삭제한다")
+    void deleteEventStreamDeletesOnlyEventStreamKey() {
+        waitingQueueService.deleteEventStream(3L);
+
+        verify(redisRepository).delete("쿠폰 발급 스트림:{3}");
+    }
+
     private Registration registration() {
         Registration registration =
                 Registration.builder()

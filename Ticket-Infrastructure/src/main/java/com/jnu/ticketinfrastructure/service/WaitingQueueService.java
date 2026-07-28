@@ -1,6 +1,7 @@
 package com.jnu.ticketinfrastructure.service;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -144,5 +145,13 @@ public class WaitingQueueService {
             redisRepository.xDelete(key, recordId);
         }
         return acknowledged;
+    }
+
+    public String eventStreamKey(Long eventId) {
+        return REDIS_EVENT_ISSUE_STREAM + ":{" + eventId + "}";
+    }
+
+    public void deleteEventStream(Long eventId) {
+        redisRepository.delete(eventStreamKey(eventId));
     }
 }

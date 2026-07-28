@@ -2,7 +2,6 @@ package com.jnu.ticketbatch.config;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_CONSUMER;
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
 
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.domainEvent.Events;
@@ -28,10 +27,12 @@ public class ProcessQueueDataJob implements Job {
         try {
             // 현재 쓰레드에 ApplicationEventPublisher를 설정
             Events.setPublisher(publisher);
+            Long eventId = context.getMergedJobDataMap().getLong("eventId");
+            String streamKey = waitingQueueService.eventStreamKey(eventId);
 
             List<StreamQueueMessage> messages =
                     waitingQueueService.readGroup(
-                            REDIS_EVENT_ISSUE_STREAM,
+                            streamKey,
                             REDIS_EVENT_ISSUE_GROUP,
                             REDIS_EVENT_ISSUE_CONSUMER,
                             READ_COUNT);
@@ -41,7 +42,8 @@ public class ProcessQueueDataJob implements Job {
                     Events.raise(
                             EventIssuedEvent.from(
                                     streamQueueMessage.getMessage(),
-                                    streamQueueMessage.getRecordId()));
+                                    streamQueueMessage.getRecordId(),
+                                    streamKey));
                 }
             }
         } catch (Exception e) {

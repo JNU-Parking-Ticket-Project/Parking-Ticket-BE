@@ -1,7 +1,6 @@
 package com.jnu.ticketapi.api.event.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
@@ -175,7 +174,7 @@ public class EventIssuedEventHandler {
     private void acknowledge(EventIssuedEvent eventIssuedEvent) {
         try {
             waitingQueueService.acknowledgeAndDelete(
-                    REDIS_EVENT_ISSUE_STREAM,
+                    resolveStreamKey(eventIssuedEvent),
                     REDIS_EVENT_ISSUE_GROUP,
                     eventIssuedEvent.getStreamRecordId());
         } catch (Exception e) {
@@ -184,5 +183,12 @@ public class EventIssuedEventHandler {
                     eventIssuedEvent.getStreamRecordId(),
                     e);
         }
+    }
+
+    private String resolveStreamKey(EventIssuedEvent eventIssuedEvent) {
+        if (eventIssuedEvent.getStreamKey() != null) {
+            return eventIssuedEvent.getStreamKey();
+        }
+        return waitingQueueService.eventStreamKey(eventIssuedEvent.getMessage().getEventId());
     }
 }

@@ -11,6 +11,7 @@ public class EventIssuedEvent extends InfrastructureEvent {
     private ChatMessage message;
     private final Double score;
     private final String streamRecordId;
+    private final String streamKey;
 
     public static EventIssuedEvent from(ChatMessage message, Double score) {
         return EventIssuedEvent.builder().message(message).score(score).build();
@@ -18,6 +19,15 @@ public class EventIssuedEvent extends InfrastructureEvent {
 
     public static EventIssuedEvent from(ChatMessage message, String streamRecordId) {
         return EventIssuedEvent.builder().message(message).streamRecordId(streamRecordId).build();
+    }
+
+    public static EventIssuedEvent from(
+            ChatMessage message, String streamRecordId, String streamKey) {
+        return EventIssuedEvent.builder()
+                .message(message)
+                .streamRecordId(streamRecordId)
+                .streamKey(streamKey)
+                .build();
     }
 
     @Override
@@ -29,6 +39,9 @@ public class EventIssuedEvent extends InfrastructureEvent {
                 + score
                 + ", streamRecordId='"
                 + streamRecordId
+                + '\''
+                + ", streamKey='"
+                + streamKey
                 + '\''
                 + '}';
     }
