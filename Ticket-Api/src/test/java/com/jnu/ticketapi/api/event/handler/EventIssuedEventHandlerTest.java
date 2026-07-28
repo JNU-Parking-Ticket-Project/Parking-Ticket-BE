@@ -188,7 +188,6 @@ class EventIssuedEventHandlerTest {
         when(sectorAdaptor.findByIdForUpdate(2L)).thenReturn(sector);
         when(sector.getId()).thenReturn(2L);
         when(sector.getInitSectorCapacity()).thenReturn(1);
-        when(sector.getIssueAmount()).thenReturn(2);
         when(registrationAdaptor.countSavedBySectorId(2L)).thenReturn(0L);
     }
 
