@@ -3,16 +3,16 @@ package com.jnu.ticketapi.api.event.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.jnu.ticketcommon.consts.TicketStatic;
-import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
@@ -29,6 +29,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class EventWithDrawUseCaseTest {
+
+    private static final String EVENT_STREAM_KEY = "쿠폰 발급 스트림:{10}";
 
     @Mock private WaitingQueueService waitingQueueService;
     @Mock private EventAdaptor eventAdaptor;
@@ -52,11 +54,7 @@ class EventWithDrawUseCaseTest {
                 StockReservationResult.reserved(1, UserStatus.SUCCESS, -2, 299);
         givenOpenEvent();
         when(waitingQueueService.reserveAndRegisterQueue(
-                        eq(TicketStatic.REDIS_EVENT_ISSUE_STREAM),
-                        eq(registration),
-                        eq(100L),
-                        eq(sector),
-                        eq(10L)))
+                        eq(EVENT_STREAM_KEY), eq(registration), eq(100L), eq(sector), eq(10L)))
                 .thenReturn(reservationResult);
 
         StockReservationResult result =
@@ -64,8 +62,7 @@ class EventWithDrawUseCaseTest {
 
         assertThat(result).isSameAs(reservationResult);
         verify(waitingQueueService)
-                .reserveAndRegisterQueue(
-                        TicketStatic.REDIS_EVENT_ISSUE_STREAM, registration, 100L, sector, 10L);
+                .reserveAndRegisterQueue(EVENT_STREAM_KEY, registration, 100L, sector, 10L);
     }
 
     @Test
@@ -74,7 +71,7 @@ class EventWithDrawUseCaseTest {
         Registration registration = registration();
         givenOpenEvent();
         when(waitingQueueService.reserveAndRegisterQueue(
-                        TicketStatic.REDIS_EVENT_ISSUE_STREAM, registration, 100L, sector, 10L))
+                        EVENT_STREAM_KEY, registration, 100L, sector, 10L))
                 .thenReturn(StockReservationResult.noStock(0));
 
         assertThatThrownBy(() -> eventWithDrawUseCase.issueEvent(registration, 100L, sector, 10L))
@@ -87,16 +84,41 @@ class EventWithDrawUseCaseTest {
         Registration registration = registration();
         givenOpenEvent();
         when(waitingQueueService.reserveAndRegisterQueue(
-                        TicketStatic.REDIS_EVENT_ISSUE_STREAM, registration, 100L, sector, 10L))
+                        EVENT_STREAM_KEY, registration, 100L, sector, 10L))
                 .thenReturn(StockReservationResult.duplicate(299));
 
         assertThatThrownBy(() -> eventWithDrawUseCase.issueEvent(registration, 100L, sector, 10L))
                 .isSameAs(AlreadyExistRegistrationException.EXCEPTION);
     }
 
-    private void givenOpenEvent() {
-        when(eventAdaptor.findReadyOrOpenEvent()).thenReturn(Result.success(event));
+    @Test
+    @DisplayName("선택한 구간이 요청 이벤트 소속이 아니면 Redis 예약을 거부한다")
+    void issueEventRejectsSectorFromAnotherEvent() throws Exception {
+        Registration registration = registration();
+        Event otherEvent = org.mockito.Mockito.mock(Event.class);
+        when(eventAdaptor.findById(10L)).thenReturn(event);
         when(event.getEventStatus()).thenReturn(EventStatus.OPEN);
+        when(sector.getEvent()).thenReturn(otherEvent);
+        when(otherEvent.getId()).thenReturn(11L);
+
+        assertThatThrownBy(() -> eventWithDrawUseCase.issueEvent(registration, 100L, sector, 10L))
+                .isSameAs(NotFoundSectorException.EXCEPTION);
+
+        verify(waitingQueueService, never())
+                .reserveAndRegisterQueue(
+                        org.mockito.ArgumentMatchers.anyString(),
+                        eq(registration),
+                        eq(100L),
+                        eq(sector),
+                        eq(10L));
+    }
+
+    private void givenOpenEvent() {
+        when(eventAdaptor.findById(10L)).thenReturn(event);
+        when(event.getId()).thenReturn(10L);
+        when(event.getEventStatus()).thenReturn(EventStatus.OPEN);
+        when(sector.getEvent()).thenReturn(event);
+        when(waitingQueueService.eventStreamKey(10L)).thenReturn(EVENT_STREAM_KEY);
     }
 
     private Registration registration() {

@@ -15,6 +15,7 @@ import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrat
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -41,18 +42,15 @@ public class EventWithDrawUseCase {
     @SneakyThrows
     public StockReservationResult issueEvent(
             Registration registration, Long userId, Sector sector, Long eventId) {
-        // 재고 감소 로직 구현
-        Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
-        readyEvent.fold(
-                (event) -> {
-                    if (event.getEventStatus().equals(EventStatus.READY))
-                        throw NotOpenEventStatusException.EXCEPTION;
-                    event.validateIssuePeriod();
-                    return null;
-                },
-                (error) -> {
-                    throw NotReadyEventStatusException.EXCEPTION;
-                });
+        Event event = eventAdaptor.findById(eventId);
+        if (event.getEventStatus() != EventStatus.OPEN) {
+            throw NotOpenEventStatusException.EXCEPTION;
+        }
+        if (sector.getEvent() == null || !Objects.equals(sector.getEvent().getId(), eventId)) {
+            throw NotFoundSectorException.EXCEPTION;
+        }
+        event.validateIssuePeriod();
+
         StockReservationResult result =
                 waitingQueueService.reserveAndRegisterQueue(
                         waitingQueueService.eventStreamKey(eventId),
