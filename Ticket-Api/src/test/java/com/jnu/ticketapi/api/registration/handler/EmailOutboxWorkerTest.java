@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.registration.handler;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.MAX_EMAIL_SEND_RETRY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -37,21 +38,23 @@ class EmailOutboxWorkerTest {
     @DisplayName("claim에 성공한 outbox 메일 발송이 성공하면 sent_at을 기록한다")
     void sendPendingMarksSentWhenMailSucceeded() {
         givenPendingOutbox();
-        when(emailOutboxAdaptor.claim(eq(1L), any(LocalDateTime.class))).thenReturn(true);
+        when(emailOutboxAdaptor.claim(eq(1L), any(LocalDateTime.class), eq(MAX_EMAIL_SEND_RETRY)))
+                .thenReturn(true);
         when(mailService.sendRegistrationResultMail("student@jnu.ac.kr", "학생", "합격", -2))
                 .thenReturn(true);
 
         emailOutboxWorker.sendPendingRegistrationResultMail();
 
         verify(emailOutboxAdaptor).markSent(1L);
-        verify(emailOutboxAdaptor, never()).releaseAfterFailure(1L);
+        verify(emailOutboxAdaptor, never()).markFailed(1L);
     }
 
     @Test
     @DisplayName("claim에 실패한 outbox는 메일을 보내지 않는다")
     void sendPendingSkipsWhenClaimFailed() {
         givenPendingOutboxWithoutMailPayload();
-        when(emailOutboxAdaptor.claim(eq(1L), any(LocalDateTime.class))).thenReturn(false);
+        when(emailOutboxAdaptor.claim(eq(1L), any(LocalDateTime.class), eq(MAX_EMAIL_SEND_RETRY)))
+                .thenReturn(false);
 
         emailOutboxWorker.sendPendingRegistrationResultMail();
 
@@ -60,16 +63,17 @@ class EmailOutboxWorkerTest {
     }
 
     @Test
-    @DisplayName("메일 발송이 실패하면 outbox claim을 해제하고 재시도 대상으로 남긴다")
-    void sendPendingReleasesClaimWhenMailFailed() {
+    @DisplayName("메일 발송이 실패하면 실패 시각과 재시도 횟수를 기록한다")
+    void sendPendingMarksOutboxFailedWhenMailFailed() {
         givenPendingOutbox();
-        when(emailOutboxAdaptor.claim(eq(1L), any(LocalDateTime.class))).thenReturn(true);
+        when(emailOutboxAdaptor.claim(eq(1L), any(LocalDateTime.class), eq(MAX_EMAIL_SEND_RETRY)))
+                .thenReturn(true);
         when(mailService.sendRegistrationResultMail("student@jnu.ac.kr", "학생", "합격", -2))
                 .thenReturn(false);
 
         emailOutboxWorker.sendPendingRegistrationResultMail();
 
-        verify(emailOutboxAdaptor).releaseAfterFailure(1L);
+        verify(emailOutboxAdaptor).markFailed(1L);
         verify(emailOutboxAdaptor, never()).markSent(1L);
     }
 
@@ -82,7 +86,8 @@ class EmailOutboxWorkerTest {
     }
 
     private void givenPendingOutboxWithoutMailPayload() {
-        when(emailOutboxAdaptor.findPending(eq(20), any(LocalDateTime.class)))
+        when(emailOutboxAdaptor.findPending(
+                        eq(20), any(LocalDateTime.class), eq(MAX_EMAIL_SEND_RETRY)))
                 .thenReturn(List.of(outbox));
         when(outbox.getId()).thenReturn(1L);
     }

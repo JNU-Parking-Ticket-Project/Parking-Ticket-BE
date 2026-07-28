@@ -23,13 +23,15 @@ public class EmailOutboxAdaptor {
         emailOutboxRepository.save(EmailOutbox.from(registration));
     }
 
-    public List<EmailOutbox> findPending(int size, LocalDateTime staleBefore) {
-        return emailOutboxRepository.findPending(staleBefore, PageRequest.of(0, size));
+    public List<EmailOutbox> findPending(int size, LocalDateTime staleBefore, int maxRetryCount) {
+        return emailOutboxRepository.findPending(
+                staleBefore, maxRetryCount, PageRequest.of(0, size));
     }
 
     @Transactional
-    public boolean claim(Long id, LocalDateTime staleBefore) {
-        return emailOutboxRepository.claim(id, LocalDateTime.now(), staleBefore) == 1;
+    public boolean claim(Long id, LocalDateTime staleBefore, int maxRetryCount) {
+        return emailOutboxRepository.claim(id, LocalDateTime.now(), staleBefore, maxRetryCount)
+                == 1;
     }
 
     @Transactional
@@ -38,7 +40,7 @@ public class EmailOutboxAdaptor {
     }
 
     @Transactional
-    public void releaseAfterFailure(Long id) {
-        emailOutboxRepository.releaseAfterFailure(id);
+    public void markFailed(Long id) {
+        emailOutboxRepository.markFailed(id, LocalDateTime.now());
     }
 }

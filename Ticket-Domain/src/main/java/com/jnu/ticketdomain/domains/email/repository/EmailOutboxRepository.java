@@ -16,21 +16,26 @@ public interface EmailOutboxRepository extends JpaRepository<EmailOutbox, Long> 
     @Query(
             "select e from EmailOutbox e "
                     + "where e.sentAt is null "
+                    + "and e.retryCount < :maxRetryCount "
                     + "and (e.processingAt is null or e.processingAt < :staleBefore) "
                     + "order by e.id asc")
     List<EmailOutbox> findPending(
-            @Param("staleBefore") LocalDateTime staleBefore, Pageable pageable);
+            @Param("staleBefore") LocalDateTime staleBefore,
+            @Param("maxRetryCount") int maxRetryCount,
+            Pageable pageable);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
             "update EmailOutbox e set e.processingAt = :now "
                     + "where e.id = :id "
                     + "and e.sentAt is null "
+                    + "and e.retryCount < :maxRetryCount "
                     + "and (e.processingAt is null or e.processingAt < :staleBefore)")
     int claim(
             @Param("id") Long id,
             @Param("now") LocalDateTime now,
-            @Param("staleBefore") LocalDateTime staleBefore);
+            @Param("staleBefore") LocalDateTime staleBefore,
+            @Param("maxRetryCount") int maxRetryCount);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update EmailOutbox e set e.sentAt = :sentAt, e.processingAt = null where e.id = :id")
@@ -38,7 +43,8 @@ public interface EmailOutboxRepository extends JpaRepository<EmailOutbox, Long> 
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
-            "update EmailOutbox e set e.processingAt = null, e.retryCount = e.retryCount + 1 "
-                    + "where e.id = :id")
-    int releaseAfterFailure(@Param("id") Long id);
+            "update EmailOutbox e "
+                    + "set e.processingAt = :failedAt, e.retryCount = e.retryCount + 1 "
+                    + "where e.id = :id and e.sentAt is null")
+    int markFailed(@Param("id") Long id, @Param("failedAt") LocalDateTime failedAt);
 }

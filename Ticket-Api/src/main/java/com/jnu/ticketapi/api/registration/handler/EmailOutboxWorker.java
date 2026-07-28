@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.registration.handler;
 
+import static com.jnu.ticketcommon.consts.TicketStatic.MAX_EMAIL_SEND_RETRY;
 
 import com.jnu.ticketdomain.domains.email.adaptor.EmailOutboxAdaptor;
 import com.jnu.ticketdomain.domains.email.domain.EmailOutbox;
@@ -28,10 +29,11 @@ public class EmailOutboxWorker {
             initialDelayString = "${mail.outbox.initial-delay-ms:1000}")
     public void sendPendingRegistrationResultMail() {
         LocalDateTime staleBefore = LocalDateTime.now().minusMinutes(STALE_PROCESSING_MINUTES);
-        List<EmailOutbox> pendingOutboxes = emailOutboxAdaptor.findPending(BATCH_SIZE, staleBefore);
+        List<EmailOutbox> pendingOutboxes =
+                emailOutboxAdaptor.findPending(BATCH_SIZE, staleBefore, MAX_EMAIL_SEND_RETRY);
 
         for (EmailOutbox outbox : pendingOutboxes) {
-            if (!emailOutboxAdaptor.claim(outbox.getId(), staleBefore)) {
+            if (!emailOutboxAdaptor.claim(outbox.getId(), staleBefore, MAX_EMAIL_SEND_RETRY)) {
                 continue;
             }
             send(outbox);
@@ -51,7 +53,7 @@ public class EmailOutboxWorker {
             return;
         }
 
-        emailOutboxAdaptor.releaseAfterFailure(outbox.getId());
+        emailOutboxAdaptor.markFailed(outbox.getId());
         log.warn("신청 결과 메일 outbox 발송 실패. outboxId: {}", outbox.getId());
     }
 }
