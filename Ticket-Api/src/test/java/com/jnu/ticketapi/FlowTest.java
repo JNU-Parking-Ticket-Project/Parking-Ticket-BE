@@ -5,7 +5,6 @@ import com.jnu.ticketapi.api.event.model.request.UpdateEventPublishRequest;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
-import com.jnu.ticketapi.api.user.ResultAssignment;
 import com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder;
 import com.jnu.ticketapi.registration.TemporarySaveRequestTestDataBuilder;
 import com.jnu.ticketapi.security.JwtGenerator;
@@ -14,6 +13,7 @@ import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.repository.CaptchaRepository;
+import com.jnu.ticketdomain.domains.email.repository.EmailOutboxRepository;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.repository.EventRepository;
@@ -33,11 +33,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -60,14 +62,14 @@ import static org.quartz.TriggerBuilder.newTrigger;
 
 @Slf4j
 @ActiveProfiles("integration-test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class FlowTest implements UsingContainers {
 
-    // production 환경변수 값
-    private static final int ASYNC_CORE_POOL_SIZE = 1000;
-    private static final int ASYNC_MAX_POOL_SIZE = 1000;
-    private static final int ASYNC_QUEUE_CAPACITY = 50000;
-    private static final int HIKARI_MAXIMUM_POOL_SIZE = 2000;
+    private static final int ASYNC_CORE_POOL_SIZE = 32;
+    private static final int ASYNC_MAX_POOL_SIZE = 64;
+    private static final int ASYNC_QUEUE_CAPACITY = 5000;
+    private static final int HIKARI_MAXIMUM_POOL_SIZE = 64;
 
     private static final Long EVENT_VALUE = 1L;
     private static final String BEARER_PREFIX = "Bearer ";
@@ -82,6 +84,7 @@ public class FlowTest implements UsingContainers {
     @DynamicPropertySource
     static void hikariProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.hikari.maximum-pool-size", () -> HIKARI_MAXIMUM_POOL_SIZE);
+        registry.add("spring.redis.command-timeout-ms", () -> 5000);
     }
 
     @Autowired
@@ -109,7 +112,7 @@ public class FlowTest implements UsingContainers {
     RedisRepository redisRepository;
 
     @Autowired
-    ResultAssignment resultAssignment;
+    EmailOutboxRepository emailOutboxRepository;
 
     private record Setting(int capacity, int reserve, int requestCount) {
     }
@@ -162,7 +165,7 @@ public class FlowTest implements UsingContainers {
 
         // when
         ExecutorService executorServiceForSector = Executors.newFixedThreadPool(settings.size());
-        ExecutorService executorServiceInSector = Executors.newCachedThreadPool();
+        ExecutorService executorServiceInSector = Executors.newFixedThreadPool(32);
         AtomicInteger successFinalSaveCount = new AtomicInteger();
         AtomicInteger rejectedFinalSaveCount = new AtomicInteger();
         AtomicInteger studentNumSequence = new AtomicInteger(100_000);
@@ -185,14 +188,12 @@ public class FlowTest implements UsingContainers {
         executorServiceForSector.shutdown();
         executorServiceForSector.awaitTermination(60, SECONDS);
         executorServiceInSector.shutdown();
-        executorServiceInSector.awaitTermination(60, SECONDS);
+        assertThat(executorServiceInSector.awaitTermination(120, SECONDS)).isTrue();
         throwIfRequestError(requestErrors);
         assertFinalSaveRequestCounts(
                 successFinalSaveCount.get(), rejectedFinalSaveCount.get(), issuedCountSum, userCountSum - issuedCountSum);
 
         awaitAllRegistrationsSaved(issuedCountSum);
-
-        resultAssignment.assign(EVENT_VALUE);
 
         // then
         List<User> usersWithResult = userRepository.findAll(Sort.by("id"));
@@ -210,12 +211,14 @@ public class FlowTest implements UsingContainers {
             softly.assertThat(successFinalSaveCount.get()).isEqualTo(issuedCountSum);
             softly.assertThat(rejectedFinalSaveCount.get()).isEqualTo(userCountSum - issuedCountSum);
             softly.assertThat(savedRegistrations).hasSize(issuedCountSum);
+            softly.assertThat(emailOutboxRepository.count()).isEqualTo(issuedCountSum.longValue());
             softly.assertThat(resultByGroup.getOrDefault(SUCCESS, Collections.emptyList())).hasSize(capacityCountSum);
             softly.assertThat(resultByGroup.getOrDefault(PREPARE, Collections.emptyList())).hasSize(reserveCountSum);
             softly.assertThat(resultByGroup.getOrDefault(FAIL, Collections.emptyList())).hasSize(userCountSum - (capacityCountSum + reserveCountSum));
         });
 
         assertPerSector(usersWithResult, settings);
+        assertRegistrationDecisions(savedRegistrations, settings);
     }
 
     private void printRegistrationsWithUserStatus(List<Registration> registrations, List<User> usersWithResult) {
@@ -304,6 +307,7 @@ public class FlowTest implements UsingContainers {
                 try {
                     WebTestClient newClient = client.mutate()
                             .defaultHeader(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
+                            .responseTimeout(Duration.ofSeconds(30))
                             .build();
 
                     String captchaCode = newClient.get().uri("/v1/captcha")
@@ -378,6 +382,46 @@ public class FlowTest implements UsingContainers {
                 softly.assertThat(preparedNumbers).containsExactlyInAnyOrderElementsOf(expectedPreparedNumbers);
             });
             i++;
+        }
+    }
+
+    private void assertRegistrationDecisions(
+            List<Registration> registrations, List<Setting> settings) {
+        for (int index = 0; index < settings.size(); index++) {
+            long sectorId = index + 1L;
+            Setting setting = settings.get(index);
+            int issueAmount = setting.capacity() + setting.reserve();
+            List<Registration> sectorRegistrations = registrations.stream()
+                    .filter(registration -> registration.getSector().getId().equals(sectorId))
+                    .toList();
+            Map<UserStatus, List<Registration>> registrationsByResult = sectorRegistrations.stream()
+                    .collect(Collectors.groupingBy(Registration::getResultStatus));
+
+            assertSoftly(softly -> {
+                softly.assertThat(sectorRegistrations).hasSize(issueAmount);
+                softly.assertThat(sectorRegistrations)
+                        .extracting(Registration::getPosition)
+                        .containsExactlyInAnyOrderElementsOf(
+                                IntStream.rangeClosed(1, issueAmount).boxed().toList());
+                softly.assertThat(registrationsByResult.getOrDefault(SUCCESS, List.of()))
+                        .hasSize(setting.capacity())
+                        .extracting(Registration::getPosition)
+                        .allMatch(position -> position <= setting.capacity());
+                softly.assertThat(registrationsByResult.getOrDefault(PREPARE, List.of()))
+                        .hasSize(setting.reserve())
+                        .extracting(Registration::getSequence)
+                        .containsExactlyInAnyOrderElementsOf(
+                                IntStream.rangeClosed(1, setting.reserve()).boxed().toList());
+                softly.assertThat(sectorRegistrations)
+                        .extracting(Registration::getSavedAt)
+                        .doesNotContainNull();
+                softly.assertThat(
+                                redisRepository.getIntegerValue(
+                                        "parking-ticket:event:{1}:sector:"
+                                                + sectorId
+                                                + ":stock"))
+                        .contains(0);
+            });
         }
     }
 

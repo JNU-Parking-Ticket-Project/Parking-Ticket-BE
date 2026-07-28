@@ -1,6 +1,5 @@
 package com.jnu.ticketapi;
 
-
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
 
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
@@ -51,6 +50,7 @@ public class RestDocsConfig {
                 .ifAvailable(
                         redisRepository -> {
                             redisRepository.delete(REDIS_EVENT_ISSUE_STREAM);
+                            redisRepository.deleteKeysByPrefix(REDIS_EVENT_ISSUE_STREAM + ":");
                             redisRepository.deleteKeysByPrefix("parking-ticket:event:");
                         });
     }
