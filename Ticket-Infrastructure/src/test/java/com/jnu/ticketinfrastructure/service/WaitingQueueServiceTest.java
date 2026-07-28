@@ -83,6 +83,7 @@ class WaitingQueueServiceTest {
                         eq("parking-ticket:event:{3}:sector:2:sequence"),
                         eq("parking-ticket:event:{3}:reserved:email"),
                         eq(STREAM_KEY),
+                        eq("parking-ticket:event:{3}:closed"),
                         anyString(),
                         eq(1L),
                         eq(2L),
@@ -105,6 +106,7 @@ class WaitingQueueServiceTest {
                         eq("parking-ticket:event:{3}:sector:2:sequence"),
                         eq("parking-ticket:event:{3}:reserved:email"),
                         eq(STREAM_KEY),
+                        eq("parking-ticket:event:{3}:closed"),
                         registrationPayloadCaptor.capture(),
                         eq(1L),
                         eq(2L),
@@ -216,6 +218,26 @@ class WaitingQueueServiceTest {
         waitingQueueService.deleteEventStockKeys(3L);
 
         verify(redisRepository).deleteKeysByPrefix("parking-ticket:event:{3}:");
+    }
+
+    @Test
+    @DisplayName("이벤트 종료 시 drain 기간 동안 Redis 재고 키 만료를 지연한다")
+    void expireEventStockKeysUsesEventStockPrefix() {
+        Duration timeout = Duration.ofMinutes(5);
+
+        waitingQueueService.expireEventStockKeys(3L, timeout);
+
+        verify(redisRepository).expireKeysByPrefix("parking-ticket:event:{3}:", timeout);
+    }
+
+    @Test
+    @DisplayName("이벤트 종료 마커는 동일한 이벤트 hash slot에 TTL과 함께 저장한다")
+    void markEventStockClosedUsesEventClosedKey() {
+        Duration timeout = Duration.ofMinutes(5);
+
+        waitingQueueService.markEventStockClosed(3L, timeout);
+
+        verify(redisRepository).set("parking-ticket:event:{3}:closed", true, timeout);
     }
 
     private Registration registration() {

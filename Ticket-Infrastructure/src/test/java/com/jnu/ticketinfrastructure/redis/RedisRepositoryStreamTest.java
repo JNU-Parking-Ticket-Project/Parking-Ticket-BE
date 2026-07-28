@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -160,6 +161,7 @@ class RedisRepositoryStreamTest {
                         "sequence",
                         "reserved-email",
                         STREAM_KEY,
+                        "closed",
                         "{\"id\":10}",
                         1L,
                         2L,
@@ -188,6 +190,7 @@ class RedisRepositoryStreamTest {
                         "sequence",
                         "reserved-email",
                         STREAM_KEY,
+                        "closed",
                         "{\"id\":10}",
                         1L,
                         2L,
@@ -203,12 +206,52 @@ class RedisRepositoryStreamTest {
     }
 
     @Test
+    @DisplayName("reserveStockAndAddToStream은 종료 마커 결과를 이벤트 종료로 변환한다")
+    void reserveStockAndAddToStreamParsesClosedResult() {
+        when(redisTemplate.execute(any(RedisCallback.class)))
+                .thenReturn(List.of(0L, "CLOSED", -1L, "", -1L, 17L));
+
+        StockReservationResult result =
+                redisRepository.reserveStockAndAddToStream(
+                        "stock",
+                        "sequence",
+                        "reserved-email",
+                        STREAM_KEY,
+                        "closed",
+                        "{\"id\":10}",
+                        1L,
+                        2L,
+                        3L,
+                        "student@jnu.ac.kr",
+                        300,
+                        300,
+                        250);
+
+        assertThat(result.isReserved()).isFalse();
+        assertThat(result.isClosed()).isTrue();
+        assertThat(result.getRemainingAmount()).isEqualTo(17);
+    }
+
+    @Test
     @DisplayName("getIntegerValue는 Lua가 저장한 raw 숫자 문자열을 serializer 없이 조회한다")
     void getIntegerValueReadsRawLuaValue() {
         when(redisTemplate.execute(any(RedisCallback.class)))
                 .thenReturn("239".getBytes(StandardCharsets.UTF_8));
 
         assertThat(redisRepository.getIntegerValue("stock")).contains(239);
+    }
+
+    @Test
+    @DisplayName("expireKeysByPrefix는 조회된 모든 키에 동일한 TTL을 설정한다")
+    void expireKeysByPrefixExpiresEveryMatchingKey() {
+        Duration timeout = Duration.ofMinutes(5);
+        when(redisTemplate.keys("parking-ticket:event:{3}:*"))
+                .thenReturn(Set.of("stock", "sequence"));
+
+        redisRepository.expireKeysByPrefix("parking-ticket:event:{3}:", timeout);
+
+        verify(redisTemplate).expire("stock", timeout);
+        verify(redisTemplate).expire("sequence", timeout);
     }
 
     @Test

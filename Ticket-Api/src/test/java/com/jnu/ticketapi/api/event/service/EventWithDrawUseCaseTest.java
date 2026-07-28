@@ -13,6 +13,7 @@ import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
+import com.jnu.ticketdomain.domains.events.exception.NotOpenEventStatusException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
@@ -89,6 +90,19 @@ class EventWithDrawUseCaseTest {
 
         assertThatThrownBy(() -> eventWithDrawUseCase.issueEvent(registration, 100L, sector, 10L))
                 .isSameAs(AlreadyExistRegistrationException.EXCEPTION);
+    }
+
+    @Test
+    @DisplayName("Redis에서 종료 마커를 확인하면 이벤트 미오픈 예외로 변환한다")
+    void issueEventThrowsNotOpenWhenRedisEventIsClosed() throws Exception {
+        Registration registration = registration();
+        givenOpenEvent();
+        when(waitingQueueService.reserveAndRegisterQueue(
+                        EVENT_STREAM_KEY, registration, 100L, sector, 10L))
+                .thenReturn(StockReservationResult.closed(17));
+
+        assertThatThrownBy(() -> eventWithDrawUseCase.issueEvent(registration, 100L, sector, 10L))
+                .isSameAs(NotOpenEventStatusException.EXCEPTION);
     }
 
     @Test

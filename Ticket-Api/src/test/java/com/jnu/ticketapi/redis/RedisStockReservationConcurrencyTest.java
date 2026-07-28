@@ -137,6 +137,22 @@ class RedisStockReservationConcurrencyTest {
         assertThat(redisRepository.getIntegerValue(stockKey(2L, 1L))).contains(239);
     }
 
+    @Test
+    @DisplayName("이벤트 종료 마커 이후에는 재고와 Stream을 변경하지 않는다")
+    void rejectsReservationAfterEventIsClosed() {
+        StockReservationResult first = reserve(3L, 1L, "first@jnu.ac.kr", 300, 300, 250);
+        redisRepository.set(closedKey(3L), "true", java.time.Duration.ofMinutes(5));
+
+        StockReservationResult closed = reserve(3L, 1L, "late@jnu.ac.kr", 300, 300, 250);
+
+        assertThat(first.isReserved()).isTrue();
+        assertThat(closed.isClosed()).isTrue();
+        assertThat(closed.getRemainingAmount()).isEqualTo(299);
+        assertThat(redisRepository.getIntegerValue(stockKey(3L, 1L))).contains(299);
+        assertThat(redisRepository.xReadGroup(streamKey(3L), "closed-test", "consumer", 10))
+                .hasSize(1);
+    }
+
     private StockReservationResult reserve(
             Long eventId,
             Long sectorId,
@@ -148,7 +164,8 @@ class RedisStockReservationConcurrencyTest {
                 stockKey(eventId, sectorId),
                 "parking-ticket:event:{" + eventId + "}:sector:" + sectorId + ":sequence",
                 "parking-ticket:event:{" + eventId + "}:reserved:email",
-                "쿠폰 발급 스트림:{" + eventId + "}",
+                streamKey(eventId),
+                closedKey(eventId),
                 "{\"email\":\"" + email + "\"}",
                 (long) email.hashCode(),
                 sectorId,
@@ -157,6 +174,14 @@ class RedisStockReservationConcurrencyTest {
                 initialRemainingAmount,
                 issueAmount,
                 capacity);
+    }
+
+    private String closedKey(Long eventId) {
+        return "parking-ticket:event:{" + eventId + "}:closed";
+    }
+
+    private String streamKey(Long eventId) {
+        return "쿠폰 발급 스트림:{" + eventId + "}";
     }
 
     private String stockKey(Long eventId, Long sectorId) {
