@@ -12,7 +12,9 @@ import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,16 +60,41 @@ class UpdateEventStatusUseCaseTest {
     }
 
     @Test
-    @DisplayName("OPEN 이외 상태 변경은 Redis 재고를 초기화하지 않는다")
-    void executeDoesNotInitializeRedisForOtherStatuses() {
+    @DisplayName("CLOSED 상태 변경은 Redis 접수를 먼저 닫고 잔여 재고를 DB에 동기화한다")
+    void executeClosesAndSynchronizesRedisStockBeforeStatusUpdate() {
         UpdateEventStatusRequest request = request(EventStatus.CLOSED);
+        when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
+        when(sector.getId()).thenReturn(7L);
+        when(waitingQueueService.findRemainingStock(3L, 7L)).thenReturn(Optional.of(4));
         when(eventAdaptor.updateEventStatus(event, EventStatus.CLOSED)).thenReturn(event);
+
+        updateEventStatusUseCase.execute(3L, request);
+
+        InOrder order = inOrder(waitingQueueService, sectorAdaptor, sector, eventAdaptor);
+        order.verify(eventAdaptor).findById(3L);
+        order.verify(waitingQueueService).markEventStockClosed(3L, Duration.ofMinutes(5));
+        order.verify(sectorAdaptor).findByEventId(3L);
+        order.verify(waitingQueueService).findRemainingStock(3L, 7L);
+        order.verify(sector).syncRemainingAmount(4);
+        order.verify(sectorAdaptor).save(sector);
+        order.verify(waitingQueueService).expireEventStockKeys(3L, Duration.ofMinutes(5));
+        order.verify(eventAdaptor).updateEventStatus(event, EventStatus.CLOSED);
+    }
+
+    @Test
+    @DisplayName("OPEN과 CLOSED 이외 상태 변경은 Redis 재고를 변경하지 않는다")
+    void executeDoesNotInitializeRedisForOtherStatuses() {
+        UpdateEventStatusRequest request = request(EventStatus.CALCULATING);
+        when(eventAdaptor.updateEventStatus(event, EventStatus.CALCULATING)).thenReturn(event);
 
         updateEventStatusUseCase.execute(3L, request);
 
         verify(sectorAdaptor, never()).findByEventId(3L);
         verify(waitingQueueService, never())
                 .initializeEventStock(
+                        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(waitingQueueService, never())
+                .markEventStockClosed(
                         org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
