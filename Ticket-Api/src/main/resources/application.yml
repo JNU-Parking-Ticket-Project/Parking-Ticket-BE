@@ -56,6 +56,11 @@ mail:
   passwd-url: ${PASSWD_URL:https://apply.jnu-parking.com/password-reset/}
   announcement-url: ${ANNOUNCEMENT_URL:https://apply.jnu-parking.com/announcement/}
 
+ticket:
+  redis:
+    stream:
+      max-processing-failures: ${REDIS_STREAM_MAX_PROCESSING_FAILURES:3}
+
 ---
 spring:
   config:

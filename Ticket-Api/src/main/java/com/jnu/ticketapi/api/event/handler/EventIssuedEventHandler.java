@@ -14,6 +14,7 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -47,6 +50,9 @@ public class EventIssuedEventHandler {
 
     private final SectorAdaptor sectorAdaptor;
     private final ObjectMapper objectMapper;
+
+    @Value("${ticket.redis.stream.max-processing-failures:3}")
+    private int maxProcessingFailures = 3;
 
     @Async
     @EventListener(classes = EventIssuedEvent.class)
@@ -94,6 +100,45 @@ public class EventIssuedEventHandler {
             }
         } finally {
             MDC.clear();
+        }
+    }
+
+    @Recover
+    public void recover(Exception exception, EventIssuedEvent eventIssuedEvent) {
+        if (eventIssuedEvent.getStreamRecordId() == null || waitingQueueService == null) {
+            tracker.error(
+                    "Redis Stream message exhausted retries without a recoverable record id",
+                    exception);
+            return;
+        }
+
+        try {
+            DeadLetterTransferResult result =
+                    waitingQueueService.recordProcessingFailure(
+                            resolveStreamKey(eventIssuedEvent),
+                            REDIS_EVENT_ISSUE_GROUP,
+                            eventIssuedEvent.getStreamRecordId(),
+                            eventIssuedEvent.getMessage(),
+                            maxProcessingFailures,
+                            exception);
+            if (result.isMoved()) {
+                tracker.error(
+                        "Redis Stream message moved to DLQ after {} failed deliveries. recordId: {}",
+                        result.getFailureCount(),
+                        eventIssuedEvent.getStreamRecordId(),
+                        exception);
+                return;
+            }
+            tracker.warn(
+                    "Redis Stream message remains pending after failed delivery {}/{}. recordId: {}",
+                    result.getFailureCount(),
+                    maxProcessingFailures,
+                    eventIssuedEvent.getStreamRecordId());
+        } catch (Exception recoveryException) {
+            tracker.error(
+                    "Failed to record Redis Stream processing failure. recordId: {}",
+                    eventIssuedEvent.getStreamRecordId(),
+                    recoveryException);
         }
     }
 
