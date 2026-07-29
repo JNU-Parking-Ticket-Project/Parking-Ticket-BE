@@ -6,6 +6,7 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
@@ -91,6 +92,9 @@ public class WaitingQueueService {
     }
 
     public boolean initializeEventStock(Long eventId, List<Sector> sectors) {
+        if (sectors == null || sectors.isEmpty()) {
+            throw NotFoundSectorException.EXCEPTION;
+        }
         List<SectorStockInitialization> initializations =
                 sectors.stream()
                         .map(sector -> toStockInitialization(eventId, sector))
