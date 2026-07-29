@@ -18,11 +18,39 @@ SET @invalid_capacity_count = (
     SELECT COUNT(*)
     FROM sector
     WHERE issue_amount < init_sector_capacity
+      AND EXISTS (
+          SELECT 1
+          FROM registration_tb registration
+          WHERE registration.sector_id = sector.sector_id
+            AND registration.is_saved = b'1'
+            AND registration.is_deleted = b'0'
+      )
 );
 SET @validation_statement = IF(
     @invalid_capacity_count = 0,
     'SELECT 1',
     'SELECT 1 FROM __flyway_blocked_registration_invalid_sector_capacity'
+);
+PREPARE validation_statement FROM @validation_statement;
+EXECUTE validation_statement;
+DEALLOCATE PREPARE validation_statement;
+
+SET @invalid_sector_reference_count = (
+    SELECT COUNT(*)
+    FROM registration_tb registration
+    INNER JOIN sector ON sector.sector_id = registration.sector_id
+    WHERE registration.is_saved = b'1'
+      AND registration.is_deleted = b'0'
+      AND (
+          sector.event_id IS NULL
+          OR sector.is_deleted IS NULL
+          OR sector.is_deleted <> b'0'
+      )
+);
+SET @validation_statement = IF(
+    @invalid_sector_reference_count = 0,
+    'SELECT 1',
+    'SELECT 1 FROM __flyway_blocked_registration_invalid_sector_reference'
 );
 PREPARE validation_statement FROM @validation_statement;
 EXECUTE validation_statement;

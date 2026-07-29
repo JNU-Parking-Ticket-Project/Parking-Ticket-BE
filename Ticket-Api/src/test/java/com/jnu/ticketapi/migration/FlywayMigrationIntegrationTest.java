@@ -130,6 +130,18 @@ class FlywayMigrationIntegrationTest {
         assertEmailOutboxIsEmpty();
     }
 
+    @Test
+    void activeRegistrationInInvisibleSectorBlocksBackfillBeforeMutation() throws SQLException {
+        flyway(false, MigrationVersion.fromVersion("3")).migrate();
+        insertHistoricalRegistrations();
+        execute("UPDATE sector SET event_id = NULL WHERE sector_id = 100");
+
+        assertThatThrownBy(() -> flyway(false, null).migrate())
+                .hasStackTraceContaining("__flyway_blocked_registration_invalid_sector_reference");
+        assertRegistrationResultIsNull(1L);
+        assertEmailOutboxIsEmpty();
+    }
+
     private Flyway flyway(boolean baselineOnMigrate, MigrationVersion target) {
         var configuration =
                 Flyway.configure()

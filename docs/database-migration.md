@@ -47,6 +47,7 @@ V4는 `is_saved = true`, `is_deleted = false`인 신청만 대상으로 합니�
 
 - 저장 완료 신청의 `saved_at` 누락
 - `issue_amount < init_sector_capacity`인 구간
+- 활성 저장 신청이 이벤트 없는 구간 또는 삭제된 구간을 참조하는 상태
 - `position`, `result_status`, `sequence`가 일부만 채워진 신청
 - 같은 구간에 확정 결과와 미확정 결과가 혼재
 - 기존 순번의 중복·누락 또는 순번과 결과의 불일치
@@ -68,10 +69,24 @@ WHERE is_saved = b'1'
 
 SELECT sector_id, init_sector_capacity, issue_amount
 FROM sector
-WHERE issue_amount < init_sector_capacity;
+WHERE issue_amount < init_sector_capacity
+  AND EXISTS (
+      SELECT 1
+      FROM registration_tb
+      WHERE registration_tb.sector_id = sector.sector_id
+        AND registration_tb.is_saved = b'1'
+        AND registration_tb.is_deleted = b'0'
+  );
+
+SELECT registration.id, registration.sector_id
+FROM registration_tb registration
+INNER JOIN sector ON sector.sector_id = registration.sector_id
+WHERE registration.is_saved = b'1'
+  AND registration.is_deleted = b'0'
+  AND (sector.event_id IS NULL OR sector.is_deleted IS NULL OR sector.is_deleted <> b'0');
 ```
 
-첫 번째 쿼리는 행이 없어야 하며, 나머지 두 쿼리는 `0`건이어야 합니다. 결과 컬럼을 이미 수동 추가한 DB라면 일부 결과나 한 구간 내 결과 혼재가 없는지도 별도로 확인합니다.
+첫 번째, 세 번째, 네 번째 쿼리는 행이 없어야 하며, `missing_saved_at_count`는 `0`이어야 합니다. 결과 컬럼을 이미 수동 추가한 DB라면 일부 결과나 한 구간 내 결과 혼재가 없는지도 별도로 확인합니다.
 
 ### 배포 후 점검
 
