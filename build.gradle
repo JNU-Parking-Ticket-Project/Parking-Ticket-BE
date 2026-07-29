@@ -89,6 +89,12 @@ subprojects {
     test {
         useJUnitPlatform()
         finalizedBy jacocoTestReport
+        testLogging {
+            events "failed"
+            exceptionFormat "full"
+            showCauses true
+            showStackTraces true
+        }
     }
 
     apply plugin: 'org.sonarqube'
