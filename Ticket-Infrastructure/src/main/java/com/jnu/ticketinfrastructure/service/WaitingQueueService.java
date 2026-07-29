@@ -201,6 +201,10 @@ public class WaitingQueueService {
         return new StreamConsumerState(lag, pending, inFlight);
     }
 
+    public boolean hasEventStreamMessages(Long eventId) {
+        return redisRepository.xLength(eventStreamKey(eventId)) > 0L;
+    }
+
     public Long acknowledge(String key, String group, String recordId) {
         return redisRepository.xAck(key, group, recordId);
     }

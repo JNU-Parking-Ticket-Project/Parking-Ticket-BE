@@ -20,6 +20,7 @@ redis:
       pending-claim-interval-ms: ${REDIS_STREAM_PENDING_CLAIM_INTERVAL_MS:5000}
       max-processing-failures: ${REDIS_STREAM_MAX_PROCESSING_FAILURES:3}
       drain-quiet-period-ms: ${REDIS_STREAM_DRAIN_QUIET_PERIOD_MS:5000}
+      startup-drain-timeout-ms: ${REDIS_STREAM_STARTUP_DRAIN_TIMEOUT_MS:300000}
 
 aws:
   ses:

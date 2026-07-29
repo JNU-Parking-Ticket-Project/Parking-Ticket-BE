@@ -182,9 +182,47 @@ class RedisStreamConsumerManagerTest {
         consumerManager = manager(waitingQueueService, handler, 2, 2, 0L);
         consumerManager.start(EVENT_ID);
 
-        consumerManager.requestDrain(EVENT_ID);
+        assertThat(consumerManager.requestDrain(EVENT_ID)).isTrue();
 
         assertThat(waitUntilStopped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("구독 없이 종료된 이벤트에 메시지가 남으면 consumer를 복원해 drain한다")
+    void restoresMissingConsumerForClosedEventDrain() {
+        WaitingQueueService waitingQueueService = mock(WaitingQueueService.class);
+        RegistrationStreamMessageHandler handler = mock(RegistrationStreamMessageHandler.class);
+        RawStreamMessage rawMessage = new RawStreamMessage("5-0", "payload");
+        StreamQueueMessage streamQueueMessage = streamQueueMessage("5-0");
+        configureQueue(waitingQueueService);
+        when(waitingQueueService.hasEventStreamMessages(EVENT_ID)).thenReturn(true);
+        when(waitingQueueService.readNewMessages(
+                        eq(STREAM_KEY), any(), any(), anyLong(), any(Duration.class)))
+                .thenReturn(List.of(rawMessage), List.of());
+        when(waitingQueueService.deserialize(STREAM_KEY, rawMessage))
+                .thenReturn(streamQueueMessage);
+        when(waitingQueueService.getConsumerState(STREAM_KEY, "쿠폰 발급 그룹", 0))
+                .thenReturn(new StreamConsumerState(0L, 0L, 0));
+        consumerManager = manager(waitingQueueService, handler, 2, 2, 0L);
+
+        assertThat(consumerManager.requestDrain(EVENT_ID)).isTrue();
+
+        verify(handler, timeout(2000)).handle(streamQueueMessage);
+        assertThat(consumerManager.awaitDrainCompletion(EVENT_ID, Duration.ofSeconds(2))).isTrue();
+    }
+
+    @Test
+    @DisplayName("종료된 이벤트 Stream에 메시지가 없으면 불필요한 consumer를 만들지 않는다")
+    void skipsDrainConsumerWhenClosedEventStreamIsEmpty() {
+        WaitingQueueService waitingQueueService = mock(WaitingQueueService.class);
+        RegistrationStreamMessageHandler handler = mock(RegistrationStreamMessageHandler.class);
+        when(waitingQueueService.hasEventStreamMessages(EVENT_ID)).thenReturn(false);
+        consumerManager = manager(waitingQueueService, handler, 2, 2, 0L);
+
+        assertThat(consumerManager.requestDrain(EVENT_ID)).isTrue();
+
+        assertThat(consumerManager.isRunning(EVENT_ID)).isFalse();
+        verify(waitingQueueService, never()).readNewMessages(any(), any(), any(), anyLong(), any());
     }
 
     @Test

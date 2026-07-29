@@ -117,8 +117,11 @@ public class RedisStreamConsumerManager {
         }
 
         EventConsumer current = consumers.get(eventId);
-        if (current != null && current.active.get()) {
-            return false;
+        if (current != null) {
+            if (current.active.get() || current.inFlight.get() > 0) {
+                return false;
+            }
+            consumers.remove(eventId, current);
         }
         EventConsumer consumer = new EventConsumer(eventId, streamKey(eventId));
         consumers.put(eventId, consumer);
@@ -126,13 +129,39 @@ public class RedisStreamConsumerManager {
         return true;
     }
 
-    public void requestDrain(Long eventId) {
+    public synchronized boolean requestDrain(Long eventId) {
         EventConsumer consumer = consumers.get(eventId);
-        if (consumer == null) {
-            return;
+        if (consumer == null || !consumer.active.get()) {
+            if (!waitingQueueService.hasEventStreamMessages(eventId)) {
+                log.info("No Redis Stream messages to drain. eventId: {}", eventId);
+                return true;
+            }
+            if (!start(eventId)) {
+                log.error("Redis Stream drain consumer could not be restored. eventId: {}", eventId);
+                return false;
+            }
+            consumer = consumers.get(eventId);
         }
         consumer.drainRequested.set(true);
         log.info("Redis Stream drain requested. eventId: {}", eventId);
+        return true;
+    }
+
+    public boolean awaitDrainCompletion(Long eventId, Duration timeout) {
+        long startedAt = System.nanoTime();
+        long timeoutNanos = Math.max(0L, timeout.toNanos());
+        while (isRunning(eventId)) {
+            if (System.nanoTime() - startedAt >= timeoutNanos) {
+                return false;
+            }
+            try {
+                Thread.sleep(Math.min(50L, Math.max(1L, timeout.toMillis())));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return true;
     }
 
     public void stopImmediately(Long eventId) {
