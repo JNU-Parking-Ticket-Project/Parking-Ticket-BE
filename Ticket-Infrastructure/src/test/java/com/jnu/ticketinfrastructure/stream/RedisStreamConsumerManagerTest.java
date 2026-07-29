@@ -187,6 +187,42 @@ class RedisStreamConsumerManagerTest {
         assertThat(waitUntilStopped()).isTrue();
     }
 
+    @Test
+    @DisplayName("최종 drain은 신규 dispatch를 중단하고 in-flight DB 처리가 끝날 때까지 대기한다")
+    void finalDrainWaitsForInFlightProcessing() throws Exception {
+        WaitingQueueService waitingQueueService = mock(WaitingQueueService.class);
+        RawStreamMessage rawMessage = new RawStreamMessage("4-0", "payload");
+        CountDownLatch processingStarted = new CountDownLatch(1);
+        CountDownLatch releaseProcessing = new CountDownLatch(1);
+        CountDownLatch processingFinished = new CountDownLatch(1);
+        RegistrationStreamMessageHandler handler =
+                message -> {
+                    processingStarted.countDown();
+                    try {
+                        releaseProcessing.await(2, TimeUnit.SECONDS);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } finally {
+                        processingFinished.countDown();
+                    }
+                };
+        configureQueue(waitingQueueService);
+        when(waitingQueueService.readNewMessages(
+                        eq(STREAM_KEY), any(), any(), anyLong(), any(Duration.class)))
+                .thenReturn(List.of(rawMessage), List.of());
+        when(waitingQueueService.deserialize(STREAM_KEY, rawMessage))
+                .thenReturn(streamQueueMessage("4-0"));
+        consumerManager = manager(waitingQueueService, handler, 2, 2, 0L);
+        consumerManager.start(EVENT_ID);
+
+        assertThat(processingStarted.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(consumerManager.pauseForFinalDrain(EVENT_ID)).isFalse();
+
+        releaseProcessing.countDown();
+        assertThat(processingFinished.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(waitUntilFinalDrainIsReady()).isTrue();
+    }
+
     private void configureQueue(WaitingQueueService waitingQueueService) {
         when(waitingQueueService.eventStreamKey(EVENT_ID)).thenReturn(STREAM_KEY);
         when(waitingQueueService.autoClaimMessages(
@@ -229,6 +265,22 @@ class RedisStreamConsumerManagerTest {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
         while (System.nanoTime() < deadline) {
             if (!consumerManager.isRunning(EVENT_ID)) {
+                return true;
+            }
+            try {
+                Thread.sleep(10L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private boolean waitUntilFinalDrainIsReady() {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        while (System.nanoTime() < deadline) {
+            if (consumerManager.pauseForFinalDrain(EVENT_ID)) {
                 return true;
             }
             try {

@@ -140,11 +140,37 @@ public class RedisStreamConsumerManager {
         if (consumer == null) {
             return;
         }
-        consumer.active.set(false);
+        synchronized (consumer) {
+            consumer.active.set(false);
+        }
         if (consumer.future != null) {
             consumer.future.cancel(true);
         }
         log.info("Redis Stream subscription stopped. eventId: {}", eventId);
+    }
+
+    public boolean pauseForFinalDrain(Long eventId) {
+        EventConsumer consumer = consumers.get(eventId);
+        if (consumer == null) {
+            return true;
+        }
+
+        boolean idle;
+        synchronized (consumer) {
+            consumer.active.set(false);
+            idle = consumer.inFlight.get() == 0;
+        }
+        if (consumer.future != null) {
+            consumer.future.cancel(true);
+        }
+        if (idle) {
+            consumers.remove(eventId, consumer);
+        }
+        log.info(
+                "Redis Stream subscription paused for final drain. eventId: {}, inFlight: {}",
+                eventId,
+                consumer.inFlight.get());
+        return idle;
     }
 
     public boolean isRunning(Long eventId) {
@@ -182,7 +208,7 @@ public class RedisStreamConsumerManager {
                 }
             }
         }
-        consumers.remove(consumer.eventId, consumer);
+        removeStoppedConsumerWhenIdle(consumer);
         log.info("Redis Stream subscription ended. eventId: {}", consumer.eventId);
     }
 
@@ -205,10 +231,13 @@ public class RedisStreamConsumerManager {
     }
 
     private void dispatch(EventConsumer consumer, RawStreamMessage rawMessage) {
-        if (!consumer.inFlightRecordIds.add(rawMessage.getRecordId())) {
-            return;
+        synchronized (consumer) {
+            if (!consumer.active.get()
+                    || !consumer.inFlightRecordIds.add(rawMessage.getRecordId())) {
+                return;
+            }
+            consumer.inFlight.incrementAndGet();
         }
-        consumer.inFlight.incrementAndGet();
         try {
             processingExecutor.execute(
                     () -> {
@@ -222,6 +251,7 @@ public class RedisStreamConsumerManager {
                             consumer.inFlight.decrementAndGet();
                             consumer.inFlightRecordIds.remove(rawMessage.getRecordId());
                             stopWhenDrained(consumer);
+                            removeStoppedConsumerWhenIdle(consumer);
                         }
                     });
         } catch (RuntimeException e) {
@@ -269,6 +299,13 @@ public class RedisStreamConsumerManager {
     private void completeRejectedDispatch(EventConsumer consumer, RawStreamMessage rawMessage) {
         consumer.inFlight.decrementAndGet();
         consumer.inFlightRecordIds.remove(rawMessage.getRecordId());
+        removeStoppedConsumerWhenIdle(consumer);
+    }
+
+    private void removeStoppedConsumerWhenIdle(EventConsumer consumer) {
+        if (!consumer.active.get() && consumer.inFlight.get() == 0) {
+            consumers.remove(consumer.eventId, consumer);
+        }
     }
 
     private void stopWhenDrained(EventConsumer consumer) {

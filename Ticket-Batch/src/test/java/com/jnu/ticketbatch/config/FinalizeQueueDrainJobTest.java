@@ -3,10 +3,12 @@ package com.jnu.ticketbatch.config;
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 class FinalizeQueueDrainJobTest {
 
     @Mock private WaitingQueueService waitingQueueService;
+    @Mock private RedisStreamConsumerManager streamConsumerManager;
     @Mock private JobExecutionContext context;
 
     private FinalizeQueueDrainJob finalizeQueueDrainJob;
@@ -31,12 +34,15 @@ class FinalizeQueueDrainJobTest {
         finalizeQueueDrainJob = new FinalizeQueueDrainJob();
         ReflectionTestUtils.setField(
                 finalizeQueueDrainJob, "waitingQueueService", waitingQueueService);
+        ReflectionTestUtils.setField(
+                finalizeQueueDrainJob, "streamConsumerManager", streamConsumerManager);
     }
 
     @Test
     @DisplayName("종료 유예시간 뒤 이벤트 Stream의 남은 메시지를 DLQ로 이관한다")
     void executeDrainsRemainingEventStreamMessages() throws Exception {
         givenEventId();
+        when(streamConsumerManager.pauseForFinalDrain(3L)).thenReturn(true);
         when(waitingQueueService.drainEventStream(3L, REDIS_EVENT_ISSUE_GROUP)).thenReturn(2L);
 
         finalizeQueueDrainJob.execute(context);
@@ -48,12 +54,27 @@ class FinalizeQueueDrainJobTest {
     @DisplayName("drain 실패를 Quartz 실패로 전달해 다음 반복 실행 기회를 유지한다")
     void executePropagatesDrainFailure() {
         givenEventId();
+        when(streamConsumerManager.pauseForFinalDrain(3L)).thenReturn(true);
         when(waitingQueueService.drainEventStream(3L, REDIS_EVENT_ISSUE_GROUP))
                 .thenThrow(new IllegalStateException("Redis unavailable"));
 
         assertThatThrownBy(() -> finalizeQueueDrainJob.execute(context))
                 .isInstanceOf(JobExecutionException.class)
                 .hasMessageContaining("eventId: 3");
+    }
+
+    @Test
+    @DisplayName("in-flight DB 처리가 남아 있으면 Stream 강제 이관을 다음 Quartz 실행으로 미룬다")
+    void executeWaitsForInFlightProcessing() {
+        givenEventId();
+        when(streamConsumerManager.pauseForFinalDrain(3L)).thenReturn(false);
+
+        assertThatThrownBy(() -> finalizeQueueDrainJob.execute(context))
+                .isInstanceOf(JobExecutionException.class)
+                .hasMessageContaining("eventId: 3");
+
+        verify(waitingQueueService, never())
+                .drainEventStream(3L, REDIS_EVENT_ISSUE_GROUP);
     }
 
     @Test
