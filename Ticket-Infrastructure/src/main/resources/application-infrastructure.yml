@@ -7,6 +7,19 @@ spring:
       pool:
         enabled: false
 
+redis:
+  stream:
+    consumer:
+      max-concurrency: ${REDIS_STREAM_MAX_CONCURRENCY:15}
+      db-pool-reserve: ${REDIS_STREAM_DB_POOL_RESERVE:5}
+      queue-capacity: ${REDIS_STREAM_QUEUE_CAPACITY:30}
+      max-active-events: ${REDIS_STREAM_MAX_ACTIVE_EVENTS:4}
+      batch-size: ${REDIS_STREAM_BATCH_SIZE:50}
+      poll-timeout-ms: ${REDIS_STREAM_POLL_TIMEOUT_MS:500}
+      pending-min-idle-ms: ${REDIS_STREAM_PENDING_MIN_IDLE_MS:30000}
+      pending-claim-interval-ms: ${REDIS_STREAM_PENDING_CLAIM_INTERVAL_MS:5000}
+      drain-quiet-period-ms: ${REDIS_STREAM_DRAIN_QUIET_PERIOD_MS:5000}
+
 aws:
   ses:
     access-key: ${AWS_SES_ACCESS_KEY:default}
