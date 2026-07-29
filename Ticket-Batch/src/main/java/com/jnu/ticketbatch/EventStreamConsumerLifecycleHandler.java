@@ -8,7 +8,6 @@ import com.jnu.ticketdomain.domains.events.event.EventStatusChangeEvent;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +47,7 @@ public class EventStreamConsumerLifecycleHandler {
             log.info("No OPEN event Stream subscription to restore");
         }
 
-        eventAdaptor.findLatestClosedEventBefore(LocalDateTime.now()).ifPresent(this::restoreDrain);
+        eventAdaptor.findLatestClosedEvent().ifPresent(this::restoreDrain);
     }
 
     @TransactionalEventListener(

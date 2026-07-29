@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @Adaptor
@@ -98,9 +97,8 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
         return eventRepository.findByEndAtBeforeAndStatusOpen(time);
     }
 
-    public Optional<Event> findLatestClosedEventBefore(LocalDateTime time) {
-        return eventRepository.findClosestClosedEvent(time, PageRequest.of(0, 1)).stream()
-                .findFirst();
+    public Optional<Event> findLatestClosedEvent() {
+        return eventRepository.findFirstByEventStatusOrderByIdDesc(EventStatus.CLOSED);
     }
 
     public List<Event> closeExpiredEventsEndAtBeforeOpen(LocalDateTime time) {
