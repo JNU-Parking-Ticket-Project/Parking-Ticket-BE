@@ -59,3 +59,6 @@ dump.rdb
 application-local.yml
 logs/**
 *.log
+
+# Load test output
+test-script/registration-load-summary.json
