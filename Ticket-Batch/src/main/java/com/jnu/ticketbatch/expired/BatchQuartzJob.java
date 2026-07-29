@@ -9,6 +9,7 @@ import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
@@ -39,6 +40,9 @@ public class BatchQuartzJob extends QuartzJobBean {
     @Autowired RegistrationAdaptor registrationAdaptor;
     @Autowired EventExpiredEventRaiseGateway eventExpiredEventRaiseGateway;
 
+    @Autowired(required = false)
+    RedisStreamConsumerManager streamConsumerManager;
+
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
         // JobDataMap에서 eventId를 가져옵니다.
@@ -46,6 +50,9 @@ public class BatchQuartzJob extends QuartzJobBean {
         Event event = eventAdaptor.findById(eventId);
         eventAdaptor.updateEventStatus(event, EventStatus.CLOSED);
         syncAndExpireRedisStock(eventId);
+        if (streamConsumerManager != null) {
+            streamConsumerManager.requestDrain(eventId);
+        }
 
         JobParameters jobParameters =
                 new JobParametersBuilder(this.jobExplorer)

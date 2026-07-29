@@ -13,6 +13,7 @@ import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +33,7 @@ class QuartzJobLauncherTest {
     @Mock private EventAdaptor eventAdaptor;
     @Mock private SectorAdaptor sectorAdaptor;
     @Mock private WaitingQueueService waitingQueueService;
+    @Mock private RedisStreamConsumerManager streamConsumerManager;
     @Mock private JobExecutionContext context;
     @Mock private Event event;
     @Mock private Sector sector;
@@ -45,25 +47,33 @@ class QuartzJobLauncherTest {
         ReflectionTestUtils.setField(quartzJobLauncher, "sectorAdaptor", sectorAdaptor);
         ReflectionTestUtils.setField(
                 quartzJobLauncher, "waitingQueueService", waitingQueueService);
+        ReflectionTestUtils.setField(
+                quartzJobLauncher, "streamConsumerManager", streamConsumerManager);
     }
 
     @Test
-    @DisplayName("구간별 Redis 재고 초기화가 완료된 뒤 이벤트를 OPEN으로 전환한다")
-    void executeInitializesRedisBeforeOpeningEvent() throws Exception {
+    @DisplayName("Redis 재고 초기화와 이벤트 OPEN이 끝난 뒤 Stream consumer를 시작한다")
+    void executeInitializesRedisBeforeOpeningEventAndStartingConsumer() throws Exception {
         givenEventJob();
         when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
         when(waitingQueueService.initializeEventStock(3L, List.of(sector))).thenReturn(true);
 
         quartzJobLauncher.execute(context);
 
-        InOrder order = inOrder(sectorAdaptor, waitingQueueService, eventAdaptor);
+        InOrder order =
+                inOrder(
+                        sectorAdaptor,
+                        waitingQueueService,
+                        eventAdaptor,
+                        streamConsumerManager);
         order.verify(sectorAdaptor).findByEventId(3L);
         order.verify(waitingQueueService).initializeEventStock(3L, List.of(sector));
         order.verify(eventAdaptor).updateEventStatus(event, EventStatus.OPEN);
+        order.verify(streamConsumerManager).start(3L);
     }
 
     @Test
-    @DisplayName("Redis 초기화에 실패하면 이벤트를 OPEN으로 변경하지 않는다")
+    @DisplayName("Redis 초기화에 실패하면 이벤트 OPEN과 Stream consumer 시작을 모두 막는다")
     void executeKeepsEventReadyWhenRedisInitializationFails() {
         givenEventJob();
         when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
@@ -74,13 +84,15 @@ class QuartzJobLauncherTest {
                 .isInstanceOf(JobExecutionException.class)
                 .hasMessageContaining("initialize and open");
         verify(eventAdaptor, never()).updateEventStatus(event, EventStatus.OPEN);
+        verify(streamConsumerManager, never()).start(3L);
     }
 
     @Test
-    @DisplayName("Redis가 비활성화된 환경에서는 기존처럼 DB 이벤트만 OPEN으로 전환한다")
+    @DisplayName("Redis가 비활성화된 환경에서는 DB 이벤트만 OPEN으로 전환한다")
     void executeOpensEventWhenRedisIsDisabled() {
         givenEventJob();
         ReflectionTestUtils.setField(quartzJobLauncher, "waitingQueueService", null);
+        ReflectionTestUtils.setField(quartzJobLauncher, "streamConsumerManager", null);
 
         assertThatCode(() -> quartzJobLauncher.execute(context)).doesNotThrowAnyException();
 

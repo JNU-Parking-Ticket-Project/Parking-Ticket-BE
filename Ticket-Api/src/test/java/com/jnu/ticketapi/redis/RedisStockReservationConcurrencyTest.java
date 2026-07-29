@@ -7,6 +7,7 @@ import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -151,8 +152,7 @@ class RedisStockReservationConcurrencyTest {
         assertThat(closed.isClosed()).isTrue();
         assertThat(closed.getRemainingAmount()).isEqualTo(299);
         assertThat(redisRepository.getIntegerValue(stockKey(3L, 1L))).contains(299);
-        assertThat(redisRepository.xReadGroup(streamKey(3L), "closed-test", "consumer", 10))
-                .hasSize(1);
+        assertThat(redisRepository.xLength(streamKey(3L))).isEqualTo(1L);
     }
 
     @Test
@@ -168,7 +168,13 @@ class RedisStockReservationConcurrencyTest {
         assertThat(unavailable.isUnavailable()).isTrue();
         assertThat(redisRepository.getIntegerValue(stockKey(4L, 1L))).contains(299);
         assertThat(redisRepository.getIntegerValue(sequenceKey(4L, 1L))).contains(1);
-        assertThat(redisRepository.xReadGroup(streamKey(4L), "lost-marker", "consumer", 10))
+        assertThat(
+                        redisRepository.xReadGroupBlocking(
+                                streamKey(4L),
+                                "lost-marker",
+                                "consumer",
+                                10,
+                                Duration.ofMillis(10)))
                 .hasSize(1);
     }
 
@@ -183,7 +189,13 @@ class RedisStockReservationConcurrencyTest {
         assertThat(unavailable.isUnavailable()).isTrue();
         assertThat(redisRepository.getIntegerValue(stockKey(5L, 1L))).isEmpty();
         assertThat(redisRepository.getIntegerValue(sequenceKey(5L, 1L))).contains(0);
-        assertThat(redisRepository.xReadGroup(streamKey(5L), "lost-stock", "consumer", 10))
+        assertThat(
+                        redisRepository.xReadGroupBlocking(
+                                streamKey(5L),
+                                "lost-stock",
+                                "consumer",
+                                10,
+                                Duration.ofMillis(10)))
                 .isEmpty();
     }
 

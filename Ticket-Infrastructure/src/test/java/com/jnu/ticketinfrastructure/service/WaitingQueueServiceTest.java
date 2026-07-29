@@ -12,10 +12,11 @@ import static org.mockito.Mockito.when;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
+import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
-import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -152,39 +153,34 @@ class WaitingQueueServiceTest {
     }
 
     @Test
-    @DisplayName("consumer group 조회는 Redis Stream readGroup에 위임한다")
-    void readGroupDelegatesToRedisStreamRepository() {
-        List<StreamQueueMessage> messages =
-                List.of(new StreamQueueMessage("1-0", new ChatMessage("{}", 1L, 2L, 3L)));
-        when(redisRepository.xClaimStale(
-                        STREAM_KEY, "group", "consumer", 100L, Duration.ofSeconds(30)))
-                .thenReturn(List.of());
-        when(redisRepository.xReadGroup(STREAM_KEY, "group", "consumer", 100L))
+    @DisplayName("새 메시지 조회는 blocking XREADGROUP에 위임한다")
+    void readNewMessagesDelegatesToRedisStreamRepository() {
+        List<RawStreamMessage> messages = List.of(new RawStreamMessage("1-0", "payload"));
+        when(redisRepository.xReadGroupBlocking(
+                        STREAM_KEY, "group", "consumer", 100L, Duration.ofMillis(500)))
                 .thenReturn(messages);
 
-        List<StreamQueueMessage> result =
-                waitingQueueService.readGroup(STREAM_KEY, "group", "consumer", 100L);
+        List<RawStreamMessage> result =
+                waitingQueueService.readNewMessages(
+                        STREAM_KEY, "group", "consumer", 100L, Duration.ofMillis(500));
 
         assertThat(result).containsExactlyElementsOf(messages);
     }
 
     @Test
-    @DisplayName("stale pending record를 먼저 복구하고 남은 수만큼 새 메시지를 읽는다")
-    void readGroupRecoversStalePendingBeforeNewMessages() {
-        StreamQueueMessage recovered =
-                new StreamQueueMessage("1-0", new ChatMessage("{}", 1L, 2L, 3L));
-        StreamQueueMessage newMessage =
-                new StreamQueueMessage("2-0", new ChatMessage("{}", 2L, 2L, 3L));
-        when(redisRepository.xClaimStale(
-                        STREAM_KEY, "group", "consumer", 2L, Duration.ofSeconds(30)))
-                .thenReturn(List.of(recovered));
-        when(redisRepository.xReadGroup(STREAM_KEY, "group", "consumer", 1L))
-                .thenReturn(List.of(newMessage));
+    @DisplayName("stale pending 회수는 XAUTOCLAIM cursor와 idle 기준을 전달한다")
+    void autoClaimMessagesDelegatesToRedisStreamRepository() {
+        AutoClaimResult claimed =
+                new AutoClaimResult("2-0", List.of(new RawStreamMessage("1-0", "payload")));
+        when(redisRepository.xAutoClaim(
+                        STREAM_KEY, "group", "consumer", 2L, Duration.ofSeconds(30), "0-0"))
+                .thenReturn(claimed);
 
-        List<StreamQueueMessage> result =
-                waitingQueueService.readGroup(STREAM_KEY, "group", "consumer", 2L);
+        AutoClaimResult result =
+                waitingQueueService.autoClaimMessages(
+                        STREAM_KEY, "group", "consumer", 2L, Duration.ofSeconds(30), "0-0");
 
-        assertThat(result).containsExactly(recovered, newMessage);
+        assertThat(result).isEqualTo(claimed);
     }
 
     @Test
