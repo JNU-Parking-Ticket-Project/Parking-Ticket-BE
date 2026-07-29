@@ -3,6 +3,7 @@ package com.jnu.ticketbatch.job;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
+import com.jnu.ticketbatch.config.FinalizeQueueDrainJob;
 import com.jnu.ticketbatch.config.ProcessQueueDataJob;
 import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketbatch.expired.BatchQuartzJob;
@@ -39,6 +40,9 @@ public class EventRegisterJob implements Job {
     private static final String ASIA_SEOUL = "Asia/Seoul";
     private static final long OPEN_LEAD_SECONDS = 5L;
     private static final long QUEUE_DRAIN_GRACE_MINUTES = 5L;
+    private static final long QUEUE_FINALIZE_DELAY_SECONDS = 60L;
+    private static final int QUEUE_FINALIZE_RETRY_COUNT = 2;
+    private static final int QUEUE_FINALIZE_RETRY_INTERVAL_SECONDS = 30;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -142,8 +146,34 @@ public class EventRegisterJob implements Job {
                         .forJob(processQueueDataJob)
                         .build();
 
+        JobDetail finalizeQueueDrainJob =
+                newJob(FinalizeQueueDrainJob.class)
+                        .withIdentity("FINALIZE_QUEUE_DRAIN_JOB" + eventId, GROUP)
+                        .usingJobData(jobDataMap)
+                        .build();
+
+        Date finalizeAt =
+                Date.from(
+                        endAt.plusMinutes(QUEUE_DRAIN_GRACE_MINUTES)
+                                .plusSeconds(QUEUE_FINALIZE_DELAY_SECONDS)
+                                .atZone(ZoneId.of(ASIA_SEOUL))
+                                .toInstant());
+
+        Trigger finalizeTrigger =
+                newTrigger()
+                        .withIdentity("FINALIZE_QUEUE_DRAIN_TRIGGER" + eventId, GROUP)
+                        .startAt(finalizeAt)
+                        .withSchedule(
+                                SimpleScheduleBuilder.simpleSchedule()
+                                        .withIntervalInSeconds(
+                                                QUEUE_FINALIZE_RETRY_INTERVAL_SECONDS)
+                                        .withRepeatCount(QUEUE_FINALIZE_RETRY_COUNT))
+                        .forJob(finalizeQueueDrainJob)
+                        .build();
+
         log.info(">>>>> ProcessQueueData 스케줄링 등록");
 
         scheduler.scheduleJob(processQueueDataJob, reserveTrigger);
+        scheduler.scheduleJob(finalizeQueueDrainJob, finalizeTrigger);
     }
 }
