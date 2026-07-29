@@ -77,16 +77,6 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
         return registrationRepository.findByEmailAndIsSaved(email, flag);
     }
 
-    @Override
-    public List<Registration> findByIsDeletedFalseAndIsSavedTrue(Long eventId) {
-        return registrationRepository.findByIsDeletedFalseAndIsSavedTrue(eventId);
-    }
-
-    @Override
-    public List<Registration> findSavedByEventIdOrderBySavedAt(Long eventId) {
-        return registrationRepository.findSavedByEventIdOrderBySavedAt(eventId);
-    }
-
     public Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(Long eventId, int page) {
         Pageable pageable = PageRequest.of(page, REGISTRATION_SIZE);
         return registrationRepository.findByIsDeletedFalseAndIsSavedTrueByPage(eventId, pageable);
@@ -108,11 +98,6 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
 
     public List<Registration> findByUserId(Long userId) {
         return registrationRepository.findByUserId(userId);
-    }
-
-    @Override
-    public Integer findPositionBySavedAt(Long id, Long sectorId) {
-        return registrationRepository.findPositionBySavedAt(id, sectorId);
     }
 
     @Override

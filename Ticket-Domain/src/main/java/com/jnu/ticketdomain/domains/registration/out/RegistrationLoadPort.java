@@ -16,17 +16,11 @@ public interface RegistrationLoadPort {
 
     Optional<Registration> findByEmail(String email);
 
-    List<Registration> findByIsDeletedFalseAndIsSavedTrue(Long eventId);
-
-    List<Registration> findSavedByEventIdOrderBySavedAt(Long eventId);
-
     Boolean existsByEmailAndIsSavedTrue(String email, Long eventId);
 
     Boolean existsByStudentNumAndIsSavedTrue(String studentNum, Long eventId);
 
     List<Registration> findByEmailAndIsSaved(String email, boolean flag);
-
-    Integer findPositionBySavedAt(Long id, Long sectorId);
 
     Boolean existsByIdAndIsSavedTrue(Long id);
 

@@ -33,18 +33,6 @@ public interface RegistrationRepository
 
     Optional<Registration> findByEmail(String email);
 
-    @Query(
-            "select r from Registration r join fetch r.sector join fetch r.user where r.isSaved = true and r.sector.event.id = :eventId")
-    List<Registration> findByIsDeletedFalseAndIsSavedTrue(@Param("eventId") Long eventId);
-
-    @Query(
-            "select r from Registration r "
-                    + "join fetch r.sector "
-                    + "join fetch r.user "
-                    + "where r.isDeleted = false and r.isSaved = true and r.eventId = :eventId "
-                    + "order by r.savedAt asc, r.id asc")
-    List<Registration> findSavedByEventIdOrderBySavedAt(@Param("eventId") Long eventId);
-
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
             value =
@@ -78,17 +66,6 @@ public interface RegistrationRepository
     List<Registration> findByUserId(@Param("userId") Long userId);
 
     List<Registration> findByUser(User user);
-
-    @Query(
-            value =
-                    "SELECT row_num FROM ( "
-                            + "  SELECT r.id, ROW_NUMBER() OVER (ORDER BY r.saved_at) AS row_num "
-                            + "  FROM registration_tb r "
-                            + "  WHERE r.is_saved = true AND r.sector_id = :sectorId "
-                            + ") AS numbered_registrations "
-                            + "WHERE numbered_registrations.id = :id",
-            nativeQuery = true)
-    Integer findPositionBySavedAt(@Param("id") Long id, @Param("sectorId") Long sectorId);
 
     Boolean existsByIdAndIsSavedTrue(Long id);
 

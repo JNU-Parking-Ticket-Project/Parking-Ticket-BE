@@ -230,7 +230,4 @@ public class RegistrationUseCase {
         }
     }
 
-    private Integer parseSectorNumber(String sectorNumber) {
-        return Integer.parseInt(sectorNumber.split("구간")[0]);
-    }
 }
