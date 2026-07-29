@@ -112,11 +112,31 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             TicketCodeException e, HttpServletRequest request) {
         BaseErrorCode code = e.getErrorCode();
         ErrorReason errorReason = code.getErrorReason();
-        log.info("TicketCodeException", e);
+        logTicketCodeException(errorReason, request, e);
         ErrorResponse errorResponse =
                 new ErrorResponse(errorReason, request.getRequestURL().toString());
         return ResponseEntity.status(HttpStatus.valueOf(errorReason.getStatus()))
                 .body(errorResponse);
+    }
+
+    private void logTicketCodeException(
+            ErrorReason errorReason, HttpServletRequest request, TicketCodeException exception) {
+        HttpStatus status = HttpStatus.valueOf(errorReason.getStatus());
+        if (status.is5xxServerError()) {
+            log.error(
+                    "TicketCodeException: code={}, method={}, uri={}",
+                    errorReason.getCode(),
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    exception);
+            return;
+        }
+
+        log.debug(
+                "TicketCodeException: code={}, method={}, uri={}",
+                errorReason.getCode(),
+                request.getMethod(),
+                request.getRequestURI());
     }
 
     /** Request Param Validation 예외 처리 */

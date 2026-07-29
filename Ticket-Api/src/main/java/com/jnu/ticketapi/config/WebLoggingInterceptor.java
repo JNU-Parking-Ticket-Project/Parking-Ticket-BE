@@ -1,28 +1,25 @@
 package com.jnu.ticketapi.config;
 
 
-import com.jnu.ticketapi.security.JwtResolver;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.util.ContentCachingRequestWrapper;
 
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class WebLoggingInterceptor implements HandlerInterceptor {
     private static final String START_TIME_ATTR_NAME = "startTime";
-    private static final String REGISTRATION_PATH = "/api/v1/registration/";
 
     private final WebProperties webProperties;
-    private final JwtResolver jwtResolver;
 
     @Override
     public boolean preHandle(
@@ -33,16 +30,17 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(
-            HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
-            throws IOException {
-        if (isSkipLogging(request)) {
-            return;
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Object handler,
+            Exception ex) {
+        try {
+            if (!isSkipLogging(request)) {
+                createRequestLog(request, response);
+            }
+        } finally {
+            MDC.clear();
         }
-
-        createRequestLog(request, response);
-        createAdditionalLog(request);
-
-        MDC.clear();
     }
 
     private boolean isSkipLogging(HttpServletRequest request) {
@@ -54,42 +52,29 @@ public class WebLoggingInterceptor implements HandlerInterceptor {
     }
 
     private void createRequestLog(HttpServletRequest request, HttpServletResponse response) {
-        String currentUserId = getCurrentUserId(request);
+        String currentUserId = getCurrentUserId();
         long executionTime = getExecutionTime(request);
         String requestUrl = request.getRequestURI();
         String method = request.getMethod();
         String responseType = response.getContentType();
+        int responseStatus = response.getStatus();
 
         log.info(
-                "Method: {}, URL: {}, User: {}, ResponseType: {}, ResponseTime: {}ms",
+                "Method: {}, URL: {}, User: {}, Status: {}, ResponseType: {}, ResponseTime: {}ms",
                 method,
                 requestUrl,
                 currentUserId,
+                responseStatus,
                 responseType,
                 executionTime);
     }
 
-    private String getCurrentUserId(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken == null) {
+    private String getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
             return "anonymous";
         }
-
-        String accessToken = jwtResolver.extractToken(bearerToken);
-        return jwtResolver.getAuthentication(accessToken).getName();
-    }
-
-    private void createAdditionalLog(HttpServletRequest request) throws IOException {
-        String requestUri = request.getRequestURI();
-        if (requestUri.trim().startsWith(REGISTRATION_PATH)) {
-            log.info("[registration request] {}", getRequestBody(request));
-        }
-    }
-
-    private String getRequestBody(HttpServletRequest request) {
-        ContentCachingRequestWrapper wrapRequest = (ContentCachingRequestWrapper) request;
-        byte[] contents = wrapRequest.getContentAsByteArray();
-        return new String(contents, StandardCharsets.UTF_8);
+        return authentication.getName();
     }
 
     private long getExecutionTime(HttpServletRequest request) {
