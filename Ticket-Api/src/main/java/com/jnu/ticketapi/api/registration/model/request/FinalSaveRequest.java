@@ -61,7 +61,7 @@ public record FinalSaveRequest(
                 .sector(sector)
                 .isSaved(true)
                 .user(user)
-                .savedAt(System.nanoTime())
+                .savedAt(System.currentTimeMillis())
                 .eventId(eventId)
                 .build();
     }

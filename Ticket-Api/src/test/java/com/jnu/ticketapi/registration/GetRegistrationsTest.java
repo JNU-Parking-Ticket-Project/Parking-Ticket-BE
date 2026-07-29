@@ -57,7 +57,8 @@ public class GetRegistrationsTest extends RestDocsConfig {
                     jsonPath("$.registrations[0].email").value("council@jnu.ac.kr"),
                     jsonPath("$.registrations[0].position").value(1),
                     jsonPath("$.registrations[0].resultStatus").value("합격"),
-                    jsonPath("$.registrations[0].sequence").value(-2));
+                    jsonPath("$.registrations[0].sequence").value(-2),
+                    jsonPath("$.registrations[0].savedAtEstimated").value(false));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
         }
