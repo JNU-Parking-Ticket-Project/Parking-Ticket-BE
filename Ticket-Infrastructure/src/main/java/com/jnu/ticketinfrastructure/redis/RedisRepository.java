@@ -1,11 +1,13 @@
 package com.jnu.ticketinfrastructure.redis;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import io.lettuce.core.XAutoClaimArgs;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
@@ -23,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Range;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.MapRecord;
@@ -48,23 +51,82 @@ public class RedisRepository {
     private static final String STREAM_POSITION_KEY = "position";
     private static final String STREAM_RESULT_STATUS_KEY = "resultStatus";
     private static final String STREAM_SEQUENCE_KEY = "sequence";
+    private static final String INITIALIZE_EVENT_STOCK_SCRIPT =
+            "if redis.call('EXISTS', KEYS[1]) == 1 then return 0 end "
+                    + "redis.call('DEL', KEYS[2]) "
+                    + "redis.call('DEL', KEYS[3]) "
+                    + "local argumentIndex = 1 "
+                    + "for keyIndex = 4, #KEYS, 2 do "
+                    + "  redis.call('SET', KEYS[keyIndex], ARGV[argumentIndex]) "
+                    + "  redis.call('SET', KEYS[keyIndex + 1], ARGV[argumentIndex + 1]) "
+                    + "  argumentIndex = argumentIndex + 2 "
+                    + "end "
+                    + "redis.call('SET', KEYS[1], '1') "
+                    + "return 1";
+    private static final String DEAD_LETTER_ORIGINAL_RECORD_ID_KEY = "originalRecordId";
+    private static final String DEAD_LETTER_FAILURE_COUNT_KEY = "failureCount";
+    private static final String DEAD_LETTER_LAST_ERROR_KEY = "lastError";
+    private static final String DEAD_LETTER_FAILED_AT_KEY = "failedAt";
+    private static final String DEAD_LETTER_REASON_KEY = "reason";
+    private static final String ACKNOWLEDGE_AND_DELETE_SCRIPT =
+            "local acknowledged = redis.call('XACK', KEYS[1], ARGV[1], ARGV[2]) "
+                    + "if acknowledged > 0 then "
+                    + "  redis.call('XDEL', KEYS[1], ARGV[2]) "
+                    + "  redis.call('HDEL', KEYS[2], ARGV[2]) "
+                    + "end "
+                    + "return acknowledged";
+    private static final String MOVE_TO_DEAD_LETTER_SCRIPT =
+            "local records = redis.call('XRANGE', KEYS[1], ARGV[2], ARGV[2]) "
+                    + "if #records == 0 then return {0, 0} end "
+                    + "local failureCount = tonumber(redis.call('HGET', KEYS[2], ARGV[2]) or '0') "
+                    + "if ARGV[10] == '0' then "
+                    + "  failureCount = redis.call('HINCRBY', KEYS[2], ARGV[2], 1) "
+                    + "  redis.call('EXPIRE', KEYS[2], tonumber(ARGV[9])) "
+                    + "  if failureCount < tonumber(ARGV[3]) then return {failureCount, 0} end "
+                    + "end "
+                    + "redis.call('XADD', KEYS[3], 'MAXLEN', tonumber(ARGV[8]), '*', "
+                    + "  'payload', ARGV[4], "
+                    + "  'originalRecordId', ARGV[2], "
+                    + "  'failureCount', tostring(failureCount), "
+                    + "  'lastError', ARGV[5], "
+                    + "  'failedAt', ARGV[6], "
+                    + "  'reason', ARGV[7]) "
+                    + "redis.call('EXPIRE', KEYS[3], tonumber(ARGV[9])) "
+                    + "redis.pcall('XACK', KEYS[1], ARGV[1], ARGV[2]) "
+                    + "redis.call('XDEL', KEYS[1], ARGV[2]) "
+                    + "redis.call('HDEL', KEYS[2], ARGV[2]) "
+                    + "return {failureCount, 1}";
+    private static final String REPLAY_DEAD_LETTER_SCRIPT =
+            "local records = redis.call('XRANGE', KEYS[1], ARGV[1], ARGV[1]) "
+                    + "if #records == 0 then return 0 end "
+                    + "local fields = records[1][2] "
+                    + "local payload = nil "
+                    + "local originalRecordId = nil "
+                    + "for index = 1, #fields, 2 do "
+                    + "  if fields[index] == 'payload' then payload = fields[index + 1] end "
+                    + "  if fields[index] == 'originalRecordId' then originalRecordId = fields[index + 1] end "
+                    + "end "
+                    + "if not payload then return -1 end "
+                    + "redis.call('XADD', KEYS[2], '*', 'payload', payload) "
+                    + "redis.call('XDEL', KEYS[1], ARGV[1]) "
+                    + "if originalRecordId then redis.call('HDEL', KEYS[3], originalRecordId) end "
+                    + "return 1";
     private static final String RESERVE_STOCK_SCRIPT =
             "if redis.call('EXISTS', KEYS[5]) == 1 then "
                     + "  local closedStock = redis.call('GET', KEYS[1]) "
                     + "  if not closedStock then closedStock = 0 end "
                     + "  return {0, 'CLOSED', -1, '', -1, tonumber(closedStock)} "
                     + "end "
+                    + "if redis.call('EXISTS', KEYS[6]) == 0 then "
+                    + "  return {0, 'UNAVAILABLE', -1, '', -1, -1} "
+                    + "end "
                     + "local stock = redis.call('GET', KEYS[1]) "
-                    + "if not stock then "
-                    + "  stock = tonumber(ARGV[1]) "
-                    + "  redis.call('SET', KEYS[1], stock) "
-                    + "else "
-                    + "  stock = tonumber(stock) "
+                    + "local positionValue = redis.call('GET', KEYS[2]) "
+                    + "if not stock or not positionValue then "
+                    + "  return {0, 'UNAVAILABLE', -1, '', -1, -1} "
                     + "end "
-                    + "if not redis.call('GET', KEYS[2]) then "
-                    + "  redis.call('SET', KEYS[2], tonumber(ARGV[2]) - stock) "
-                    + "end "
-                    + "if redis.call('SISMEMBER', KEYS[3], ARGV[8]) == 1 then "
+                    + "stock = tonumber(stock) "
+                    + "if redis.call('SISMEMBER', KEYS[3], ARGV[6]) == 1 then "
                     + "  return {0, 'DUPLICATE', -1, '', -1, stock} "
                     + "end "
                     + "if stock <= 0 then "
@@ -72,18 +134,18 @@ public class RedisRepository {
                     + "end "
                     + "local position = redis.call('INCR', KEYS[2]) "
                     + "local status = 'PREPARE' "
-                    + "local sequence = position - tonumber(ARGV[3]) "
-                    + "if position <= tonumber(ARGV[3]) then "
+                    + "local sequence = position - tonumber(ARGV[1]) "
+                    + "if position <= tonumber(ARGV[1]) then "
                     + "  status = 'SUCCESS' "
                     + "  sequence = -2 "
                     + "end "
                     + "local remaining = redis.call('DECR', KEYS[1]) "
-                    + "redis.call('SADD', KEYS[3], ARGV[8]) "
+                    + "redis.call('SADD', KEYS[3], ARGV[6]) "
                     + "redis.call('XADD', KEYS[4], '*', "
-                    + "  'registration', ARGV[4], "
-                    + "  'userId', ARGV[5], "
-                    + "  'sectorId', ARGV[6], "
-                    + "  'eventId', ARGV[7], "
+                    + "  'registration', ARGV[2], "
+                    + "  'userId', ARGV[3], "
+                    + "  'sectorId', ARGV[4], "
+                    + "  'eventId', ARGV[5], "
                     + "  'position', tostring(position), "
                     + "  'resultStatus', status, "
                     + "  'sequence', tostring(sequence)) "
@@ -204,13 +266,12 @@ public class RedisRepository {
             String reservedEmailKey,
             String streamKey,
             String closedKey,
+            String initializedKey,
             String registration,
             Long userId,
             Long sectorId,
             Long eventId,
             String email,
-            Integer initialRemainingAmount,
-            Integer issueAmount,
             Integer initSectorCapacity) {
         List<Object> rawResult =
                 redisTemplate.execute(
@@ -221,16 +282,14 @@ public class RedisRepository {
                                                         RESERVE_STOCK_SCRIPT.getBytes(
                                                                 StandardCharsets.UTF_8),
                                                         ReturnType.MULTI,
-                                                        5,
+                                                        6,
                                                         redisArgs(
                                                                 stockKey,
                                                                 sequenceKey,
                                                                 reservedEmailKey,
                                                                 streamKey,
                                                                 closedKey,
-                                                                String.valueOf(
-                                                                        initialRemainingAmount),
-                                                                String.valueOf(issueAmount),
+                                                                initializedKey,
                                                                 String.valueOf(initSectorCapacity),
                                                                 registration,
                                                                 String.valueOf(userId),
@@ -238,6 +297,37 @@ public class RedisRepository {
                                                                 String.valueOf(eventId),
                                                                 email)));
         return toStockReservationResult(rawResult);
+    }
+
+    public boolean initializeEventStock(
+            String initializedKey,
+            String reservedEmailKey,
+            String closedKey,
+            List<SectorStockInitialization> sectors) {
+        List<String> keys = new ArrayList<>();
+        keys.add(initializedKey);
+        keys.add(reservedEmailKey);
+        keys.add(closedKey);
+        List<String> arguments = new ArrayList<>();
+        for (SectorStockInitialization sector : sectors) {
+            keys.add(sector.getStockKey());
+            keys.add(sector.getSequenceKey());
+            arguments.add(String.valueOf(sector.getRemainingAmount()));
+            arguments.add(String.valueOf(sector.getAssignedPosition()));
+        }
+        List<String> scriptParameters = new ArrayList<>(keys);
+        scriptParameters.addAll(arguments);
+        Long initialized =
+                redisTemplate.execute(
+                        (RedisCallback<Long>)
+                                connection ->
+                                        connection.eval(
+                                                INITIALIZE_EVENT_STOCK_SCRIPT.getBytes(
+                                                        StandardCharsets.UTF_8),
+                                                ReturnType.INTEGER,
+                                                keys.size(),
+                                                redisArgs(scriptParameters.toArray(new String[0]))));
+        return initialized != null && initialized == 1L;
     }
 
     public void createConsumerGroupIfAbsent(String key, String group) {
@@ -334,6 +424,99 @@ public class RedisRepository {
         return redisTemplate.opsForStream().delete(key, recordId);
     }
 
+    public Long xAcknowledgeAndDelete(
+            String streamKey, String failureKey, String group, String recordId) {
+        return redisTemplate.execute(
+                (RedisCallback<Long>)
+                        connection ->
+                                connection.eval(
+                                        ACKNOWLEDGE_AND_DELETE_SCRIPT.getBytes(
+                                                StandardCharsets.UTF_8),
+                                        ReturnType.INTEGER,
+                                        2,
+                                        redisArgs(streamKey, failureKey, group, recordId)));
+    }
+
+    public DeadLetterTransferResult xRecordFailureAndMaybeMoveToDeadLetter(
+            String streamKey,
+            String failureKey,
+            String deadLetterKey,
+            String group,
+            String recordId,
+            String payload,
+            int maxFailures,
+            String lastError,
+            long failedAt,
+            String reason,
+            long maxLength,
+            Duration retention,
+            boolean forceMove) {
+        List<Object> rawResult =
+                redisTemplate.execute(
+                        (RedisCallback<List<Object>>)
+                                connection ->
+                                        (List<Object>)
+                                                connection.eval(
+                                                        MOVE_TO_DEAD_LETTER_SCRIPT.getBytes(
+                                                                StandardCharsets.UTF_8),
+                                                        ReturnType.MULTI,
+                                                        3,
+                                                        redisArgs(
+                                                                streamKey,
+                                                                failureKey,
+                                                                deadLetterKey,
+                                                                group,
+                                                                recordId,
+                                                                String.valueOf(maxFailures),
+                                                                payload,
+                                                                lastError,
+                                                                String.valueOf(failedAt),
+                                                                reason,
+                                                                String.valueOf(maxLength),
+                                                                String.valueOf(
+                                                                        retention.toSeconds()),
+                                                                forceMove ? "1" : "0")));
+        if (rawResult == null || rawResult.size() < 2) {
+            throw new IllegalStateException("Failed to move Redis Stream message to DLQ");
+        }
+        return new DeadLetterTransferResult(
+                integerValue(rawResult.get(0)), longValue(rawResult.get(1)) == 1L);
+    }
+
+    public List<RawStreamMessage> xRangeRaw(String key) {
+        List<MapRecord<String, Object, Object>> records =
+                redisTemplate.opsForStream().range(key, Range.unbounded());
+        if (records == null || records.isEmpty()) {
+            return List.of();
+        }
+        return records.stream().map(this::toRawStreamMessage).toList();
+    }
+
+    public List<DeadLetterQueueMessage> xRangeDeadLetters(String key, long count) {
+        List<MapRecord<String, Object, Object>> records =
+                redisTemplate.opsForStream().range(key, Range.unbounded());
+        if (records == null || records.isEmpty()) {
+            return List.of();
+        }
+        return records.stream().limit(count).map(this::toDeadLetterQueueMessage).toList();
+    }
+
+    public Long xReplayDeadLetter(
+            String deadLetterKey, String streamKey, String failureKey, String recordId) {
+        return redisTemplate.execute(
+                (RedisCallback<Long>)
+                        connection ->
+                                connection.eval(
+                                        REPLAY_DEAD_LETTER_SCRIPT.getBytes(StandardCharsets.UTF_8),
+                                        ReturnType.INTEGER,
+                                        3,
+                                        redisArgs(deadLetterKey, streamKey, failureKey, recordId)));
+    }
+
+    public Boolean expire(String key, Duration timeout) {
+        return redisTemplate.expire(key, timeout);
+    }
+
     public Optional<Integer> getIntegerValue(String key) {
         byte[] value =
                 redisTemplate.execute(
@@ -412,6 +595,19 @@ public class RedisRepository {
         }
     }
 
+    private DeadLetterQueueMessage toDeadLetterQueueMessage(
+            MapRecord<String, Object, Object> record) {
+        Map<Object, Object> values = record.getValue();
+        return new DeadLetterQueueMessage(
+                record.getId().getValue(),
+                value(values, DEAD_LETTER_ORIGINAL_RECORD_ID_KEY),
+                value(values, STREAM_PAYLOAD_KEY),
+                integerValue(values, DEAD_LETTER_FAILURE_COUNT_KEY),
+                value(values, DEAD_LETTER_LAST_ERROR_KEY),
+                longValue(values, DEAD_LETTER_FAILED_AT_KEY),
+                value(values, DEAD_LETTER_REASON_KEY));
+    }
+
     private ChatMessage toReservedChatMessage(MapRecord<String, Object, Object> record) {
         return toReservedChatMessage(record.getValue());
     }
@@ -450,6 +646,10 @@ public class RedisRepository {
         }
         if ("CLOSED".equals(reason)) {
             return StockReservationResult.closed(remainingAmount);
+        }
+        if ("UNAVAILABLE".equals(reason)) {
+            return StockReservationResult.unavailable(
+                    remainingAmount != null && remainingAmount >= 0 ? remainingAmount : null);
         }
         throw new IllegalStateException("Unknown Redis stock reservation result: " + reason);
     }

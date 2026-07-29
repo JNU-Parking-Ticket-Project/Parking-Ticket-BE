@@ -26,6 +26,7 @@ public class TicketStatic {
     public static final int NOT_FOUND = 404;
     public static final int TOO_MANY_REQUESTS = 429;
     public static final int INTERNAL_SERVER = 500;
+    public static final int SERVICE_UNAVAILABLE = 503;
     public static final String SWAGGER_DOCS_VERSION = "v0.0.1";
 
     public static final String REDIS_EVENT_CHANNEL = "쿠폰 발급 채널";

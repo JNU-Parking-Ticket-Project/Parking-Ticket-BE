@@ -37,4 +37,6 @@ public interface EventRepository extends JpaRepository<Event, Long>, CustomEvent
     Boolean existsByPublishTrue();
 
     Optional<Event> findFirstByOrderByIdDesc();
+
+    List<Event> findAllByEventStatusOrderByIdDesc(EventStatus eventStatus);
 }

@@ -10,6 +10,7 @@ public class StockReservationResult {
     private static final String DUPLICATE = "DUPLICATE";
     private static final String NO_STOCK = "NO_STOCK";
     private static final String CLOSED = "CLOSED";
+    private static final String UNAVAILABLE = "UNAVAILABLE";
 
     private final boolean reserved;
     private final String reason;
@@ -51,6 +52,10 @@ public class StockReservationResult {
         return new StockReservationResult(false, CLOSED, null, null, null, remainingAmount);
     }
 
+    public static StockReservationResult unavailable(Integer remainingAmount) {
+        return new StockReservationResult(false, UNAVAILABLE, null, null, null, remainingAmount);
+    }
+
     public boolean isDuplicate() {
         return DUPLICATE.equals(reason);
     }
@@ -61,5 +66,9 @@ public class StockReservationResult {
 
     public boolean isClosed() {
         return CLOSED.equals(reason);
+    }
+
+    public boolean isUnavailable() {
+        return UNAVAILABLE.equals(reason);
     }
 }

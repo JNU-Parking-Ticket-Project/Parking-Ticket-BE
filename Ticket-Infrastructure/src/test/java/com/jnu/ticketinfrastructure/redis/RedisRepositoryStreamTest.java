@@ -10,7 +10,10 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -161,13 +164,12 @@ class RedisRepositoryStreamTest {
                         "reserved-email",
                         STREAM_KEY,
                         "closed",
+                        "initialized",
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        300,
-                        300,
                         250);
 
         assertThat(result.isReserved()).isTrue();
@@ -190,13 +192,12 @@ class RedisRepositoryStreamTest {
                         "reserved-email",
                         STREAM_KEY,
                         "closed",
+                        "initialized",
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        300,
-                        300,
                         250);
 
         assertThat(result.isReserved()).isFalse();
@@ -217,18 +218,56 @@ class RedisRepositoryStreamTest {
                         "reserved-email",
                         STREAM_KEY,
                         "closed",
+                        "initialized",
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        300,
-                        300,
                         250);
 
         assertThat(result.isReserved()).isFalse();
         assertThat(result.isClosed()).isTrue();
         assertThat(result.getRemainingAmount()).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("reserveStockAndAddToStream은 필수 Redis 상태 유실을 unavailable로 변환한다")
+    void reserveStockAndAddToStreamParsesUnavailableResult() {
+        when(redisTemplate.execute(any(RedisCallback.class)))
+                .thenReturn(List.of(0L, "UNAVAILABLE", -1L, "", -1L, -1L));
+
+        StockReservationResult result =
+                redisRepository.reserveStockAndAddToStream(
+                        "stock",
+                        "sequence",
+                        "reserved-email",
+                        STREAM_KEY,
+                        "closed",
+                        "initialized",
+                        "{\"id\":10}",
+                        1L,
+                        2L,
+                        3L,
+                        "student@jnu.ac.kr",
+                        250);
+
+        assertThat(result.isUnavailable()).isTrue();
+        assertThat(result.getRemainingAmount()).isNull();
+    }
+
+    @Test
+    @DisplayName("initializeEventStock은 원자 초기화 Lua 결과를 반환한다")
+    void initializeEventStockReturnsAtomicScriptResult() {
+        when(redisTemplate.execute(any(RedisCallback.class))).thenReturn(1L);
+        SectorStockInitialization sector =
+                new SectorStockInitialization("stock", "sequence", 240, 60);
+
+        boolean initialized =
+                redisRepository.initializeEventStock(
+                        "initialized", "reserved-email", "closed", List.of(sector));
+
+        assertThat(initialized).isTrue();
     }
 
     @Test
@@ -286,5 +325,92 @@ class RedisRepositoryStreamTest {
         Long deleted = redisRepository.xDelete(STREAM_KEY, "1-0");
 
         assertThat(deleted).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("xAcknowledgeAndDelete는 Lua의 ACK 결과를 반환한다")
+    void xAcknowledgeAndDeleteReturnsAtomicScriptResult() {
+        when(redisTemplate.execute(any(RedisCallback.class))).thenReturn(1L);
+
+        Long acknowledged =
+                redisRepository.xAcknowledgeAndDelete(
+                        STREAM_KEY, STREAM_KEY + ":failures", GROUP, "1-0");
+
+        assertThat(acknowledged).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("실패 기록 Lua 결과를 실패 횟수와 DLQ 이관 여부로 변환한다")
+    void xRecordFailureAndMaybeMoveToDeadLetterParsesResult() {
+        when(redisTemplate.execute(any(RedisCallback.class))).thenReturn(List.of(3L, 1L));
+
+        DeadLetterTransferResult result =
+                redisRepository.xRecordFailureAndMaybeMoveToDeadLetter(
+                        STREAM_KEY,
+                        STREAM_KEY + ":failures",
+                        STREAM_KEY + ":dlq",
+                        GROUP,
+                        "1-0",
+                        "{\"registration\":\"{}\"}",
+                        3,
+                        "DB error",
+                        1_000L,
+                        "PROCESSING_FAILURE",
+                        1_000L,
+                        Duration.ofDays(7),
+                        false);
+
+        assertThat(result.getFailureCount()).isEqualTo(3);
+        assertThat(result.isMoved()).isTrue();
+    }
+
+    @Test
+    @DisplayName("DLQ Stream record는 원본 payload와 실패 메타데이터로 복원한다")
+    void xRangeDeadLettersParsesFailureMetadata() throws Exception {
+        ChatMessage message = new ChatMessage("{\"id\":10}", 1L, 2L, 3L);
+        MapRecord<String, Object, Object> record =
+                MapRecord.create(
+                                STREAM_KEY + ":dlq",
+                                Map.<Object, Object>of(
+                                        "payload",
+                                        objectMapper.writeValueAsString(message),
+                                        "originalRecordId",
+                                        "1-0",
+                                        "failureCount",
+                                        "3",
+                                        "lastError",
+                                        "DB error",
+                                        "failedAt",
+                                        "1000",
+                                        "reason",
+                                        "PROCESSING_FAILURE"))
+                        .withId(RecordId.of("9-0"));
+        when(redisTemplate.opsForStream()).thenReturn(streamOperations);
+        when(streamOperations.range(
+                        STREAM_KEY + ":dlq", org.springframework.data.domain.Range.unbounded()))
+                .thenReturn(List.of(record));
+
+        List<DeadLetterQueueMessage> result =
+                redisRepository.xRangeDeadLetters(STREAM_KEY + ":dlq", 10L);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getRecordId()).isEqualTo("9-0");
+        assertThat(result.get(0).getOriginalRecordId()).isEqualTo("1-0");
+        assertThat(result.get(0).getFailureCount()).isEqualTo(3);
+        assertThat(result.get(0).getLastError()).isEqualTo("DB error");
+        assertThat(objectMapper.readValue(result.get(0).getPayload(), ChatMessage.class).getUserId())
+                .isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("DLQ 재처리는 Lua의 원본 Stream 복원 결과를 반환한다")
+    void xReplayDeadLetterReturnsAtomicScriptResult() {
+        when(redisTemplate.execute(any(RedisCallback.class))).thenReturn(1L);
+
+        Long replayed =
+                redisRepository.xReplayDeadLetter(
+                        STREAM_KEY + ":dlq", STREAM_KEY, STREAM_KEY + ":failures", "9-0");
+
+        assertThat(replayed).isEqualTo(1L);
     }
 }
