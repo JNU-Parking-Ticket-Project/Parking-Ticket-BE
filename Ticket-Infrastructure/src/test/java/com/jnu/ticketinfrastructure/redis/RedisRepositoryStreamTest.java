@@ -10,8 +10,8 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
-import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
@@ -25,11 +25,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.RedisSystemException;
-import org.springframework.data.redis.connection.stream.ByteRecord;
 import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.MapRecord;
-import org.springframework.data.redis.connection.stream.PendingMessage;
-import org.springframework.data.redis.connection.stream.PendingMessages;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.connection.stream.StreamReadOptions;
@@ -46,8 +43,6 @@ class RedisRepositoryStreamTest {
 
     @Mock private RedisTemplate<String, Object> redisTemplate;
     @Mock private StreamOperations<String, Object, Object> streamOperations;
-    @Mock private ByteRecord byteRecord;
-
     private RedisRepository redisRepository;
     private ObjectMapper objectMapper;
 
@@ -80,7 +75,7 @@ class RedisRepositoryStreamTest {
     }
 
     @Test
-    @DisplayName("xReadGroup은 Stream record id와 payload를 StreamQueueMessage로 복원한다")
+    @DisplayName("blocking XREADGROUP은 Stream record id와 raw payload를 복원한다")
     void xReadGroupParsesRecordIdAndPayload() throws Exception {
         ChatMessage message = new ChatMessage("{\"id\":10}", 1L, 2L, 3L);
         MapRecord<String, Object, Object> record =
@@ -95,21 +90,23 @@ class RedisRepositoryStreamTest {
                         any(Consumer.class), any(StreamReadOptions.class), any(StreamOffset.class)))
                 .thenReturn(List.of(record));
 
-        List<StreamQueueMessage> result =
-                redisRepository.xReadGroup(STREAM_KEY, GROUP, CONSUMER, 100);
+        List<RawStreamMessage> result =
+                redisRepository.xReadGroupBlocking(
+                        STREAM_KEY, GROUP, CONSUMER, 100, Duration.ofMillis(500));
 
         assertThat(result).hasSize(1);
-        StreamQueueMessage streamQueueMessage = result.get(0);
-        assertThat(streamQueueMessage.getRecordId()).isEqualTo("1690000000000-0");
-        assertThat(streamQueueMessage.getMessage().getRegistration()).isEqualTo("{\"id\":10}");
-        assertThat(streamQueueMessage.getMessage().getUserId()).isEqualTo(1L);
-        assertThat(streamQueueMessage.getMessage().getSectorId()).isEqualTo(2L);
-        assertThat(streamQueueMessage.getMessage().getEventId()).isEqualTo(3L);
+        RawStreamMessage streamMessage = result.get(0);
+        assertThat(streamMessage.getRecordId()).isEqualTo("1690000000000-0");
+        ChatMessage parsed = objectMapper.readValue(streamMessage.getPayload(), ChatMessage.class);
+        assertThat(parsed.getRegistration()).isEqualTo("{\"id\":10}");
+        assertThat(parsed.getUserId()).isEqualTo(1L);
+        assertThat(parsed.getSectorId()).isEqualTo(2L);
+        assertThat(parsed.getEventId()).isEqualTo(3L);
     }
 
     @Test
-    @DisplayName("xReadGroup은 Redis 예약 script가 저장한 확정 결과 필드를 ChatMessage로 복원한다")
-    void xReadGroupParsesReservedDecisionFields() {
+    @DisplayName("blocking XREADGROUP은 Redis 예약 script의 확정 결과 필드를 raw payload로 복원한다")
+    void xReadGroupParsesReservedDecisionFields() throws Exception {
         MapRecord<String, Object, Object> record =
                 MapRecord.create(
                                 STREAM_KEY,
@@ -135,10 +132,12 @@ class RedisRepositoryStreamTest {
                         any(Consumer.class), any(StreamReadOptions.class), any(StreamOffset.class)))
                 .thenReturn(List.of(record));
 
-        List<StreamQueueMessage> result =
-                redisRepository.xReadGroup(STREAM_KEY, GROUP, CONSUMER, 100);
+        List<RawStreamMessage> result =
+                redisRepository.xReadGroupBlocking(
+                        STREAM_KEY, GROUP, CONSUMER, 100, Duration.ofMillis(500));
 
-        ChatMessage message = result.get(0).getMessage();
+        ChatMessage message =
+                objectMapper.readValue(result.get(0).getPayload(), ChatMessage.class);
         assertThat(message.getRegistration()).isEqualTo("{\"id\":10}");
         assertThat(message.getUserId()).isEqualTo(1L);
         assertThat(message.getSectorId()).isEqualTo(2L);
@@ -265,44 +264,6 @@ class RedisRepositoryStreamTest {
 
         assertThatCode(() -> redisRepository.createConsumerGroupIfAbsent(STREAM_KEY, GROUP))
                 .doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("xClaimStale은 idle 기준을 넘긴 pending record를 현재 consumer로 가져온다")
-    void xClaimStaleClaimsRecoverablePendingRecord() throws Exception {
-        ChatMessage message = new ChatMessage("{\"id\":10}", 1L, 2L, 3L);
-        MapRecord<String, Object, Object> record =
-                MapRecord.create(
-                                STREAM_KEY,
-                                Map.<Object, Object>of(
-                                        "payload", objectMapper.writeValueAsString(message)))
-                        .withId(RecordId.of("1-0"));
-        PendingMessage pendingMessage =
-                new PendingMessage(
-                        RecordId.of("1-0"),
-                        Consumer.from(GROUP, "stopped-consumer"),
-                        Duration.ofMinutes(1),
-                        2L);
-        PendingMessages pendingMessages = new PendingMessages(GROUP, List.of(pendingMessage));
-        when(redisTemplate.opsForStream()).thenReturn(streamOperations);
-        when(redisTemplate.execute(any(RedisCallback.class)))
-                .thenReturn("OK")
-                .thenReturn(List.of(byteRecord));
-        when(streamOperations.pending(
-                        eq(STREAM_KEY),
-                        eq(GROUP),
-                        any(org.springframework.data.domain.Range.class),
-                        eq(10L)))
-                .thenReturn(pendingMessages);
-        when(streamOperations.deserializeRecord(byteRecord)).thenReturn(record);
-
-        List<StreamQueueMessage> result =
-                redisRepository.xClaimStale(
-                        STREAM_KEY, GROUP, CONSUMER, 10L, Duration.ofSeconds(30));
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getRecordId()).isEqualTo("1-0");
-        assertThat(result.get(0).getMessage().getUserId()).isEqualTo(1L);
     }
 
     @Test

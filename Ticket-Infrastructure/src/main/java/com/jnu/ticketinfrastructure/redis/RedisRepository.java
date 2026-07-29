@@ -3,9 +3,13 @@ package com.jnu.ticketinfrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
+import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
-import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
+import io.lettuce.core.XAutoClaimArgs;
+import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.models.stream.ClaimedMessages;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -15,17 +19,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.stream.StreamSupport;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.dao.DataAccessException;
-import org.springframework.data.domain.Range;
 import org.springframework.data.redis.connection.ReturnType;
-import org.springframework.data.redis.connection.stream.ByteRecord;
 import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.MapRecord;
-import org.springframework.data.redis.connection.stream.PendingMessage;
-import org.springframework.data.redis.connection.stream.PendingMessages;
+import org.springframework.data.redis.connection.stream.PendingMessagesSummary;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamOffset;
@@ -256,58 +257,73 @@ public class RedisRepository {
         }
     }
 
-    public List<StreamQueueMessage> xReadGroup(
-            String key, String group, String consumer, long count) {
+    public List<RawStreamMessage> xReadGroupBlocking(
+            String key, String group, String consumer, long count, Duration blockTimeout) {
         createConsumerGroupIfAbsent(key, group);
         List<MapRecord<String, Object, Object>> records =
                 redisTemplate
                         .opsForStream()
                         .read(
                                 Consumer.from(group, consumer),
-                                StreamReadOptions.empty().count(count),
+                                StreamReadOptions.empty().count(count).block(blockTimeout),
                                 StreamOffset.create(key, ReadOffset.lastConsumed()));
         if (records == null || records.isEmpty()) {
             return List.of();
         }
-        return records.stream().map(this::toStreamQueueMessage).toList();
+        return records.stream().map(this::toRawStreamMessage).toList();
     }
 
-    public List<StreamQueueMessage> xClaimStale(
-            String key, String group, String consumer, long count, Duration minIdleTime) {
+    @SuppressWarnings("unchecked")
+    public AutoClaimResult xAutoClaim(
+            String key,
+            String group,
+            String consumer,
+            long count,
+            Duration minIdleTime,
+            String startId) {
         createConsumerGroupIfAbsent(key, group);
-        PendingMessages pendingMessages =
-                redisTemplate.opsForStream().pending(key, group, Range.unbounded(), count);
-        if (pendingMessages == null || pendingMessages.isEmpty()) {
-            return List.of();
-        }
+        return redisTemplate.execute(
+                (RedisCallback<AutoClaimResult>)
+                        connection -> {
+                            RedisClusterAsyncCommands<byte[], byte[]> commands =
+                                    (RedisClusterAsyncCommands<byte[], byte[]>)
+                                            connection.getNativeConnection();
+                            XAutoClaimArgs<byte[]> args =
+                                    new XAutoClaimArgs<byte[]>()
+                                            .consumer(
+                                                    io.lettuce.core.Consumer.from(
+                                                            bytes(group), bytes(consumer)))
+                                            .minIdleTime(minIdleTime)
+                                            .startId(startId)
+                                            .count(count);
+                            try {
+                                ClaimedMessages<byte[], byte[]> claimedMessages =
+                                        commands.xautoclaim(bytes(key), args)
+                                                .get(1, TimeUnit.SECONDS);
+                                List<RawStreamMessage> messages =
+                                        claimedMessages.getMessages().stream()
+                                                .map(
+                                                        message ->
+                                                                new RawStreamMessage(
+                                                                        message.getId(),
+                                                                        payload(message.getBody())))
+                                                .toList();
+                                return new AutoClaimResult(claimedMessages.getId(), messages);
+                            } catch (Exception e) {
+                                throw new IllegalStateException(
+                                        "Failed to auto-claim Redis Stream messages", e);
+                            }
+                        });
+    }
 
-        RecordId[] staleRecordIds =
-                StreamSupport.stream(pendingMessages.spliterator(), false)
-                        .filter(pendingMessage -> isStale(pendingMessage, minIdleTime))
-                        .map(PendingMessage::getId)
-                        .toArray(RecordId[]::new);
-        if (staleRecordIds.length == 0) {
-            return List.of();
-        }
+    public long xLength(String key) {
+        Long size = redisTemplate.opsForStream().size(key);
+        return size == null ? 0L : size;
+    }
 
-        List<ByteRecord> claimedRecords =
-                redisTemplate.execute(
-                        (RedisCallback<List<ByteRecord>>)
-                                connection ->
-                                        connection.xClaim(
-                                                key.getBytes(StandardCharsets.UTF_8),
-                                                group,
-                                                consumer,
-                                                minIdleTime,
-                                                staleRecordIds));
-        if (claimedRecords == null || claimedRecords.isEmpty()) {
-            return List.of();
-        }
-
-        return claimedRecords.stream()
-                .map(redisTemplate.opsForStream()::deserializeRecord)
-                .map(this::toStreamQueueMessage)
-                .toList();
+    public long xPendingCount(String key, String group) {
+        PendingMessagesSummary summary = redisTemplate.opsForStream().pending(key, group);
+        return summary == null ? 0L : summary.getTotalPendingMessages();
     }
 
     public Long xAck(String key, String group, String recordId) {
@@ -351,23 +367,56 @@ public class RedisRepository {
         }
     }
 
-    private StreamQueueMessage toStreamQueueMessage(MapRecord<String, Object, Object> record) {
+    private RawStreamMessage toRawStreamMessage(MapRecord<String, Object, Object> record) {
         Object payload = record.getValue().get(STREAM_PAYLOAD_KEY);
         try {
             if (payload == null) {
-                return new StreamQueueMessage(
-                        record.getId().getValue(), toReservedChatMessage(record));
+                payload = objectMapper.writeValueAsString(toReservedChatMessage(record));
             }
-            return new StreamQueueMessage(
-                    record.getId().getValue(),
-                    objectMapper.readValue(String.valueOf(payload), ChatMessage.class));
+            return new RawStreamMessage(record.getId().getValue(), String.valueOf(payload));
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to parse Redis Stream message", e);
+            throw new IllegalStateException("Failed to serialize Redis Stream message", e);
+        }
+    }
+
+    private byte[] bytes(String value) {
+        return value.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String payload(Map<byte[], byte[]> body) {
+        Optional<String> payload =
+                body.entrySet().stream()
+                .filter(
+                        entry ->
+                                STREAM_PAYLOAD_KEY.equals(
+                                        new String(entry.getKey(), StandardCharsets.UTF_8)))
+                .map(entry -> new String(entry.getValue(), StandardCharsets.UTF_8))
+                .findFirst();
+        if (payload.isPresent()) {
+            return payload.get();
+        }
+        Map<Object, Object> values =
+                body.entrySet().stream()
+                        .collect(
+                                java.util.stream.Collectors.toMap(
+                                        entry ->
+                                                new String(
+                                                        entry.getKey(), StandardCharsets.UTF_8),
+                                        entry ->
+                                                new String(
+                                                        entry.getValue(), StandardCharsets.UTF_8)));
+        try {
+            return objectMapper.writeValueAsString(toReservedChatMessage(values));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to serialize Redis Stream message", e);
         }
     }
 
     private ChatMessage toReservedChatMessage(MapRecord<String, Object, Object> record) {
-        Map<Object, Object> values = record.getValue();
+        return toReservedChatMessage(record.getValue());
+    }
+
+    private ChatMessage toReservedChatMessage(Map<Object, Object> values) {
         return new ChatMessage(
                 value(values, STREAM_REGISTRATION_KEY),
                 longValue(values, STREAM_USER_ID_KEY),
@@ -464,9 +513,5 @@ public class RedisRepository {
     private boolean isAlreadyCreatedGroup(Exception e) {
         String message = e.getMessage();
         return message != null && message.contains("BUSYGROUP");
-    }
-
-    private boolean isStale(PendingMessage pendingMessage, Duration minIdleTime) {
-        return pendingMessage.getElapsedTimeSinceLastDelivery().compareTo(minIdleTime) >= 0;
     }
 }

@@ -111,6 +111,9 @@ redis:
   stock-sync:
     enabled: false
 
+  stream:
+    consumer:
+      lifecycle-enabled: false
 ---
 
 spring:
