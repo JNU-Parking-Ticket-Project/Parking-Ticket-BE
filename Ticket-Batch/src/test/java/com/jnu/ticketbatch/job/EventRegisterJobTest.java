@@ -1,7 +1,6 @@
 package com.jnu.ticketbatch.job;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -50,7 +49,8 @@ class EventRegisterJobTest {
         verify(scheduler, times(2)).scheduleJob(jobCaptor.capture(), triggerCaptor.capture());
         List<JobDetail> jobs = jobCaptor.getAllValues();
         List<Trigger> triggers = triggerCaptor.getAllValues();
-        assertThat(jobs).extracting(JobDetail::getJobClass)
+        assertThat(jobs)
+                .extracting(JobDetail::getJobClass)
                 .containsExactly(ProcessQueueDataJob.class, FinalizeQueueDrainJob.class);
 
         SimpleTrigger finalizeTrigger = (SimpleTrigger) triggers.get(1);

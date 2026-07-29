@@ -136,19 +136,13 @@ class EventIssuedEventHandlerTest {
     @Test
     @DisplayName("Stream record id가 없는 이전 이벤트는 DLQ 실패 횟수를 기록하지 않는다")
     void recoverSkipsLegacyEventWithoutStreamRecordId() {
-        EventIssuedEvent event =
-                EventIssuedEvent.from(new ChatMessage("{}", 1L, 2L, 3L), 1_000D);
+        EventIssuedEvent event = EventIssuedEvent.from(new ChatMessage("{}", 1L, 2L, 3L), 1_000D);
 
         eventIssuedEventHandler.recover(new IllegalStateException("저장 실패"), event);
 
         verify(waitingQueueService, never())
                 .recordProcessingFailure(
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        org.mockito.ArgumentMatchers.anyInt(),
-                        any());
+                        any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyInt(), any());
     }
 
     @Test

@@ -37,7 +37,9 @@ public class FinalizeQueueDrainJob implements Job {
                         movedCount);
                 return;
             }
-            log.info("Event Stream drain completed without remaining messages. eventId: {}", eventId);
+            log.info(
+                    "Event Stream drain completed without remaining messages. eventId: {}",
+                    eventId);
         } catch (Exception e) {
             throw new JobExecutionException(
                     "Failed to finalize Redis Stream drain. eventId: " + eventId, e);
