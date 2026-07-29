@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.PageRequest;
 
 import javax.persistence.EntityManager;
 import java.util.List;
@@ -121,5 +122,63 @@ public class RegistrationRepositoryTest {
                 .extracting(Registration::getResultStatus)
                 .containsExactly(UserStatus.SUCCESS, UserStatus.PREPARE);
         assertThat(result).extracting(Registration::getPosition).containsExactly(1, 2);
+    }
+
+    @Test
+    @DisplayName("수동 메일 대상 신청은 페이지가 바뀌어도 id 순서를 유지한다")
+    void findSavedRegistrationsByPageInStableOrder() {
+        Event event = Event.builder().title("종료 이벤트").build();
+        em.persist(event);
+
+        Sector sector = Sector.builder()
+                .sectorNumber("1구간")
+                .name("공과대학")
+                .sectorCapacity(2)
+                .reserve(1)
+                .build();
+        sector.setEvent(event);
+        em.persist(sector);
+
+        User user = UserTestBuilder.builder().withEmail("mail-target@example.com").build();
+        em.persist(user);
+
+        Registration first = RegistrationTestBuilder.builder()
+                .withUser(user)
+                .withSector(sector)
+                .withEmail("first@example.com")
+                .withStudentNum("20001")
+                .withEventId(event.getId())
+                .build();
+        Registration second = RegistrationTestBuilder.builder()
+                .withUser(user)
+                .withSector(sector)
+                .withEmail("second@example.com")
+                .withStudentNum("20002")
+                .withEventId(event.getId())
+                .build();
+        Registration third = RegistrationTestBuilder.builder()
+                .withUser(user)
+                .withSector(sector)
+                .withEmail("third@example.com")
+                .withStudentNum("20003")
+                .withEventId(event.getId())
+                .build();
+        em.persist(first);
+        em.persist(second);
+        em.persist(third);
+        em.flush();
+        em.clear();
+
+        var firstPage = registrationRepository.findByIsDeletedFalseAndIsSavedTrueByPage(
+                event.getId(), PageRequest.of(0, 2));
+        var secondPage = registrationRepository.findByIsDeletedFalseAndIsSavedTrueByPage(
+                event.getId(), PageRequest.of(1, 2));
+
+        assertThat(firstPage.getContent())
+                .extracting(Registration::getId)
+                .containsExactly(first.getId(), second.getId());
+        assertThat(secondPage.getContent())
+                .extracting(Registration::getId)
+                .containsExactly(third.getId());
     }
 }

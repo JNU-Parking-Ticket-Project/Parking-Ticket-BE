@@ -34,7 +34,9 @@ public interface RegistrationRepository
     Optional<Registration> findByEmail(String email);
 
     @Query(
-            "select r from Registration r where r.isDeleted = false and r.isSaved = true and r.sector.event.id = :eventId")
+            "select r from Registration r "
+                    + "where r.isDeleted = false and r.isSaved = true "
+                    + "and r.sector.event.id = :eventId order by r.id asc")
     Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(
             @Param("eventId") Long eventId, Pageable pageable);
 
