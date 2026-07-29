@@ -5,6 +5,7 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.repository.RegistrationRepository;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketdomain.fixture.RegistrationTestBuilder;
 import com.jnu.ticketdomain.fixture.UserTestBuilder;
 import org.junit.jupiter.api.DisplayName;
@@ -27,69 +28,98 @@ public class RegistrationRepositoryTest {
     private EntityManager em;
 
     @Test
-    @DisplayName("성공 : 정렬조건대로 정상조회된다")
+    @DisplayName("과거 이벤트 신청 목록은 현재 User 상태가 아닌 Registration 결과로 조회된다")
     void findSortedRegistrationsByEventId() {
-        // given
-        Event event = Event.builder().title("이벤트").build();
-        em.persist(event);
+        Event pastEvent = Event.builder().title("과거 이벤트").build();
+        Event currentEvent = Event.builder().title("현재 이벤트").build();
+        em.persist(pastEvent);
+        em.persist(currentEvent);
 
-        Sector sector1 = Sector.builder().sectorNumber("1구간").name("소프트웨어공학과").sectorCapacity(10).reserve(1).build();
-        Sector sector2 = Sector.builder().sectorNumber("2구간").name("전자컴퓨터공학과").sectorCapacity(10).reserve(1).build();
-        sector1.setEvent(event);
-        sector2.setEvent(event);
+        Sector pastSector = Sector.builder()
+                .sectorNumber("1구간")
+                .name("소프트웨어공학과")
+                .sectorCapacity(1)
+                .reserve(1)
+                .build();
+        Sector currentSector = Sector.builder()
+                .sectorNumber("1구간")
+                .name("전자컴퓨터공학과")
+                .sectorCapacity(1)
+                .reserve(0)
+                .build();
+        pastSector.setEvent(pastEvent);
+        currentSector.setEvent(currentEvent);
+        em.persist(pastSector);
+        em.persist(currentSector);
 
-        em.persist(sector1);
-        em.persist(sector2);
-
-        User user1 = UserTestBuilder.builder()
-                .withEmail("success1@example.com")
+        User laterFailedUser = UserTestBuilder.builder()
+                .withEmail("past-success@example.com")
+                .asFail()
+                .build();
+        User laterSucceededUser = UserTestBuilder.builder()
+                .withEmail("past-prepare@example.com")
                 .asSuccess()
                 .build();
-        User user2 = UserTestBuilder.builder()
-                .withEmail("prepare1@example.com")
-                .asPrepare(1)
-                .build();
-        User user3 = UserTestBuilder.builder()
-                .withEmail("success2@example.com")
+        User failedRegistrationUser = UserTestBuilder.builder()
+                .withEmail("past-fail@example.com")
                 .asSuccess()
                 .build();
+        em.persist(laterFailedUser);
+        em.persist(laterSucceededUser);
+        em.persist(failedRegistrationUser);
 
-        em.persist(user1);
-        em.persist(user2);
-        em.persist(user3);
-
-        Registration reg1 = RegistrationTestBuilder.builder()
-                .withUser(user1)
-                .withSector(sector1)
+        Registration pastSuccess = RegistrationTestBuilder.builder()
+                .withUser(laterFailedUser)
+                .withSector(pastSector)
+                .withEmail("past-success@example.com")
                 .withStudentNum("10001")
+                .withEventId(pastEvent.getId())
+                .withSavedAt(1_000L)
+                .withResult(1, UserStatus.SUCCESS, -2)
                 .build();
-        Registration reg2 = RegistrationTestBuilder.builder()
-                .withUser(user2)
-                .withSector(sector1)
+        Registration pastPrepare = RegistrationTestBuilder.builder()
+                .withUser(laterSucceededUser)
+                .withSector(pastSector)
+                .withEmail("past-prepare@example.com")
                 .withStudentNum("10002")
+                .withEventId(pastEvent.getId())
+                .withSavedAt(2_000L)
+                .withResult(2, UserStatus.PREPARE, 1)
                 .build();
-        Registration reg3 = RegistrationTestBuilder.builder()
-                .withUser(user3)
-                .withSector(sector2)
+        Registration pastFail = RegistrationTestBuilder.builder()
+                .withUser(failedRegistrationUser)
+                .withSector(pastSector)
+                .withEmail("past-fail@example.com")
                 .withStudentNum("10003")
+                .withEventId(pastEvent.getId())
+                .withSavedAt(3_000L)
+                .withResult(3, UserStatus.FAIL, -1)
                 .build();
-
-        em.persist(reg1);
-        em.persist(reg2);
-        em.persist(reg3);
+        Registration currentFailure = RegistrationTestBuilder.builder()
+                .withUser(laterFailedUser)
+                .withSector(currentSector)
+                .withEmail("past-success@example.com")
+                .withStudentNum("10001")
+                .withEventId(currentEvent.getId())
+                .withSavedAt(4_000L)
+                .withResult(1, UserStatus.FAIL, -1)
+                .build();
+        em.persist(pastSuccess);
+        em.persist(pastPrepare);
+        em.persist(pastFail);
+        em.persist(currentFailure);
         em.flush();
         em.clear();
 
-        // when
-        List<Registration> result = registrationRepository.findSortedRegistrationsByEventId(event.getId());
+        List<Registration> result =
+                registrationRepository.findSortedRegistrationsByEventId(pastEvent.getId());
 
-        // then
-        assertThat(result).hasSize(3);
-
-        // sector1의 SUCCESS(user1) → sector1의 PREPARE(user2) → sector2의 SUCCESS(user3)
-        assertThat(result.get(0).getUser().getEmail()).isEqualTo("success1@example.com");
-        assertThat(result.get(1).getUser().getEmail()).isEqualTo("prepare1@example.com");
-        assertThat(result.get(2).getUser().getEmail()).isEqualTo("success2@example.com");
+        assertThat(result)
+                .extracting(Registration::getEmail)
+                .containsExactly("past-success@example.com", "past-prepare@example.com");
+        assertThat(result)
+                .extracting(Registration::getResultStatus)
+                .containsExactly(UserStatus.SUCCESS, UserStatus.PREPARE);
+        assertThat(result).extracting(Registration::getPosition).containsExactly(1, 2);
     }
-
 }

@@ -3,6 +3,7 @@ package com.jnu.ticketdomain.fixture;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 
 import java.time.LocalDateTime;
 
@@ -20,6 +21,9 @@ public class RegistrationTestBuilder {
     private boolean isSaved = true;
     private boolean isDeleted = false;
     private Long savedAt = System.nanoTime();
+    private Integer position;
+    private UserStatus resultStatus;
+    private Integer sequence;
     private User user;
     private Sector sector;
     private Long eventId = 1L;
@@ -54,6 +58,29 @@ public class RegistrationTestBuilder {
         return this;
     }
 
+    public RegistrationTestBuilder withEmail(String email) {
+        this.email = email;
+        return this;
+    }
+
+    public RegistrationTestBuilder withSavedAt(Long savedAt) {
+        this.savedAt = savedAt;
+        return this;
+    }
+
+    public RegistrationTestBuilder withEventId(Long eventId) {
+        this.eventId = eventId;
+        return this;
+    }
+
+    public RegistrationTestBuilder withResult(
+            Integer position, UserStatus resultStatus, Integer sequence) {
+        this.position = position;
+        this.resultStatus = resultStatus;
+        this.sequence = sequence;
+        return this;
+    }
+
     public Registration build() {
         return Registration.builder()
                 .email(email)
@@ -67,6 +94,9 @@ public class RegistrationTestBuilder {
                 .createdAt(createdAt)
                 .isSaved(isSaved)
                 .savedAt(savedAt)
+                .position(position)
+                .resultStatus(resultStatus)
+                .sequence(sequence)
                 .user(user)
                 .sector(sector)
                 .eventId(eventId)

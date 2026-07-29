@@ -22,6 +22,9 @@ public record RegistrationDto(
         String affiliation,
         String department,
         String sectorNum,
+        Integer position,
+        String resultStatus,
+        Integer sequence,
         LocalDateTime savedAt) {
     public static List<RegistrationDto> of(List<Registration> registrations) {
         return registrations.stream()
@@ -42,6 +45,9 @@ public record RegistrationDto(
                             .affiliation(registration.getAffiliation())
                             .department(registration.getDepartment())
                             .sectorNum(registration.getSector().getSectorNumber())
+                            .position(registration.getPosition())
+                            .resultStatus(registration.getResultStatus().getValue())
+                            .sequence(registration.getSequence())
                             .savedAt(localDateTime)
                             .build();
                 })

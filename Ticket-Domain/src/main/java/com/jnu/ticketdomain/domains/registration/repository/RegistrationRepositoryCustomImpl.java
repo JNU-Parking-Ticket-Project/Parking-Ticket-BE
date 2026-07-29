@@ -3,10 +3,8 @@ package com.jnu.ticketdomain.domains.registration.repository;
 import com.jnu.ticketdomain.domains.events.domain.QSector;
 import com.jnu.ticketdomain.domains.registration.domain.QRegistration;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import com.jnu.ticketdomain.domains.user.domain.QUser;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -47,32 +45,21 @@ public class RegistrationRepositoryCustomImpl implements RegistrationRepositoryC
 
     @Override
     public List<Registration> findSortedRegistrationsByEventId(Long eventId) {
-
-        QUser user = registration.user;
-        QSector sector = registration.sector;
+        QSector sector = new QSector("sector");
 
         return queryFactory
                 .selectFrom(registration)
+                .join(registration.sector, sector)
+                .fetchJoin()
                 .where(
                         registration.isDeleted.isFalse(),
                         registration.isSaved.isTrue(),
                         sector.event.id.eq(eventId),
-                        user.status.in(UserStatus.SUCCESS, UserStatus.PREPARE))
+                        registration.resultStatus.in(UserStatus.SUCCESS, UserStatus.PREPARE))
                 .orderBy(
                         sector.sectorNumber.asc(),
-                        registration.savedAt.asc(),
-                        // SUCCESS 먼저 오도록 정렬
-                        new CaseBuilder()
-                                .when(user.status.eq(UserStatus.SUCCESS))
-                                .then(0)
-                                .otherwise(1)
-                                .asc(),
-                        // SUCCESS면 r.id, PREPARE면 u.sequence
-                        new CaseBuilder()
-                                .when(user.status.eq(UserStatus.SUCCESS))
-                                .then(registration.id)
-                                .otherwise(user.sequence.longValue())
-                                .asc())
+                        registration.position.asc(),
+                        registration.id.asc())
                 .fetch();
     }
 
