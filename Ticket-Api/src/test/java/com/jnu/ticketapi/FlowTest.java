@@ -9,7 +9,6 @@ import com.jnu.ticketapi.api.user.ResultAssignment;
 import com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder;
 import com.jnu.ticketapi.registration.TemporarySaveRequestTestDataBuilder;
 import com.jnu.ticketapi.security.JwtGenerator;
-import com.jnu.ticketbatch.config.ProcessQueueDataJob;
 import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
@@ -330,31 +329,8 @@ public class FlowTest implements UsingContainers {
         JobDetail openJob = createEventOpenJob();
         Trigger openTrigger = createEventOpenTrigger(openJob);
 
-        JobDetail processJob = createRegistrationProcessingJob();
-        Trigger processTrigger = createRegistrationProcessingTrigger(processJob);
-
-        scheduler.scheduleJob(processJob, processTrigger);
         scheduler.scheduleJob(openJob, openTrigger);
         scheduler.start();
-    }
-
-    private SimpleTrigger createRegistrationProcessingTrigger(JobDetail processJob) {
-        return newTrigger()
-                .withIdentity("REGISTRATION_PROCESSING_TRIGGER" + EVENT_VALUE, "testGroup")
-                .startNow()
-                .withSchedule(
-                        SimpleScheduleBuilder.simpleSchedule()
-                                .withIntervalInMilliseconds(400)
-                                .repeatForever())
-                .forJob(processJob)
-                .build();
-    }
-
-    private JobDetail createRegistrationProcessingJob() {
-        return newJob(ProcessQueueDataJob.class)
-                .withIdentity("REGISTRATION_PROCESSING_JOB" + EVENT_VALUE, "testGroup")
-                .usingJobData("eventId", EVENT_VALUE)
-                .build();
     }
 
     private Trigger createEventOpenTrigger(JobDetail eventOpenJob) {
@@ -460,5 +436,4 @@ public class FlowTest implements UsingContainers {
     }
 
 }
-
 
