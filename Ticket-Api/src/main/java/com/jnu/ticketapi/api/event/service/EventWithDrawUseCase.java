@@ -51,6 +51,9 @@ public class EventWithDrawUseCase {
             throw NotFoundSectorException.EXCEPTION;
         }
         event.validateIssuePeriod();
+        if (waitingQueueService == null) {
+            throw RedisStockUnavailableException.EXCEPTION;
+        }
 
         StockReservationResult result;
         try {
