@@ -28,7 +28,7 @@ MySQL 컨테이너는 `MYSQL_DATABASE`로 빈 데이터베이스만 생성합니
 2. migration 계정의 `ALTER`, `CREATE`, `INDEX`, `REFERENCES`, `CREATE TEMPORARY TABLES` 권한을 확인합니다.
 3. 기존 스키마가 V1 기준 테이블을 보유했는지 확인하고 아래 V4 사전 점검 SQL을 실행합니다.
 4. 운영 서버 환경에 최초 1회만 `FLYWAY_BASELINE_ON_MIGRATE=true`를 주입해 애플리케이션을 시작합니다.
-5. 컨테이너가 실행 중인지만 보지 말고 `/api/actuator/health`가 `UP`인지 확인합니다.
+5. 현재 운영 배포 workflow가 `/api/actuator/health`의 `UP`을 확인했는지 확인합니다. 제한 시간 안에 기동하지 못하거나 컨테이너가 종료되면 배포는 실패해야 합니다.
 6. `flyway_schema_history`에 version 1 baseline과 version 2, 3, 4 success가 기록됐는지 확인합니다.
 7. `registration_tb` 결과 컬럼, `email_outbox`, Outbox 인덱스와 과거 결과 검증 쿼리를 확인합니다.
 8. 이후 배포부터 `FLYWAY_BASELINE_ON_MIGRATE=false`로 되돌립니다.
