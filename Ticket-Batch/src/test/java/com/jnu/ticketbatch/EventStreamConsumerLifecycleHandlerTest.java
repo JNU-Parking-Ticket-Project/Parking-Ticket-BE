@@ -11,7 +11,7 @@ import com.jnu.ticketdomain.domains.events.event.EventStatusChangeEvent;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import java.time.Duration;
-import java.util.Optional;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +25,7 @@ class EventStreamConsumerLifecycleHandlerTest {
     @Mock private EventAdaptor eventAdaptor;
     @Mock private RedisStreamConsumerManager streamConsumerManager;
     @Mock private Event event;
+    @Mock private Event secondEvent;
 
     private EventStreamConsumerLifecycleHandler lifecycleHandler;
 
@@ -39,7 +40,7 @@ class EventStreamConsumerLifecycleHandlerTest {
     void restoresOpenEventSubscriptionOnStartup() {
         when(eventAdaptor.findOpenEvent()).thenReturn(event);
         when(event.getId()).thenReturn(3L);
-        when(eventAdaptor.findLatestClosedEvent()).thenReturn(Optional.empty());
+        when(eventAdaptor.findClosedEvents()).thenReturn(List.of());
 
         lifecycleHandler.restoreOpenEventSubscription();
 
@@ -47,26 +48,32 @@ class EventStreamConsumerLifecycleHandlerTest {
     }
 
     @Test
-    @DisplayName("애플리케이션 재시작 시 최신 CLOSED 이벤트의 남은 Stream을 끝까지 drain한다")
+    @DisplayName("애플리케이션 재시작 시 CLOSED 이벤트의 남은 Stream을 끝까지 drain한다")
     void restoresClosedEventDrainOnStartup() {
         when(eventAdaptor.findOpenEvent()).thenThrow(NotFoundEventException.EXCEPTION);
-        when(eventAdaptor.findLatestClosedEvent()).thenReturn(Optional.of(event));
+        when(eventAdaptor.findClosedEvents()).thenReturn(List.of(event, secondEvent));
         when(event.getId()).thenReturn(3L);
+        when(secondEvent.getId()).thenReturn(4L);
         when(streamConsumerManager.requestDrain(3L)).thenReturn(true);
+        when(streamConsumerManager.requestDrain(4L)).thenReturn(true);
         when(streamConsumerManager.awaitDrainCompletion(3L, Duration.ofMinutes(5)))
+                .thenReturn(true);
+        when(streamConsumerManager.awaitDrainCompletion(4L, Duration.ofMinutes(5)))
                 .thenReturn(true);
 
         lifecycleHandler.restoreOpenEventSubscription();
 
         verify(streamConsumerManager).requestDrain(3L);
         verify(streamConsumerManager).awaitDrainCompletion(3L, Duration.ofMinutes(5));
+        verify(streamConsumerManager).requestDrain(4L);
+        verify(streamConsumerManager).awaitDrainCompletion(4L, Duration.ofMinutes(5));
     }
 
     @Test
     @DisplayName("CLOSED 이벤트 Stream을 제한 시간 안에 복원하지 못하면 기동을 실패시킨다")
     void failsStartupWhenClosedEventDrainCannotBeRestored() {
         when(eventAdaptor.findOpenEvent()).thenThrow(NotFoundEventException.EXCEPTION);
-        when(eventAdaptor.findLatestClosedEvent()).thenReturn(Optional.of(event));
+        when(eventAdaptor.findClosedEvents()).thenReturn(List.of(event));
         when(event.getId()).thenReturn(3L);
         when(streamConsumerManager.requestDrain(3L)).thenReturn(true);
         when(streamConsumerManager.awaitDrainCompletion(3L, Duration.ofMinutes(5)))

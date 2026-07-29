@@ -97,8 +97,8 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
         return eventRepository.findByEndAtBeforeAndStatusOpen(time);
     }
 
-    public Optional<Event> findLatestClosedEvent() {
-        return eventRepository.findFirstByEventStatusOrderByIdDesc(EventStatus.CLOSED);
+    public List<Event> findClosedEvents() {
+        return eventRepository.findAllByEventStatusOrderByIdDesc(EventStatus.CLOSED);
     }
 
     public List<Event> closeExpiredEventsEndAtBeforeOpen(LocalDateTime time) {

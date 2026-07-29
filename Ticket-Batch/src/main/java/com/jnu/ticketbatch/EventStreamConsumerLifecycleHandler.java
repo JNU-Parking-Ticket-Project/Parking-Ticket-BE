@@ -47,7 +47,7 @@ public class EventStreamConsumerLifecycleHandler {
             log.info("No OPEN event Stream subscription to restore");
         }
 
-        eventAdaptor.findLatestClosedEvent().ifPresent(this::restoreDrain);
+        eventAdaptor.findClosedEvents().forEach(this::restoreDrain);
     }
 
     @TransactionalEventListener(
