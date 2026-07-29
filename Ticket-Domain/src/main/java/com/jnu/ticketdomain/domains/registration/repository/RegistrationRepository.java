@@ -33,13 +33,6 @@ public interface RegistrationRepository
 
     Optional<Registration> findByEmail(String email);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query(
-            value =
-                    "update registration_tb set saved_at = (UNIX_TIMESTAMP(NOW(6))*1000000) where id = :id",
-            nativeQuery = true)
-    void updateSavedAt(@Param("id") Long registrationId);
-
     @Query(
             "select r from Registration r where r.isDeleted = false and r.isSaved = true and r.sector.event.id = :eventId")
     Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(
