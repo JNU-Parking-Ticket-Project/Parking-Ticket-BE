@@ -10,7 +10,10 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.model.StreamConsumerState;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
@@ -36,6 +39,12 @@ import org.springframework.stereotype.Service;
 public class WaitingQueueService {
 
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
+    private static final Duration DEAD_LETTER_RETENTION = Duration.ofDays(7);
+    private static final Duration DRAINED_STREAM_RETENTION = Duration.ofDays(1);
+    private static final long DEAD_LETTER_MAX_LENGTH = 1_000L;
+    private static final int MAX_ERROR_LENGTH = 1_000;
+    private static final String PROCESSING_FAILURE_REASON = "PROCESSING_FAILURE";
+    private static final String EVENT_DRAIN_REASON = "EVENT_DRAIN_TIMEOUT";
     private final RedisRepository redisRepository;
     @Autowired private ObjectMapper objectMapper;
 
@@ -57,14 +66,6 @@ public class WaitingQueueService {
             String key, Registration registration, Long userId, Sector sector, Long eventId)
             throws JsonProcessingException {
         String registrationString = convertRegistrationJSON(registration);
-        int issueAmount = sector.getIssueAmount();
-        int initialRemainingAmount =
-                Math.max(
-                        0,
-                        Math.min(
-                                Optional.ofNullable(sector.getRemainingAmount())
-                                        .orElse(issueAmount),
-                                issueAmount));
         StockReservationResult result =
                 redisRepository.reserveStockAndAddToStream(
                         stockKey(eventId, sector.getId()),
@@ -72,13 +73,12 @@ public class WaitingQueueService {
                         reservedEmailKey(eventId),
                         key,
                         closedKey(eventId),
+                        initializedKey(eventId),
                         registrationString,
                         userId,
                         sector.getId(),
                         eventId,
                         registration.getEmail(),
-                        initialRemainingAmount,
-                        issueAmount,
                         sector.getInitSectorCapacity());
         tracker.info(
                 "Reserved Redis stock. sectorId: {}, reserved: {}, position: {}, status: {}, remaining: {}",
@@ -88,6 +88,18 @@ public class WaitingQueueService {
                 result.getResultStatus(),
                 result.getRemainingAmount());
         return result;
+    }
+
+    public boolean initializeEventStock(Long eventId, List<Sector> sectors) {
+        List<SectorStockInitialization> initializations =
+                sectors.stream()
+                        .map(sector -> toStockInitialization(eventId, sector))
+                        .toList();
+        return redisRepository.initializeEventStock(
+                initializedKey(eventId),
+                reservedEmailKey(eventId),
+                closedKey(eventId),
+                initializations);
     }
 
     public String convertRegistrationJSON(Registration registration) {
@@ -193,20 +205,88 @@ public class WaitingQueueService {
         return new StreamConsumerState(lag, pending, inFlight);
     }
 
+    public boolean hasEventStreamMessages(Long eventId) {
+        return redisRepository.xLength(eventStreamKey(eventId)) > 0L;
+    }
+
     public Long acknowledge(String key, String group, String recordId) {
         return redisRepository.xAck(key, group, recordId);
     }
 
     public Long acknowledgeAndDelete(String key, String group, String recordId) {
-        Long acknowledged = redisRepository.xAck(key, group, recordId);
-        if (acknowledged != null && acknowledged > 0) {
-            redisRepository.xDelete(key, recordId);
+        return redisRepository.xAcknowledgeAndDelete(key, streamFailureKey(key), group, recordId);
+    }
+
+    public DeadLetterTransferResult recordProcessingFailure(
+            String streamKey,
+            String group,
+            String recordId,
+            String payload,
+            int maxFailures,
+            Throwable throwable) {
+        if (maxFailures < 1) {
+            throw new IllegalArgumentException("maxFailures must be greater than zero");
         }
-        return acknowledged;
+        return moveToDeadLetter(
+                streamKey,
+                group,
+                recordId,
+                payload,
+                maxFailures,
+                errorMessage(throwable),
+                PROCESSING_FAILURE_REASON,
+                false);
+    }
+
+    public long drainEventStream(Long eventId, String group) {
+        String streamKey = eventStreamKey(eventId);
+        List<RawStreamMessage> messages = redisRepository.xRangeRaw(streamKey);
+        long movedCount = 0L;
+        for (RawStreamMessage message : messages) {
+            DeadLetterTransferResult result =
+                    moveToDeadLetter(
+                            streamKey,
+                            group,
+                            message.getRecordId(),
+                            message.getPayload(),
+                            1,
+                            "Event queue drain grace period elapsed",
+                            EVENT_DRAIN_REASON,
+                            true);
+            if (result.isMoved()) {
+                movedCount++;
+            }
+        }
+        redisRepository.expire(streamKey, DRAINED_STREAM_RETENTION);
+        redisRepository.expire(streamFailureKey(streamKey), DRAINED_STREAM_RETENTION);
+        return movedCount;
+    }
+
+    public List<DeadLetterQueueMessage> findDeadLetters(Long eventId, long count) {
+        if (count < 1) {
+            return List.of();
+        }
+        return redisRepository.xRangeDeadLetters(
+                eventDeadLetterStreamKey(eventId), Math.min(count, DEAD_LETTER_MAX_LENGTH));
+    }
+
+    public boolean replayDeadLetter(Long eventId, String deadLetterRecordId) {
+        String streamKey = eventStreamKey(eventId);
+        Long replayed =
+                redisRepository.xReplayDeadLetter(
+                        eventDeadLetterStreamKey(eventId),
+                        streamKey,
+                        streamFailureKey(streamKey),
+                        deadLetterRecordId);
+        return replayed != null && replayed == 1L;
     }
 
     public String eventStreamKey(Long eventId) {
         return REDIS_EVENT_ISSUE_STREAM + ":{" + eventId + "}";
+    }
+
+    public String eventDeadLetterStreamKey(Long eventId) {
+        return eventStreamKey(eventId) + ":dlq";
     }
 
     public void deleteEventStream(Long eventId) {
@@ -247,5 +327,64 @@ public class WaitingQueueService {
 
     public String closedKey(Long eventId) {
         return eventStockPrefix(eventId) + "closed";
+    }
+
+    public String initializedKey(Long eventId) {
+        return eventStockPrefix(eventId) + "initialized";
+    }
+
+    private SectorStockInitialization toStockInitialization(Long eventId, Sector sector) {
+        int issueAmount = sector.getIssueAmount();
+        int remainingAmount =
+                Math.max(
+                        0,
+                        Math.min(
+                                Optional.ofNullable(sector.getRemainingAmount())
+                                        .orElse(issueAmount),
+                                issueAmount));
+        return new SectorStockInitialization(
+                stockKey(eventId, sector.getId()),
+                sequenceKey(eventId, sector.getId()),
+                remainingAmount,
+                issueAmount - remainingAmount);
+    }
+
+    private DeadLetterTransferResult moveToDeadLetter(
+            String streamKey,
+            String group,
+            String recordId,
+            String payload,
+            int maxFailures,
+            String lastError,
+            String reason,
+            boolean forceMove) {
+        return redisRepository.xRecordFailureAndMaybeMoveToDeadLetter(
+                streamKey,
+                streamFailureKey(streamKey),
+                streamDeadLetterKey(streamKey),
+                group,
+                recordId,
+                payload,
+                maxFailures,
+                lastError,
+                System.currentTimeMillis(),
+                reason,
+                DEAD_LETTER_MAX_LENGTH,
+                DEAD_LETTER_RETENTION,
+                forceMove);
+    }
+
+    private String streamFailureKey(String streamKey) {
+        return streamKey + ":failures";
+    }
+
+    private String streamDeadLetterKey(String streamKey) {
+        return streamKey + ":dlq";
+    }
+
+    private String errorMessage(Throwable throwable) {
+        String message = throwable.getMessage();
+        String error = throwable.getClass().getName() + (message == null ? "" : ": " + message);
+        return error.substring(0, Math.min(error.length(), MAX_ERROR_LENGTH));
     }
 }

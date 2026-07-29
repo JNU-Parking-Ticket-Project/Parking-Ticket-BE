@@ -4,6 +4,7 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_CONSUME
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
 
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.StreamConsumerState;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
@@ -47,6 +48,7 @@ public class RedisStreamConsumerManager {
     private final Duration pendingClaimInterval;
     private final Duration drainQuietPeriod;
     private final int batchSize;
+    private final int maxProcessingFailures;
     private final String consumerInstanceId;
     private final ExecutorService coordinatorExecutor;
     private final ThreadPoolExecutor processingExecutor;
@@ -66,6 +68,8 @@ public class RedisStreamConsumerManager {
             @Value("${redis.stream.consumer.pending-min-idle-ms:30000}") long pendingMinIdleMillis,
             @Value("${redis.stream.consumer.pending-claim-interval-ms:5000}")
                     long pendingClaimIntervalMillis,
+            @Value("${redis.stream.consumer.max-processing-failures:3}")
+                    int maxProcessingFailures,
             @Value("${redis.stream.consumer.drain-quiet-period-ms:5000}")
                     long drainQuietPeriodMillis) {
         this.waitingQueueService = waitingQueueService;
@@ -74,6 +78,7 @@ public class RedisStreamConsumerManager {
         this.pollTimeout = Duration.ofMillis(Math.max(1L, pollTimeoutMillis));
         this.pendingMinIdleTime = Duration.ofMillis(Math.max(1L, pendingMinIdleMillis));
         this.pendingClaimInterval = Duration.ofMillis(Math.max(1L, pendingClaimIntervalMillis));
+        this.maxProcessingFailures = Math.max(1, maxProcessingFailures);
         this.drainQuietPeriod = Duration.ofMillis(Math.max(0L, drainQuietPeriodMillis));
         this.consumerInstanceId = UUID.randomUUID().toString().substring(0, 8);
 
@@ -112,8 +117,11 @@ public class RedisStreamConsumerManager {
         }
 
         EventConsumer current = consumers.get(eventId);
-        if (current != null && current.active.get()) {
-            return false;
+        if (current != null) {
+            if (current.active.get() || current.inFlight.get() > 0) {
+                return false;
+            }
+            consumers.remove(eventId, current);
         }
         EventConsumer consumer = new EventConsumer(eventId, streamKey(eventId));
         consumers.put(eventId, consumer);
@@ -121,13 +129,39 @@ public class RedisStreamConsumerManager {
         return true;
     }
 
-    public void requestDrain(Long eventId) {
+    public synchronized boolean requestDrain(Long eventId) {
         EventConsumer consumer = consumers.get(eventId);
-        if (consumer == null) {
-            return;
+        if (consumer == null || !consumer.active.get()) {
+            if (!waitingQueueService.hasEventStreamMessages(eventId)) {
+                log.info("No Redis Stream messages to drain. eventId: {}", eventId);
+                return true;
+            }
+            if (!start(eventId)) {
+                log.error("Redis Stream drain consumer could not be restored. eventId: {}", eventId);
+                return false;
+            }
+            consumer = consumers.get(eventId);
         }
         consumer.drainRequested.set(true);
         log.info("Redis Stream drain requested. eventId: {}", eventId);
+        return true;
+    }
+
+    public boolean awaitDrainCompletion(Long eventId, Duration timeout) {
+        long startedAt = System.nanoTime();
+        long timeoutNanos = Math.max(0L, timeout.toNanos());
+        while (isRunning(eventId)) {
+            if (System.nanoTime() - startedAt >= timeoutNanos) {
+                return false;
+            }
+            try {
+                Thread.sleep(Math.min(50L, Math.max(1L, timeout.toMillis())));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return true;
     }
 
     public void stopImmediately(Long eventId) {
@@ -135,11 +169,37 @@ public class RedisStreamConsumerManager {
         if (consumer == null) {
             return;
         }
-        consumer.active.set(false);
+        synchronized (consumer) {
+            consumer.active.set(false);
+        }
         if (consumer.future != null) {
             consumer.future.cancel(true);
         }
         log.info("Redis Stream subscription stopped. eventId: {}", eventId);
+    }
+
+    public boolean pauseForFinalDrain(Long eventId) {
+        EventConsumer consumer = consumers.get(eventId);
+        if (consumer == null) {
+            return true;
+        }
+
+        boolean idle;
+        synchronized (consumer) {
+            consumer.active.set(false);
+            idle = consumer.inFlight.get() == 0;
+        }
+        if (consumer.future != null) {
+            consumer.future.cancel(true);
+        }
+        if (idle) {
+            consumers.remove(eventId, consumer);
+        }
+        log.info(
+                "Redis Stream subscription paused for final drain. eventId: {}, inFlight: {}",
+                eventId,
+                consumer.inFlight.get());
+        return idle;
     }
 
     public boolean isRunning(Long eventId) {
@@ -177,7 +237,7 @@ public class RedisStreamConsumerManager {
                 }
             }
         }
-        consumers.remove(consumer.eventId, consumer);
+        removeStoppedConsumerWhenIdle(consumer);
         log.info("Redis Stream subscription ended. eventId: {}", consumer.eventId);
     }
 
@@ -200,10 +260,13 @@ public class RedisStreamConsumerManager {
     }
 
     private void dispatch(EventConsumer consumer, RawStreamMessage rawMessage) {
-        if (!consumer.inFlightRecordIds.add(rawMessage.getRecordId())) {
-            return;
+        synchronized (consumer) {
+            if (!consumer.active.get()
+                    || !consumer.inFlightRecordIds.add(rawMessage.getRecordId())) {
+                return;
+            }
+            consumer.inFlight.incrementAndGet();
         }
-        consumer.inFlight.incrementAndGet();
         try {
             processingExecutor.execute(
                     () -> {
@@ -212,15 +275,12 @@ public class RedisStreamConsumerManager {
                                     waitingQueueService.deserialize(consumer.streamKey, rawMessage);
                             messageHandler.handle(message);
                         } catch (Exception e) {
-                            log.error(
-                                    "Redis Stream message processing failed. eventId: {}, recordId: {}",
-                                    consumer.eventId,
-                                    rawMessage.getRecordId(),
-                                    e);
+                            recordProcessingFailure(consumer, rawMessage, e);
                         } finally {
                             consumer.inFlight.decrementAndGet();
                             consumer.inFlightRecordIds.remove(rawMessage.getRecordId());
                             stopWhenDrained(consumer);
+                            removeStoppedConsumerWhenIdle(consumer);
                         }
                     });
         } catch (RuntimeException e) {
@@ -229,9 +289,52 @@ public class RedisStreamConsumerManager {
         }
     }
 
+    private void recordProcessingFailure(
+            EventConsumer consumer, RawStreamMessage rawMessage, Exception exception) {
+        try {
+            DeadLetterTransferResult result =
+                    waitingQueueService.recordProcessingFailure(
+                            consumer.streamKey,
+                            REDIS_EVENT_ISSUE_GROUP,
+                            rawMessage.getRecordId(),
+                            rawMessage.getPayload(),
+                            maxProcessingFailures,
+                            exception);
+            if (result.isMoved()) {
+                log.error(
+                        "Redis Stream message moved to DLQ after {} failed deliveries. eventId: {}, recordId: {}",
+                        result.getFailureCount(),
+                        consumer.eventId,
+                        rawMessage.getRecordId(),
+                        exception);
+                return;
+            }
+            log.warn(
+                    "Redis Stream message remains Pending after failed delivery {}/{}. eventId: {}, recordId: {}, cause: {}",
+                    result.getFailureCount(),
+                    maxProcessingFailures,
+                    consumer.eventId,
+                    rawMessage.getRecordId(),
+                    exception.toString());
+        } catch (Exception recoveryException) {
+            log.error(
+                    "Failed to record Redis Stream processing failure. eventId: {}, recordId: {}",
+                    consumer.eventId,
+                    rawMessage.getRecordId(),
+                    recoveryException);
+        }
+    }
+
     private void completeRejectedDispatch(EventConsumer consumer, RawStreamMessage rawMessage) {
         consumer.inFlight.decrementAndGet();
         consumer.inFlightRecordIds.remove(rawMessage.getRecordId());
+        removeStoppedConsumerWhenIdle(consumer);
+    }
+
+    private void removeStoppedConsumerWhenIdle(EventConsumer consumer) {
+        if (!consumer.active.get() && consumer.inFlight.get() == 0) {
+            consumers.remove(consumer.eventId, consumer);
+        }
     }
 
     private void stopWhenDrained(EventConsumer consumer) {
