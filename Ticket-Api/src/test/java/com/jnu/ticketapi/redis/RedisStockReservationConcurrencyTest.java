@@ -149,8 +149,7 @@ class RedisStockReservationConcurrencyTest {
         assertThat(closed.isClosed()).isTrue();
         assertThat(closed.getRemainingAmount()).isEqualTo(299);
         assertThat(redisRepository.getIntegerValue(stockKey(3L, 1L))).contains(299);
-        assertThat(redisRepository.xReadGroup(streamKey(3L), "closed-test", "consumer", 10))
-                .hasSize(1);
+        assertThat(redisRepository.xLength(streamKey(3L))).isEqualTo(1L);
     }
 
     private StockReservationResult reserve(

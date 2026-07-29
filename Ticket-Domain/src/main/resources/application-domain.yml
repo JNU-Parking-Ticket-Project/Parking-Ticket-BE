@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:ticket}?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${DB_NAME:${MYSQL_DATABASE:jnu-parking}}?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
     username: ${DATASOURCE_USERNAME:root}
     password: ${DATASOURCE_PASSWORD:}
     #    driver-class-name: ${DATASOURCE_DRIVER:org.h2.Driver}
@@ -9,25 +9,29 @@ spring:
       maxLifetime: 580000
       maximum-pool-size: 20
   jpa:
-    #    hibernate:
-    #      ddl-auto: create-drop
-    generate-ddl: true
+    generate-ddl: false
     show-sql: ${SHOW_SQL:true}
+    open-in-view: false
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    defer-datasource-initialization: false
+    hibernate:
+      ddl-auto: validate
     properties:
       hibernate:
         #        format_sql: ${FORMAT_SQL:true}
         default_batch_fetch_size: ${JPA_BATCH_FETCH_SIZE:100}
   batch:
-    sql:
-      init:
-        mode: always
-        continue-on-error: false
-    open-in-view: false
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-    #     script 파일이 hibernate 초기화 이후 동작하게 하기 위한 옵션
-    defer-datasource-initialization: false
     jdbc:
-      initialize-schema: always
+      initialize-schema: never
+
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+    baseline-version: 1
+    validate-on-migrate: true
+    clean-disabled: true
+    encoding: UTF-8
 
 
   quartz:
@@ -91,8 +95,16 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
   jpa:
+    generate-ddl: true
     show-sql: true
     database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: create-drop
+  batch:
+    jdbc:
+      initialize-schema: always
+  flyway:
+    enabled: false
   h2:
     console:
       enabled: true
@@ -111,6 +123,9 @@ redis:
   stock-sync:
     enabled: false
 
+  stream:
+    consumer:
+      lifecycle-enabled: false
 ---
 
 spring:
@@ -118,7 +133,7 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:econovation}?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${DB_NAME:${MYSQL_DATABASE:jnu-parking}}?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&tinyInt1isBit=false
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maxLifetime: 580000
@@ -126,7 +141,7 @@ spring:
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
   jpa:
-    generate-ddl: true
+    generate-ddl: false
     properties:
       hibernate:
         default_batch_fetch_size: ${JPA_BATCH_FETCH_SIZE:100}
@@ -176,6 +191,7 @@ spring:
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
   jpa:
+    generate-ddl: false
     properties:
       hibernate:
         default_batch_fetch_size: ${JPA_BATCH_FETCH_SIZE:100}
@@ -184,6 +200,9 @@ spring:
     hibernate:
       ddl-auto: validate
     database-platform: org.hibernate.dialect.MySQL8Dialect
+
+  flyway:
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
 
   quartz:
     job-store-type: jdbc  # Quartz가 메모리가 아닌 DB에 Job/Trigger 저장
@@ -222,10 +241,18 @@ spring:
     activate:
       on-profile: integration-test
   jpa:
+    generate-ddl: true
     show-sql: true
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
       ddl-auto: create-drop
+
+  batch:
+    jdbc:
+      initialize-schema: always
+
+  flyway:
+    enabled: false
 
   quartz:
     jdbc:

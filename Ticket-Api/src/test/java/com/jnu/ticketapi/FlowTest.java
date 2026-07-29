@@ -8,7 +8,6 @@ import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
 import com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder;
 import com.jnu.ticketapi.registration.TemporarySaveRequestTestDataBuilder;
 import com.jnu.ticketapi.security.JwtGenerator;
-import com.jnu.ticketbatch.config.ProcessQueueDataJob;
 import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
@@ -24,6 +23,7 @@ import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
+import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -114,6 +114,9 @@ public class FlowTest implements UsingContainers {
     @Autowired
     EmailOutboxRepository emailOutboxRepository;
 
+    @Autowired
+    RedisStreamConsumerManager streamConsumerManager;
+
     private record Setting(int capacity, int reserve, int requestCount) {
     }
 
@@ -121,6 +124,7 @@ public class FlowTest implements UsingContainers {
 
     @AfterEach
     void tearDown() throws SchedulerException {
+        streamConsumerManager.stopImmediately(EVENT_VALUE);
         if (!scheduler.isShutdown()) {
             scheduler.shutdown(true);
         }
@@ -447,31 +451,8 @@ public class FlowTest implements UsingContainers {
         JobDetail openJob = createEventOpenJob();
         Trigger openTrigger = createEventOpenTrigger(openJob);
 
-        JobDetail processJob = createRegistrationProcessingJob();
-        Trigger processTrigger = createRegistrationProcessingTrigger(processJob);
-
-        scheduler.scheduleJob(processJob, processTrigger);
         scheduler.scheduleJob(openJob, openTrigger);
         scheduler.start();
-    }
-
-    private SimpleTrigger createRegistrationProcessingTrigger(JobDetail processJob) {
-        return newTrigger()
-                .withIdentity("REGISTRATION_PROCESSING_TRIGGER" + EVENT_VALUE, "testGroup")
-                .startNow()
-                .withSchedule(
-                        SimpleScheduleBuilder.simpleSchedule()
-                                .withIntervalInMilliseconds(400)
-                                .repeatForever())
-                .forJob(processJob)
-                .build();
-    }
-
-    private JobDetail createRegistrationProcessingJob() {
-        return newJob(ProcessQueueDataJob.class)
-                .withIdentity("REGISTRATION_PROCESSING_JOB" + EVENT_VALUE, "testGroup")
-                .usingJobData("eventId", EVENT_VALUE)
-                .build();
     }
 
     private Trigger createEventOpenTrigger(JobDetail eventOpenJob) {

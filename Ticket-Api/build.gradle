@@ -25,6 +25,8 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-ui:1.6.12'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.flywaydb:flyway-core'
+    runtimeOnly 'org.flywaydb:flyway-mysql'
     implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
     implementation group: 'software.amazon.awssdk', name: 'ses', version: "2.19.29"
     implementation group: 'org.apache.poi', name: 'poi', version: '5.2.3'
