@@ -8,7 +8,6 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +21,6 @@ public class EmailSendEventHandler {
     private final RegistrationAdaptor registrationAdaptor;
     private final EmailOutboxAdaptor emailOutboxAdaptor;
 
-    @Async
     @TransactionalEventListener(
             classes = SendEmailEvent.class,
             phase = TransactionPhase.AFTER_COMMIT)
