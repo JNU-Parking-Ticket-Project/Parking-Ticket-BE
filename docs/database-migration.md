@@ -80,10 +80,15 @@ WHERE issue_amount < init_sector_capacity
 
 SELECT registration.id, registration.sector_id
 FROM registration_tb registration
-INNER JOIN sector ON sector.sector_id = registration.sector_id
+LEFT JOIN sector ON sector.sector_id = registration.sector_id
 WHERE registration.is_saved = b'1'
   AND registration.is_deleted = b'0'
-  AND (sector.event_id IS NULL OR sector.is_deleted IS NULL OR sector.is_deleted <> b'0');
+  AND (
+      sector.sector_id IS NULL
+      OR sector.event_id IS NULL
+      OR sector.is_deleted IS NULL
+      OR sector.is_deleted <> b'0'
+  );
 ```
 
 첫 번째, 세 번째, 네 번째 쿼리는 행이 없어야 하며, `missing_saved_at_count`는 `0`이어야 합니다. 결과 컬럼을 이미 수동 추가한 DB라면 일부 결과나 한 구간 내 결과 혼재가 없는지도 별도로 확인합니다.

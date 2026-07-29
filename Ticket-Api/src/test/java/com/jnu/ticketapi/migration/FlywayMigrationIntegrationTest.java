@@ -142,6 +142,18 @@ class FlywayMigrationIntegrationTest {
         assertEmailOutboxIsEmpty();
     }
 
+    @Test
+    void activeRegistrationWithoutSectorBlocksBackfillBeforeMutation() throws SQLException {
+        flyway(false, MigrationVersion.fromVersion("3")).migrate();
+        insertHistoricalRegistrations();
+        orphanRegistrationFromSector(1L, 999L);
+
+        assertThatThrownBy(() -> flyway(false, null).migrate())
+                .hasStackTraceContaining("__flyway_blocked_registration_invalid_sector_reference");
+        assertRegistrationResultIsNull(2L);
+        assertEmailOutboxIsEmpty();
+    }
+
     private Flyway flyway(boolean baselineOnMigrate, MigrationVersion target) {
         var configuration =
                 Flyway.configure()
@@ -376,6 +388,23 @@ class FlywayMigrationIntegrationTest {
         try (Connection connection = connection();
                 Statement statement = connection.createStatement()) {
             statement.execute(sql);
+        }
+    }
+
+    private void orphanRegistrationFromSector(Long registrationId, Long sectorId)
+            throws SQLException {
+        try (Connection connection = connection();
+                Statement statement = connection.createStatement()) {
+            statement.execute("SET FOREIGN_KEY_CHECKS = 0");
+            try {
+                statement.execute(
+                        "UPDATE registration_tb SET sector_id = "
+                                + sectorId
+                                + " WHERE id = "
+                                + registrationId);
+            } finally {
+                statement.execute("SET FOREIGN_KEY_CHECKS = 1");
+            }
         }
     }
 

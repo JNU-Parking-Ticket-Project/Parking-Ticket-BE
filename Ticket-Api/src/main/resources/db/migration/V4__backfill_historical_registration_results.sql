@@ -38,11 +38,12 @@ DEALLOCATE PREPARE validation_statement;
 SET @invalid_sector_reference_count = (
     SELECT COUNT(*)
     FROM registration_tb registration
-    INNER JOIN sector ON sector.sector_id = registration.sector_id
+    LEFT JOIN sector ON sector.sector_id = registration.sector_id
     WHERE registration.is_saved = b'1'
       AND registration.is_deleted = b'0'
       AND (
-          sector.event_id IS NULL
+          sector.sector_id IS NULL
+          OR sector.event_id IS NULL
           OR sector.is_deleted IS NULL
           OR sector.is_deleted <> b'0'
       )
