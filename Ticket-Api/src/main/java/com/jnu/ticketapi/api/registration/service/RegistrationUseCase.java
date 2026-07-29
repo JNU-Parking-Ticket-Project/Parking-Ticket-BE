@@ -36,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -164,9 +165,7 @@ public class RegistrationUseCase {
             Registration registration, User user, String email, Long sectorId, Long eventId) {
         eventWithDrawUseCase.issueEvent(
                 registration, user.getId(), registration.getSector(), eventId);
-        if (ableRedis) {
-            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
-        }
+        deleteRefreshTokenAfterReservation(email, user.getId(), eventId);
     }
 
     private FinalSaveResponse saveRegistration(
@@ -185,10 +184,23 @@ public class RegistrationUseCase {
             String email,
             Long eventId) {
         eventWithDrawUseCase.issueEvent(registration, currentUserId, sector, eventId);
-        if (ableRedis) {
-            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
-        }
+        deleteRefreshTokenAfterReservation(email, currentUserId, eventId);
         return FinalSaveResponse.from(registration);
+    }
+
+    private void deleteRefreshTokenAfterReservation(String email, Long userId, Long eventId) {
+        if (!ableRedis) {
+            return;
+        }
+        try {
+            redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
+        } catch (DataAccessException e) {
+            log.error(
+                    "Failed to delete refresh token after registration was accepted. userId: {}, eventId: {}",
+                    userId,
+                    eventId,
+                    e);
+        }
     }
 
     private void validateEventPublish(Event event) {
