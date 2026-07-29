@@ -35,7 +35,7 @@ public class SecurityConfig {
     protected String[] councilAndAdminUrls = {
         "/v1/announce/**",
         "/v1/notice/**",
-        "/v1/registrations",
+        "/v1/registrations/**",
         "/v1/sectors/**",
         "/v1/events/**",
         "/v1/council/**"

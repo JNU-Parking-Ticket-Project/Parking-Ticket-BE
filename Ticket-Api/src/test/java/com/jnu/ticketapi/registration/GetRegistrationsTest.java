@@ -62,5 +62,16 @@ public class GetRegistrationsTest extends RestDocsConfig {
             log.info("responseBody : {}", responseBody);
         }
 
+        @Test
+        @DisplayName("실패 : 일반 사용자는 신청 목록을 조회할 수 없다")
+        void userCannotReadRegistrationList() throws Exception {
+            String accessToken = jwtGenerator.generateAccessToken("user@jnu.ac.kr", "USER");
+
+            mvc.perform(
+                            get("/v1/registrations/1")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken))
+                    .andExpect(status().isForbidden());
+        }
     }
 }
