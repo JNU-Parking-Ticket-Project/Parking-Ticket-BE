@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.jnu.ticketcommon.message.ResponseMessage;
 import com.jnu.ticketdomain.common.domainEvent.Events;
 import com.jnu.ticketdomain.domains.council.adaptor.CouncilAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
@@ -55,7 +54,7 @@ class CouncilUseCaseTest {
 
         var response = councilUseCase.sendEmail(10L);
 
-        assertThat(response.message()).isEqualTo(ResponseMessage.SUCCESS_SEND_EMAIL_MANUALLY);
+        assertThat(response.message()).isEqualTo("메일 전송 요청이 접수되었습니다.");
         ArgumentCaptor<SendEmailEvent> eventCaptor = ArgumentCaptor.forClass(SendEmailEvent.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue().getEventId()).isEqualTo(10L);
