@@ -2,6 +2,7 @@ package com.jnu.ticketapi.api.registration.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.MAX_EMAIL_SEND_RETRY;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.jnu.ticketdomain.domains.email.adaptor.EmailOutboxAdaptor;
 import com.jnu.ticketdomain.domains.email.domain.EmailOutbox;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
+import com.jnu.ticketinfrastructure.model.MailSendResult;
 import com.jnu.ticketinfrastructure.service.MailService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,12 +43,12 @@ class EmailOutboxWorkerTest {
         when(emailOutboxAdaptor.claim(eq(1L), any(LocalDateTime.class), eq(MAX_EMAIL_SEND_RETRY)))
                 .thenReturn(true);
         when(mailService.sendRegistrationResultMail("student@jnu.ac.kr", "학생", "합격", -2))
-                .thenReturn(true);
+                .thenReturn(MailSendResult.success());
 
         emailOutboxWorker.sendPendingRegistrationResultMail();
 
         verify(emailOutboxAdaptor).markSent(1L);
-        verify(emailOutboxAdaptor, never()).markFailed(1L);
+        verify(emailOutboxAdaptor, never()).markFailed(any(), any(), anyInt());
     }
 
     @Test
@@ -69,11 +71,13 @@ class EmailOutboxWorkerTest {
         when(emailOutboxAdaptor.claim(eq(1L), any(LocalDateTime.class), eq(MAX_EMAIL_SEND_RETRY)))
                 .thenReturn(true);
         when(mailService.sendRegistrationResultMail("student@jnu.ac.kr", "학생", "합격", -2))
-                .thenReturn(false);
+                .thenReturn(MailSendResult.failure("SES unavailable"));
+        when(emailOutboxAdaptor.markFailed(1L, "SES unavailable", MAX_EMAIL_SEND_RETRY))
+                .thenReturn(true);
 
         emailOutboxWorker.sendPendingRegistrationResultMail();
 
-        verify(emailOutboxAdaptor).markFailed(1L);
+        verify(emailOutboxAdaptor).markFailed(1L, "SES unavailable", MAX_EMAIL_SEND_RETRY);
         verify(emailOutboxAdaptor, never()).markSent(1L);
     }
 

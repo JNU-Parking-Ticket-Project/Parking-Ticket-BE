@@ -31,9 +31,9 @@ class EmailOutboxRepositoryTest {
         EmailOutbox coolingDown = emailOutboxRepository.saveAndFlush(outbox(2L));
         EmailOutbox exhausted = emailOutboxRepository.saveAndFlush(outbox(3L));
 
-        emailOutboxRepository.markFailed(coolingDown.getId(), now.minusMinutes(1));
+        markFailed(coolingDown.getId(), now.minusMinutes(1), "temporary failure");
         for (int retry = 0; retry < MAX_EMAIL_SEND_RETRY; retry++) {
-            emailOutboxRepository.markFailed(exhausted.getId(), now.minusMinutes(20));
+            markFailed(exhausted.getId(), now.minusMinutes(20), "permanent failure");
         }
         entityManager.clear();
 
@@ -48,6 +48,70 @@ class EmailOutboxRepositoryTest {
                         emailOutboxRepository.claim(
                                 exhausted.getId(), now, staleBefore, MAX_EMAIL_SEND_RETRY))
                 .isZero();
+    }
+
+    @Test
+    @DisplayName("마지막 재시도 실패 시 failed_at을 기록하고 processing 상태를 해제한다")
+    void markFailureTransitionsToTerminalStateAtRetryLimit() {
+        EmailOutbox outbox = emailOutboxRepository.saveAndFlush(outbox(4L));
+        LocalDateTime firstFailureAt = LocalDateTime.of(2026, 7, 28, 12, 0);
+        LocalDateTime terminalFailureAt = firstFailureAt.plusMinutes(20);
+
+        markFailed(outbox.getId(), firstFailureAt, "first failure", 2);
+
+        EmailOutbox retrying = emailOutboxRepository.findById(outbox.getId()).orElseThrow();
+        assertThat(retrying.getRetryCount()).isEqualTo(1);
+        assertThat(retrying.getProcessingAt()).isEqualTo(firstFailureAt);
+        assertThat(retrying.getFailedAt()).isNull();
+        assertThat(retrying.getLastError()).isEqualTo("first failure");
+
+        markFailed(outbox.getId(), terminalFailureAt, "terminal failure", 2);
+
+        EmailOutbox failed = emailOutboxRepository.findById(outbox.getId()).orElseThrow();
+        assertThat(failed.getRetryCount()).isEqualTo(2);
+        assertThat(failed.getProcessingAt()).isNull();
+        assertThat(failed.getFailedAt()).isEqualTo(terminalFailureAt);
+        assertThat(failed.getLastError()).isEqualTo("terminal failure");
+        assertThat(emailOutboxRepository.markSent(outbox.getId(), terminalFailureAt.plusSeconds(1)))
+                .isZero();
+        assertThat(emailOutboxRepository.findById(outbox.getId()).orElseThrow().getSentAt())
+                .isNull();
+        assertThat(emailOutboxRepository.findFailedByEventId(10L, PageRequest.of(0, 20)))
+                .extracting(EmailOutbox::getId)
+                .containsExactly(outbox.getId());
+    }
+
+    @Test
+    @DisplayName("최종 실패 outbox 재활성화는 한 번만 성공하고 발송 상태를 초기화한다")
+    void requeueFailedOutboxIsAtomicAndIdempotent() {
+        EmailOutbox outbox = emailOutboxRepository.saveAndFlush(outbox(5L));
+        LocalDateTime failedAt = LocalDateTime.of(2026, 7, 28, 12, 0);
+        markFailed(outbox.getId(), failedAt, "terminal failure", 1);
+
+        int firstRequeue = emailOutboxRepository.requeueFailed(10L, outbox.getId());
+        int repeatedRequeue = emailOutboxRepository.requeueFailed(10L, outbox.getId());
+
+        assertThat(firstRequeue).isOne();
+        assertThat(repeatedRequeue).isZero();
+        EmailOutbox requeued = emailOutboxRepository.findById(outbox.getId()).orElseThrow();
+        assertThat(requeued.getRetryCount()).isZero();
+        assertThat(requeued.getProcessingAt()).isNull();
+        assertThat(requeued.getFailedAt()).isNull();
+        assertThat(requeued.getLastError()).isNull();
+    }
+
+    private void markFailed(Long id, LocalDateTime failedAt, String error) {
+        markFailed(id, failedAt, error, MAX_EMAIL_SEND_RETRY);
+    }
+
+    private void markFailed(Long id, LocalDateTime failedAt, String error, int maxRetryCount) {
+        int terminalRetryCount = maxRetryCount - 1;
+        int updated =
+                emailOutboxRepository.markTerminalFailure(
+                        id, failedAt, error, terminalRetryCount, maxRetryCount);
+        if (updated == 0) {
+            emailOutboxRepository.markRetryFailure(id, failedAt, error, terminalRetryCount);
+        }
     }
 
     private EmailOutbox outbox(Long registrationId) {

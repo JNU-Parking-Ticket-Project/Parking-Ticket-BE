@@ -1,7 +1,12 @@
 package com.jnu.ticketdomain.domains.email;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.jnu.ticketdomain.domains.email.adaptor.EmailOutboxAdaptor;
@@ -49,6 +54,30 @@ class EmailOutboxAdaptorTest {
         emailOutboxAdaptor.saveRegistrationResultIfAbsent(registration);
 
         verify(emailOutboxRepository).save(org.mockito.ArgumentMatchers.any(EmailOutbox.class));
+    }
+
+    @Test
+    @DisplayName("일시 발송 실패는 오류 내용을 정규화해 재시도 상태로 기록한다")
+    void markFailedRecordsNormalizedErrorForRetry() {
+        when(emailOutboxRepository.markTerminalFailure(
+                        eq(1L), any(LocalDateTime.class), eq("SES unavailable"), eq(2), eq(3)))
+                .thenReturn(0);
+        when(emailOutboxRepository.markRetryFailure(
+                        eq(1L), any(LocalDateTime.class), eq("SES unavailable"), eq(2)))
+                .thenReturn(1);
+
+        boolean updated = emailOutboxAdaptor.markFailed(1L, "  SES unavailable  ", 3);
+
+        assertThat(updated).isTrue();
+    }
+
+    @Test
+    @DisplayName("재시도 상한은 1 이상이어야 한다")
+    void markFailedRejectsInvalidRetryLimit() {
+        assertThatThrownBy(() -> emailOutboxAdaptor.markFailed(1L, "failure", 0))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verifyNoInteractions(emailOutboxRepository);
     }
 
     private Registration registration() {

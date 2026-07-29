@@ -45,9 +45,9 @@ class FlywayMigrationIntegrationTest {
 
         MigrateResult firstMigration = flyway.migrate();
 
-        assertThat(firstMigration.migrationsExecuted).isEqualTo(2);
+        assertThat(firstMigration.migrationsExecuted).isEqualTo(3);
         assertThat(flyway.info().current().getVersion())
-                .isEqualTo(MigrationVersion.fromVersion("2"));
+                .isEqualTo(MigrationVersion.fromVersion("3"));
         assertResultSchema();
         assertHibernateSchemaValidation();
 
@@ -64,9 +64,9 @@ class FlywayMigrationIntegrationTest {
         Flyway flyway = flyway(true, null);
         MigrateResult migration = flyway.migrate();
 
-        assertThat(migration.migrationsExecuted).isEqualTo(1);
+        assertThat(migration.migrationsExecuted).isEqualTo(2);
         assertThat(flyway.info().current().getVersion())
-                .isEqualTo(MigrationVersion.fromVersion("2"));
+                .isEqualTo(MigrationVersion.fromVersion("3"));
         assertResultSchema();
     }
 
@@ -75,13 +75,15 @@ class FlywayMigrationIntegrationTest {
         Flyway legacySchema = flyway(false, MigrationVersion.fromVersion("1"));
         legacySchema.migrate();
         applyExistingManualResultSchema();
+        insertExistingExhaustedOutbox();
         dropFlywayHistory();
 
         Flyway flyway = flyway(true, null);
         MigrateResult migration = flyway.migrate();
 
-        assertThat(migration.migrationsExecuted).isEqualTo(1);
+        assertThat(migration.migrationsExecuted).isEqualTo(2);
         assertResultSchema();
+        assertExistingExhaustedOutboxWasBackfilled();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
     }
 
@@ -105,9 +107,12 @@ class FlywayMigrationIntegrationTest {
             assertThat(hasColumn(connection, "registration_tb", "result_status")).isTrue();
             assertThat(hasColumn(connection, "registration_tb", "sequence")).isTrue();
             assertThat(hasTable(connection, "email_outbox")).isTrue();
+            assertThat(hasColumn(connection, "email_outbox", "failed_at")).isTrue();
+            assertThat(hasColumn(connection, "email_outbox", "last_error")).isTrue();
             assertThat(hasIndex(connection, "email_outbox", "uk_email_outbox_registration_id"))
                     .isTrue();
             assertThat(hasIndex(connection, "email_outbox", "idx_email_outbox_pending")).isTrue();
+            assertThat(hasIndex(connection, "email_outbox", "idx_email_outbox_failed")).isTrue();
             assertThat(hasForeignKey(connection, "email_outbox", "fk_email_outbox_registration"))
                     .isTrue();
         }
@@ -179,6 +184,34 @@ class FlywayMigrationIntegrationTest {
         try (Connection connection = connection();
                 Statement statement = connection.createStatement()) {
             statement.execute("DROP TABLE flyway_schema_history");
+        }
+    }
+
+    private void insertExistingExhaustedOutbox() throws SQLException {
+        try (Connection connection = connection();
+                Statement statement = connection.createStatement()) {
+            statement.execute("SET FOREIGN_KEY_CHECKS = 0");
+            statement.execute(
+                    "INSERT INTO email_outbox "
+                            + "(id, event_id, registration_id, email, name, result_status, sequence, "
+                            + "created_at, processing_at, sent_at, retry_count) VALUES "
+                            + "(1, 10, 999, 'failed@jnu.ac.kr', '학생', '불합격', -1, "
+                            + "'2026-07-28 10:00:00', '2026-07-28 11:00:00', NULL, 10)");
+            statement.execute("SET FOREIGN_KEY_CHECKS = 1");
+        }
+    }
+
+    private void assertExistingExhaustedOutboxWasBackfilled() throws SQLException {
+        try (Connection connection = connection();
+                Statement statement = connection.createStatement();
+                ResultSet result =
+                        statement.executeQuery(
+                                "SELECT failed_at, processing_at, last_error "
+                                        + "FROM email_outbox WHERE id = 1")) {
+            assertThat(result.next()).isTrue();
+            assertThat(result.getTimestamp("failed_at")).isNotNull();
+            assertThat(result.getTimestamp("processing_at")).isNull();
+            assertThat(result.getString("last_error")).isNotBlank();
         }
     }
 
