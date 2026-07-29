@@ -33,7 +33,12 @@ public class SecurityConfig {
     private final SpringEnvironmentHelper springEnvironmentHelper;
 
     protected String[] councilAndAdminUrls = {
-        "/v1/announce/**", "/v1/notice/**", "/v1/registrations", "/v1/sectors/**", "/v1/events/**"
+        "/v1/announce/**",
+        "/v1/notice/**",
+        "/v1/registrations",
+        "/v1/sectors/**",
+        "/v1/events/**",
+        "/v1/council/**"
     };
 
     protected String[] adminUrls = {
