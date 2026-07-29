@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -50,7 +50,6 @@ public class RedisStreamConsumerManager {
     private final String consumerInstanceId;
     private final ExecutorService coordinatorExecutor;
     private final ThreadPoolExecutor processingExecutor;
-    private final Semaphore processingCapacity;
     private final Map<Long, EventConsumer> consumers = new ConcurrentHashMap<>();
     private final AtomicBoolean shuttingDown = new AtomicBoolean();
 
@@ -82,7 +81,6 @@ public class RedisStreamConsumerManager {
         int processingConcurrency =
                 Math.max(1, Math.min(configuredConcurrency, availableDbConnections));
         int boundedQueueCapacity = Math.max(1, queueCapacity);
-        this.processingCapacity = new Semaphore(processingConcurrency + boundedQueueCapacity, true);
         this.processingExecutor =
                 new ThreadPoolExecutor(
                         processingConcurrency,
@@ -91,7 +89,7 @@ public class RedisStreamConsumerManager {
                         TimeUnit.MILLISECONDS,
                         new ArrayBlockingQueue<>(boundedQueueCapacity),
                         namedThreadFactory("redis-stream-worker-"),
-                        new ThreadPoolExecutor.AbortPolicy());
+                        this::blockUntilQueueHasCapacity);
         this.coordinatorExecutor =
                 Executors.newFixedThreadPool(
                         Math.max(1, maxActiveEvents), namedThreadFactory("redis-stream-consumer-"));
@@ -207,7 +205,6 @@ public class RedisStreamConsumerManager {
         }
         consumer.inFlight.incrementAndGet();
         try {
-            processingCapacity.acquire();
             processingExecutor.execute(
                     () -> {
                         try {
@@ -221,17 +218,12 @@ public class RedisStreamConsumerManager {
                                     rawMessage.getRecordId(),
                                     e);
                         } finally {
-                            processingCapacity.release();
                             consumer.inFlight.decrementAndGet();
                             consumer.inFlightRecordIds.remove(rawMessage.getRecordId());
                             stopWhenDrained(consumer);
                         }
                     });
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            completeRejectedDispatch(consumer, rawMessage);
         } catch (RuntimeException e) {
-            processingCapacity.release();
             completeRejectedDispatch(consumer, rawMessage);
             throw e;
         }
@@ -299,6 +291,19 @@ public class RedisStreamConsumerManager {
             thread.setDaemon(false);
             return thread;
         };
+    }
+
+    private void blockUntilQueueHasCapacity(Runnable task, ThreadPoolExecutor executor) {
+        if (executor.isShutdown()) {
+            throw new RejectedExecutionException("Redis Stream processing executor is shut down");
+        }
+        try {
+            executor.getQueue().put(task);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RejectedExecutionException(
+                    "Interrupted while waiting for Redis Stream processing capacity", e);
+        }
     }
 
     @PreDestroy

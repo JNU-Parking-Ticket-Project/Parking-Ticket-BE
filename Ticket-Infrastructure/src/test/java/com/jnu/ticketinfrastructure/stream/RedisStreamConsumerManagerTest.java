@@ -90,6 +90,7 @@ class RedisStreamConsumerManagerTest {
         AtomicInteger active = new AtomicInteger();
         AtomicInteger maxActive = new AtomicInteger();
         CountDownLatch twoWorkersStarted = new CountDownLatch(2);
+        CountDownLatch allMessagesProcessed = new CountDownLatch(6);
         CountDownLatch releaseWorkers = new CountDownLatch(1);
         RegistrationStreamMessageHandler handler =
                 message -> {
@@ -102,6 +103,7 @@ class RedisStreamConsumerManagerTest {
                         Thread.currentThread().interrupt();
                     } finally {
                         active.decrementAndGet();
+                        allMessagesProcessed.countDown();
                     }
                 };
         List<RawStreamMessage> messages =
@@ -126,6 +128,7 @@ class RedisStreamConsumerManagerTest {
         assertThat(twoWorkersStarted.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(maxActive).hasValue(2);
         releaseWorkers.countDown();
+        assertThat(allMessagesProcessed.await(2, TimeUnit.SECONDS)).isTrue();
     }
 
     @Test
@@ -170,7 +173,7 @@ class RedisStreamConsumerManagerTest {
                 dbPoolSize,
                 1,
                 configuredConcurrency,
-                6,
+                1,
                 1,
                 10,
                 10L,
