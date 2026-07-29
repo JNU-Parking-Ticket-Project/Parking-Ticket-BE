@@ -5,9 +5,11 @@ import com.jnu.ticketbatch.job.EventRegisterJob;
 import com.jnu.ticketbatch.job.EventUpdateJob;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.event.EventDeletedEvent;
+import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -22,6 +24,9 @@ public class EventDeletedEventHandler {
     private final EventRegisterJob eventRegisterJob;
     private final EventUpdateJob eventUpdateJob;
 
+    @Autowired(required = false)
+    private RedisStreamConsumerManager streamConsumerManager;
+
     @SneakyThrows
     @Async
     @TransactionalEventListener(
@@ -33,6 +38,9 @@ public class EventDeletedEventHandler {
         Event event = eventDeletedEvent.getEvent();
         try {
             eventUpdateJob.cancelScheduledJob(event.getId());
+            if (streamConsumerManager != null) {
+                streamConsumerManager.stopImmediately(event.getId());
+            }
         } catch (Exception e) {
             log.info("스케줄링 실패 : " + e.getMessage());
             throw new RuntimeException("스케줄링 실패 : " + e.getMessage());
