@@ -77,6 +77,19 @@ class EmailOutboxWorkerTest {
         verify(emailOutboxAdaptor, never()).markSent(1L);
     }
 
+    @Test
+    @DisplayName("단일 worker는 한 번에 최대 14건의 outbox를 조회한다")
+    void findsAtMostFourteenPendingOutboxesPerRun() {
+        when(emailOutboxAdaptor.findPending(
+                        eq(14), any(LocalDateTime.class), eq(MAX_EMAIL_SEND_RETRY)))
+                .thenReturn(List.of());
+
+        emailOutboxWorker.sendPendingRegistrationResultMail();
+
+        verify(emailOutboxAdaptor)
+                .findPending(eq(14), any(LocalDateTime.class), eq(MAX_EMAIL_SEND_RETRY));
+    }
+
     private void givenPendingOutbox() {
         givenPendingOutboxWithoutMailPayload();
         when(outbox.getEmail()).thenReturn("student@jnu.ac.kr");
@@ -87,7 +100,7 @@ class EmailOutboxWorkerTest {
 
     private void givenPendingOutboxWithoutMailPayload() {
         when(emailOutboxAdaptor.findPending(
-                        eq(20), any(LocalDateTime.class), eq(MAX_EMAIL_SEND_RETRY)))
+                        eq(14), any(LocalDateTime.class), eq(MAX_EMAIL_SEND_RETRY)))
                 .thenReturn(List.of(outbox));
         when(outbox.getId()).thenReturn(1L);
     }
