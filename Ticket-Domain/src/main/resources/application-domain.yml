@@ -107,6 +107,10 @@ mail:
   outbox:
     enabled: false
 
+redis:
+  stream:
+    consumer:
+      lifecycle-enabled: false
 ---
 
 spring:
