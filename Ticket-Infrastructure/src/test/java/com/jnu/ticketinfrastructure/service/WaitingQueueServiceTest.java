@@ -1,6 +1,7 @@
 package com.jnu.ticketinfrastructure.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -8,9 +9,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
@@ -153,6 +156,15 @@ class WaitingQueueServiceTest {
                 .isEqualTo("parking-ticket:event:{3}:sector:2:sequence");
         assertThat(initialization.getRemainingAmount()).isEqualTo(240);
         assertThat(initialization.getAssignedPosition()).isEqualTo(60);
+    }
+
+    @Test
+    @DisplayName("구간이 없는 이벤트는 Redis 초기화 마커를 만들지 않고 OPEN을 중단한다")
+    void initializeEventStockRejectsEventWithoutSectors() {
+        assertThatThrownBy(() -> waitingQueueService.initializeEventStock(3L, List.of()))
+                .isSameAs(NotFoundSectorException.EXCEPTION);
+
+        verifyNoInteractions(redisRepository);
     }
 
     @Test
