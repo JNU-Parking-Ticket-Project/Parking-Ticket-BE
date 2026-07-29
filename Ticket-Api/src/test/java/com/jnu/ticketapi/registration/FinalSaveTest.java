@@ -1,6 +1,9 @@
 package com.jnu.ticketapi.registration;
 
 import static com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder.builder;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -18,6 +21,7 @@ import com.jnu.ticketdomain.domains.captcha.exception.CaptchaErrorCode;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.exception.SectorErrorCode;
 import com.jnu.ticketdomain.domains.user.exception.UserErrorCode;
+import com.jnu.ticketinfrastructure.redis.RedisService;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +32,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
@@ -56,8 +62,12 @@ public class FinalSaveTest extends RestDocsConfig {
 
     @Autowired private WaitingQueueService waitingQueueService;
 
+    @SpyBean private RedisService redisService;
+
     @BeforeEach
     void initializeRedisStock() {
+        waitingQueueService.deleteEventStream(1L);
+        waitingQueueService.deleteEventStockKeys(1L);
         waitingQueueService.initializeEventStock(1L, sectorAdaptor.findByEventId(1L));
     }
 
@@ -92,6 +102,35 @@ public class FinalSaveTest extends RestDocsConfig {
             resultActions.andExpectAll(status().isOk(), jsonPath("$.email").value(email));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
+        }
+
+        @Test
+        @DisplayName("성공 : 접수 후 refresh token 삭제가 실패해도 신청 결과를 유지한다")
+        void successWhenRefreshTokenCleanupFails() throws Exception {
+            // given
+            String email = "admin@jnu.ac.kr";
+            String accessToken = jwtGenerator.generateAccessToken(email, "ADMIN");
+            String captchaCode = getCaptchaCodeRequest(accessToken);
+            FinalSaveRequest request =
+                    builder()
+                            .withCaptchaAnswer("1234")
+                            .withCaptchaCode(captchaCode)
+                            .build();
+            doThrow(new RedisConnectionFailureException("forced refresh token cleanup failure"))
+                    .when(redisService)
+                    .deleteValues(anyString());
+
+            // when
+            ResultActions resultActions =
+                    mvc.perform(
+                            post("/v1/registration/1")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken)
+                                    .content(om.writeValueAsString(request)));
+
+            // then
+            resultActions.andExpectAll(status().isOk(), jsonPath("$.email").value(email));
+            assertThat(waitingQueueService.hasEventStreamMessages(1L)).isTrue();
         }
 
         private String getCaptchaCodeRequest(String accessToken) throws Exception {
