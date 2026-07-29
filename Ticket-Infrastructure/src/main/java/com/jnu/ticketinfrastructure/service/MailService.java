@@ -2,6 +2,7 @@ package com.jnu.ticketinfrastructure.service;
 
 
 import com.jnu.ticketcommon.consts.MailTemplate;
+import com.jnu.ticketinfrastructure.model.MailSendResult;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +65,7 @@ public class MailService {
                 .build();
     }
 
-    public boolean sendRegistrationResultMail(
+    public MailSendResult sendRegistrationResultMail(
             String email, String name, String status, Integer sequence) {
         try {
             Context context =
@@ -77,11 +78,26 @@ public class MailService {
                             MailTemplate.REGISTRATION_TEMPLATE,
                             context);
             log.info("신청 결과 메일 발송. 사용자 이메일 : {}, 결과 : {}", email, result);
-            return result;
+            if (result) {
+                return MailSendResult.success();
+            }
+            return MailSendResult.failure("SES가 성공 응답을 반환하지 않았습니다.");
         } catch (Exception e) {
             log.info("신청 결과 메일 발송 실패. 사용자 이메일 : {}, 에러 로그 : {} ", email, e.getMessage());
-            return false;
+            return MailSendResult.failure(rootCauseMessage(e));
         }
+    }
+
+    private String rootCauseMessage(Throwable throwable) {
+        Throwable rootCause = throwable;
+        while (rootCause.getCause() != null) {
+            rootCause = rootCause.getCause();
+        }
+        String message = rootCause.getMessage();
+        if (message == null || message.isBlank()) {
+            return rootCause.getClass().getSimpleName();
+        }
+        return rootCause.getClass().getSimpleName() + ": " + message;
     }
 
     public static Context newRegistrationContext(
