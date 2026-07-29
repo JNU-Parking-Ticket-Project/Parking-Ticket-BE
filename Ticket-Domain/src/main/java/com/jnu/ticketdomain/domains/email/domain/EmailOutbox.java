@@ -90,20 +90,37 @@ public class EmailOutbox {
     }
 
     public static EmailOutbox from(Registration registration) {
-        UserStatus resultStatus =
-                registration.getResultStatus() != null
-                        ? registration.getResultStatus()
-                        : registration.getUser().getStatus();
-        Integer sequence =
-                registration.getSequence() != null
-                        ? registration.getSequence()
-                        : registration.getUser().getSequence();
+        validateRegistrationResult(registration);
         return new EmailOutbox(
-                registration.getEventId(),
+                resolveEventId(registration),
                 registration.getId(),
                 registration.getEmail(),
                 registration.getName(),
-                resultStatus,
-                sequence);
+                registration.getResultStatus(),
+                registration.getSequence());
+    }
+
+    private static void validateRegistrationResult(Registration registration) {
+        if (!registration.isSaved()
+                || registration.getId() == null
+                || registration.getPosition() == null
+                || registration.getResultStatus() == null
+                || registration.getSequence() == null) {
+            throw new IllegalStateException(
+                    "저장 완료 Registration의 확정 결과가 필요합니다. registrationId="
+                            + registration.getId());
+        }
+    }
+
+    private static Long resolveEventId(Registration registration) {
+        if (registration.getEventId() != null) {
+            return registration.getEventId();
+        }
+        if (registration.getSector() != null && registration.getSector().getEvent() != null) {
+            return registration.getSector().getEvent().getId();
+        }
+        throw new IllegalStateException(
+                "Registration의 eventId를 확인할 수 없습니다. registrationId="
+                        + registration.getId());
     }
 }
