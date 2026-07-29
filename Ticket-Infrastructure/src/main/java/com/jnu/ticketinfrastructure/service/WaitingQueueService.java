@@ -9,6 +9,7 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
@@ -57,14 +58,6 @@ public class WaitingQueueService {
             String key, Registration registration, Long userId, Sector sector, Long eventId)
             throws JsonProcessingException {
         String registrationString = convertRegistrationJSON(registration);
-        int issueAmount = sector.getIssueAmount();
-        int initialRemainingAmount =
-                Math.max(
-                        0,
-                        Math.min(
-                                Optional.ofNullable(sector.getRemainingAmount())
-                                        .orElse(issueAmount),
-                                issueAmount));
         StockReservationResult result =
                 redisRepository.reserveStockAndAddToStream(
                         stockKey(eventId, sector.getId()),
@@ -72,13 +65,12 @@ public class WaitingQueueService {
                         reservedEmailKey(eventId),
                         key,
                         closedKey(eventId),
+                        initializedKey(eventId),
                         registrationString,
                         userId,
                         sector.getId(),
                         eventId,
                         registration.getEmail(),
-                        initialRemainingAmount,
-                        issueAmount,
                         sector.getInitSectorCapacity());
         tracker.info(
                 "Reserved Redis stock. sectorId: {}, reserved: {}, position: {}, status: {}, remaining: {}",
@@ -88,6 +80,18 @@ public class WaitingQueueService {
                 result.getResultStatus(),
                 result.getRemainingAmount());
         return result;
+    }
+
+    public boolean initializeEventStock(Long eventId, List<Sector> sectors) {
+        List<SectorStockInitialization> initializations =
+                sectors.stream()
+                        .map(sector -> toStockInitialization(eventId, sector))
+                        .toList();
+        return redisRepository.initializeEventStock(
+                initializedKey(eventId),
+                reservedEmailKey(eventId),
+                closedKey(eventId),
+                initializations);
     }
 
     public String convertRegistrationJSON(Registration registration) {
@@ -229,5 +233,25 @@ public class WaitingQueueService {
 
     public String closedKey(Long eventId) {
         return eventStockPrefix(eventId) + "closed";
+    }
+
+    public String initializedKey(Long eventId) {
+        return eventStockPrefix(eventId) + "initialized";
+    }
+
+    private SectorStockInitialization toStockInitialization(Long eventId, Sector sector) {
+        int issueAmount = sector.getIssueAmount();
+        int remainingAmount =
+                Math.max(
+                        0,
+                        Math.min(
+                                Optional.ofNullable(sector.getRemainingAmount())
+                                        .orElse(issueAmount),
+                                issueAmount));
+        return new SectorStockInitialization(
+                stockKey(eventId, sector.getId()),
+                sequenceKey(eventId, sector.getId()),
+                remainingAmount,
+                issueAmount - remainingAmount);
     }
 }

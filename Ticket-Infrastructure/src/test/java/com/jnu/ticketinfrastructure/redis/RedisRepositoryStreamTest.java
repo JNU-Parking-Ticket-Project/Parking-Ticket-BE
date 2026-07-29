@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import java.nio.charset.StandardCharsets;
@@ -162,13 +163,12 @@ class RedisRepositoryStreamTest {
                         "reserved-email",
                         STREAM_KEY,
                         "closed",
+                        "initialized",
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        300,
-                        300,
                         250);
 
         assertThat(result.isReserved()).isTrue();
@@ -191,13 +191,12 @@ class RedisRepositoryStreamTest {
                         "reserved-email",
                         STREAM_KEY,
                         "closed",
+                        "initialized",
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        300,
-                        300,
                         250);
 
         assertThat(result.isReserved()).isFalse();
@@ -218,18 +217,56 @@ class RedisRepositoryStreamTest {
                         "reserved-email",
                         STREAM_KEY,
                         "closed",
+                        "initialized",
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        300,
-                        300,
                         250);
 
         assertThat(result.isReserved()).isFalse();
         assertThat(result.isClosed()).isTrue();
         assertThat(result.getRemainingAmount()).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("reserveStockAndAddToStream은 필수 Redis 상태 유실을 unavailable로 변환한다")
+    void reserveStockAndAddToStreamParsesUnavailableResult() {
+        when(redisTemplate.execute(any(RedisCallback.class)))
+                .thenReturn(List.of(0L, "UNAVAILABLE", -1L, "", -1L, -1L));
+
+        StockReservationResult result =
+                redisRepository.reserveStockAndAddToStream(
+                        "stock",
+                        "sequence",
+                        "reserved-email",
+                        STREAM_KEY,
+                        "closed",
+                        "initialized",
+                        "{\"id\":10}",
+                        1L,
+                        2L,
+                        3L,
+                        "student@jnu.ac.kr",
+                        250);
+
+        assertThat(result.isUnavailable()).isTrue();
+        assertThat(result.getRemainingAmount()).isNull();
+    }
+
+    @Test
+    @DisplayName("initializeEventStock은 원자 초기화 Lua 결과를 반환한다")
+    void initializeEventStockReturnsAtomicScriptResult() {
+        when(redisTemplate.execute(any(RedisCallback.class))).thenReturn(1L);
+        SectorStockInitialization sector =
+                new SectorStockInitialization("stock", "sequence", 240, 60);
+
+        boolean initialized =
+                redisRepository.initializeEventStock(
+                        "initialized", "reserved-email", "closed", List.of(sector));
+
+        assertThat(initialized).isTrue();
     }
 
     @Test

@@ -13,6 +13,7 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
@@ -73,8 +74,6 @@ class WaitingQueueServiceTest {
         Registration registration = registration();
         Sector sector = org.mockito.Mockito.mock(Sector.class);
         when(sector.getId()).thenReturn(2L);
-        when(sector.getRemainingAmount()).thenReturn(240);
-        when(sector.getIssueAmount()).thenReturn(300);
         when(sector.getInitSectorCapacity()).thenReturn(250);
         StockReservationResult reservationResult =
                 StockReservationResult.reserved(1, UserStatus.SUCCESS, -2, 299);
@@ -84,13 +83,12 @@ class WaitingQueueServiceTest {
                         eq("parking-ticket:event:{3}:reserved:email"),
                         eq(STREAM_KEY),
                         eq("parking-ticket:event:{3}:closed"),
+                        eq("parking-ticket:event:{3}:initialized"),
                         anyString(),
                         eq(1L),
                         eq(2L),
                         eq(3L),
                         eq("student@jnu.ac.kr"),
-                        eq(240),
-                        eq(300),
                         eq(250)))
                 .thenReturn(reservationResult);
 
@@ -107,17 +105,50 @@ class WaitingQueueServiceTest {
                         eq("parking-ticket:event:{3}:reserved:email"),
                         eq(STREAM_KEY),
                         eq("parking-ticket:event:{3}:closed"),
+                        eq("parking-ticket:event:{3}:initialized"),
                         registrationPayloadCaptor.capture(),
                         eq(1L),
                         eq(2L),
                         eq(3L),
                         eq("student@jnu.ac.kr"),
-                        eq(240),
-                        eq(300),
                         eq(250));
         JSONObject payload = new JSONObject(registrationPayloadCaptor.getValue());
         assertThat(payload.getString("email")).isEqualTo("student@jnu.ac.kr");
         assertThat(payload.getString("studentNum")).isEqualTo("20240001");
+    }
+
+    @Test
+    @DisplayName("이벤트 OPEN 초기화는 구간별 stock과 현재 position을 원자 설정한다")
+    void initializeEventStockBuildsSectorStockState() {
+        Sector sector = org.mockito.Mockito.mock(Sector.class);
+        when(sector.getId()).thenReturn(2L);
+        when(sector.getIssueAmount()).thenReturn(300);
+        when(sector.getRemainingAmount()).thenReturn(240);
+        when(redisRepository.initializeEventStock(
+                        eq("parking-ticket:event:{3}:initialized"),
+                        eq("parking-ticket:event:{3}:reserved:email"),
+                        eq("parking-ticket:event:{3}:closed"),
+                        any()))
+                .thenReturn(true);
+
+        boolean initialized = waitingQueueService.initializeEventStock(3L, List.of(sector));
+
+        assertThat(initialized).isTrue();
+        ArgumentCaptor<List<SectorStockInitialization>> initializationCaptor =
+                ArgumentCaptor.forClass(List.class);
+        verify(redisRepository)
+                .initializeEventStock(
+                        eq("parking-ticket:event:{3}:initialized"),
+                        eq("parking-ticket:event:{3}:reserved:email"),
+                        eq("parking-ticket:event:{3}:closed"),
+                        initializationCaptor.capture());
+        SectorStockInitialization initialization = initializationCaptor.getValue().get(0);
+        assertThat(initialization.getStockKey())
+                .isEqualTo("parking-ticket:event:{3}:sector:2:stock");
+        assertThat(initialization.getSequenceKey())
+                .isEqualTo("parking-ticket:event:{3}:sector:2:sequence");
+        assertThat(initialization.getRemainingAmount()).isEqualTo(240);
+        assertThat(initialization.getAssignedPosition()).isEqualTo(60);
     }
 
     @Test
