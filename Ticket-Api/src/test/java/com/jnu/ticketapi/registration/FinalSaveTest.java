@@ -15,9 +15,12 @@ import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.security.JwtGenerator;
 import com.jnu.ticketcommon.message.ValidationMessage;
 import com.jnu.ticketdomain.domains.captcha.exception.CaptchaErrorCode;
+import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.exception.SectorErrorCode;
 import com.jnu.ticketdomain.domains.user.exception.UserErrorCode;
+import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,6 +51,15 @@ public class FinalSaveTest extends RestDocsConfig {
     @Autowired JwtGenerator jwtGenerator;
 
     @Autowired CaptchaHashProcessor captchaHashProcessor;
+
+    @Autowired private SectorAdaptor sectorAdaptor;
+
+    @Autowired private WaitingQueueService waitingQueueService;
+
+    @BeforeEach
+    void initializeRedisStock() {
+        waitingQueueService.initializeEventStock(1L, sectorAdaptor.findByEventId(1L));
+    }
 
     @Nested
     class finalSaveTest {

@@ -86,6 +86,10 @@ public class FinalSaveExceptionDocs implements SwaggerExampleExceptions {
     public TicketCodeException Sector_재고가_없는_경우 =
             new TicketCodeException(EventErrorCode.NO_EVENT_STOCK_LEFT);
 
+    @ExplainError("Redis 재고 상태가 유실되거나 Redis 연결이 불가능한 경우")
+    public TicketCodeException Redis_재고_처리가_불가능한_경우 =
+            RedisStockUnavailableException.EXCEPTION;
+
     @ExplainError("이벤트가 종료된 상태인 경우")
     public TicketCodeException 이벤트가_종료된_상태 = AlreadyCloseStatusException.EXCEPTION;
 

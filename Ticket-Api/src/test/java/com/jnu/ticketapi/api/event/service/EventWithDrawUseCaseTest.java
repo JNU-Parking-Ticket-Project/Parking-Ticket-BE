@@ -14,6 +14,7 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 import com.jnu.ticketdomain.domains.events.exception.NotOpenEventStatusException;
+import com.jnu.ticketdomain.domains.events.exception.RedisStockUnavailableException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -103,6 +105,46 @@ class EventWithDrawUseCaseTest {
 
         assertThatThrownBy(() -> eventWithDrawUseCase.issueEvent(registration, 100L, sector, 10L))
                 .isSameAs(NotOpenEventStatusException.EXCEPTION);
+    }
+
+    @Test
+    @DisplayName("Redis 필수 재고 상태가 유실되면 503 재고 처리 불가 예외로 변환한다")
+    void issueEventThrowsUnavailableWhenRedisStockStateIsLost() throws Exception {
+        Registration registration = registration();
+        givenOpenEvent();
+        when(waitingQueueService.reserveAndRegisterQueue(
+                        EVENT_STREAM_KEY, registration, 100L, sector, 10L))
+                .thenReturn(StockReservationResult.unavailable(null));
+
+        assertThatThrownBy(() -> eventWithDrawUseCase.issueEvent(registration, 100L, sector, 10L))
+                .isSameAs(RedisStockUnavailableException.EXCEPTION);
+    }
+
+    @Test
+    @DisplayName("Redis 연결 실패를 503 재고 처리 불가 예외로 변환한다")
+    void issueEventThrowsUnavailableWhenRedisConnectionFails() throws Exception {
+        Registration registration = registration();
+        givenOpenEvent();
+        when(waitingQueueService.reserveAndRegisterQueue(
+                        EVENT_STREAM_KEY, registration, 100L, sector, 10L))
+                .thenThrow(new RedisConnectionFailureException("connection refused"));
+
+        assertThatThrownBy(() -> eventWithDrawUseCase.issueEvent(registration, 100L, sector, 10L))
+                .isSameAs(RedisStockUnavailableException.EXCEPTION);
+    }
+
+    @Test
+    @DisplayName("Redis가 비활성화되어 예약 서비스가 없으면 503 재고 처리 불가 예외로 변환한다")
+    void issueEventThrowsUnavailableWhenRedisServiceIsDisabled() {
+        Registration registration = registration();
+        when(eventAdaptor.findById(10L)).thenReturn(event);
+        when(event.getId()).thenReturn(10L);
+        when(event.getEventStatus()).thenReturn(EventStatus.OPEN);
+        when(sector.getEvent()).thenReturn(event);
+        ReflectionTestUtils.setField(eventWithDrawUseCase, "waitingQueueService", null);
+
+        assertThatThrownBy(() -> eventWithDrawUseCase.issueEvent(registration, 100L, sector, 10L))
+                .isSameAs(RedisStockUnavailableException.EXCEPTION);
     }
 
     @Test

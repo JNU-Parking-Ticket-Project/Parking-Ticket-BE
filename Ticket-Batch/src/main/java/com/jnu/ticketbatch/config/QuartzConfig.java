@@ -19,6 +19,7 @@ public class QuartzConfig {
         SchedulerFactoryBean factory = new SchedulerFactoryBean();
         factory.setJobFactory(jobFactory); // AutoWiringSpringBeanJobFactory 설정
         factory.setDataSource(dataSource); // DataSource 설정
+        factory.setAutoStartup(false);
         return factory;
     }
 }
