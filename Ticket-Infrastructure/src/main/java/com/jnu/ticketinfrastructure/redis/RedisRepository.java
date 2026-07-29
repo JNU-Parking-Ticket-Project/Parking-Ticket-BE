@@ -1,9 +1,12 @@
 package com.jnu.ticketinfrastructure.redis;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +50,54 @@ public class RedisRepository {
     private static final String STREAM_POSITION_KEY = "position";
     private static final String STREAM_RESULT_STATUS_KEY = "resultStatus";
     private static final String STREAM_SEQUENCE_KEY = "sequence";
+    private static final String DEAD_LETTER_ORIGINAL_RECORD_ID_KEY = "originalRecordId";
+    private static final String DEAD_LETTER_FAILURE_COUNT_KEY = "failureCount";
+    private static final String DEAD_LETTER_LAST_ERROR_KEY = "lastError";
+    private static final String DEAD_LETTER_FAILED_AT_KEY = "failedAt";
+    private static final String DEAD_LETTER_REASON_KEY = "reason";
+    private static final String ACKNOWLEDGE_AND_DELETE_SCRIPT =
+            "local acknowledged = redis.call('XACK', KEYS[1], ARGV[1], ARGV[2]) "
+                    + "if acknowledged > 0 then "
+                    + "  redis.call('XDEL', KEYS[1], ARGV[2]) "
+                    + "  redis.call('HDEL', KEYS[2], ARGV[2]) "
+                    + "end "
+                    + "return acknowledged";
+    private static final String MOVE_TO_DEAD_LETTER_SCRIPT =
+            "local records = redis.call('XRANGE', KEYS[1], ARGV[2], ARGV[2]) "
+                    + "if #records == 0 then return {0, 0} end "
+                    + "local failureCount = tonumber(redis.call('HGET', KEYS[2], ARGV[2]) or '0') "
+                    + "if ARGV[10] == '0' then "
+                    + "  failureCount = redis.call('HINCRBY', KEYS[2], ARGV[2], 1) "
+                    + "  redis.call('EXPIRE', KEYS[2], tonumber(ARGV[9])) "
+                    + "  if failureCount < tonumber(ARGV[3]) then return {failureCount, 0} end "
+                    + "end "
+                    + "redis.call('XADD', KEYS[3], 'MAXLEN', tonumber(ARGV[8]), '*', "
+                    + "  'payload', ARGV[4], "
+                    + "  'originalRecordId', ARGV[2], "
+                    + "  'failureCount', tostring(failureCount), "
+                    + "  'lastError', ARGV[5], "
+                    + "  'failedAt', ARGV[6], "
+                    + "  'reason', ARGV[7]) "
+                    + "redis.call('EXPIRE', KEYS[3], tonumber(ARGV[9])) "
+                    + "redis.pcall('XACK', KEYS[1], ARGV[1], ARGV[2]) "
+                    + "redis.call('XDEL', KEYS[1], ARGV[2]) "
+                    + "redis.call('HDEL', KEYS[2], ARGV[2]) "
+                    + "return {failureCount, 1}";
+    private static final String REPLAY_DEAD_LETTER_SCRIPT =
+            "local records = redis.call('XRANGE', KEYS[1], ARGV[1], ARGV[1]) "
+                    + "if #records == 0 then return 0 end "
+                    + "local fields = records[1][2] "
+                    + "local payload = nil "
+                    + "local originalRecordId = nil "
+                    + "for index = 1, #fields, 2 do "
+                    + "  if fields[index] == 'payload' then payload = fields[index + 1] end "
+                    + "  if fields[index] == 'originalRecordId' then originalRecordId = fields[index + 1] end "
+                    + "end "
+                    + "if not payload then return -1 end "
+                    + "redis.call('XADD', KEYS[2], '*', 'payload', payload) "
+                    + "redis.call('XDEL', KEYS[1], ARGV[1]) "
+                    + "if originalRecordId then redis.call('HDEL', KEYS[3], originalRecordId) end "
+                    + "return 1";
     private static final String RESERVE_STOCK_SCRIPT =
             "if redis.call('EXISTS', KEYS[5]) == 1 then "
                     + "  local closedStock = redis.call('GET', KEYS[1]) "
@@ -318,6 +369,106 @@ public class RedisRepository {
         return redisTemplate.opsForStream().delete(key, recordId);
     }
 
+    public Long xAcknowledgeAndDelete(
+            String streamKey, String failureKey, String group, String recordId) {
+        return redisTemplate.execute(
+                (RedisCallback<Long>)
+                        connection ->
+                                connection.eval(
+                                        ACKNOWLEDGE_AND_DELETE_SCRIPT.getBytes(
+                                                StandardCharsets.UTF_8),
+                                        ReturnType.INTEGER,
+                                        2,
+                                        redisArgs(streamKey, failureKey, group, recordId)));
+    }
+
+    public DeadLetterTransferResult xRecordFailureAndMaybeMoveToDeadLetter(
+            String streamKey,
+            String failureKey,
+            String deadLetterKey,
+            String group,
+            String recordId,
+            ChatMessage message,
+            int maxFailures,
+            String lastError,
+            long failedAt,
+            String reason,
+            long maxLength,
+            Duration retention,
+            boolean forceMove) {
+        String serializedMessage;
+        try {
+            serializedMessage = objectMapper.writeValueAsString(message);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize Redis Stream message", e);
+        }
+
+        List<Object> rawResult =
+                redisTemplate.execute(
+                        (RedisCallback<List<Object>>)
+                                connection ->
+                                        (List<Object>)
+                                                connection.eval(
+                                                        MOVE_TO_DEAD_LETTER_SCRIPT.getBytes(
+                                                                StandardCharsets.UTF_8),
+                                                        ReturnType.MULTI,
+                                                        3,
+                                                        redisArgs(
+                                                                streamKey,
+                                                                failureKey,
+                                                                deadLetterKey,
+                                                                group,
+                                                                recordId,
+                                                                String.valueOf(maxFailures),
+                                                                serializedMessage,
+                                                                lastError,
+                                                                String.valueOf(failedAt),
+                                                                reason,
+                                                                String.valueOf(maxLength),
+                                                                String.valueOf(
+                                                                        retention.toSeconds()),
+                                                                forceMove ? "1" : "0")));
+        if (rawResult == null || rawResult.size() < 2) {
+            throw new IllegalStateException("Failed to move Redis Stream message to DLQ");
+        }
+        return new DeadLetterTransferResult(
+                integerValue(rawResult.get(0)), longValue(rawResult.get(1)) == 1L);
+    }
+
+    public List<StreamQueueMessage> xRange(String key) {
+        List<MapRecord<String, Object, Object>> records =
+                redisTemplate.opsForStream().range(key, Range.unbounded());
+        if (records == null || records.isEmpty()) {
+            return List.of();
+        }
+        return records.stream().map(this::toStreamQueueMessage).toList();
+    }
+
+    public List<DeadLetterQueueMessage> xRangeDeadLetters(String key, long count) {
+        List<MapRecord<String, Object, Object>> records =
+                redisTemplate.opsForStream().range(key, Range.unbounded());
+        if (records == null || records.isEmpty()) {
+            return List.of();
+        }
+        return records.stream().limit(count).map(this::toDeadLetterQueueMessage).toList();
+    }
+
+    public Long xReplayDeadLetter(
+            String deadLetterKey, String streamKey, String failureKey, String recordId) {
+        return redisTemplate.execute(
+                (RedisCallback<Long>)
+                        connection ->
+                                connection.eval(
+                                        REPLAY_DEAD_LETTER_SCRIPT.getBytes(StandardCharsets.UTF_8),
+                                        ReturnType.INTEGER,
+                                        3,
+                                        redisArgs(deadLetterKey, streamKey, failureKey, recordId)));
+    }
+
+    public Boolean expire(String key, Duration timeout) {
+        return redisTemplate.expire(key, timeout);
+    }
+
     public Optional<Integer> getIntegerValue(String key) {
         byte[] value =
                 redisTemplate.execute(
@@ -363,6 +514,25 @@ public class RedisRepository {
                     objectMapper.readValue(String.valueOf(payload), ChatMessage.class));
         } catch (Exception e) {
             throw new IllegalStateException("Failed to parse Redis Stream message", e);
+        }
+    }
+
+    private DeadLetterQueueMessage toDeadLetterQueueMessage(
+            MapRecord<String, Object, Object> record) {
+        Map<Object, Object> values = record.getValue();
+        try {
+            ChatMessage message =
+                    objectMapper.readValue(value(values, STREAM_PAYLOAD_KEY), ChatMessage.class);
+            return new DeadLetterQueueMessage(
+                    record.getId().getValue(),
+                    value(values, DEAD_LETTER_ORIGINAL_RECORD_ID_KEY),
+                    message,
+                    integerValue(values, DEAD_LETTER_FAILURE_COUNT_KEY),
+                    value(values, DEAD_LETTER_LAST_ERROR_KEY),
+                    longValue(values, DEAD_LETTER_FAILED_AT_KEY),
+                    value(values, DEAD_LETTER_REASON_KEY));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to parse Redis Stream DLQ message", e);
         }
     }
 

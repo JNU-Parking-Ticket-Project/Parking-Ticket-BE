@@ -9,6 +9,8 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
@@ -35,6 +37,12 @@ public class WaitingQueueService {
 
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
     private static final Duration STREAM_PENDING_MIN_IDLE_TIME = Duration.ofSeconds(30);
+    private static final Duration DEAD_LETTER_RETENTION = Duration.ofDays(7);
+    private static final Duration DRAINED_STREAM_RETENTION = Duration.ofDays(1);
+    private static final long DEAD_LETTER_MAX_LENGTH = 1_000L;
+    private static final int MAX_ERROR_LENGTH = 1_000;
+    private static final String PROCESSING_FAILURE_REASON = "PROCESSING_FAILURE";
+    private static final String EVENT_DRAIN_REASON = "EVENT_DRAIN_TIMEOUT";
 
     private final RedisRepository redisRepository;
     @Autowired private ObjectMapper objectMapper;
@@ -180,15 +188,79 @@ public class WaitingQueueService {
     }
 
     public Long acknowledgeAndDelete(String key, String group, String recordId) {
-        Long acknowledged = redisRepository.xAck(key, group, recordId);
-        if (acknowledged != null && acknowledged > 0) {
-            redisRepository.xDelete(key, recordId);
+        return redisRepository.xAcknowledgeAndDelete(key, streamFailureKey(key), group, recordId);
+    }
+
+    public DeadLetterTransferResult recordProcessingFailure(
+            String streamKey,
+            String group,
+            String recordId,
+            ChatMessage message,
+            int maxFailures,
+            Throwable throwable) {
+        if (maxFailures < 1) {
+            throw new IllegalArgumentException("maxFailures must be greater than zero");
         }
-        return acknowledged;
+        return moveToDeadLetter(
+                streamKey,
+                group,
+                recordId,
+                message,
+                maxFailures,
+                errorMessage(throwable),
+                PROCESSING_FAILURE_REASON,
+                false);
+    }
+
+    public long drainEventStream(Long eventId, String group) {
+        String streamKey = eventStreamKey(eventId);
+        List<StreamQueueMessage> messages = redisRepository.xRange(streamKey);
+        long movedCount = 0L;
+        for (StreamQueueMessage message : messages) {
+            DeadLetterTransferResult result =
+                    moveToDeadLetter(
+                            streamKey,
+                            group,
+                            message.getRecordId(),
+                            message.getMessage(),
+                            1,
+                            "Event queue drain grace period elapsed",
+                            EVENT_DRAIN_REASON,
+                            true);
+            if (result.isMoved()) {
+                movedCount++;
+            }
+        }
+        redisRepository.expire(streamKey, DRAINED_STREAM_RETENTION);
+        redisRepository.expire(streamFailureKey(streamKey), DRAINED_STREAM_RETENTION);
+        return movedCount;
+    }
+
+    public List<DeadLetterQueueMessage> findDeadLetters(Long eventId, long count) {
+        if (count < 1) {
+            return List.of();
+        }
+        return redisRepository.xRangeDeadLetters(
+                eventDeadLetterStreamKey(eventId), Math.min(count, DEAD_LETTER_MAX_LENGTH));
+    }
+
+    public boolean replayDeadLetter(Long eventId, String deadLetterRecordId) {
+        String streamKey = eventStreamKey(eventId);
+        Long replayed =
+                redisRepository.xReplayDeadLetter(
+                        eventDeadLetterStreamKey(eventId),
+                        streamKey,
+                        streamFailureKey(streamKey),
+                        deadLetterRecordId);
+        return replayed != null && replayed == 1L;
     }
 
     public String eventStreamKey(Long eventId) {
         return REDIS_EVENT_ISSUE_STREAM + ":{" + eventId + "}";
+    }
+
+    public String eventDeadLetterStreamKey(Long eventId) {
+        return eventStreamKey(eventId) + ":dlq";
     }
 
     public void deleteEventStream(Long eventId) {
@@ -229,5 +301,44 @@ public class WaitingQueueService {
 
     public String closedKey(Long eventId) {
         return eventStockPrefix(eventId) + "closed";
+    }
+
+    private DeadLetterTransferResult moveToDeadLetter(
+            String streamKey,
+            String group,
+            String recordId,
+            ChatMessage message,
+            int maxFailures,
+            String lastError,
+            String reason,
+            boolean forceMove) {
+        return redisRepository.xRecordFailureAndMaybeMoveToDeadLetter(
+                streamKey,
+                streamFailureKey(streamKey),
+                streamDeadLetterKey(streamKey),
+                group,
+                recordId,
+                message,
+                maxFailures,
+                lastError,
+                System.currentTimeMillis(),
+                reason,
+                DEAD_LETTER_MAX_LENGTH,
+                DEAD_LETTER_RETENTION,
+                forceMove);
+    }
+
+    private String streamFailureKey(String streamKey) {
+        return streamKey + ":failures";
+    }
+
+    private String streamDeadLetterKey(String streamKey) {
+        return streamKey + ":dlq";
+    }
+
+    private String errorMessage(Throwable throwable) {
+        String message = throwable.getMessage();
+        String error = throwable.getClass().getName() + (message == null ? "" : ": " + message);
+        return error.substring(0, Math.min(error.length(), MAX_ERROR_LENGTH));
     }
 }
