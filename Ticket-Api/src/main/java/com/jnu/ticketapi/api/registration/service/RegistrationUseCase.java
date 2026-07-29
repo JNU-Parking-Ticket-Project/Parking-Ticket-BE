@@ -29,15 +29,14 @@ import com.jnu.ticketdomain.domains.registration.exception.NotFoundRegistrationE
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketinfrastructure.redis.RedisService;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @UseCase
 @RequiredArgsConstructor
@@ -186,12 +185,10 @@ public class RegistrationUseCase {
             Long currentUserId,
             String email,
             Long eventId) {
-        //        Registration saveReg = saveAndFlush(registration);
         eventWithDrawUseCase.issueEvent(registration, currentUserId, sector.getId(), eventId);
         if (ableRedis) {
             redisService.deleteValues("RT(" + TicketStatic.SERVER + "):" + email);
         }
-        //        Events.raise(new EventIssuedEvent())
         return FinalSaveResponse.from(registration);
     }
 

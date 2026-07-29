@@ -10,18 +10,17 @@ import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
-import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
+import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import com.jnu.ticketinfrastructure.stream.RegistrationStreamMessageHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.event.EventListener;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +30,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EventIssuedEventHandler {
+public class EventIssuedEventHandler implements RegistrationStreamMessageHandler {
 
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
 
@@ -44,28 +43,27 @@ public class EventIssuedEventHandler {
     private final SectorAdaptor sectorAdaptor;
     private final ObjectMapper objectMapper;
 
-    @Async
-    @EventListener(classes = EventIssuedEvent.class)
+    @Override
     @Retryable(
             retryFor = {Exception.class},
             maxAttempts = 3,
             backoff = @Backoff(delay = 2000))
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handle(EventIssuedEvent eventIssuedEvent) {
+    public void handle(StreamQueueMessage streamQueueMessage) {
         try {
-            MDC.put("userId", String.valueOf(eventIssuedEvent.getMessage().getUserId()));
+            MDC.put("userId", String.valueOf(streamQueueMessage.getMessage().getUserId()));
 
-            Sector sector = sectorAdaptor.findById(eventIssuedEvent.getMessage().getSectorId());
+            Sector sector = sectorAdaptor.findById(streamQueueMessage.getMessage().getSectorId());
 
             try {
                 Registration registration =
                         objectMapper.readValue(
-                                eventIssuedEvent.getMessage().getRegistration(),
+                                streamQueueMessage.getMessage().getRegistration(),
                                 Registration.class);
 
                 if (isAlreadySaved(registration)) {
                     tracker.info("Already saved, ignored");
-                    acknowledgeAfterCommit(eventIssuedEvent);
+                    acknowledgeAfterCommit(streamQueueMessage);
                     return;
                 }
                 tracker.info(
@@ -78,14 +76,14 @@ public class EventIssuedEventHandler {
                 processQueueData(
                         sector,
                         registration,
-                        eventIssuedEvent.getMessage().getUserId(),
-                        resolveScore(eventIssuedEvent));
-                acknowledgeAfterCommit(eventIssuedEvent);
+                        streamQueueMessage.getMessage().getUserId(),
+                        resolveScore(streamQueueMessage));
+                acknowledgeAfterCommit(streamQueueMessage);
 
                 // sectorAdaptor.save(sector); 데드락 문제 임시 해결
             } catch (NoEventStockLeftException e) {
                 tracker.info("해당 구간 잔여 여석이 없습니다.", e);
-                acknowledgeAfterCommit(eventIssuedEvent);
+                acknowledgeAfterCommit(streamQueueMessage);
             } catch (Exception e) {
                 // ack 하지 않으면 Redis Stream pending entry로 남아 재처리할 수 있다.
                 tracker.error("EventIssuedEventHandler Exception: ", e);
@@ -128,15 +126,12 @@ public class EventIssuedEventHandler {
         tracker.info("Registration saved");
     }
 
-    private Double resolveScore(EventIssuedEvent eventIssuedEvent) {
-        if (eventIssuedEvent.getScore() != null) {
-            return eventIssuedEvent.getScore();
-        }
-        String streamRecordId = eventIssuedEvent.getStreamRecordId();
+    private Double resolveScore(StreamQueueMessage streamQueueMessage) {
+        String streamRecordId = streamQueueMessage.getRecordId();
         if (streamRecordId != null && streamRecordId.contains("-")) {
             return Double.valueOf(streamRecordId.substring(0, streamRecordId.indexOf('-')));
         }
-        return (double) System.nanoTime();
+        return (double) System.currentTimeMillis();
     }
 
     private boolean isAlreadySaved(Registration registration) {
@@ -151,8 +146,8 @@ public class EventIssuedEventHandler {
                                 registration.getEmail(), registration.getEventId()));
     }
 
-    private void acknowledgeAfterCommit(EventIssuedEvent eventIssuedEvent) {
-        if (eventIssuedEvent.getStreamRecordId() == null) {
+    private void acknowledgeAfterCommit(StreamQueueMessage streamQueueMessage) {
+        if (streamQueueMessage.getRecordId() == null) {
             return;
         }
 
@@ -162,33 +157,31 @@ public class EventIssuedEventHandler {
                     new TransactionSynchronization() {
                         @Override
                         public void afterCommit() {
-                            acknowledge(eventIssuedEvent);
+                            acknowledge(streamQueueMessage);
                         }
                     });
             return;
         }
 
-        acknowledge(eventIssuedEvent);
+        acknowledge(streamQueueMessage);
     }
 
-    private void acknowledge(EventIssuedEvent eventIssuedEvent) {
+    private void acknowledge(StreamQueueMessage streamQueueMessage) {
         try {
             waitingQueueService.acknowledgeAndDelete(
-                    resolveStreamKey(eventIssuedEvent),
+                    resolveStreamKey(streamQueueMessage),
                     REDIS_EVENT_ISSUE_GROUP,
-                    eventIssuedEvent.getStreamRecordId());
+                    streamQueueMessage.getRecordId());
         } catch (Exception e) {
             tracker.error(
-                    "Redis Stream ACK failed. recordId: {}",
-                    eventIssuedEvent.getStreamRecordId(),
-                    e);
+                    "Redis Stream ACK failed. recordId: {}", streamQueueMessage.getRecordId(), e);
         }
     }
 
-    private String resolveStreamKey(EventIssuedEvent eventIssuedEvent) {
-        if (eventIssuedEvent.getStreamKey() != null) {
-            return eventIssuedEvent.getStreamKey();
+    private String resolveStreamKey(StreamQueueMessage streamQueueMessage) {
+        if (streamQueueMessage.getStreamKey() != null) {
+            return streamQueueMessage.getStreamKey();
         }
-        return waitingQueueService.eventStreamKey(eventIssuedEvent.getMessage().getEventId());
+        return waitingQueueService.eventStreamKey(streamQueueMessage.getMessage().getEventId());
     }
 }
