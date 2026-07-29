@@ -314,7 +314,7 @@ class RedisRepositoryStreamTest {
                         STREAM_KEY + ":dlq",
                         GROUP,
                         "1-0",
-                        new ChatMessage("{}", 1L, 2L, 3L),
+                        "{\"registration\":\"{}\"}",
                         3,
                         "DB error",
                         1_000L,
@@ -361,7 +361,8 @@ class RedisRepositoryStreamTest {
         assertThat(result.get(0).getOriginalRecordId()).isEqualTo("1-0");
         assertThat(result.get(0).getFailureCount()).isEqualTo(3);
         assertThat(result.get(0).getLastError()).isEqualTo("DB error");
-        assertThat(result.get(0).getMessage().getUserId()).isEqualTo(1L);
+        assertThat(objectMapper.readValue(result.get(0).getPayload(), ChatMessage.class).getUserId())
+                .isEqualTo(1L);
     }
 
     @Test

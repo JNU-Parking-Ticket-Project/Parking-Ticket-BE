@@ -4,6 +4,7 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_CONSUME
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
 
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.StreamConsumerState;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
@@ -47,6 +48,7 @@ public class RedisStreamConsumerManager {
     private final Duration pendingClaimInterval;
     private final Duration drainQuietPeriod;
     private final int batchSize;
+    private final int maxProcessingFailures;
     private final String consumerInstanceId;
     private final ExecutorService coordinatorExecutor;
     private final ThreadPoolExecutor processingExecutor;
@@ -66,6 +68,8 @@ public class RedisStreamConsumerManager {
             @Value("${redis.stream.consumer.pending-min-idle-ms:30000}") long pendingMinIdleMillis,
             @Value("${redis.stream.consumer.pending-claim-interval-ms:5000}")
                     long pendingClaimIntervalMillis,
+            @Value("${redis.stream.consumer.max-processing-failures:3}")
+                    int maxProcessingFailures,
             @Value("${redis.stream.consumer.drain-quiet-period-ms:5000}")
                     long drainQuietPeriodMillis) {
         this.waitingQueueService = waitingQueueService;
@@ -74,6 +78,7 @@ public class RedisStreamConsumerManager {
         this.pollTimeout = Duration.ofMillis(Math.max(1L, pollTimeoutMillis));
         this.pendingMinIdleTime = Duration.ofMillis(Math.max(1L, pendingMinIdleMillis));
         this.pendingClaimInterval = Duration.ofMillis(Math.max(1L, pendingClaimIntervalMillis));
+        this.maxProcessingFailures = Math.max(1, maxProcessingFailures);
         this.drainQuietPeriod = Duration.ofMillis(Math.max(0L, drainQuietPeriodMillis));
         this.consumerInstanceId = UUID.randomUUID().toString().substring(0, 8);
 
@@ -212,11 +217,7 @@ public class RedisStreamConsumerManager {
                                     waitingQueueService.deserialize(consumer.streamKey, rawMessage);
                             messageHandler.handle(message);
                         } catch (Exception e) {
-                            log.error(
-                                    "Redis Stream message processing failed. eventId: {}, recordId: {}",
-                                    consumer.eventId,
-                                    rawMessage.getRecordId(),
-                                    e);
+                            recordProcessingFailure(consumer, rawMessage, e);
                         } finally {
                             consumer.inFlight.decrementAndGet();
                             consumer.inFlightRecordIds.remove(rawMessage.getRecordId());
@@ -226,6 +227,42 @@ public class RedisStreamConsumerManager {
         } catch (RuntimeException e) {
             completeRejectedDispatch(consumer, rawMessage);
             throw e;
+        }
+    }
+
+    private void recordProcessingFailure(
+            EventConsumer consumer, RawStreamMessage rawMessage, Exception exception) {
+        try {
+            DeadLetterTransferResult result =
+                    waitingQueueService.recordProcessingFailure(
+                            consumer.streamKey,
+                            REDIS_EVENT_ISSUE_GROUP,
+                            rawMessage.getRecordId(),
+                            rawMessage.getPayload(),
+                            maxProcessingFailures,
+                            exception);
+            if (result.isMoved()) {
+                log.error(
+                        "Redis Stream message moved to DLQ after {} failed deliveries. eventId: {}, recordId: {}",
+                        result.getFailureCount(),
+                        consumer.eventId,
+                        rawMessage.getRecordId(),
+                        exception);
+                return;
+            }
+            log.warn(
+                    "Redis Stream message remains Pending after failed delivery {}/{}. eventId: {}, recordId: {}, cause: {}",
+                    result.getFailureCount(),
+                    maxProcessingFailures,
+                    consumer.eventId,
+                    rawMessage.getRecordId(),
+                    exception.toString());
+        } catch (Exception recoveryException) {
+            log.error(
+                    "Failed to record Redis Stream processing failure. eventId: {}, recordId: {}",
+                    consumer.eventId,
+                    rawMessage.getRecordId(),
+                    recoveryException);
         }
     }
 

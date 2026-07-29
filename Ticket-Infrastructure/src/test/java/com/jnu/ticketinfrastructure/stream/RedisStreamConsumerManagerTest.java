@@ -5,12 +5,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.StreamConsumerState;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
@@ -81,6 +83,41 @@ class RedisStreamConsumerManagerTest {
         consumerManager.start(EVENT_ID);
 
         verify(handler, timeout(2000)).handle(streamQueueMessage);
+    }
+
+    @Test
+    @DisplayName("역직렬화 실패도 delivery 실패로 기록해 poison message 상한을 적용한다")
+    void recordsDeserializationFailureForDeadLetterPolicy() {
+        WaitingQueueService waitingQueueService = mock(WaitingQueueService.class);
+        RegistrationStreamMessageHandler handler = mock(RegistrationStreamMessageHandler.class);
+        RawStreamMessage rawMessage = new RawStreamMessage("3-0", "not-json");
+        IllegalStateException failure = new IllegalStateException("invalid payload");
+        configureQueue(waitingQueueService);
+        when(waitingQueueService.readNewMessages(
+                        eq(STREAM_KEY), any(), any(), anyLong(), any(Duration.class)))
+                .thenReturn(List.of(rawMessage), List.of());
+        when(waitingQueueService.deserialize(STREAM_KEY, rawMessage)).thenThrow(failure);
+        when(waitingQueueService.recordProcessingFailure(
+                        STREAM_KEY,
+                        "쿠폰 발급 그룹",
+                        "3-0",
+                        "not-json",
+                        3,
+                        failure))
+                .thenReturn(new DeadLetterTransferResult(1, false));
+        consumerManager = manager(waitingQueueService, handler, 2, 2, 0L);
+
+        consumerManager.start(EVENT_ID);
+
+        verify(waitingQueueService, timeout(2000))
+                .recordProcessingFailure(
+                        STREAM_KEY,
+                        "쿠폰 발급 그룹",
+                        "3-0",
+                        "not-json",
+                        3,
+                        failure);
+        verify(handler, never()).handle(any());
     }
 
     @Test
@@ -179,6 +216,7 @@ class RedisStreamConsumerManagerTest {
                 10L,
                 10L,
                 1L,
+                3,
                 drainQuietPeriodMillis);
     }
 

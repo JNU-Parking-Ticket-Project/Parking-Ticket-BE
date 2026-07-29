@@ -19,7 +19,6 @@ import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
-import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -183,7 +182,7 @@ class WaitingQueueServiceTest {
     @Test
     @DisplayName("처리 실패 횟수가 상한 미만이면 Pending을 유지한다")
     void recordProcessingFailureKeepsMessageUntilLimit() {
-        ChatMessage message = new ChatMessage("{}", 1L, 2L, 3L);
+        String payload = "{\"registration\":\"{}\"}";
         DeadLetterTransferResult pending = new DeadLetterTransferResult(2, false);
         when(redisRepository.xRecordFailureAndMaybeMoveToDeadLetter(
                         eq(STREAM_KEY),
@@ -191,7 +190,7 @@ class WaitingQueueServiceTest {
                         eq(STREAM_KEY + ":dlq"),
                         eq("group"),
                         eq("1-0"),
-                        eq(message),
+                        eq(payload),
                         eq(3),
                         anyString(),
                         anyLong(),
@@ -206,7 +205,7 @@ class WaitingQueueServiceTest {
                         STREAM_KEY,
                         "group",
                         "1-0",
-                        message,
+                        payload,
                         3,
                         new IllegalStateException("DB 저장 실패"));
 
@@ -218,17 +217,16 @@ class WaitingQueueServiceTest {
     @DisplayName("이벤트 drain은 남은 모든 메시지를 DLQ로 강제 이관한다")
     void drainEventStreamMovesEveryRemainingMessage() {
         String eventStreamKey = "쿠폰 발급 스트림:{3}";
-        StreamQueueMessage first = new StreamQueueMessage("1-0", new ChatMessage("{}", 1L, 2L, 3L));
-        StreamQueueMessage second =
-                new StreamQueueMessage("2-0", new ChatMessage("{}", 2L, 2L, 3L));
-        when(redisRepository.xRange(eventStreamKey)).thenReturn(List.of(first, second));
+        RawStreamMessage first = new RawStreamMessage("1-0", "payload-1");
+        RawStreamMessage second = new RawStreamMessage("2-0", "payload-2");
+        when(redisRepository.xRangeRaw(eventStreamKey)).thenReturn(List.of(first, second));
         when(redisRepository.xRecordFailureAndMaybeMoveToDeadLetter(
                         eq(eventStreamKey),
                         eq(eventStreamKey + ":failures"),
                         eq(eventStreamKey + ":dlq"),
                         eq("group"),
                         anyString(),
-                        any(ChatMessage.class),
+                        anyString(),
                         eq(1),
                         anyString(),
                         anyLong(),
@@ -252,7 +250,7 @@ class WaitingQueueServiceTest {
                 new DeadLetterQueueMessage(
                         "9-0",
                         "1-0",
-                        new ChatMessage("{}", 1L, 2L, 3L),
+                        "payload",
                         3,
                         "error",
                         1_000L,

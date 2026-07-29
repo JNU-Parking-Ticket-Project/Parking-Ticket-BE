@@ -1,7 +1,6 @@
 package com.jnu.ticketinfrastructure.redis;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
@@ -10,7 +9,6 @@ import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
-import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import io.lettuce.core.XAutoClaimArgs;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.models.stream.ClaimedMessages;
@@ -406,7 +404,7 @@ public class RedisRepository {
             String deadLetterKey,
             String group,
             String recordId,
-            ChatMessage message,
+            String payload,
             int maxFailures,
             String lastError,
             long failedAt,
@@ -414,13 +412,6 @@ public class RedisRepository {
             long maxLength,
             Duration retention,
             boolean forceMove) {
-        String serializedMessage;
-        try {
-            serializedMessage = objectMapper.writeValueAsString(message);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize Redis Stream message", e);
-        }
-
         List<Object> rawResult =
                 redisTemplate.execute(
                         (RedisCallback<List<Object>>)
@@ -438,7 +429,7 @@ public class RedisRepository {
                                                                 group,
                                                                 recordId,
                                                                 String.valueOf(maxFailures),
-                                                                serializedMessage,
+                                                                payload,
                                                                 lastError,
                                                                 String.valueOf(failedAt),
                                                                 reason,
@@ -453,13 +444,13 @@ public class RedisRepository {
                 integerValue(rawResult.get(0)), longValue(rawResult.get(1)) == 1L);
     }
 
-    public List<StreamQueueMessage> xRange(String key) {
+    public List<RawStreamMessage> xRangeRaw(String key) {
         List<MapRecord<String, Object, Object>> records =
                 redisTemplate.opsForStream().range(key, Range.unbounded());
         if (records == null || records.isEmpty()) {
             return List.of();
         }
-        return records.stream().map(this::toStreamQueueMessage).toList();
+        return records.stream().map(this::toRawStreamMessage).toList();
     }
 
     public List<DeadLetterQueueMessage> xRangeDeadLetters(String key, long count) {
@@ -532,19 +523,6 @@ public class RedisRepository {
         }
     }
 
-    private StreamQueueMessage toStreamQueueMessage(MapRecord<String, Object, Object> record) {
-        Object payload = record.getValue().get(STREAM_PAYLOAD_KEY);
-        try {
-            ChatMessage message =
-                    payload == null
-                            ? toReservedChatMessage(record)
-                            : objectMapper.readValue(String.valueOf(payload), ChatMessage.class);
-            return new StreamQueueMessage(record.getId().getValue(), message);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to parse Redis Stream message", e);
-        }
-    }
-
     private byte[] bytes(String value) {
         return value.getBytes(StandardCharsets.UTF_8);
     }
@@ -581,20 +559,14 @@ public class RedisRepository {
     private DeadLetterQueueMessage toDeadLetterQueueMessage(
             MapRecord<String, Object, Object> record) {
         Map<Object, Object> values = record.getValue();
-        try {
-            ChatMessage message =
-                    objectMapper.readValue(value(values, STREAM_PAYLOAD_KEY), ChatMessage.class);
-            return new DeadLetterQueueMessage(
-                    record.getId().getValue(),
-                    value(values, DEAD_LETTER_ORIGINAL_RECORD_ID_KEY),
-                    message,
-                    integerValue(values, DEAD_LETTER_FAILURE_COUNT_KEY),
-                    value(values, DEAD_LETTER_LAST_ERROR_KEY),
-                    longValue(values, DEAD_LETTER_FAILED_AT_KEY),
-                    value(values, DEAD_LETTER_REASON_KEY));
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to parse Redis Stream DLQ message", e);
-        }
+        return new DeadLetterQueueMessage(
+                record.getId().getValue(),
+                value(values, DEAD_LETTER_ORIGINAL_RECORD_ID_KEY),
+                value(values, STREAM_PAYLOAD_KEY),
+                integerValue(values, DEAD_LETTER_FAILURE_COUNT_KEY),
+                value(values, DEAD_LETTER_LAST_ERROR_KEY),
+                longValue(values, DEAD_LETTER_FAILED_AT_KEY),
+                value(values, DEAD_LETTER_REASON_KEY));
     }
 
     private ChatMessage toReservedChatMessage(MapRecord<String, Object, Object> record) {

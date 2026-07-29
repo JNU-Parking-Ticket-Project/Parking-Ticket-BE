@@ -9,7 +9,7 @@ import lombok.Getter;
 public class DeadLetterQueueMessage {
     private final String recordId;
     private final String originalRecordId;
-    private final ChatMessage message;
+    private final String payload;
     private final int failureCount;
     private final String lastError;
     private final long failedAt;

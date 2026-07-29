@@ -213,7 +213,7 @@ public class WaitingQueueService {
             String streamKey,
             String group,
             String recordId,
-            ChatMessage message,
+            String payload,
             int maxFailures,
             Throwable throwable) {
         if (maxFailures < 1) {
@@ -223,7 +223,7 @@ public class WaitingQueueService {
                 streamKey,
                 group,
                 recordId,
-                message,
+                payload,
                 maxFailures,
                 errorMessage(throwable),
                 PROCESSING_FAILURE_REASON,
@@ -232,15 +232,15 @@ public class WaitingQueueService {
 
     public long drainEventStream(Long eventId, String group) {
         String streamKey = eventStreamKey(eventId);
-        List<StreamQueueMessage> messages = redisRepository.xRange(streamKey);
+        List<RawStreamMessage> messages = redisRepository.xRangeRaw(streamKey);
         long movedCount = 0L;
-        for (StreamQueueMessage message : messages) {
+        for (RawStreamMessage message : messages) {
             DeadLetterTransferResult result =
                     moveToDeadLetter(
                             streamKey,
                             group,
                             message.getRecordId(),
-                            message.getMessage(),
+                            message.getPayload(),
                             1,
                             "Event queue drain grace period elapsed",
                             EVENT_DRAIN_REASON,
@@ -325,7 +325,7 @@ public class WaitingQueueService {
             String streamKey,
             String group,
             String recordId,
-            ChatMessage message,
+            String payload,
             int maxFailures,
             String lastError,
             String reason,
@@ -336,7 +336,7 @@ public class WaitingQueueService {
                 streamDeadLetterKey(streamKey),
                 group,
                 recordId,
-                message,
+                payload,
                 maxFailures,
                 lastError,
                 System.currentTimeMillis(),

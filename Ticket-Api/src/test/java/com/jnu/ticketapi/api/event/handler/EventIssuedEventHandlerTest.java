@@ -19,7 +19,6 @@ import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
-import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.time.LocalDateTime;
@@ -103,46 +102,6 @@ class EventIssuedEventHandlerTest {
 
         verify(waitingQueueService, never())
                 .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "2-0");
-    }
-
-    @Test
-    @DisplayName("로컬 재시도가 모두 실패하면 delivery 실패 횟수를 기록한다")
-    void recoverRecordsExhaustedDeliveryFailure() {
-        StreamQueueMessage event = event("2-0", "not-json");
-        IllegalStateException failure = new IllegalStateException("DB 저장 실패");
-        when(waitingQueueService.recordProcessingFailure(
-                        EVENT_STREAM_KEY,
-                        REDIS_EVENT_ISSUE_GROUP,
-                        "2-0",
-                        event.getMessage(),
-                        3,
-                        failure))
-                .thenReturn(new DeadLetterTransferResult(1, false));
-
-        eventIssuedEventHandler.recover(failure, event);
-
-        verify(waitingQueueService)
-                .recordProcessingFailure(
-                        EVENT_STREAM_KEY,
-                        REDIS_EVENT_ISSUE_GROUP,
-                        "2-0",
-                        event.getMessage(),
-                        3,
-                        failure);
-        verify(waitingQueueService, never())
-                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "2-0");
-    }
-
-    @Test
-    @DisplayName("Stream record id가 없는 이전 이벤트는 DLQ 실패 횟수를 기록하지 않는다")
-    void recoverSkipsLegacyEventWithoutStreamRecordId() {
-        StreamQueueMessage event = event(null, "{}");
-
-        eventIssuedEventHandler.recover(new IllegalStateException("저장 실패"), event);
-
-        verify(waitingQueueService, never())
-                .recordProcessingFailure(
-                        any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyInt(), any());
     }
 
     @Test
