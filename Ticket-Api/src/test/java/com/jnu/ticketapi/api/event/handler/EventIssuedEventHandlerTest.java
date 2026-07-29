@@ -18,9 +18,9 @@ import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
-import com.jnu.ticketinfrastructure.domainEvent.EventIssuedEvent;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
+import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -74,7 +74,7 @@ class EventIssuedEventHandlerTest {
     @Test
     @DisplayName("DB 트랜잭션이 커밋된 뒤에만 Stream record를 ACK하고 삭제한다")
     void handleAcknowledgesStreamRecordAfterCommit() {
-        EventIssuedEvent event = event("1-0", registrationJson());
+        StreamQueueMessage event = event("1-0", registrationJson());
         givenQueuedRegistrationSector();
         when(userAdaptor.findById(1L)).thenReturn(queuedUser);
         when(registrationAdaptor.save(any(Registration.class)))
@@ -95,7 +95,7 @@ class EventIssuedEventHandlerTest {
     @Test
     @DisplayName("처리에 실패하면 예외를 다시 던지고 Stream record를 ACK하지 않는다")
     void handleKeepsStreamRecordPendingOnFailure() {
-        EventIssuedEvent event = event("2-0", "not-json");
+        StreamQueueMessage event = event("2-0", "not-json");
         when(sectorAdaptor.findByIdForUpdate(2L)).thenReturn(sector);
 
         assertThatThrownBy(() -> eventIssuedEventHandler.handle(event))
@@ -108,7 +108,7 @@ class EventIssuedEventHandlerTest {
     @Test
     @DisplayName("로컬 재시도가 모두 실패하면 delivery 실패 횟수를 기록한다")
     void recoverRecordsExhaustedDeliveryFailure() {
-        EventIssuedEvent event = event("2-0", "not-json");
+        StreamQueueMessage event = event("2-0", "not-json");
         IllegalStateException failure = new IllegalStateException("DB 저장 실패");
         when(waitingQueueService.recordProcessingFailure(
                         EVENT_STREAM_KEY,
@@ -136,7 +136,7 @@ class EventIssuedEventHandlerTest {
     @Test
     @DisplayName("Stream record id가 없는 이전 이벤트는 DLQ 실패 횟수를 기록하지 않는다")
     void recoverSkipsLegacyEventWithoutStreamRecordId() {
-        EventIssuedEvent event = EventIssuedEvent.from(new ChatMessage("{}", 1L, 2L, 3L), 1_000D);
+        StreamQueueMessage event = event(null, "{}");
 
         eventIssuedEventHandler.recover(new IllegalStateException("저장 실패"), event);
 
@@ -148,7 +148,7 @@ class EventIssuedEventHandlerTest {
     @Test
     @DisplayName("ID가 없는 신규 신청도 같은 이벤트와 이메일로 이미 저장됐다면 재처리하지 않는다")
     void handleSkipsRedeliveredRegistrationWithoutId() {
-        EventIssuedEvent event = event("3-0", registrationJson());
+        StreamQueueMessage event = event("3-0", registrationJson());
         when(sectorAdaptor.findByIdForUpdate(2L)).thenReturn(sector);
         when(registrationAdaptor.existsByEmailAndIsSavedTrue("student@jnu.ac.kr", 3L))
                 .thenReturn(true);
@@ -271,9 +271,9 @@ class EventIssuedEventHandlerTest {
         synchronizations.forEach(TransactionSynchronization::afterCommit);
     }
 
-    private EventIssuedEvent event(String recordId, String registration) {
-        return EventIssuedEvent.from(
-                new ChatMessage(registration, 1L, 2L, 3L), recordId, EVENT_STREAM_KEY);
+    private StreamQueueMessage event(String recordId, String registration) {
+        return new StreamQueueMessage(
+                EVENT_STREAM_KEY, recordId, new ChatMessage(registration, 1L, 2L, 3L));
     }
 
     private String registrationJson() {

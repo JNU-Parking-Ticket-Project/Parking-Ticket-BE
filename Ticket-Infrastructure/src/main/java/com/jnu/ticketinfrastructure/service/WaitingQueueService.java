@@ -8,14 +8,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
+import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
+import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
+import com.jnu.ticketinfrastructure.model.StreamConsumerState;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -36,14 +38,12 @@ import org.springframework.stereotype.Service;
 public class WaitingQueueService {
 
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
-    private static final Duration STREAM_PENDING_MIN_IDLE_TIME = Duration.ofSeconds(30);
     private static final Duration DEAD_LETTER_RETENTION = Duration.ofDays(7);
     private static final Duration DRAINED_STREAM_RETENTION = Duration.ofDays(1);
     private static final long DEAD_LETTER_MAX_LENGTH = 1_000L;
     private static final int MAX_ERROR_LENGTH = 1_000;
     private static final String PROCESSING_FAILURE_REASON = "PROCESSING_FAILURE";
     private static final String EVENT_DRAIN_REASON = "EVENT_DRAIN_TIMEOUT";
-
     private final RedisRepository redisRepository;
     @Autowired private ObjectMapper objectMapper;
 
@@ -169,18 +169,36 @@ public class WaitingQueueService {
         return redisRepository.zRangeWithScores(key, 0L, -1L);
     }
 
-    public List<StreamQueueMessage> readGroup(
-            String key, String group, String consumer, long count) {
-        List<StreamQueueMessage> recovered =
-                redisRepository.xClaimStale(
-                        key, group, consumer, count, STREAM_PENDING_MIN_IDLE_TIME);
-        if (recovered.size() >= count) {
-            return recovered;
-        }
+    public List<RawStreamMessage> readNewMessages(
+            String key, String group, String consumer, long count, Duration blockTimeout) {
+        return redisRepository.xReadGroupBlocking(key, group, consumer, count, blockTimeout);
+    }
 
-        List<StreamQueueMessage> messages = new ArrayList<>(recovered);
-        messages.addAll(redisRepository.xReadGroup(key, group, consumer, count - recovered.size()));
-        return messages;
+    public AutoClaimResult autoClaimMessages(
+            String key,
+            String group,
+            String consumer,
+            long count,
+            Duration minIdleTime,
+            String startId) {
+        return redisRepository.xAutoClaim(key, group, consumer, count, minIdleTime, startId);
+    }
+
+    public StreamQueueMessage deserialize(String streamKey, RawStreamMessage rawMessage) {
+        try {
+            return new StreamQueueMessage(
+                    streamKey,
+                    rawMessage.getRecordId(),
+                    objectMapper.readValue(rawMessage.getPayload(), ChatMessage.class));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to parse Redis Stream message", e);
+        }
+    }
+
+    public StreamConsumerState getConsumerState(String key, String group, int inFlight) {
+        long pending = redisRepository.xPendingCount(key, group);
+        long lag = Math.max(0L, redisRepository.xLength(key) - pending);
+        return new StreamConsumerState(lag, pending, inFlight);
     }
 
     public Long acknowledge(String key, String group, String recordId) {

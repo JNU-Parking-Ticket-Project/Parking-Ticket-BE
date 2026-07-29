@@ -5,7 +5,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.jnu.ticketbatch.config.FinalizeQueueDrainJob;
-import com.jnu.ticketbatch.config.ProcessQueueDataJob;
+import com.jnu.ticketbatch.expired.BatchQuartzJob;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -37,21 +37,20 @@ class EventRegisterJobTest {
     }
 
     @Test
-    @DisplayName("대기열 소비 종료 60초 뒤 세 번의 종료 drain을 예약한다")
-    void processQueueDataJobSchedulesFinalDrainRetries() throws Exception {
-        LocalDateTime startAt = LocalDateTime.of(2026, 7, 29, 10, 0);
+    @DisplayName("이벤트 종료 Job과 함께 유예시간 이후 세 번의 최종 drain을 예약한다")
+    void expiredJobSchedulesFinalDrainRetries() throws Exception {
         LocalDateTime endAt = LocalDateTime.of(2026, 7, 29, 10, 10);
         ArgumentCaptor<JobDetail> jobCaptor = ArgumentCaptor.forClass(JobDetail.class);
         ArgumentCaptor<Trigger> triggerCaptor = ArgumentCaptor.forClass(Trigger.class);
 
-        eventRegisterJob.processQueueDataJob(3L, startAt, endAt);
+        eventRegisterJob.expiredJob(3L, endAt);
 
         verify(scheduler, times(2)).scheduleJob(jobCaptor.capture(), triggerCaptor.capture());
         List<JobDetail> jobs = jobCaptor.getAllValues();
         List<Trigger> triggers = triggerCaptor.getAllValues();
         assertThat(jobs)
                 .extracting(JobDetail::getJobClass)
-                .containsExactly(ProcessQueueDataJob.class, FinalizeQueueDrainJob.class);
+                .containsExactly(BatchQuartzJob.class, FinalizeQueueDrainJob.class);
 
         SimpleTrigger finalizeTrigger = (SimpleTrigger) triggers.get(1);
         Date expectedStart =
