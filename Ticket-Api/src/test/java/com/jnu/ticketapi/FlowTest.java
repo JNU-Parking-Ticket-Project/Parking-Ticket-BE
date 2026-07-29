@@ -457,6 +457,7 @@ public class FlowTest implements UsingContainers {
 
     private void rescheduleJob() throws SchedulerException {
         scheduler.clear();
+        prepareEventPeriodForImmediateOpen();
 
         JobDetail openJob = createEventOpenJob();
         Trigger openTrigger = createEventOpenTrigger(openJob);
@@ -517,12 +518,21 @@ public class FlowTest implements UsingContainers {
                 .build();
 
         LocalDateTime now = LocalDateTime.now();
-        DateTimePeriod dateTimePeriod = new DateTimePeriod(now.plusSeconds(5), now.plusMinutes(10));
+        DateTimePeriod dateTimePeriod =
+                new DateTimePeriod(now.plusMinutes(5), now.plusMinutes(15));
 
         EventRegisterRequest registerRequest = new EventRegisterRequest(dateTimePeriod, "주차권 이벤트");
         client.post().uri("/v1/events")
                 .bodyValue(registerRequest)
                 .exchange().expectStatus().isOk();
+    }
+
+    private void prepareEventPeriodForImmediateOpen() {
+        LocalDateTime now = LocalDateTime.now();
+        Event event = eventRepository.findFirstByOrderByIdDesc().orElseThrow();
+        event.updateDateTimePeriod(
+                new DateTimePeriod(now.minusSeconds(1), now.plusMinutes(10)));
+        eventRepository.saveAndFlush(event);
     }
 
     private void createCaptcha() {
