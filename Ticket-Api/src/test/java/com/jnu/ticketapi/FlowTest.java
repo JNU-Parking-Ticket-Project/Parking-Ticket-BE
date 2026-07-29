@@ -23,7 +23,9 @@ import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketdomain.domains.user.repository.UserRepository;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
+import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.quartz.*;
@@ -106,10 +108,18 @@ public class FlowTest implements UsingContainers {
     @Autowired
     ResultAssignment resultAssignment;
 
+    @Autowired
+    RedisStreamConsumerManager streamConsumerManager;
+
     private record Setting(int capacity, int reserve, int requestCount) {
     }
 
     private Long USER_IDENTIFIER = 1L;
+
+    @AfterEach
+    void stopStreamConsumer() {
+        streamConsumerManager.stopImmediately(EVENT_VALUE);
+    }
 
 
     /**
@@ -436,4 +446,3 @@ public class FlowTest implements UsingContainers {
     }
 
 }
-
