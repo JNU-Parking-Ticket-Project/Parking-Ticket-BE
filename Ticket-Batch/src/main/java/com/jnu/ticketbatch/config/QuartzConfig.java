@@ -1,6 +1,5 @@
 package com.jnu.ticketbatch.config;
 
-
 import javax.sql.DataSource;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +18,8 @@ public class QuartzConfig {
         SchedulerFactoryBean factory = new SchedulerFactoryBean();
         factory.setJobFactory(jobFactory); // AutoWiringSpringBeanJobFactory 설정
         factory.setDataSource(dataSource); // DataSource 설정
+        // JDBC JobStore may still contain the removed ProcessQueueDataJob class. Starting Quartz
+        // before deleting that entry makes recovery fail with ClassNotFoundException.
         factory.setAutoStartup(false);
         return factory;
     }
