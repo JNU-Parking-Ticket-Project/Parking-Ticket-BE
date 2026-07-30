@@ -38,7 +38,7 @@ public class EventStreamConsumerLifecycleHandler {
     private long startupDrainTimeoutMillis = 300_000L;
 
     @EventListener(ApplicationReadyEvent.class)
-    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @Order(Ordered.HIGHEST_PRECEDENCE + 10)
     public void restoreOpenEventSubscription() {
         try {
             Event event = eventAdaptor.findOpenEvent();

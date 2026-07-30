@@ -96,14 +96,31 @@ public class WaitingQueueService {
             throw NotFoundSectorException.EXCEPTION;
         }
         List<SectorStockInitialization> initializations =
-                sectors.stream()
-                        .map(sector -> toStockInitialization(eventId, sector))
-                        .toList();
+                sectors.stream().map(sector -> toStockInitialization(eventId, sector)).toList();
         return redisRepository.initializeEventStock(
                 initializedKey(eventId),
                 reservedEmailKey(eventId),
                 closedKey(eventId),
                 initializations);
+    }
+
+    public boolean rebuildEventStock(
+            Long eventId, List<Sector> sectors, Set<String> reservedEmails) {
+        if (sectors == null || sectors.isEmpty()) {
+            throw NotFoundSectorException.EXCEPTION;
+        }
+        List<SectorStockInitialization> initializations =
+                sectors.stream().map(sector -> toStockInitialization(eventId, sector)).toList();
+        return redisRepository.rebuildEventStock(
+                initializedKey(eventId),
+                reservedEmailKey(eventId),
+                closedKey(eventId),
+                initializations,
+                reservedEmails == null ? Set.of() : reservedEmails);
+    }
+
+    public boolean isAvailable() {
+        return redisRepository.ping();
     }
 
     public String convertRegistrationJSON(Registration registration) {

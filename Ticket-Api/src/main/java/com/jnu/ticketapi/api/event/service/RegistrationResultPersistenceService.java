@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.event.service;
 
+
 import com.jnu.ticketdomain.domains.email.adaptor.EmailOutboxAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
@@ -13,8 +14,13 @@ import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -84,11 +90,7 @@ public class RegistrationResultPersistenceService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public StockReservationResult persistWithDatabaseFallback(
-            Registration registration,
-            Long userId,
-            Long sectorId,
-            Long eventId,
-            long savedAt) {
+            Registration registration, Long userId, Long sectorId, Long eventId, long savedAt) {
         User user = userAdaptor.findByIdForUpdate(userId);
         Sector sector = sectorAdaptor.findByIdForUpdate(sectorId);
         validateSector(sector, eventId);
@@ -115,6 +117,52 @@ public class RegistrationResultPersistenceService {
                 decision.resultStatus,
                 decision.sequence,
                 savedAt);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public EventStockRecoverySnapshot prepareRecoverySnapshot(Long eventId) {
+        List<Registration> savedRegistrations =
+                registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(eventId);
+        Map<Long, List<Registration>> registrationsBySector =
+                savedRegistrations.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        registration -> registration.getSector().getId()));
+        List<Sector> sectors =
+                sectorAdaptor.findByEventId(eventId).stream()
+                        .sorted(Comparator.comparing(Sector::getId))
+                        .map(sector -> sectorAdaptor.findByIdForUpdate(sector.getId()))
+                        .toList();
+        if (sectors.isEmpty()) {
+            throw NotFoundSectorException.EXCEPTION;
+        }
+
+        for (Sector sector : sectors) {
+            validateSector(sector, eventId);
+            List<Registration> sectorRegistrations =
+                    registrationsBySector.getOrDefault(sector.getId(), List.of());
+            int maxPosition =
+                    sectorRegistrations.stream()
+                            .map(Registration::getPosition)
+                            .filter(Objects::nonNull)
+                            .max(Integer::compareTo)
+                            .orElse(0);
+            int assignedFromCheckpoint = sector.getIssueAmount() - currentRemaining(sector);
+            int assignedPosition =
+                    Math.min(
+                            sector.getIssueAmount(),
+                            Math.max(
+                                    assignedFromCheckpoint,
+                                    Math.max(maxPosition, sectorRegistrations.size())));
+            sector.syncRemainingAmount(sector.getIssueAmount() - assignedPosition);
+        }
+
+        Set<String> reservedEmails =
+                savedRegistrations.stream()
+                        .map(Registration::getEmail)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toUnmodifiableSet());
+        return new EventStockRecoverySnapshot(List.copyOf(sectors), reservedEmails);
     }
 
     private StockReservationResult saveResult(
@@ -170,8 +218,7 @@ public class RegistrationResultPersistenceService {
     }
 
     private void validateSector(Sector sector, Long eventId) {
-        if (sector.getEvent() == null
-                || !Objects.equals(sector.getEvent().getId(), eventId)) {
+        if (sector.getEvent() == null || !Objects.equals(sector.getEvent().getId(), eventId)) {
             throw NotFoundSectorException.EXCEPTION;
         }
         if (sector.getEvent().getEventStatus() != EventStatus.OPEN) {

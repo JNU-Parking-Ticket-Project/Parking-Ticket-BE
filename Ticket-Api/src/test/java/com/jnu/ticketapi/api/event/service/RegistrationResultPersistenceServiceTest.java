@@ -11,6 +11,7 @@ import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.NotOpenEventStatusException;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
@@ -19,6 +20,7 @@ import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -89,8 +91,7 @@ class RegistrationResultPersistenceServiceTest {
         when(registrationAdaptor.saveAndFlush(registration)).thenReturn(registration);
 
         StockReservationResult result =
-                service.persistWithDatabaseFallback(
-                        registration, 30L, 20L, 10L, 2_345L);
+                service.persistWithDatabaseFallback(registration, 30L, 20L, 10L, 2_345L);
 
         assertThat(result.getPosition()).isEqualTo(1);
         assertThat(result.getResultStatus()).isEqualTo(UserStatus.SUCCESS);
@@ -146,6 +147,38 @@ class RegistrationResultPersistenceServiceTest {
                 .isInstanceOf(IllegalStateException.class);
 
         verify(registrationAdaptor, never()).saveAndFlush(registration);
+    }
+
+    @Test
+    @DisplayName("Redis 복구 스냅샷은 DB position과 체크포인트 중 더 진행된 값을 보존한다")
+    void preparesRecoverySnapshotWithoutRewindingPosition() {
+        Sector sector = sector();
+        Registration saved = registration();
+        saved.finalSave(2, UserStatus.SUCCESS, -2);
+        saved.setSector(sector);
+        when(registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(10L))
+                .thenReturn(List.of(saved));
+        when(sectorAdaptor.findByEventId(10L)).thenReturn(List.of(sector));
+        when(sectorAdaptor.findByIdForUpdate(20L)).thenReturn(sector);
+
+        EventStockRecoverySnapshot snapshot = service.prepareRecoverySnapshot(10L);
+
+        assertThat(snapshot.sectors()).containsExactly(sector);
+        assertThat(snapshot.reservedEmails()).containsExactly("student@jnu.ac.kr");
+        assertThat(sector.getRemainingAmount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("CLOSED 이벤트는 Redis 접수 상태를 다시 만들지 않는다")
+    void rejectsRecoverySnapshotForClosedEvent() {
+        Sector sector = sector();
+        ReflectionTestUtils.setField(sector.getEvent(), "eventStatus", EventStatus.CLOSED);
+        when(registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(10L)).thenReturn(List.of());
+        when(sectorAdaptor.findByEventId(10L)).thenReturn(List.of(sector));
+        when(sectorAdaptor.findByIdForUpdate(20L)).thenReturn(sector);
+
+        assertThatThrownBy(() -> service.prepareRecoverySnapshot(10L))
+                .isSameAs(NotOpenEventStatusException.EXCEPTION);
     }
 
     private void givenLockedEntities(User user, Sector sector) {
