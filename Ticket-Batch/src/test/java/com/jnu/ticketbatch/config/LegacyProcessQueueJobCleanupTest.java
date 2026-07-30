@@ -39,6 +39,7 @@ class LegacyProcessQueueJobCleanupTest {
         ArgumentCaptor<List<JobKey>> jobKeys = ArgumentCaptor.forClass(List.class);
         verify(scheduler).deleteJobs(jobKeys.capture());
         assertThat(jobKeys.getValue()).containsExactly(legacyJob);
+        verify(scheduler).start();
         assertThat(cleanup.isRunning()).isTrue();
         assertThat(cleanup.getPhase()).isLessThan(Integer.MAX_VALUE);
     }
@@ -52,6 +53,7 @@ class LegacyProcessQueueJobCleanupTest {
         cleanup.start();
 
         verify(scheduler, never()).deleteJobs(anyList());
+        verify(scheduler).start();
         assertThat(cleanup.isRunning()).isTrue();
     }
 
@@ -64,6 +66,21 @@ class LegacyProcessQueueJobCleanupTest {
         assertThatThrownBy(cleanup::start)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("PROCESS_QUEUE_DATA_JOB");
+        verify(scheduler, never()).start();
+        assertThat(cleanup.isRunning()).isFalse();
+    }
+
+    @Test
+    void failsStartupWhenQuartzCannotStartAfterCleanup() throws Exception {
+        when(scheduler.getJobKeys(GroupMatcher.anyJobGroup())).thenReturn(Set.of());
+        org.mockito.Mockito.doThrow(new SchedulerException("scheduler unavailable"))
+                .when(scheduler)
+                .start();
+        LegacyProcessQueueJobCleanup cleanup = new LegacyProcessQueueJobCleanup(scheduler);
+
+        assertThatThrownBy(cleanup::start)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("start Quartz");
         assertThat(cleanup.isRunning()).isFalse();
     }
 }

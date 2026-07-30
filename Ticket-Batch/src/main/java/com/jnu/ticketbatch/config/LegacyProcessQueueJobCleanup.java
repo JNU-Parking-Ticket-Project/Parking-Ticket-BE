@@ -11,7 +11,7 @@ import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
 
-/** Removes the durable 400ms polling jobs left in JDBC JobStore by the legacy queue consumer. */
+/** Removes durable 400ms polling jobs from JDBC JobStore, then starts Quartz recovery. */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -42,10 +42,11 @@ public class LegacyProcessQueueJobCleanup implements SmartLifecycle {
                         "Removed legacy Quartz polling jobs before scheduler startup. jobs: {}",
                         legacyJobKeys);
             }
+            scheduler.start();
             running = true;
         } catch (SchedulerException e) {
             throw new IllegalStateException(
-                    "Failed to remove legacy PROCESS_QUEUE_DATA_JOB entries", e);
+                    "Failed to remove legacy PROCESS_QUEUE_DATA_JOB entries and start Quartz", e);
         }
     }
 
