@@ -8,20 +8,23 @@ import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
-import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
 @RequiredArgsConstructor
+@Slf4j
 public class UpdateEventStatusUseCase {
     private static final Duration REDIS_STOCK_DRAIN_TIMEOUT = Duration.ofMinutes(5);
 
     private final EventAdaptor eventAdaptor;
     private final SectorAdaptor sectorAdaptor;
+    private final RegistrationAdmissionCoordinator registrationAdmissionCoordinator;
 
     @Autowired(required = false)
     private WaitingQueueService waitingQueueService;
@@ -31,9 +34,8 @@ public class UpdateEventStatusUseCase {
     public EventResponse execute(Long eventId, UpdateEventStatusRequest updateEventStatusRequest) {
         final Event event = eventAdaptor.findById(eventId);
         final EventStatus status = updateEventStatusRequest.getStatus();
-        if (status == EventStatus.OPEN && waitingQueueService != null) {
-            waitingQueueService.initializeEventStock(
-                    eventId, sectorAdaptor.findByEventId(eventId));
+        if (status == EventStatus.OPEN) {
+            initializeAdmission(eventId);
         }
         if (status == EventStatus.CLOSED && waitingQueueService != null) {
             closeEventStock(eventId);
@@ -42,16 +44,26 @@ public class UpdateEventStatusUseCase {
     }
 
     private void closeEventStock(Long eventId) {
-        waitingQueueService.markEventStockClosed(eventId, REDIS_STOCK_DRAIN_TIMEOUT);
-        for (Sector sector : sectorAdaptor.findByEventId(eventId)) {
-            waitingQueueService
-                    .findRemainingStock(eventId, sector.getId())
-                    .ifPresent(
-                            remainingAmount -> {
-                                sector.syncRemainingAmount(remainingAmount);
-                                sectorAdaptor.save(sector);
-                            });
+        try {
+            waitingQueueService.markEventStockClosed(eventId, REDIS_STOCK_DRAIN_TIMEOUT);
+            waitingQueueService.expireEventStockKeys(eventId, REDIS_STOCK_DRAIN_TIMEOUT);
+        } catch (DataAccessException exception) {
+            log.warn(
+                    "Redis event stock could not be closed; DB event status remains authoritative. eventId: {}",
+                    eventId,
+                    exception);
         }
-        waitingQueueService.expireEventStockKeys(eventId, REDIS_STOCK_DRAIN_TIMEOUT);
+    }
+
+    private void initializeAdmission(Long eventId) {
+        if (waitingQueueService == null) {
+            registrationAdmissionCoordinator.activateDatabaseFallback(eventId, null);
+            return;
+        }
+        try {
+            waitingQueueService.initializeEventStock(eventId, sectorAdaptor.findByEventId(eventId));
+        } catch (DataAccessException exception) {
+            registrationAdmissionCoordinator.activateDatabaseFallback(eventId, exception);
+        }
     }
 }

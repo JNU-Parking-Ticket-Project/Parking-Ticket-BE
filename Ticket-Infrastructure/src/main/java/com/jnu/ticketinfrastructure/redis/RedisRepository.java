@@ -1,5 +1,6 @@
 package com.jnu.ticketinfrastructure.redis;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
@@ -60,6 +61,21 @@ public class RedisRepository {
                     + "  redis.call('SET', KEYS[keyIndex], ARGV[argumentIndex]) "
                     + "  redis.call('SET', KEYS[keyIndex + 1], ARGV[argumentIndex + 1]) "
                     + "  argumentIndex = argumentIndex + 2 "
+                    + "end "
+                    + "redis.call('SET', KEYS[1], '1') "
+                    + "return 1";
+    private static final String REBUILD_EVENT_STOCK_SCRIPT =
+            "redis.call('DEL', KEYS[1]) "
+                    + "redis.call('DEL', KEYS[2]) "
+                    + "redis.call('DEL', KEYS[3]) "
+                    + "local argumentIndex = 1 "
+                    + "for keyIndex = 4, #KEYS, 2 do "
+                    + "  redis.call('SET', KEYS[keyIndex], ARGV[argumentIndex]) "
+                    + "  redis.call('SET', KEYS[keyIndex + 1], ARGV[argumentIndex + 1]) "
+                    + "  argumentIndex = argumentIndex + 2 "
+                    + "end "
+                    + "for emailIndex = argumentIndex, #ARGV do "
+                    + "  redis.call('SADD', KEYS[2], ARGV[emailIndex]) "
                     + "end "
                     + "redis.call('SET', KEYS[1], '1') "
                     + "return 1";
@@ -326,8 +342,49 @@ public class RedisRepository {
                                                         StandardCharsets.UTF_8),
                                                 ReturnType.INTEGER,
                                                 keys.size(),
-                                                redisArgs(scriptParameters.toArray(new String[0]))));
+                                                redisArgs(
+                                                        scriptParameters.toArray(new String[0]))));
         return initialized != null && initialized == 1L;
+    }
+
+    public boolean rebuildEventStock(
+            String initializedKey,
+            String reservedEmailKey,
+            String closedKey,
+            List<SectorStockInitialization> sectors,
+            Set<String> reservedEmails) {
+        List<String> keys = new ArrayList<>();
+        keys.add(initializedKey);
+        keys.add(reservedEmailKey);
+        keys.add(closedKey);
+        List<String> arguments = new ArrayList<>();
+        for (SectorStockInitialization sector : sectors) {
+            keys.add(sector.getStockKey());
+            keys.add(sector.getSequenceKey());
+            arguments.add(String.valueOf(sector.getRemainingAmount()));
+            arguments.add(String.valueOf(sector.getAssignedPosition()));
+        }
+        arguments.addAll(reservedEmails);
+        List<String> scriptParameters = new ArrayList<>(keys);
+        scriptParameters.addAll(arguments);
+        Long rebuilt =
+                redisTemplate.execute(
+                        (RedisCallback<Long>)
+                                connection ->
+                                        connection.eval(
+                                                REBUILD_EVENT_STOCK_SCRIPT.getBytes(
+                                                        StandardCharsets.UTF_8),
+                                                ReturnType.INTEGER,
+                                                keys.size(),
+                                                redisArgs(
+                                                        scriptParameters.toArray(new String[0]))));
+        return rebuilt != null && rebuilt == 1L;
+    }
+
+    public boolean ping() {
+        String response =
+                redisTemplate.execute((RedisCallback<String>) connection -> connection.ping());
+        return "PONG".equalsIgnoreCase(response);
     }
 
     public void createConsumerGroupIfAbsent(String key, String group) {
@@ -569,12 +626,12 @@ public class RedisRepository {
     private String payload(Map<byte[], byte[]> body) {
         Optional<String> payload =
                 body.entrySet().stream()
-                .filter(
-                        entry ->
-                                STREAM_PAYLOAD_KEY.equals(
-                                        new String(entry.getKey(), StandardCharsets.UTF_8)))
-                .map(entry -> new String(entry.getValue(), StandardCharsets.UTF_8))
-                .findFirst();
+                        .filter(
+                                entry ->
+                                        STREAM_PAYLOAD_KEY.equals(
+                                                new String(entry.getKey(), StandardCharsets.UTF_8)))
+                        .map(entry -> new String(entry.getValue(), StandardCharsets.UTF_8))
+                        .findFirst();
         if (payload.isPresent()) {
             return payload.get();
         }
@@ -582,9 +639,7 @@ public class RedisRepository {
                 body.entrySet().stream()
                         .collect(
                                 java.util.stream.Collectors.toMap(
-                                        entry ->
-                                                new String(
-                                                        entry.getKey(), StandardCharsets.UTF_8),
+                                        entry -> new String(entry.getKey(), StandardCharsets.UTF_8),
                                         entry ->
                                                 new String(
                                                         entry.getValue(), StandardCharsets.UTF_8)));
