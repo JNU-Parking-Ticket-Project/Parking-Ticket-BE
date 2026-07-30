@@ -30,5 +30,7 @@ public interface RegistrationLoadPort {
 
     Boolean existsByIdAndIsSavedTrue(Long id);
 
+    Long countSavedBySectorId(Long sectorId);
+
     List<Registration> findSortedRegistrationsByEventId(Long eventId);
 }

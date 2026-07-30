@@ -121,6 +121,11 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     }
 
     @Override
+    public Long countSavedBySectorId(Long sectorId) {
+        return registrationRepository.countSavedBySectorId(sectorId);
+    }
+
+    @Override
     public List<Registration> findSortedRegistrationsByEventId(Long eventId) {
         return registrationRepository.findSortedRegistrationsByEventId(eventId);
     }

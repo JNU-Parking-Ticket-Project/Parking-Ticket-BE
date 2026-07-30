@@ -91,4 +91,7 @@ public interface RegistrationRepository
     Integer findPositionBySavedAt(@Param("id") Long id, @Param("sectorId") Long sectorId);
 
     Boolean existsByIdAndIsSavedTrue(Long id);
+
+    @Query("select count(r) from Registration r where r.isSaved = true and r.sector.id = :sectorId")
+    Long countSavedBySectorId(@Param("sectorId") Long sectorId);
 }
