@@ -106,6 +106,15 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
         return registrationRepository.countSavedBySectorId(sectorId);
     }
 
+    public Optional<Registration> findSavedByEmailAndEventId(String email, Long eventId) {
+        return registrationRepository.findSavedByEmailAndEventId(email, eventId);
+    }
+
+    public Optional<Registration> findSavedBySectorIdAndPosition(
+            Long sectorId, Integer position) {
+        return registrationRepository.findSavedBySectorIdAndPosition(sectorId, position);
+    }
+
     @Override
     public List<Registration> findSortedRegistrationsByEventId(Long eventId) {
         return registrationRepository.findSortedRegistrationsByEventId(eventId);

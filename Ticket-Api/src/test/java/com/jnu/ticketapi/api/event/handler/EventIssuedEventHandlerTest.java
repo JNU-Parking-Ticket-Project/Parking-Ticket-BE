@@ -1,51 +1,38 @@
 package com.jnu.ticketapi.api.event.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jnu.ticketdomain.domains.email.adaptor.EmailOutboxAdaptor;
-import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
-import com.jnu.ticketdomain.domains.events.domain.Sector;
-import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
+import com.jnu.ticketapi.api.event.service.RegistrationResultPersistenceService;
+import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import com.jnu.ticketdomain.domains.user.adaptor.UserAdaptor;
-import com.jnu.ticketdomain.domains.user.domain.User;
-import com.jnu.ticketdomain.domains.user.domain.UserRole;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
-import java.time.LocalDateTime;
-import java.util.List;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @ExtendWith(MockitoExtension.class)
 class EventIssuedEventHandlerTest {
 
     private static final String EVENT_STREAM_KEY = "쿠폰 발급 스트림:{3}";
 
-    @Mock private RegistrationAdaptor registrationAdaptor;
-    @Mock private UserAdaptor userAdaptor;
-    @Mock private EmailOutboxAdaptor emailOutboxAdaptor;
-    @Mock private SectorAdaptor sectorAdaptor;
+    @Mock private RegistrationResultPersistenceService registrationResultPersistenceService;
     @Mock private WaitingQueueService waitingQueueService;
-    @Mock private Sector sector;
-    @Mock private User queuedUser;
 
     private EventIssuedEventHandler eventIssuedEventHandler;
 
@@ -53,186 +40,113 @@ class EventIssuedEventHandlerTest {
     void setUp() {
         eventIssuedEventHandler =
                 new EventIssuedEventHandler(
-                        registrationAdaptor,
-                        userAdaptor,
-                        emailOutboxAdaptor,
-                        sectorAdaptor,
-                        new ObjectMapper());
+                        registrationResultPersistenceService, new ObjectMapper());
         ReflectionTestUtils.setField(
                 eventIssuedEventHandler, "waitingQueueService", waitingQueueService);
     }
 
-    @AfterEach
-    void clearTransactionSynchronization() {
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.clearSynchronization();
-        }
-        TransactionSynchronizationManager.setActualTransactionActive(false);
-    }
-
     @Test
-    @DisplayName("DB 트랜잭션이 커밋된 뒤에만 Stream record를 ACK하고 삭제한다")
-    void handleAcknowledgesStreamRecordAfterCommit() {
-        StreamQueueMessage event = event("1-0", registrationJson());
-        givenQueuedRegistrationSector();
-        when(userAdaptor.findById(1L)).thenReturn(queuedUser);
-        when(registrationAdaptor.save(any(Registration.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        beginTransactionSynchronization();
+    @DisplayName("DB 확정 서비스가 반환된 뒤 Stream record를 ACK하고 삭제한다")
+    void handleAcknowledgesAfterDatabasePersistenceReturns() {
+        StreamQueueMessage event =
+                event(
+                        "1234-0",
+                        new ChatMessage(
+                                registrationJson(),
+                                1L,
+                                2L,
+                                3L,
+                                1,
+                                UserStatus.SUCCESS,
+                                -2));
 
         eventIssuedEventHandler.handle(event);
 
-        verify(waitingQueueService, never())
-                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "1-0");
-
-        commitSynchronizations();
-
+        ArgumentCaptor<StockReservationResult> reservationCaptor =
+                ArgumentCaptor.forClass(StockReservationResult.class);
+        verify(registrationResultPersistenceService)
+                .persistRedisReservation(
+                        any(Registration.class),
+                        eq(1L),
+                        eq(2L),
+                        eq(3L),
+                        reservationCaptor.capture(),
+                        eq(1234L));
         verify(waitingQueueService)
-                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "1-0");
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "1234-0");
     }
 
     @Test
-    @DisplayName("처리에 실패하면 예외를 다시 던지고 Stream record를 ACK하지 않는다")
-    void handleKeepsStreamRecordPendingOnFailure() {
-        StreamQueueMessage event = event("2-0", "not-json");
-        when(sectorAdaptor.findByIdForUpdate(2L)).thenReturn(sector);
+    @DisplayName("결정 정보가 없는 레거시 메시지는 DB fallback으로 확정한다")
+    void handleLegacyMessageWithDatabaseFallback() {
+        StreamQueueMessage event =
+                event("2-0", new ChatMessage(registrationJson(), 1L, 2L, 3L));
+
+        eventIssuedEventHandler.handle(event);
+
+        verify(registrationResultPersistenceService)
+                .persistWithDatabaseFallback(
+                        any(Registration.class), eq(1L), eq(2L), eq(3L), eq(2L));
+        verify(waitingQueueService)
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "2-0");
+    }
+
+    @Test
+    @DisplayName("DB 저장이 실패하면 Stream record를 ACK하지 않는다")
+    void handleKeepsStreamRecordPendingOnPersistenceFailure() {
+        StreamQueueMessage event =
+                event(
+                        "3-0",
+                        new ChatMessage(
+                                registrationJson(),
+                                1L,
+                                2L,
+                                3L,
+                                1,
+                                UserStatus.SUCCESS,
+                                -2));
+        when(registrationResultPersistenceService.persistRedisReservation(
+                        any(), any(), any(), any(), any(), eq(3L)))
+                .thenThrow(new IllegalStateException("DB 저장 실패"));
 
         assertThatThrownBy(() -> eventIssuedEventHandler.handle(event))
                 .isInstanceOf(IllegalStateException.class);
 
         verify(waitingQueueService, never())
-                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "2-0");
-    }
-
-    @Test
-    @DisplayName("ID가 없는 신규 신청도 같은 이벤트와 이메일로 이미 저장됐다면 재처리하지 않는다")
-    void handleSkipsRedeliveredRegistrationWithoutId() {
-        StreamQueueMessage event = event("3-0", registrationJson());
-        when(sectorAdaptor.findByIdForUpdate(2L)).thenReturn(sector);
-        when(registrationAdaptor.existsByEmailAndIsSavedTrue("student@jnu.ac.kr", 3L))
-                .thenReturn(true);
-
-        eventIssuedEventHandler.handle(event);
-
-        verify(userAdaptor, never()).findById(1L);
-        verify(registrationAdaptor, never()).save(any());
-        verify(waitingQueueService)
                 .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "3-0");
     }
 
     @Test
-    @DisplayName("정원 이내 position이면 합격으로 확정하고 outbox를 생성한다")
-    void processQueueDataDecidesSuccess() {
-        Registration registration = registration();
-        User user = user();
-        givenSector(2, 4);
-        when(registrationAdaptor.countSavedBySectorId(1L)).thenReturn(0L);
-        when(userAdaptor.findById(100L)).thenReturn(user);
-        when(registrationAdaptor.save(registration)).thenReturn(registration);
+    @DisplayName("잘못된 payload는 Stream record를 ACK하지 않는다")
+    void handleKeepsInvalidPayloadPending() {
+        StreamQueueMessage event = event("4-0", new ChatMessage("not-json", 1L, 2L, 3L));
 
-        eventIssuedEventHandler.processQueueData(sector, registration, 100L, 1_234D);
+        assertThatThrownBy(() -> eventIssuedEventHandler.handle(event))
+                .isInstanceOf(IllegalStateException.class);
 
-        assertThat(registration.getPosition()).isEqualTo(1);
-        assertThat(registration.getResultStatus()).isEqualTo(UserStatus.SUCCESS);
-        assertThat(registration.getSequence()).isEqualTo(-2);
-        assertThat(registration.getSavedAt()).isEqualTo(1_234L);
-        assertThat(user.getStatus()).isEqualTo(UserStatus.SUCCESS);
-        assertThat(user.getSequence()).isEqualTo(-2);
-        verify(sector).decreaseEventStock();
-        verify(emailOutboxAdaptor).saveRegistrationResultIfAbsent(registration);
+        verify(registrationResultPersistenceService, never())
+                .persistWithDatabaseFallback(any(), any(), any(), any(), any(Long.class));
+        verify(waitingQueueService, never())
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "4-0");
     }
 
     @Test
-    @DisplayName("정원 초과 예비 정원 이내 position이면 예비 번호로 확정한다")
-    void processQueueDataDecidesPrepare() {
-        Registration registration = registration();
-        User user = user();
-        givenSector(2, 4);
-        when(registrationAdaptor.countSavedBySectorId(1L)).thenReturn(2L);
-        when(userAdaptor.findById(100L)).thenReturn(user);
-        when(registrationAdaptor.save(registration)).thenReturn(registration);
+    @DisplayName("레거시 메시지 처리 시 DB 재고가 없으면 ACK하고 종료한다")
+    void handleAcknowledgesLegacyMessageWhenDatabaseStockIsEmpty() {
+        StreamQueueMessage event =
+                event("5-0", new ChatMessage(registrationJson(), 1L, 2L, 3L));
+        when(registrationResultPersistenceService.persistWithDatabaseFallback(
+                        any(), eq(1L), eq(2L), eq(3L), eq(5L)))
+                .thenThrow(NoEventStockLeftException.EXCEPTION);
 
-        eventIssuedEventHandler.processQueueData(sector, registration, 100L);
+        eventIssuedEventHandler.handle(event);
 
-        assertThat(registration.getPosition()).isEqualTo(3);
-        assertThat(registration.getResultStatus()).isEqualTo(UserStatus.PREPARE);
-        assertThat(registration.getSequence()).isEqualTo(1);
-        assertThat(user.getStatus()).isEqualTo(UserStatus.PREPARE);
-        assertThat(user.getSequence()).isEqualTo(1);
-        verify(sector).decreaseEventStock();
-        verify(emailOutboxAdaptor).saveRegistrationResultIfAbsent(registration);
+        verify(waitingQueueService)
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "5-0");
     }
 
-    @Test
-    @DisplayName("예비 정원까지 초과한 position이면 불합격으로 저장하고 재고는 차감하지 않는다")
-    void processQueueDataDecidesFailWithoutDecreasingStock() {
-        Registration registration = registration();
-        User user = user();
-        givenSector(2, 4);
-        when(registrationAdaptor.countSavedBySectorId(1L)).thenReturn(4L);
-        when(userAdaptor.findById(100L)).thenReturn(user);
-        when(registrationAdaptor.save(registration)).thenReturn(registration);
-
-        eventIssuedEventHandler.processQueueData(sector, registration, 100L);
-
-        assertThat(registration.getPosition()).isEqualTo(5);
-        assertThat(registration.getResultStatus()).isEqualTo(UserStatus.FAIL);
-        assertThat(registration.getSequence()).isEqualTo(-1);
-        assertThat(user.getStatus()).isEqualTo(UserStatus.FAIL);
-        assertThat(user.getSequence()).isEqualTo(-1);
-        verify(sector, never()).decreaseEventStock();
-        verify(emailOutboxAdaptor).saveRegistrationResultIfAbsent(registration);
-    }
-
-    @Test
-    @DisplayName("Redis에서 확정된 position과 결과가 있으면 DB count 없이 그대로 저장한다")
-    void processQueueDataUsesRedisDecisionWithoutCountingOrDecreasingStock() {
-        Registration registration = registration();
-        User user = user();
-        ChatMessage message = new ChatMessage("{}", 100L, 1L, 10L, 3, UserStatus.PREPARE, 1);
-        when(userAdaptor.findById(100L)).thenReturn(user);
-        when(registrationAdaptor.save(registration)).thenReturn(registration);
-
-        eventIssuedEventHandler.processQueueData(sector, registration, message);
-
-        assertThat(registration.getPosition()).isEqualTo(3);
-        assertThat(registration.getResultStatus()).isEqualTo(UserStatus.PREPARE);
-        assertThat(registration.getSequence()).isEqualTo(1);
-        assertThat(user.getStatus()).isEqualTo(UserStatus.PREPARE);
-        assertThat(user.getSequence()).isEqualTo(1);
-        verify(registrationAdaptor, never())
-                .countSavedBySectorId(org.mockito.ArgumentMatchers.any());
-        verify(sector, never()).decreaseEventStock();
-        verify(emailOutboxAdaptor).saveRegistrationResultIfAbsent(registration);
-    }
-
-    private void givenQueuedRegistrationSector() {
-        when(sectorAdaptor.findByIdForUpdate(2L)).thenReturn(sector);
-        when(sector.getId()).thenReturn(2L);
-        when(sector.getInitSectorCapacity()).thenReturn(1);
-        when(registrationAdaptor.countSavedBySectorId(2L)).thenReturn(0L);
-    }
-
-    private void givenSector(int initSectorCapacity, int issueAmount) {
-        when(sector.getId()).thenReturn(1L);
-        when(sector.getInitSectorCapacity()).thenReturn(initSectorCapacity);
-        org.mockito.Mockito.lenient().when(sector.getIssueAmount()).thenReturn(issueAmount);
-    }
-
-    private void beginTransactionSynchronization() {
-        TransactionSynchronizationManager.setActualTransactionActive(true);
-        TransactionSynchronizationManager.initSynchronization();
-    }
-
-    private void commitSynchronizations() {
-        List<TransactionSynchronization> synchronizations =
-                TransactionSynchronizationManager.getSynchronizations();
-        synchronizations.forEach(TransactionSynchronization::afterCommit);
-    }
-
-    private StreamQueueMessage event(String recordId, String registration) {
-        return new StreamQueueMessage(
-                EVENT_STREAM_KEY, recordId, new ChatMessage(registration, 1L, 2L, 3L));
+    private StreamQueueMessage event(String recordId, ChatMessage message) {
+        return new StreamQueueMessage(EVENT_STREAM_KEY, recordId, message);
     }
 
     private String registrationJson() {
@@ -245,32 +159,5 @@ class EventIssuedEventHandlerTest {
                 + "\"isSaved\":false,"
                 + "\"isDeleted\":false,"
                 + "\"eventId\":3}";
-    }
-
-    private Registration registration() {
-        Registration registration =
-                Registration.builder()
-                        .email("student@jnu.ac.kr")
-                        .name("학생")
-                        .studentNum("20240001")
-                        .affiliation("공과대학")
-                        .department("컴퓨터공학과")
-                        .carNum("12가3456")
-                        .isLight(false)
-                        .phoneNum("010-0000-0000")
-                        .createdAt(LocalDateTime.of(2026, 6, 25, 10, 0))
-                        .isSaved(false)
-                        .eventId(10L)
-                        .build();
-        registration.setId(10L);
-        return registration;
-    }
-
-    private User user() {
-        return User.builder()
-                .email("student@jnu.ac.kr")
-                .pwd("encoded-password")
-                .userRole(UserRole.USER)
-                .build();
     }
 }

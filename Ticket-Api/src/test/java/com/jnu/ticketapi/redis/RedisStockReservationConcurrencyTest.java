@@ -9,6 +9,7 @@ import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.time.Duration;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -191,11 +192,7 @@ class RedisStockReservationConcurrencyTest {
         assertThat(redisRepository.getIntegerValue(sequenceKey(5L, 1L))).contains(0);
         assertThat(
                         redisRepository.xReadGroupBlocking(
-                                streamKey(5L),
-                                "lost-stock",
-                                "consumer",
-                                10,
-                                Duration.ofMillis(10)))
+                                streamKey(5L), "lost-stock", "consumer", 10, Duration.ofMillis(10)))
                 .isEmpty();
     }
 
@@ -210,6 +207,38 @@ class RedisStockReservationConcurrencyTest {
         assertThat(reinitialized).isFalse();
         assertThat(redisRepository.getIntegerValue(stockKey(6L, 1L))).contains(299);
         assertThat(redisRepository.getIntegerValue(sequenceKey(6L, 1L))).contains(1);
+    }
+
+    @Test
+    @DisplayName("DB 스냅샷 복구 후 기존 신청은 중복 차단하고 다음 position부터 예약한다")
+    void rebuildsAdmissionStateFromDatabaseSnapshot() {
+        initialize(7L, 1L, 300, 300);
+        assertThat(reserve(7L, 1L, "redis@jnu.ac.kr", 250).isReserved()).isTrue();
+        redisRepository.delete(initializedKey(7L));
+        redisRepository.delete(stockKey(7L, 1L));
+        redisRepository.delete(sequenceKey(7L, 1L));
+        redisRepository.delete("parking-ticket:event:{7}:reserved:email");
+
+        boolean rebuilt =
+                redisRepository.rebuildEventStock(
+                        initializedKey(7L),
+                        "parking-ticket:event:{7}:reserved:email",
+                        closedKey(7L),
+                        List.of(
+                                new SectorStockInitialization(
+                                        stockKey(7L, 1L), sequenceKey(7L, 1L), 297, 3)),
+                        Set.of("redis@jnu.ac.kr", "fallback@jnu.ac.kr"));
+        StockReservationResult duplicate = reserve(7L, 1L, "fallback@jnu.ac.kr", 250);
+        StockReservationResult next = reserve(7L, 1L, "next@jnu.ac.kr", 250);
+
+        assertThat(rebuilt).isTrue();
+        assertThat(duplicate.isDuplicate()).isTrue();
+        assertThat(duplicate.getRemainingAmount()).isEqualTo(297);
+        assertThat(next.isReserved()).isTrue();
+        assertThat(next.getPosition()).isEqualTo(4);
+        assertThat(next.getRemainingAmount()).isEqualTo(296);
+        assertThat(redisRepository.getIntegerValue(sequenceKey(7L, 1L))).contains(4);
+        assertThat(redisRepository.xLength(streamKey(7L))).isEqualTo(2L);
     }
 
     private StockReservationResult reserve(
@@ -229,8 +258,7 @@ class RedisStockReservationConcurrencyTest {
                 capacity);
     }
 
-    private boolean initialize(
-            Long eventId, Long sectorId, int remainingAmount, int issueAmount) {
+    private boolean initialize(Long eventId, Long sectorId, int remainingAmount, int issueAmount) {
         return redisRepository.initializeEventStock(
                 initializedKey(eventId),
                 "parking-ticket:event:{" + eventId + "}:reserved:email",

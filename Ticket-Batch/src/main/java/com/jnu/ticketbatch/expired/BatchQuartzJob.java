@@ -3,10 +3,8 @@ package com.jnu.ticketbatch.expired;
 
 import com.jnu.ticketdomain.domains.events.EventExpiredEventRaiseGateway;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
-import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
-import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.adaptor.RegistrationAdaptor;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
@@ -20,6 +18,7 @@ import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
 @Slf4j
@@ -32,7 +31,6 @@ public class BatchQuartzJob extends QuartzJobBean {
     @Autowired private JobExplorer jobExplorer;
 
     @Autowired EventAdaptor eventAdaptor;
-    @Autowired SectorAdaptor sectorAdaptor;
 
     @Autowired(required = false)
     WaitingQueueService waitingQueueService;
@@ -73,16 +71,14 @@ public class BatchQuartzJob extends QuartzJobBean {
         if (waitingQueueService == null) {
             return;
         }
-        waitingQueueService.markEventStockClosed(eventId, REDIS_STOCK_DRAIN_TIMEOUT);
-        for (Sector sector : sectorAdaptor.findByEventId(eventId)) {
-            waitingQueueService
-                    .findRemainingStock(eventId, sector.getId())
-                    .ifPresent(
-                            remainingAmount -> {
-                                sector.syncRemainingAmount(remainingAmount);
-                                sectorAdaptor.save(sector);
-                            });
+        try {
+            waitingQueueService.markEventStockClosed(eventId, REDIS_STOCK_DRAIN_TIMEOUT);
+            waitingQueueService.expireEventStockKeys(eventId, REDIS_STOCK_DRAIN_TIMEOUT);
+        } catch (DataAccessException exception) {
+            log.warn(
+                    "Redis event stock could not be closed; DB event status remains authoritative. eventId: {}",
+                    eventId,
+                    exception);
         }
-        waitingQueueService.expireEventStockKeys(eventId, REDIS_STOCK_DRAIN_TIMEOUT);
     }
 }

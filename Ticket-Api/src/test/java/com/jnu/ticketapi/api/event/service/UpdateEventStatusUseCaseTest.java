@@ -14,7 +14,6 @@ import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +29,7 @@ class UpdateEventStatusUseCaseTest {
     @Mock private EventAdaptor eventAdaptor;
     @Mock private SectorAdaptor sectorAdaptor;
     @Mock private WaitingQueueService waitingQueueService;
+    @Mock private RegistrationAdmissionCoordinator registrationAdmissionCoordinator;
     @Mock private Event event;
     @Mock private Sector sector;
 
@@ -37,7 +37,9 @@ class UpdateEventStatusUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        updateEventStatusUseCase = new UpdateEventStatusUseCase(eventAdaptor, sectorAdaptor);
+        updateEventStatusUseCase =
+                new UpdateEventStatusUseCase(
+                        eventAdaptor, sectorAdaptor, registrationAdmissionCoordinator);
         ReflectionTestUtils.setField(
                 updateEventStatusUseCase, "waitingQueueService", waitingQueueService);
         when(eventAdaptor.findById(3L)).thenReturn(event);
@@ -60,25 +62,19 @@ class UpdateEventStatusUseCaseTest {
     }
 
     @Test
-    @DisplayName("CLOSED 상태 변경은 Redis 접수를 먼저 닫고 잔여 재고를 DB에 동기화한다")
-    void executeClosesAndSynchronizesRedisStockBeforeStatusUpdate() {
+    @DisplayName("CLOSED 상태 변경은 DB 체크포인트를 유지하고 Redis 접수만 닫는다")
+    void executeClosesRedisWithoutOverwritingDatabaseCheckpoint() {
         UpdateEventStatusRequest request = request(EventStatus.CLOSED);
-        when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
-        when(sector.getId()).thenReturn(7L);
-        when(waitingQueueService.findRemainingStock(3L, 7L)).thenReturn(Optional.of(4));
         when(eventAdaptor.updateEventStatus(event, EventStatus.CLOSED)).thenReturn(event);
 
         updateEventStatusUseCase.execute(3L, request);
 
-        InOrder order = inOrder(waitingQueueService, sectorAdaptor, sector, eventAdaptor);
+        InOrder order = inOrder(waitingQueueService, eventAdaptor);
         order.verify(eventAdaptor).findById(3L);
         order.verify(waitingQueueService).markEventStockClosed(3L, Duration.ofMinutes(5));
-        order.verify(sectorAdaptor).findByEventId(3L);
-        order.verify(waitingQueueService).findRemainingStock(3L, 7L);
-        order.verify(sector).syncRemainingAmount(4);
-        order.verify(sectorAdaptor).save(sector);
         order.verify(waitingQueueService).expireEventStockKeys(3L, Duration.ofMinutes(5));
         order.verify(eventAdaptor).updateEventStatus(event, EventStatus.CLOSED);
+        verify(sectorAdaptor, never()).save(sector);
     }
 
     @Test
