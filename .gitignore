@@ -62,3 +62,4 @@ logs/**
 
 # Load test output
 test-script/registration-load-summary.json
+test-script/registration-load-runtime.json
