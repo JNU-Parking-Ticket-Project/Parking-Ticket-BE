@@ -34,6 +34,12 @@ public class UserAdaptor implements UserLoadPort, UserRecordPort {
         return userRepository.findById(id).orElseThrow(() -> NotFoundUserException.EXCEPTION);
     }
 
+    public User findByIdForUpdate(Long id) {
+        return userRepository
+                .findByIdForUpdate(id)
+                .orElseThrow(() -> NotFoundUserException.EXCEPTION);
+    }
+
     @Override
     public User updatePassword(String email, String password) {
         User user =

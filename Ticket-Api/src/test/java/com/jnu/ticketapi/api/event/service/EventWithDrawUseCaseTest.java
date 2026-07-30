@@ -2,6 +2,7 @@ package com.jnu.ticketapi.api.event.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,6 +38,7 @@ class EventWithDrawUseCaseTest {
 
     @Mock private WaitingQueueService waitingQueueService;
     @Mock private EventAdaptor eventAdaptor;
+    @Mock private RegistrationResultPersistenceService registrationResultPersistenceService;
     @Mock private Event event;
     @Mock private Sector sector;
 
@@ -44,7 +46,8 @@ class EventWithDrawUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        eventWithDrawUseCase = new EventWithDrawUseCase(eventAdaptor);
+        eventWithDrawUseCase =
+                new EventWithDrawUseCase(eventAdaptor, registrationResultPersistenceService);
         ReflectionTestUtils.setField(
                 eventWithDrawUseCase, "waitingQueueService", waitingQueueService);
     }
@@ -59,6 +62,15 @@ class EventWithDrawUseCaseTest {
         when(waitingQueueService.reserveAndRegisterQueue(
                         eq(EVENT_STREAM_KEY), eq(registration), eq(100L), eq(sector), eq(10L)))
                 .thenReturn(reservationResult);
+        when(sector.getId()).thenReturn(20L);
+        when(registrationResultPersistenceService.persistRedisReservation(
+                        eq(registration),
+                        eq(100L),
+                        eq(20L),
+                        eq(10L),
+                        eq(reservationResult),
+                        anyLong()))
+                .thenReturn(reservationResult);
 
         StockReservationResult result =
                 eventWithDrawUseCase.issueEvent(registration, 100L, sector, 10L);
@@ -66,6 +78,14 @@ class EventWithDrawUseCaseTest {
         assertThat(result).isSameAs(reservationResult);
         verify(waitingQueueService)
                 .reserveAndRegisterQueue(EVENT_STREAM_KEY, registration, 100L, sector, 10L);
+        verify(registrationResultPersistenceService)
+                .persistRedisReservation(
+                        eq(registration),
+                        eq(100L),
+                        eq(20L),
+                        eq(10L),
+                        eq(reservationResult),
+                        anyLong());
     }
 
     @Test

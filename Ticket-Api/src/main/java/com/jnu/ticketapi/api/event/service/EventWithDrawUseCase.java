@@ -32,6 +32,7 @@ public class EventWithDrawUseCase {
     private WaitingQueueService waitingQueueService;
 
     private final EventAdaptor eventAdaptor;
+    private final RegistrationResultPersistenceService registrationResultPersistenceService;
 
     /** 재고 감소 */
     //    @RedissonLock(
@@ -80,7 +81,13 @@ public class EventWithDrawUseCase {
         if (result.isUnavailable()) {
             throw RedisStockUnavailableException.EXCEPTION;
         }
-        return result;
+        return registrationResultPersistenceService.persistRedisReservation(
+                registration,
+                userId,
+                sector.getId(),
+                eventId,
+                result,
+                System.currentTimeMillis());
     }
 
     public GetEventPeriodResponse getEventPeriod() {
