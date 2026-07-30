@@ -122,7 +122,7 @@ public class RegistrationResultPersistenceService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public EventStockRecoverySnapshot prepareRecoverySnapshot(Long eventId) {
         List<Registration> savedRegistrations =
-                registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(eventId);
+                registrationAdaptor.findSavedForAdmissionRecovery(eventId);
         Map<Long, List<Registration>> registrationsBySector =
                 savedRegistrations.stream()
                         .collect(

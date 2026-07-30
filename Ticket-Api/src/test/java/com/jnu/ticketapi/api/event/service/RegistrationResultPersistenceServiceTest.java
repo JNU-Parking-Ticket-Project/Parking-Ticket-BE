@@ -156,7 +156,7 @@ class RegistrationResultPersistenceServiceTest {
         Registration saved = registration();
         saved.finalSave(2, UserStatus.SUCCESS, -2);
         saved.setSector(sector);
-        when(registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(10L))
+        when(registrationAdaptor.findSavedForAdmissionRecovery(10L))
                 .thenReturn(List.of(saved));
         when(sectorAdaptor.findByEventId(10L)).thenReturn(List.of(sector));
         when(sectorAdaptor.findByIdForUpdate(20L)).thenReturn(sector);
@@ -173,7 +173,7 @@ class RegistrationResultPersistenceServiceTest {
     void rejectsRecoverySnapshotForClosedEvent() {
         Sector sector = sector();
         ReflectionTestUtils.setField(sector.getEvent(), "eventStatus", EventStatus.CLOSED);
-        when(registrationAdaptor.findByIsDeletedFalseAndIsSavedTrue(10L)).thenReturn(List.of());
+        when(registrationAdaptor.findSavedForAdmissionRecovery(10L)).thenReturn(List.of());
         when(sectorAdaptor.findByEventId(10L)).thenReturn(List.of(sector));
         when(sectorAdaptor.findByIdForUpdate(20L)).thenReturn(sector);
 

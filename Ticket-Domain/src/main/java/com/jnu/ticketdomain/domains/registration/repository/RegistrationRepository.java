@@ -40,6 +40,12 @@ public interface RegistrationRepository
     Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(
             @Param("eventId") Long eventId, Pageable pageable);
 
+    @Query(
+            "select r from Registration r join fetch r.sector "
+                    + "where r.isDeleted = false and r.isSaved = true "
+                    + "and r.sector.event.id = :eventId order by r.id asc")
+    List<Registration> findSavedForAdmissionRecovery(@Param("eventId") Long eventId);
+
     @Query("UPDATE Registration r SET r.isDeleted = true WHERE r.sector.id = :sectorId")
     @Modifying(clearAutomatically = true)
     void deleteBySectorId(@Param("sectorId") Long sectorId);
