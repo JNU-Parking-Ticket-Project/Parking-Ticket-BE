@@ -11,6 +11,7 @@ import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class OpenEventUseCase {
     private final EventAdaptor eventAdaptor;
     private final SectorAdaptor sectorAdaptor;
+    private final RegistrationAdmissionCoordinator registrationAdmissionCoordinator;
 
     @Autowired(required = false)
     private WaitingQueueService waitingQueueService;
@@ -28,8 +30,16 @@ public class OpenEventUseCase {
         readyEvent.fold(
                 event -> {
                     if (waitingQueueService != null) {
-                        waitingQueueService.initializeEventStock(
-                                event.getId(), sectorAdaptor.findByEventId(event.getId()));
+                        try {
+                            waitingQueueService.initializeEventStock(
+                                    event.getId(), sectorAdaptor.findByEventId(event.getId()));
+                        } catch (DataAccessException exception) {
+                            registrationAdmissionCoordinator.activateDatabaseFallback(
+                                    event.getId(), exception);
+                        }
+                    } else {
+                        registrationAdmissionCoordinator.activateDatabaseFallback(
+                                event.getId(), null);
                     }
                     eventAdaptor.updateEventStatus(event, EventStatus.OPEN);
                     return null;

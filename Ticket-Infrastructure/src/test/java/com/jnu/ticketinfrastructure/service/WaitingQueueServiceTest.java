@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -168,6 +169,47 @@ class WaitingQueueServiceTest {
     }
 
     @Test
+    @DisplayName("Redis 복구는 DB 체크포인트와 확정 이메일을 원자 재구축에 전달한다")
+    void rebuildEventStockUsesDatabaseSnapshot() {
+        Sector sector = org.mockito.Mockito.mock(Sector.class);
+        when(sector.getId()).thenReturn(2L);
+        when(sector.getIssueAmount()).thenReturn(300);
+        when(sector.getRemainingAmount()).thenReturn(240);
+        when(redisRepository.rebuildEventStock(
+                        eq("parking-ticket:event:{3}:initialized"),
+                        eq("parking-ticket:event:{3}:reserved:email"),
+                        eq("parking-ticket:event:{3}:closed"),
+                        any(),
+                        eq(Set.of("student@jnu.ac.kr"))))
+                .thenReturn(true);
+
+        boolean rebuilt =
+                waitingQueueService.rebuildEventStock(
+                        3L, List.of(sector), Set.of("student@jnu.ac.kr"));
+
+        assertThat(rebuilt).isTrue();
+        ArgumentCaptor<List<SectorStockInitialization>> initializationCaptor =
+                ArgumentCaptor.forClass(List.class);
+        verify(redisRepository)
+                .rebuildEventStock(
+                        eq("parking-ticket:event:{3}:initialized"),
+                        eq("parking-ticket:event:{3}:reserved:email"),
+                        eq("parking-ticket:event:{3}:closed"),
+                        initializationCaptor.capture(),
+                        eq(Set.of("student@jnu.ac.kr")));
+        assertThat(initializationCaptor.getValue().get(0).getRemainingAmount()).isEqualTo(240);
+        assertThat(initializationCaptor.getValue().get(0).getAssignedPosition()).isEqualTo(60);
+    }
+
+    @Test
+    @DisplayName("Redis 상태 확인은 PING 결과를 사용한다")
+    void availabilityUsesRedisPing() {
+        when(redisRepository.ping()).thenReturn(true);
+
+        assertThat(waitingQueueService.isAvailable()).isTrue();
+    }
+
+    @Test
     @DisplayName("새 메시지 조회는 blocking XREADGROUP에 위임한다")
     void readNewMessagesDelegatesToRedisStreamRepository() {
         List<RawStreamMessage> messages = List.of(new RawStreamMessage("1-0", "payload"));
@@ -291,13 +333,7 @@ class WaitingQueueServiceTest {
     void findDeadLettersCapsRequestedCount() {
         DeadLetterQueueMessage message =
                 new DeadLetterQueueMessage(
-                        "9-0",
-                        "1-0",
-                        "payload",
-                        3,
-                        "error",
-                        1_000L,
-                        "PROCESSING_FAILURE");
+                        "9-0", "1-0", "payload", 3, "error", 1_000L, "PROCESSING_FAILURE");
         when(redisRepository.xRangeDeadLetters("쿠폰 발급 스트림:{3}:dlq", 1_000L))
                 .thenReturn(List.of(message));
 

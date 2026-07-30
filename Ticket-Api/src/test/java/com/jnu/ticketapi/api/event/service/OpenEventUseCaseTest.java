@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.api.event.service;
 
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jnu.ticketcommon.utils.Result;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,6 +28,7 @@ class OpenEventUseCaseTest {
     @Mock private EventAdaptor eventAdaptor;
     @Mock private SectorAdaptor sectorAdaptor;
     @Mock private WaitingQueueService waitingQueueService;
+    @Mock private RegistrationAdmissionCoordinator registrationAdmissionCoordinator;
     @Mock private Event event;
     @Mock private Sector sector;
 
@@ -33,9 +36,9 @@ class OpenEventUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        openEventUseCase = new OpenEventUseCase(eventAdaptor, sectorAdaptor);
-        ReflectionTestUtils.setField(
-                openEventUseCase, "waitingQueueService", waitingQueueService);
+        openEventUseCase =
+                new OpenEventUseCase(eventAdaptor, sectorAdaptor, registrationAdmissionCoordinator);
+        ReflectionTestUtils.setField(openEventUseCase, "waitingQueueService", waitingQueueService);
     }
 
     @Test
@@ -52,5 +55,21 @@ class OpenEventUseCaseTest {
         order.verify(sectorAdaptor).findByEventId(3L);
         order.verify(waitingQueueService).initializeEventStock(3L, List.of(sector));
         order.verify(eventAdaptor).updateEventStatus(event, EventStatus.OPEN);
+    }
+
+    @Test
+    @DisplayName("Redis 초기화가 실패해도 DB fallback으로 이벤트를 OPEN한다")
+    void executeOpensWithDatabaseFallbackWhenRedisFails() {
+        when(eventAdaptor.findReadyEvent()).thenReturn(Result.success(event));
+        when(event.getId()).thenReturn(3L);
+        when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
+        RedisConnectionFailureException failure =
+                new RedisConnectionFailureException("connection refused");
+        when(waitingQueueService.initializeEventStock(3L, List.of(sector))).thenThrow(failure);
+
+        openEventUseCase.execute();
+
+        verify(registrationAdmissionCoordinator).activateDatabaseFallback(3L, failure);
+        verify(eventAdaptor).updateEventStatus(event, EventStatus.OPEN);
     }
 }
