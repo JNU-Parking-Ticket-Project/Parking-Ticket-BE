@@ -101,8 +101,8 @@ class RegistrationResultPersistenceServiceTest {
     }
 
     @Test
-    @DisplayName("이미 DB에 확정된 이메일은 재고를 다시 차감하거나 Outbox를 중복 생성하지 않는다")
-    void returnsExistingRegistrationIdempotently() {
+    @DisplayName("DB fallback의 중복 신청은 재고와 Outbox를 건드리지 않고 중복 결과를 반환한다")
+    void returnsDuplicateWithoutChangingStock() {
         Registration incoming = registration();
         Registration existing = registration();
         existing.finalSave(2, UserStatus.SUCCESS, -2);
@@ -115,7 +115,8 @@ class RegistrationResultPersistenceServiceTest {
         StockReservationResult result =
                 service.persistWithDatabaseFallback(incoming, 30L, 20L, 10L, 3_456L);
 
-        assertThat(result.getPosition()).isEqualTo(2);
+        assertThat(result.isDuplicate()).isTrue();
+        assertThat(result.getPosition()).isNull();
         assertThat(sector.getRemainingAmount()).isEqualTo(3);
         verify(registrationAdaptor, never()).saveAndFlush(incoming);
         verify(emailOutboxAdaptor, never()).saveRegistrationResultIfAbsent(incoming);

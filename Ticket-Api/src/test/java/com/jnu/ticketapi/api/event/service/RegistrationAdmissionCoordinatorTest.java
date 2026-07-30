@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.api.event.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -155,6 +157,39 @@ class RegistrationAdmissionCoordinatorTest {
 
         assertThat(result).isSameAs(noStock);
         assertThat(coordinator.isDatabaseFallback(10L)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Redis 예약 뒤 DB 저장 실패는 Redis 장애로 오인하지 않는다")
+    void doesNotFallBackWhenDatabasePersistenceFails() throws Exception {
+        StockReservationResult reserved =
+                StockReservationResult.reserved(1, UserStatus.SUCCESS, -2, 2);
+        DataIntegrityViolationException databaseFailure =
+                new DataIntegrityViolationException("forced database failure");
+        when(waitingQueueService.reserveAndRegisterQueue(
+                        STREAM_KEY, registration, 30L, sector, 10L))
+                .thenReturn(reserved);
+        when(registrationResultPersistenceService.persistRedisReservation(
+                        org.mockito.ArgumentMatchers.eq(registration),
+                        org.mockito.ArgumentMatchers.eq(30L),
+                        org.mockito.ArgumentMatchers.eq(20L),
+                        org.mockito.ArgumentMatchers.eq(10L),
+                        org.mockito.ArgumentMatchers.eq(reserved),
+                        org.mockito.ArgumentMatchers.anyLong()))
+                .thenThrow(databaseFailure);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> coordinator.admit(registration, 30L, sector, 10L))
+                .isSameAs(databaseFailure);
+
+        assertThat(coordinator.isDatabaseFallback(10L)).isFalse();
+        verify(registrationResultPersistenceService, never())
+                .persistWithDatabaseFallback(
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.anyLong());
     }
 
     @Test
