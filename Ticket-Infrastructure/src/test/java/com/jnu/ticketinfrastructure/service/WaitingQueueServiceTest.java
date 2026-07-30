@@ -3,6 +3,7 @@ package com.jnu.ticketinfrastructure.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -14,6 +15,8 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
@@ -163,30 +166,120 @@ class WaitingQueueServiceTest {
     }
 
     @Test
-    @DisplayName("ACK에 성공한 Stream record는 원본 entry도 삭제한다")
-    void acknowledgeAndDeleteRemovesAcknowledgedRecord() {
-        when(redisRepository.xAck(STREAM_KEY, "group", "1-0")).thenReturn(1L);
+    @DisplayName("ACK와 원본 삭제, 실패 횟수 정리를 원자 연산에 위임한다")
+    void acknowledgeAndDeleteDelegatesAtomicCleanup() {
+        when(redisRepository.xAcknowledgeAndDelete(
+                        STREAM_KEY, STREAM_KEY + ":failures", "group", "1-0"))
+                .thenReturn(1L);
 
         Long acknowledged = waitingQueueService.acknowledgeAndDelete(STREAM_KEY, "group", "1-0");
 
         assertThat(acknowledged).isEqualTo(1L);
-        verify(redisRepository).xDelete(STREAM_KEY, "1-0");
+        verify(redisRepository)
+                .xAcknowledgeAndDelete(STREAM_KEY, STREAM_KEY + ":failures", "group", "1-0");
     }
 
     @Test
-    @DisplayName("ACK하지 못한 Stream record는 삭제하지 않는다")
-    void acknowledgeAndDeleteKeepsUnacknowledgedRecord() {
-        when(redisRepository.xAck(STREAM_KEY, "group", "1-0")).thenReturn(0L);
+    @DisplayName("처리 실패 횟수가 상한 미만이면 Pending을 유지한다")
+    void recordProcessingFailureKeepsMessageUntilLimit() {
+        String payload = "{\"registration\":\"{}\"}";
+        DeadLetterTransferResult pending = new DeadLetterTransferResult(2, false);
+        when(redisRepository.xRecordFailureAndMaybeMoveToDeadLetter(
+                        eq(STREAM_KEY),
+                        eq(STREAM_KEY + ":failures"),
+                        eq(STREAM_KEY + ":dlq"),
+                        eq("group"),
+                        eq("1-0"),
+                        eq(payload),
+                        eq(3),
+                        anyString(),
+                        anyLong(),
+                        eq("PROCESSING_FAILURE"),
+                        eq(1_000L),
+                        eq(Duration.ofDays(7)),
+                        eq(false)))
+                .thenReturn(pending);
 
-        waitingQueueService.acknowledgeAndDelete(STREAM_KEY, "group", "1-0");
+        DeadLetterTransferResult result =
+                waitingQueueService.recordProcessingFailure(
+                        STREAM_KEY,
+                        "group",
+                        "1-0",
+                        payload,
+                        3,
+                        new IllegalStateException("DB 저장 실패"));
 
-        verify(redisRepository, never()).xDelete(STREAM_KEY, "1-0");
+        assertThat(result.getFailureCount()).isEqualTo(2);
+        assertThat(result.isMoved()).isFalse();
+    }
+
+    @Test
+    @DisplayName("이벤트 drain은 남은 모든 메시지를 DLQ로 강제 이관한다")
+    void drainEventStreamMovesEveryRemainingMessage() {
+        String eventStreamKey = "쿠폰 발급 스트림:{3}";
+        RawStreamMessage first = new RawStreamMessage("1-0", "payload-1");
+        RawStreamMessage second = new RawStreamMessage("2-0", "payload-2");
+        when(redisRepository.xRangeRaw(eventStreamKey)).thenReturn(List.of(first, second));
+        when(redisRepository.xRecordFailureAndMaybeMoveToDeadLetter(
+                        eq(eventStreamKey),
+                        eq(eventStreamKey + ":failures"),
+                        eq(eventStreamKey + ":dlq"),
+                        eq("group"),
+                        anyString(),
+                        anyString(),
+                        eq(1),
+                        anyString(),
+                        anyLong(),
+                        eq("EVENT_DRAIN_TIMEOUT"),
+                        eq(1_000L),
+                        eq(Duration.ofDays(7)),
+                        eq(true)))
+                .thenReturn(new DeadLetterTransferResult(0, true));
+
+        long moved = waitingQueueService.drainEventStream(3L, "group");
+
+        assertThat(moved).isEqualTo(2L);
+        verify(redisRepository).expire(eventStreamKey, Duration.ofDays(1));
+        verify(redisRepository).expire(eventStreamKey + ":failures", Duration.ofDays(1));
+    }
+
+    @Test
+    @DisplayName("DLQ 조회 건수는 최대 보관 건수를 넘지 않는다")
+    void findDeadLettersCapsRequestedCount() {
+        DeadLetterQueueMessage message =
+                new DeadLetterQueueMessage(
+                        "9-0",
+                        "1-0",
+                        "payload",
+                        3,
+                        "error",
+                        1_000L,
+                        "PROCESSING_FAILURE");
+        when(redisRepository.xRangeDeadLetters("쿠폰 발급 스트림:{3}:dlq", 1_000L))
+                .thenReturn(List.of(message));
+
+        List<DeadLetterQueueMessage> result = waitingQueueService.findDeadLetters(3L, 5_000L);
+
+        assertThat(result).containsExactly(message);
+    }
+
+    @Test
+    @DisplayName("DLQ 수동 재처리는 원본 Stream 복원을 원자 연산에 위임한다")
+    void replayDeadLetterDelegatesAtomicReplay() {
+        when(redisRepository.xReplayDeadLetter(
+                        "쿠폰 발급 스트림:{3}:dlq", "쿠폰 발급 스트림:{3}", "쿠폰 발급 스트림:{3}:failures", "9-0"))
+                .thenReturn(1L);
+
+        boolean replayed = waitingQueueService.replayDeadLetter(3L, "9-0");
+
+        assertThat(replayed).isTrue();
     }
 
     @Test
     @DisplayName("이벤트별 Stream key는 Redis Cluster hash tag에 eventId를 사용한다")
     void eventStreamKeyUsesEventHashTag() {
         assertThat(waitingQueueService.eventStreamKey(3L)).isEqualTo("쿠폰 발급 스트림:{3}");
+        assertThat(waitingQueueService.eventDeadLetterStreamKey(3L)).isEqualTo("쿠폰 발급 스트림:{3}:dlq");
     }
 
     @Test

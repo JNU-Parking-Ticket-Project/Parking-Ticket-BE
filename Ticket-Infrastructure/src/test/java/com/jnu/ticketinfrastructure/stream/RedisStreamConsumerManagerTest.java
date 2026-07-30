@@ -5,12 +5,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
 import com.jnu.ticketinfrastructure.model.StreamConsumerState;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
@@ -84,6 +86,41 @@ class RedisStreamConsumerManagerTest {
     }
 
     @Test
+    @DisplayName("역직렬화 실패도 delivery 실패로 기록해 poison message 상한을 적용한다")
+    void recordsDeserializationFailureForDeadLetterPolicy() {
+        WaitingQueueService waitingQueueService = mock(WaitingQueueService.class);
+        RegistrationStreamMessageHandler handler = mock(RegistrationStreamMessageHandler.class);
+        RawStreamMessage rawMessage = new RawStreamMessage("3-0", "not-json");
+        IllegalStateException failure = new IllegalStateException("invalid payload");
+        configureQueue(waitingQueueService);
+        when(waitingQueueService.readNewMessages(
+                        eq(STREAM_KEY), any(), any(), anyLong(), any(Duration.class)))
+                .thenReturn(List.of(rawMessage), List.of());
+        when(waitingQueueService.deserialize(STREAM_KEY, rawMessage)).thenThrow(failure);
+        when(waitingQueueService.recordProcessingFailure(
+                        STREAM_KEY,
+                        "쿠폰 발급 그룹",
+                        "3-0",
+                        "not-json",
+                        3,
+                        failure))
+                .thenReturn(new DeadLetterTransferResult(1, false));
+        consumerManager = manager(waitingQueueService, handler, 2, 2, 0L);
+
+        consumerManager.start(EVENT_ID);
+
+        verify(waitingQueueService, timeout(2000))
+                .recordProcessingFailure(
+                        STREAM_KEY,
+                        "쿠폰 발급 그룹",
+                        "3-0",
+                        "not-json",
+                        3,
+                        failure);
+        verify(handler, never()).handle(any());
+    }
+
+    @Test
     @DisplayName("동시 DB 처리는 Hikari 여유 connection 수를 넘지 않는다")
     void limitsConcurrentProcessingToAvailableDbConnections() throws Exception {
         WaitingQueueService waitingQueueService = mock(WaitingQueueService.class);
@@ -145,9 +182,83 @@ class RedisStreamConsumerManagerTest {
         consumerManager = manager(waitingQueueService, handler, 2, 2, 0L);
         consumerManager.start(EVENT_ID);
 
-        consumerManager.requestDrain(EVENT_ID);
+        assertThat(consumerManager.requestDrain(EVENT_ID)).isTrue();
 
         assertThat(waitUntilStopped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("구독 없이 종료된 이벤트에 메시지가 남으면 consumer를 복원해 drain한다")
+    void restoresMissingConsumerForClosedEventDrain() {
+        WaitingQueueService waitingQueueService = mock(WaitingQueueService.class);
+        RegistrationStreamMessageHandler handler = mock(RegistrationStreamMessageHandler.class);
+        RawStreamMessage rawMessage = new RawStreamMessage("5-0", "payload");
+        StreamQueueMessage streamQueueMessage = streamQueueMessage("5-0");
+        configureQueue(waitingQueueService);
+        when(waitingQueueService.hasEventStreamMessages(EVENT_ID)).thenReturn(true);
+        when(waitingQueueService.readNewMessages(
+                        eq(STREAM_KEY), any(), any(), anyLong(), any(Duration.class)))
+                .thenReturn(List.of(rawMessage), List.of());
+        when(waitingQueueService.deserialize(STREAM_KEY, rawMessage))
+                .thenReturn(streamQueueMessage);
+        when(waitingQueueService.getConsumerState(STREAM_KEY, "쿠폰 발급 그룹", 0))
+                .thenReturn(new StreamConsumerState(0L, 0L, 0));
+        consumerManager = manager(waitingQueueService, handler, 2, 2, 0L);
+
+        assertThat(consumerManager.requestDrain(EVENT_ID)).isTrue();
+
+        verify(handler, timeout(2000)).handle(streamQueueMessage);
+        assertThat(consumerManager.awaitDrainCompletion(EVENT_ID, Duration.ofSeconds(2))).isTrue();
+    }
+
+    @Test
+    @DisplayName("종료된 이벤트 Stream에 메시지가 없으면 불필요한 consumer를 만들지 않는다")
+    void skipsDrainConsumerWhenClosedEventStreamIsEmpty() {
+        WaitingQueueService waitingQueueService = mock(WaitingQueueService.class);
+        RegistrationStreamMessageHandler handler = mock(RegistrationStreamMessageHandler.class);
+        when(waitingQueueService.hasEventStreamMessages(EVENT_ID)).thenReturn(false);
+        consumerManager = manager(waitingQueueService, handler, 2, 2, 0L);
+
+        assertThat(consumerManager.requestDrain(EVENT_ID)).isTrue();
+
+        assertThat(consumerManager.isRunning(EVENT_ID)).isFalse();
+        verify(waitingQueueService, never()).readNewMessages(any(), any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("최종 drain은 신규 dispatch를 중단하고 in-flight DB 처리가 끝날 때까지 대기한다")
+    void finalDrainWaitsForInFlightProcessing() throws Exception {
+        WaitingQueueService waitingQueueService = mock(WaitingQueueService.class);
+        RawStreamMessage rawMessage = new RawStreamMessage("4-0", "payload");
+        CountDownLatch processingStarted = new CountDownLatch(1);
+        CountDownLatch releaseProcessing = new CountDownLatch(1);
+        CountDownLatch processingFinished = new CountDownLatch(1);
+        RegistrationStreamMessageHandler handler =
+                message -> {
+                    processingStarted.countDown();
+                    try {
+                        releaseProcessing.await(2, TimeUnit.SECONDS);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } finally {
+                        processingFinished.countDown();
+                    }
+                };
+        configureQueue(waitingQueueService);
+        when(waitingQueueService.readNewMessages(
+                        eq(STREAM_KEY), any(), any(), anyLong(), any(Duration.class)))
+                .thenReturn(List.of(rawMessage), List.of());
+        when(waitingQueueService.deserialize(STREAM_KEY, rawMessage))
+                .thenReturn(streamQueueMessage("4-0"));
+        consumerManager = manager(waitingQueueService, handler, 2, 2, 0L);
+        consumerManager.start(EVENT_ID);
+
+        assertThat(processingStarted.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(consumerManager.pauseForFinalDrain(EVENT_ID)).isFalse();
+
+        releaseProcessing.countDown();
+        assertThat(processingFinished.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(waitUntilFinalDrainIsReady()).isTrue();
     }
 
     private void configureQueue(WaitingQueueService waitingQueueService) {
@@ -179,6 +290,7 @@ class RedisStreamConsumerManagerTest {
                 10L,
                 10L,
                 1L,
+                3,
                 drainQuietPeriodMillis);
     }
 
@@ -191,6 +303,22 @@ class RedisStreamConsumerManagerTest {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
         while (System.nanoTime() < deadline) {
             if (!consumerManager.isRunning(EVENT_ID)) {
+                return true;
+            }
+            try {
+                Thread.sleep(10L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private boolean waitUntilFinalDrainIsReady() {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        while (System.nanoTime() < deadline) {
+            if (consumerManager.pauseForFinalDrain(EVENT_ID)) {
                 return true;
             }
             try {
