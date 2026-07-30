@@ -1,14 +1,21 @@
 package com.jnu.ticketinfrastructure.service;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_CHANNEL;
+import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
+import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
+import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.StreamConsumerState;
+import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
+import java.time.Duration;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +33,6 @@ import org.springframework.stereotype.Service;
 public class WaitingQueueService {
 
     private static final Logger tracker = LoggerFactory.getLogger("processTracker");
-
     private final RedisRepository redisRepository;
     @Autowired private ObjectMapper objectMapper;
 
@@ -40,9 +46,8 @@ public class WaitingQueueService {
         Double score = (double) System.currentTimeMillis();
         String registrationString = convertRegistrationJSON(registration);
         ChatMessage message = new ChatMessage(registrationString, userId, sectorId, eventId);
-        checkDuplicateData(key, message);
-        redisRepository.zAddIfAbsent(key, message, score);
-        tracker.info("Added to the queue, score:{}", score);
+        redisRepository.xAdd(key, message);
+        tracker.info("Added to the stream, score:{}", score);
     }
 
     public String convertRegistrationJSON(Registration registration) {
@@ -114,5 +119,57 @@ public class WaitingQueueService {
 
     public Set<ZSetOperations.TypedTuple<Object>> findAllWithScore(String key) {
         return redisRepository.zRangeWithScores(key, 0L, -1L);
+    }
+
+    public List<RawStreamMessage> readNewMessages(
+            String key, String group, String consumer, long count, Duration blockTimeout) {
+        return redisRepository.xReadGroupBlocking(key, group, consumer, count, blockTimeout);
+    }
+
+    public AutoClaimResult autoClaimMessages(
+            String key,
+            String group,
+            String consumer,
+            long count,
+            Duration minIdleTime,
+            String startId) {
+        return redisRepository.xAutoClaim(key, group, consumer, count, minIdleTime, startId);
+    }
+
+    public StreamQueueMessage deserialize(String streamKey, RawStreamMessage rawMessage) {
+        try {
+            return new StreamQueueMessage(
+                    streamKey,
+                    rawMessage.getRecordId(),
+                    objectMapper.readValue(rawMessage.getPayload(), ChatMessage.class));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to parse Redis Stream message", e);
+        }
+    }
+
+    public StreamConsumerState getConsumerState(String key, String group, int inFlight) {
+        long pending = redisRepository.xPendingCount(key, group);
+        long lag = Math.max(0L, redisRepository.xLength(key) - pending);
+        return new StreamConsumerState(lag, pending, inFlight);
+    }
+
+    public Long acknowledge(String key, String group, String recordId) {
+        return redisRepository.xAck(key, group, recordId);
+    }
+
+    public Long acknowledgeAndDelete(String key, String group, String recordId) {
+        Long acknowledged = redisRepository.xAck(key, group, recordId);
+        if (acknowledged != null && acknowledged > 0) {
+            redisRepository.xDelete(key, recordId);
+        }
+        return acknowledged;
+    }
+
+    public String eventStreamKey(Long eventId) {
+        return REDIS_EVENT_ISSUE_STREAM + ":{" + eventId + "}";
+    }
+
+    public void deleteEventStream(Long eventId) {
+        redisRepository.delete(eventStreamKey(eventId));
     }
 }

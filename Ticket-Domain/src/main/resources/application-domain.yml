@@ -101,6 +101,11 @@ spring:
   quartz:
     jdbc:
       initialize-schema: always
+
+redis:
+  stream:
+    consumer:
+      lifecycle-enabled: false
 ---
 
 spring:

@@ -30,6 +30,9 @@ public class TicketStatic {
 
     public static final String REDIS_EVENT_CHANNEL = "쿠폰 발급 채널";
     public static final String REDIS_EVENT_ISSUE_STORE = "쿠폰 발급 저장소";
+    public static final String REDIS_EVENT_ISSUE_STREAM = "쿠폰 발급 스트림";
+    public static final String REDIS_EVENT_ISSUE_GROUP = "쿠폰 발급 그룹";
+    public static final String REDIS_EVENT_ISSUE_CONSUMER = "쿠폰 발급 소비자";
 
     public static final Integer REGISTRATION_SIZE = 14;
     public static final Integer MAX_EMAIL_SEND_RETRY = 10;

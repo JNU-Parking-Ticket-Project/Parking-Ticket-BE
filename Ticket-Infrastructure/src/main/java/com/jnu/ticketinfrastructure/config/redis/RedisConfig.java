@@ -64,7 +64,7 @@ public class RedisConfig {
                 new Jackson2JsonRedisSerializer<>(ChatMessage.class);
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(serializer);
+        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
         return redisTemplate;
     }
 }

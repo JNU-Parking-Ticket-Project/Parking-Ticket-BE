@@ -18,11 +18,16 @@ public class ChatMessage {
 
     @Override
     public String toString() {
-        return "ChatMessage{" +
-                "registration='" + registration + '\'' +
-                ", userId=" + userId +
-                ", sectorId=" + sectorId +
-                ", eventId=" + eventId +
-                '}';
+        return "ChatMessage{"
+                + "registration='"
+                + registration
+                + '\''
+                + ", userId="
+                + userId
+                + ", sectorId="
+                + sectorId
+                + ", eventId="
+                + eventId
+                + '}';
     }
 }

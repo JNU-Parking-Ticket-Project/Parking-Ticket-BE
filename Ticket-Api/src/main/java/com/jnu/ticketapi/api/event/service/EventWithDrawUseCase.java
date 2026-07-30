@@ -1,6 +1,5 @@
 package com.jnu.ticketapi.api.event.service;
 
-import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STORE;
 
 import com.jnu.ticketapi.api.event.model.response.GetEventPeriodResponse;
 import com.jnu.ticketcommon.annotation.UseCase;
@@ -52,7 +51,11 @@ public class EventWithDrawUseCase {
                     throw NotReadyEventStatusException.EXCEPTION;
                 });
         waitingQueueService.registerQueue(
-                REDIS_EVENT_ISSUE_STORE, registration, userId, sectorId, eventId);
+                waitingQueueService.eventStreamKey(eventId),
+                registration,
+                userId,
+                sectorId,
+                eventId);
     }
 
     public GetEventPeriodResponse getEventPeriod() {
