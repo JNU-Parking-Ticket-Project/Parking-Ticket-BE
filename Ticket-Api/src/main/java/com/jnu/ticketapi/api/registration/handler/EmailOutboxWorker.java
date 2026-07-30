@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class EmailOutboxWorker {
-    private static final int BATCH_SIZE = 20;
+    private static final int BATCH_SIZE = 14;
     private static final long STALE_PROCESSING_MINUTES = 10;
 
     private final EmailOutboxAdaptor emailOutboxAdaptor;

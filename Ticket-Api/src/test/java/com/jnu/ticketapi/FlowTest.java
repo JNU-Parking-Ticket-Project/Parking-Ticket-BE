@@ -5,7 +5,6 @@ import com.jnu.ticketapi.api.event.model.request.UpdateEventPublishRequest;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.sector.model.request.SectorRegisterRequest;
-import com.jnu.ticketapi.api.user.ResultAssignment;
 import com.jnu.ticketapi.registration.FinalSaveRequestTestDataBuilder;
 import com.jnu.ticketapi.registration.TemporarySaveRequestTestDataBuilder;
 import com.jnu.ticketapi.security.JwtGenerator;
@@ -13,6 +12,7 @@ import com.jnu.ticketbatch.config.QuartzJobLauncher;
 import com.jnu.ticketdomain.common.vo.DateTimePeriod;
 import com.jnu.ticketdomain.domains.captcha.domain.Captcha;
 import com.jnu.ticketdomain.domains.captcha.repository.CaptchaRepository;
+import com.jnu.ticketdomain.domains.email.repository.EmailOutboxRepository;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.repository.EventRepository;
@@ -33,23 +33,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.jnu.ticketdomain.domains.user.domain.UserStatus.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.awaitility.Awaitility.await;
 import static org.quartz.JobBuilder.newJob;
@@ -57,14 +62,14 @@ import static org.quartz.TriggerBuilder.newTrigger;
 
 @Slf4j
 @ActiveProfiles("integration-test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class FlowTest implements UsingContainers {
 
-    // production 환경변수 값
-    private static final int ASYNC_CORE_POOL_SIZE = 1000;
-    private static final int ASYNC_MAX_POOL_SIZE = 1000;
-    private static final int ASYNC_QUEUE_CAPACITY = 50000;
-    private static final int HIKARI_MAXIMUM_POOL_SIZE = 2000;
+    private static final int ASYNC_CORE_POOL_SIZE = 32;
+    private static final int ASYNC_MAX_POOL_SIZE = 64;
+    private static final int ASYNC_QUEUE_CAPACITY = 5000;
+    private static final int HIKARI_MAXIMUM_POOL_SIZE = 64;
 
     private static final Long EVENT_VALUE = 1L;
     private static final String BEARER_PREFIX = "Bearer ";
@@ -79,6 +84,7 @@ public class FlowTest implements UsingContainers {
     @DynamicPropertySource
     static void hikariProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.hikari.maximum-pool-size", () -> HIKARI_MAXIMUM_POOL_SIZE);
+        registry.add("spring.redis.command-timeout-ms", () -> 5000);
     }
 
     @Autowired
@@ -106,7 +112,7 @@ public class FlowTest implements UsingContainers {
     RedisRepository redisRepository;
 
     @Autowired
-    ResultAssignment resultAssignment;
+    EmailOutboxRepository emailOutboxRepository;
 
     @Autowired
     RedisStreamConsumerManager streamConsumerManager;
@@ -117,8 +123,11 @@ public class FlowTest implements UsingContainers {
     private Long USER_IDENTIFIER = 1L;
 
     @AfterEach
-    void stopStreamConsumer() {
+    void tearDown() throws SchedulerException {
         streamConsumerManager.stopImmediately(EVENT_VALUE);
+        if (!scheduler.isShutdown()) {
+            scheduler.shutdown(true);
+        }
     }
 
 
@@ -143,6 +152,7 @@ public class FlowTest implements UsingContainers {
         Integer capacityCountSum = settings.stream().map(Setting::capacity).reduce(0, Integer::sum);
         Integer reserveCountSum = settings.stream().map(Setting::reserve).reduce(0, Integer::sum);
         Integer userCountSum = settings.stream().map(Setting::requestCount).reduce(0, Integer::sum);
+        Integer issuedCountSum = capacityCountSum + reserveCountSum;
 
         List<List<String>> userAccessTokens = setUpAccessTokensPerSector(settings);
 
@@ -159,26 +169,42 @@ public class FlowTest implements UsingContainers {
 
         // when
         ExecutorService executorServiceForSector = Executors.newFixedThreadPool(settings.size());
-        ExecutorService executorServiceInSector = Executors.newCachedThreadPool();
+        ExecutorService executorServiceInSector = Executors.newFixedThreadPool(32);
+        AtomicInteger successFinalSaveCount = new AtomicInteger();
+        AtomicInteger rejectedFinalSaveCount = new AtomicInteger();
+        AtomicInteger studentNumSequence = new AtomicInteger(100_000);
+        Queue<Throwable> requestErrors = new ConcurrentLinkedQueue<>();
 
         for (int i = 0; i < settings.size(); i++) {
             int sectorId = i + 1;
             List<String> accessTokensPerSector = userAccessTokens.get(i);
-            executorServiceForSector.submit(() -> finalSaveRequestToSector(sectorId, accessTokensPerSector, executorServiceInSector));
+            executorServiceForSector.submit(
+                    () ->
+                            finalSaveRequestToSector(
+                                    sectorId,
+                                    accessTokensPerSector,
+                                    executorServiceInSector,
+                                    successFinalSaveCount,
+                                    rejectedFinalSaveCount,
+                                    studentNumSequence,
+                                    requestErrors));
         }
         executorServiceForSector.shutdown();
         executorServiceForSector.awaitTermination(60, SECONDS);
         executorServiceInSector.shutdown();
-        executorServiceInSector.awaitTermination(60, SECONDS);
+        assertThat(executorServiceInSector.awaitTermination(120, SECONDS)).isTrue();
+        throwIfRequestError(requestErrors);
+        assertFinalSaveRequestCounts(
+                successFinalSaveCount.get(), rejectedFinalSaveCount.get(), issuedCountSum, userCountSum - issuedCountSum);
 
-        awaitAllRegistrationsSaved(userCountSum);
-
-        resultAssignment.assign(EVENT_VALUE);
+        awaitAllRegistrationsSaved(issuedCountSum);
 
         // then
         List<User> usersWithResult = userRepository.findAll(Sort.by("id"));
         List<Registration> resultRegistration = registrationRepository.findSortedRegistrationsByEventId(EVENT_VALUE);
         List<Registration> registrations = registrationRepository.findAll();
+        List<Registration> savedRegistrations =
+                registrations.stream().filter(Registration::isSaved).toList();
 
         Map<UserStatus, List<User>> resultByGroup = usersWithResult.stream()
                 .collect(Collectors.groupingBy(User::getStatus, Collectors.toList()));
@@ -186,13 +212,17 @@ public class FlowTest implements UsingContainers {
         printRegistrationsWithUserStatus(resultRegistration, usersWithResult);
 
         assertSoftly(softly -> {
-            softly.assertThat(registrations).hasSize(userCountSum);
+            softly.assertThat(successFinalSaveCount.get()).isEqualTo(issuedCountSum);
+            softly.assertThat(rejectedFinalSaveCount.get()).isEqualTo(userCountSum - issuedCountSum);
+            softly.assertThat(savedRegistrations).hasSize(issuedCountSum);
+            softly.assertThat(emailOutboxRepository.count()).isEqualTo(issuedCountSum.longValue());
             softly.assertThat(resultByGroup.getOrDefault(SUCCESS, Collections.emptyList())).hasSize(capacityCountSum);
             softly.assertThat(resultByGroup.getOrDefault(PREPARE, Collections.emptyList())).hasSize(reserveCountSum);
             softly.assertThat(resultByGroup.getOrDefault(FAIL, Collections.emptyList())).hasSize(userCountSum - (capacityCountSum + reserveCountSum));
         });
 
         assertPerSector(usersWithResult, settings);
+        assertRegistrationDecisions(savedRegistrations, settings);
     }
 
     private void printRegistrationsWithUserStatus(List<Registration> registrations, List<User> usersWithResult) {
@@ -268,30 +298,72 @@ public class FlowTest implements UsingContainers {
                 .toList();
     }
 
-    private void finalSaveRequestToSector(long sectorId, List<String> accessTokens, ExecutorService executorService) {
+    private void finalSaveRequestToSector(
+            long sectorId,
+            List<String> accessTokens,
+            ExecutorService executorService,
+            AtomicInteger successFinalSaveCount,
+            AtomicInteger rejectedFinalSaveCount,
+            AtomicInteger studentNumSequence,
+            Queue<Throwable> requestErrors) {
         for (String accessToken : accessTokens) {
             executorService.execute(() -> {
-                WebTestClient newClient = client.mutate()
-                        .defaultHeader(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
-                        .build();
+                try {
+                    WebTestClient newClient = client.mutate()
+                            .defaultHeader(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
+                            .responseTimeout(Duration.ofSeconds(30))
+                            .build();
 
-                String captchaCode = newClient.get().uri("/v1/captcha")
-                        .exchange().expectStatus().isOk()
-                        .expectBody(CaptchaResponse.class)
-                        .returnResult().getResponseBody().captchaCode();
+                    String captchaCode = newClient.get().uri("/v1/captcha")
+                            .exchange().expectStatus().isOk()
+                            .expectBody(CaptchaResponse.class)
+                            .returnResult().getResponseBody().captchaCode();
 
-                FinalSaveRequest request2 = FinalSaveRequestTestDataBuilder
-                        .builder()
-                        .withSelectSectorId(sectorId)
-                        .withCaptchaCode(captchaCode)
-                        .withCaptchaAnswer("1")
-                        .build();
+                    FinalSaveRequest request2 = FinalSaveRequestTestDataBuilder
+                            .builder()
+                            .withSelectSectorId(sectorId)
+                            .withStudentNum(String.valueOf(studentNumSequence.incrementAndGet()))
+                            .withCaptchaCode(captchaCode)
+                            .withCaptchaAnswer("1")
+                            .build();
 
-                newClient.post().uri("/v1/registration/{event-id}", EVENT_VALUE)
-                        .bodyValue(request2)
-                        .exchange().expectStatus().isOk();
+                    int statusCode = newClient.post().uri("/v1/registration/{event-id}", EVENT_VALUE)
+                            .bodyValue(request2)
+                            .exchange()
+                            .expectBody()
+                            .returnResult()
+                            .getStatus()
+                            .value();
+
+                    if (statusCode >= 200 && statusCode < 300) {
+                        successFinalSaveCount.incrementAndGet();
+                        return;
+                    }
+                    if (statusCode >= 400 && statusCode < 500) {
+                        rejectedFinalSaveCount.incrementAndGet();
+                        return;
+                    }
+                    requestErrors.add(new AssertionError("Unexpected finalSave status: " + statusCode));
+                } catch (Throwable e) {
+                    requestErrors.add(e);
+                }
             });
         }
+    }
+
+    private void throwIfRequestError(Queue<Throwable> requestErrors) {
+        Throwable requestError = requestErrors.peek();
+        if (requestError != null) {
+            throw new AssertionError("finalSave 요청 중 예상하지 못한 오류가 발생했습니다.", requestError);
+        }
+    }
+
+    private void assertFinalSaveRequestCounts(
+            int successCount, int rejectedCount, int expectedSuccessCount, int expectedRejectedCount) {
+        assertSoftly(softly -> {
+            softly.assertThat(successCount).isEqualTo(expectedSuccessCount);
+            softly.assertThat(rejectedCount).isEqualTo(expectedRejectedCount);
+        });
     }
 
     private void assertPerSector(List<User> usersWithResult, List<Setting> settings) {
@@ -314,6 +386,46 @@ public class FlowTest implements UsingContainers {
                 softly.assertThat(preparedNumbers).containsExactlyInAnyOrderElementsOf(expectedPreparedNumbers);
             });
             i++;
+        }
+    }
+
+    private void assertRegistrationDecisions(
+            List<Registration> registrations, List<Setting> settings) {
+        for (int index = 0; index < settings.size(); index++) {
+            long sectorId = index + 1L;
+            Setting setting = settings.get(index);
+            int issueAmount = setting.capacity() + setting.reserve();
+            List<Registration> sectorRegistrations = registrations.stream()
+                    .filter(registration -> registration.getSector().getId().equals(sectorId))
+                    .toList();
+            Map<UserStatus, List<Registration>> registrationsByResult = sectorRegistrations.stream()
+                    .collect(Collectors.groupingBy(Registration::getResultStatus));
+
+            assertSoftly(softly -> {
+                softly.assertThat(sectorRegistrations).hasSize(issueAmount);
+                softly.assertThat(sectorRegistrations)
+                        .extracting(Registration::getPosition)
+                        .containsExactlyInAnyOrderElementsOf(
+                                IntStream.rangeClosed(1, issueAmount).boxed().toList());
+                softly.assertThat(registrationsByResult.getOrDefault(SUCCESS, List.of()))
+                        .hasSize(setting.capacity())
+                        .extracting(Registration::getPosition)
+                        .allMatch(position -> position <= setting.capacity());
+                softly.assertThat(registrationsByResult.getOrDefault(PREPARE, List.of()))
+                        .hasSize(setting.reserve())
+                        .extracting(Registration::getSequence)
+                        .containsExactlyInAnyOrderElementsOf(
+                                IntStream.rangeClosed(1, setting.reserve()).boxed().toList());
+                softly.assertThat(sectorRegistrations)
+                        .extracting(Registration::getSavedAt)
+                        .doesNotContainNull();
+                softly.assertThat(
+                                redisRepository.getIntegerValue(
+                                        "parking-ticket:event:{1}:sector:"
+                                                + sectorId
+                                                + ":stock"))
+                        .contains(0);
+            });
         }
     }
 
@@ -426,9 +538,13 @@ public class FlowTest implements UsingContainers {
     private void awaitAllRegistrationsSaved(int expectedSavedCount) {
         await().atMost(60, SECONDS)
                 .pollInterval(200, MILLISECONDS)
-                .until(() -> registrationRepository.findAll().stream()
-                        .filter(Registration::isSaved)
-                        .count() == expectedSavedCount);
+                .untilAsserted(() -> {
+                    long savedCount =
+                            registrationRepository.findAll().stream()
+                                    .filter(Registration::isSaved)
+                                    .count();
+                    assertThat(savedCount).isEqualTo(expectedSavedCount);
+                });
         System.out.println("============데이터 처리 완료===============");
     }
 

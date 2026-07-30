@@ -9,14 +9,18 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -62,6 +66,59 @@ class WaitingQueueServiceTest {
         assertThat(payload.getString("studentNum")).isEqualTo("20240001");
         assertThat(payload.getBoolean("isSaved")).isFalse();
         assertThat(payload.getLong("eventId")).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("Redis 예약은 DB 잔여여석과 이메일 중복 키, Stream 저장을 한 번에 위임한다")
+    void reserveAndRegisterQueueDelegatesAtomicStockReservation() throws Exception {
+        Registration registration = registration();
+        Sector sector = org.mockito.Mockito.mock(Sector.class);
+        when(sector.getId()).thenReturn(2L);
+        when(sector.getRemainingAmount()).thenReturn(240);
+        when(sector.getIssueAmount()).thenReturn(300);
+        when(sector.getInitSectorCapacity()).thenReturn(250);
+        StockReservationResult reservationResult =
+                StockReservationResult.reserved(1, UserStatus.SUCCESS, -2, 299);
+        when(redisRepository.reserveStockAndAddToStream(
+                        eq("parking-ticket:event:{3}:sector:2:stock"),
+                        eq("parking-ticket:event:{3}:sector:2:sequence"),
+                        eq("parking-ticket:event:{3}:reserved:email"),
+                        eq(STREAM_KEY),
+                        eq("parking-ticket:event:{3}:closed"),
+                        anyString(),
+                        eq(1L),
+                        eq(2L),
+                        eq(3L),
+                        eq("student@jnu.ac.kr"),
+                        eq(240),
+                        eq(300),
+                        eq(250)))
+                .thenReturn(reservationResult);
+
+        StockReservationResult result =
+                waitingQueueService.reserveAndRegisterQueue(
+                        STREAM_KEY, registration, 1L, sector, 3L);
+
+        assertThat(result).isSameAs(reservationResult);
+        ArgumentCaptor<String> registrationPayloadCaptor = ArgumentCaptor.forClass(String.class);
+        verify(redisRepository)
+                .reserveStockAndAddToStream(
+                        eq("parking-ticket:event:{3}:sector:2:stock"),
+                        eq("parking-ticket:event:{3}:sector:2:sequence"),
+                        eq("parking-ticket:event:{3}:reserved:email"),
+                        eq(STREAM_KEY),
+                        eq("parking-ticket:event:{3}:closed"),
+                        registrationPayloadCaptor.capture(),
+                        eq(1L),
+                        eq(2L),
+                        eq(3L),
+                        eq("student@jnu.ac.kr"),
+                        eq(240),
+                        eq(300),
+                        eq(250));
+        JSONObject payload = new JSONObject(registrationPayloadCaptor.getValue());
+        assertThat(payload.getString("email")).isEqualTo("student@jnu.ac.kr");
+        assertThat(payload.getString("studentNum")).isEqualTo("20240001");
     }
 
     @Test
@@ -138,6 +195,45 @@ class WaitingQueueServiceTest {
         waitingQueueService.deleteEventStream(3L);
 
         verify(redisRepository).delete("쿠폰 발급 스트림:{3}");
+    }
+
+    @Test
+    @DisplayName("Redis 잔여 재고 조회는 stock key를 사용한다")
+    void findRemainingStockUsesStockKey() {
+        when(redisRepository.getIntegerValue("parking-ticket:event:{3}:sector:2:stock"))
+                .thenReturn(Optional.of(10));
+
+        Optional<Integer> remainingStock = waitingQueueService.findRemainingStock(3L, 2L);
+
+        assertThat(remainingStock).contains(10);
+    }
+
+    @Test
+    @DisplayName("이벤트 종료 시 event 단위 Redis 재고 키 prefix를 삭제한다")
+    void deleteEventStockKeysDeletesEventStockPrefix() {
+        waitingQueueService.deleteEventStockKeys(3L);
+
+        verify(redisRepository).deleteKeysByPrefix("parking-ticket:event:{3}:");
+    }
+
+    @Test
+    @DisplayName("이벤트 종료 시 drain 기간 동안 Redis 재고 키 만료를 지연한다")
+    void expireEventStockKeysUsesEventStockPrefix() {
+        Duration timeout = Duration.ofMinutes(5);
+
+        waitingQueueService.expireEventStockKeys(3L, timeout);
+
+        verify(redisRepository).expireKeysByPrefix("parking-ticket:event:{3}:", timeout);
+    }
+
+    @Test
+    @DisplayName("이벤트 종료 마커는 동일한 이벤트 hash slot에 TTL과 함께 저장한다")
+    void markEventStockClosedUsesEventClosedKey() {
+        Duration timeout = Duration.ofMinutes(5);
+
+        waitingQueueService.markEventStockClosed(3L, timeout);
+
+        verify(redisRepository).set("parking-ticket:event:{3}:closed", true, timeout);
     }
 
     private Registration registration() {

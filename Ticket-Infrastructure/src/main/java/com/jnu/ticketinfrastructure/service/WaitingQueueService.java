@@ -5,17 +5,20 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_STREAM;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.model.StreamConsumerState;
 import com.jnu.ticketinfrastructure.model.StreamQueueMessage;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +51,43 @@ public class WaitingQueueService {
         ChatMessage message = new ChatMessage(registrationString, userId, sectorId, eventId);
         redisRepository.xAdd(key, message);
         tracker.info("Added to the stream, score:{}", score);
+    }
+
+    public StockReservationResult reserveAndRegisterQueue(
+            String key, Registration registration, Long userId, Sector sector, Long eventId)
+            throws JsonProcessingException {
+        String registrationString = convertRegistrationJSON(registration);
+        int issueAmount = sector.getIssueAmount();
+        int initialRemainingAmount =
+                Math.max(
+                        0,
+                        Math.min(
+                                Optional.ofNullable(sector.getRemainingAmount())
+                                        .orElse(issueAmount),
+                                issueAmount));
+        StockReservationResult result =
+                redisRepository.reserveStockAndAddToStream(
+                        stockKey(eventId, sector.getId()),
+                        sequenceKey(eventId, sector.getId()),
+                        reservedEmailKey(eventId),
+                        key,
+                        closedKey(eventId),
+                        registrationString,
+                        userId,
+                        sector.getId(),
+                        eventId,
+                        registration.getEmail(),
+                        initialRemainingAmount,
+                        issueAmount,
+                        sector.getInitSectorCapacity());
+        tracker.info(
+                "Reserved Redis stock. sectorId: {}, reserved: {}, position: {}, status: {}, remaining: {}",
+                sector.getId(),
+                result.isReserved(),
+                result.getPosition(),
+                result.getResultStatus(),
+                result.getRemainingAmount());
+        return result;
     }
 
     public String convertRegistrationJSON(Registration registration) {
@@ -171,5 +211,41 @@ public class WaitingQueueService {
 
     public void deleteEventStream(Long eventId) {
         redisRepository.delete(eventStreamKey(eventId));
+    }
+
+    public Optional<Integer> findRemainingStock(Long eventId, Long sectorId) {
+        return redisRepository.getIntegerValue(stockKey(eventId, sectorId));
+    }
+
+    public void deleteEventStockKeys(Long eventId) {
+        redisRepository.deleteKeysByPrefix(eventStockPrefix(eventId));
+    }
+
+    public void expireEventStockKeys(Long eventId, Duration timeout) {
+        redisRepository.expireKeysByPrefix(eventStockPrefix(eventId), timeout);
+    }
+
+    public void markEventStockClosed(Long eventId, Duration timeout) {
+        redisRepository.set(closedKey(eventId), true, timeout);
+    }
+
+    public String eventStockPrefix(Long eventId) {
+        return "parking-ticket:event:{" + eventId + "}:";
+    }
+
+    public String stockKey(Long eventId, Long sectorId) {
+        return eventStockPrefix(eventId) + "sector:" + sectorId + ":stock";
+    }
+
+    public String sequenceKey(Long eventId, Long sectorId) {
+        return eventStockPrefix(eventId) + "sector:" + sectorId + ":sequence";
+    }
+
+    public String reservedEmailKey(Long eventId) {
+        return eventStockPrefix(eventId) + "reserved:email";
+    }
+
+    public String closedKey(Long eventId) {
+        return eventStockPrefix(eventId) + "closed";
     }
 }

@@ -11,8 +11,11 @@ import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.*;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
+import com.jnu.ticketdomain.domains.registration.exception.AlreadyExistRegistrationException;
+import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -37,25 +40,34 @@ public class EventWithDrawUseCase {
     //            leaseTime = 10000,
     //            timeUnit = TimeUnit.MILLISECONDS)
     @SneakyThrows
-    public void issueEvent(Registration registration, Long userId, Long sectorId, Long eventId) {
-        // 재고 감소 로직 구현
-        Result<Event, Object> readyEvent = eventAdaptor.findReadyOrOpenEvent();
-        readyEvent.fold(
-                (event) -> {
-                    if (event.getEventStatus().equals(EventStatus.READY))
-                        throw NotOpenEventStatusException.EXCEPTION;
-                    event.validateIssuePeriod();
-                    return null;
-                },
-                (error) -> {
-                    throw NotReadyEventStatusException.EXCEPTION;
-                });
-        waitingQueueService.registerQueue(
-                waitingQueueService.eventStreamKey(eventId),
-                registration,
-                userId,
-                sectorId,
-                eventId);
+    public StockReservationResult issueEvent(
+            Registration registration, Long userId, Sector sector, Long eventId) {
+        Event event = eventAdaptor.findById(eventId);
+        if (event.getEventStatus() != EventStatus.OPEN) {
+            throw NotOpenEventStatusException.EXCEPTION;
+        }
+        if (sector.getEvent() == null || !Objects.equals(sector.getEvent().getId(), eventId)) {
+            throw NotFoundSectorException.EXCEPTION;
+        }
+        event.validateIssuePeriod();
+
+        StockReservationResult result =
+                waitingQueueService.reserveAndRegisterQueue(
+                        waitingQueueService.eventStreamKey(eventId),
+                        registration,
+                        userId,
+                        sector,
+                        eventId);
+        if (result.isDuplicate()) {
+            throw AlreadyExistRegistrationException.EXCEPTION;
+        }
+        if (result.isNoStock()) {
+            throw NoEventStockLeftException.EXCEPTION;
+        }
+        if (result.isClosed()) {
+            throw NotOpenEventStatusException.EXCEPTION;
+        }
+        return result;
     }
 
     public GetEventPeriodResponse getEventPeriod() {
@@ -77,6 +89,9 @@ public class EventWithDrawUseCase {
                     eventAdaptor.updateEventStatus(event, EventStatus.CLOSED);
                     List<Sector> sector = event.getSector();
                     sector.forEach(Sector::resetAmount);
+                    if (waitingQueueService != null) {
+                        waitingQueueService.deleteEventStockKeys(event.getId());
+                    }
                     return null;
                 },
                 (error) -> {

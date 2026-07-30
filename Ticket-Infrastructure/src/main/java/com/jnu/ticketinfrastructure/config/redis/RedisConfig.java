@@ -36,6 +36,9 @@ public class RedisConfig {
     @Value("${spring.redis.password}")
     private String redisPassword;
 
+    @Value("${spring.redis.command-timeout-ms:3000}")
+    private long redisCommandTimeoutMs;
+
     @Bean
     @ConditionalOnExpression("${ableRedis:true}")
     public RedisConnectionFactory redisConnectionFactory() {
@@ -47,7 +50,7 @@ public class RedisConfig {
 
         LettuceClientConfiguration clientConfig =
                 LettuceClientConfiguration.builder()
-                        .commandTimeout(Duration.ofSeconds(1))
+                        .commandTimeout(Duration.ofMillis(redisCommandTimeoutMs))
                         .shutdownTimeout(Duration.ZERO)
                         .build();
         return new LettuceConnectionFactory(redisConfig, clientConfig);

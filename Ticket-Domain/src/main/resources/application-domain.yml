@@ -108,6 +108,9 @@ mail:
     enabled: false
 
 redis:
+  stock-sync:
+    enabled: false
+
   stream:
     consumer:
       lifecycle-enabled: false
@@ -238,4 +241,8 @@ thread:
 
 mail:
   outbox:
+    enabled: false
+
+redis:
+  stock-sync:
     enabled: false

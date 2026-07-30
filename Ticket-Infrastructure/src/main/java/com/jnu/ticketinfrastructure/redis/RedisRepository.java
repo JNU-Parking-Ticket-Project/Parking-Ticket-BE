@@ -2,17 +2,21 @@ package com.jnu.ticketinfrastructure.redis;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import io.lettuce.core.XAutoClaimArgs;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +41,53 @@ import org.springframework.stereotype.Repository;
 @ConditionalOnExpression("${ableRedis:true}")
 public class RedisRepository {
     private static final String STREAM_PAYLOAD_KEY = "payload";
+    private static final String STREAM_REGISTRATION_KEY = "registration";
+    private static final String STREAM_USER_ID_KEY = "userId";
+    private static final String STREAM_SECTOR_ID_KEY = "sectorId";
+    private static final String STREAM_EVENT_ID_KEY = "eventId";
+    private static final String STREAM_POSITION_KEY = "position";
+    private static final String STREAM_RESULT_STATUS_KEY = "resultStatus";
+    private static final String STREAM_SEQUENCE_KEY = "sequence";
+    private static final String RESERVE_STOCK_SCRIPT =
+            "if redis.call('EXISTS', KEYS[5]) == 1 then "
+                    + "  local closedStock = redis.call('GET', KEYS[1]) "
+                    + "  if not closedStock then closedStock = 0 end "
+                    + "  return {0, 'CLOSED', -1, '', -1, tonumber(closedStock)} "
+                    + "end "
+                    + "local stock = redis.call('GET', KEYS[1]) "
+                    + "if not stock then "
+                    + "  stock = tonumber(ARGV[1]) "
+                    + "  redis.call('SET', KEYS[1], stock) "
+                    + "else "
+                    + "  stock = tonumber(stock) "
+                    + "end "
+                    + "if not redis.call('GET', KEYS[2]) then "
+                    + "  redis.call('SET', KEYS[2], tonumber(ARGV[2]) - stock) "
+                    + "end "
+                    + "if redis.call('SISMEMBER', KEYS[3], ARGV[8]) == 1 then "
+                    + "  return {0, 'DUPLICATE', -1, '', -1, stock} "
+                    + "end "
+                    + "if stock <= 0 then "
+                    + "  return {0, 'NO_STOCK', -1, '', -1, stock} "
+                    + "end "
+                    + "local position = redis.call('INCR', KEYS[2]) "
+                    + "local status = 'PREPARE' "
+                    + "local sequence = position - tonumber(ARGV[3]) "
+                    + "if position <= tonumber(ARGV[3]) then "
+                    + "  status = 'SUCCESS' "
+                    + "  sequence = -2 "
+                    + "end "
+                    + "local remaining = redis.call('DECR', KEYS[1]) "
+                    + "redis.call('SADD', KEYS[3], ARGV[8]) "
+                    + "redis.call('XADD', KEYS[4], '*', "
+                    + "  'registration', ARGV[4], "
+                    + "  'userId', ARGV[5], "
+                    + "  'sectorId', ARGV[6], "
+                    + "  'eventId', ARGV[7], "
+                    + "  'position', tostring(position), "
+                    + "  'resultStatus', status, "
+                    + "  'sequence', tostring(sequence)) "
+                    + "return {1, 'RESERVED', position, status, sequence, remaining}";
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -122,6 +173,17 @@ public class RedisRepository {
         }
     }
 
+    public void expireKeysByPrefix(String prefix, Duration timeout) {
+        Set<String> keys = redisTemplate.keys(prefix + "*");
+        if (keys != null) {
+            keys.forEach(key -> redisTemplate.expire(key, timeout));
+        }
+    }
+
+    public void set(String key, Object value, Duration timeout) {
+        redisTemplate.opsForValue().set(key, value, timeout);
+    }
+
     public Double getScore(String key, Object value) {
         return redisTemplate.opsForZSet().score(key, value);
     }
@@ -134,6 +196,48 @@ public class RedisRepository {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to add message to Redis Stream", e);
         }
+    }
+
+    public StockReservationResult reserveStockAndAddToStream(
+            String stockKey,
+            String sequenceKey,
+            String reservedEmailKey,
+            String streamKey,
+            String closedKey,
+            String registration,
+            Long userId,
+            Long sectorId,
+            Long eventId,
+            String email,
+            Integer initialRemainingAmount,
+            Integer issueAmount,
+            Integer initSectorCapacity) {
+        List<Object> rawResult =
+                redisTemplate.execute(
+                        (RedisCallback<List<Object>>)
+                                connection ->
+                                        (List<Object>)
+                                                connection.eval(
+                                                        RESERVE_STOCK_SCRIPT.getBytes(
+                                                                StandardCharsets.UTF_8),
+                                                        ReturnType.MULTI,
+                                                        5,
+                                                        redisArgs(
+                                                                stockKey,
+                                                                sequenceKey,
+                                                                reservedEmailKey,
+                                                                streamKey,
+                                                                closedKey,
+                                                                String.valueOf(
+                                                                        initialRemainingAmount),
+                                                                String.valueOf(issueAmount),
+                                                                String.valueOf(initSectorCapacity),
+                                                                registration,
+                                                                String.valueOf(userId),
+                                                                String.valueOf(sectorId),
+                                                                String.valueOf(eventId),
+                                                                email)));
+        return toStockReservationResult(rawResult);
     }
 
     public void createConsumerGroupIfAbsent(String key, String group) {
@@ -230,6 +334,17 @@ public class RedisRepository {
         return redisTemplate.opsForStream().delete(key, recordId);
     }
 
+    public Optional<Integer> getIntegerValue(String key) {
+        byte[] value =
+                redisTemplate.execute(
+                        (RedisCallback<byte[]>)
+                                connection -> connection.get(key.getBytes(StandardCharsets.UTF_8)));
+        if (value == null) {
+            return Optional.empty();
+        }
+        return Optional.of(Integer.parseInt(new String(value, StandardCharsets.UTF_8)));
+    }
+
     public Long remove(String key, Object value) {
         return redisTemplate.opsForZSet().remove(key, value);
     }
@@ -254,7 +369,14 @@ public class RedisRepository {
 
     private RawStreamMessage toRawStreamMessage(MapRecord<String, Object, Object> record) {
         Object payload = record.getValue().get(STREAM_PAYLOAD_KEY);
-        return new RawStreamMessage(record.getId().getValue(), String.valueOf(payload));
+        try {
+            if (payload == null) {
+                payload = objectMapper.writeValueAsString(toReservedChatMessage(record));
+            }
+            return new RawStreamMessage(record.getId().getValue(), String.valueOf(payload));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to serialize Redis Stream message", e);
+        }
     }
 
     private byte[] bytes(String value) {
@@ -262,14 +384,130 @@ public class RedisRepository {
     }
 
     private String payload(Map<byte[], byte[]> body) {
-        return body.entrySet().stream()
+        Optional<String> payload =
+                body.entrySet().stream()
                 .filter(
                         entry ->
                                 STREAM_PAYLOAD_KEY.equals(
                                         new String(entry.getKey(), StandardCharsets.UTF_8)))
                 .map(entry -> new String(entry.getValue(), StandardCharsets.UTF_8))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Redis Stream payload is missing"));
+                .findFirst();
+        if (payload.isPresent()) {
+            return payload.get();
+        }
+        Map<Object, Object> values =
+                body.entrySet().stream()
+                        .collect(
+                                java.util.stream.Collectors.toMap(
+                                        entry ->
+                                                new String(
+                                                        entry.getKey(), StandardCharsets.UTF_8),
+                                        entry ->
+                                                new String(
+                                                        entry.getValue(), StandardCharsets.UTF_8)));
+        try {
+            return objectMapper.writeValueAsString(toReservedChatMessage(values));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to serialize Redis Stream message", e);
+        }
+    }
+
+    private ChatMessage toReservedChatMessage(MapRecord<String, Object, Object> record) {
+        return toReservedChatMessage(record.getValue());
+    }
+
+    private ChatMessage toReservedChatMessage(Map<Object, Object> values) {
+        return new ChatMessage(
+                value(values, STREAM_REGISTRATION_KEY),
+                longValue(values, STREAM_USER_ID_KEY),
+                longValue(values, STREAM_SECTOR_ID_KEY),
+                longValue(values, STREAM_EVENT_ID_KEY),
+                integerValue(values, STREAM_POSITION_KEY),
+                UserStatus.valueOf(value(values, STREAM_RESULT_STATUS_KEY)),
+                integerValue(values, STREAM_SEQUENCE_KEY));
+    }
+
+    private StockReservationResult toStockReservationResult(List<Object> rawResult) {
+        if (rawResult == null || rawResult.isEmpty()) {
+            throw new IllegalStateException("Failed to reserve Redis stock");
+        }
+        boolean reserved = longValue(rawResult.get(0)) == 1L;
+        String reason = stringValue(rawResult.get(1));
+        Integer position = normalizePositive(integerValue(rawResult.get(2)));
+        String status = stringValue(rawResult.get(3));
+        Integer sequence = normalizeSequence(integerValue(rawResult.get(4)));
+        Integer remainingAmount = integerValue(rawResult.get(5));
+
+        if (reserved) {
+            return StockReservationResult.reserved(
+                    position, UserStatus.valueOf(status), sequence, remainingAmount);
+        }
+        if ("DUPLICATE".equals(reason)) {
+            return StockReservationResult.duplicate(remainingAmount);
+        }
+        if ("NO_STOCK".equals(reason)) {
+            return StockReservationResult.noStock(remainingAmount);
+        }
+        if ("CLOSED".equals(reason)) {
+            return StockReservationResult.closed(remainingAmount);
+        }
+        throw new IllegalStateException("Unknown Redis stock reservation result: " + reason);
+    }
+
+    private byte[][] redisArgs(String... values) {
+        List<byte[]> args = new ArrayList<>();
+        for (String value : values) {
+            args.add(value.getBytes(StandardCharsets.UTF_8));
+        }
+        return args.toArray(new byte[0][]);
+    }
+
+    private String value(Map<Object, Object> values, String key) {
+        Object value = values.get(key);
+        if (value == null) {
+            value = values.get(key.getBytes(StandardCharsets.UTF_8));
+        }
+        return stringValue(value);
+    }
+
+    private Long longValue(Map<Object, Object> values, String key) {
+        return Long.parseLong(value(values, key));
+    }
+
+    private Integer integerValue(Map<Object, Object> values, String key) {
+        return Integer.parseInt(value(values, key));
+    }
+
+    private Long longValue(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        return Long.parseLong(stringValue(value));
+    }
+
+    private Integer integerValue(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return Integer.parseInt(stringValue(value));
+    }
+
+    private String stringValue(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Redis value must not be null");
+        }
+        if (value instanceof byte[] bytes) {
+            return new String(bytes, StandardCharsets.UTF_8);
+        }
+        return String.valueOf(value);
+    }
+
+    private Integer normalizePositive(Integer value) {
+        return value != null && value > 0 ? value : null;
+    }
+
+    private Integer normalizeSequence(Integer value) {
+        return value != null && value != -1 ? value : null;
     }
 
     private boolean isAlreadyCreatedGroup(Exception e) {

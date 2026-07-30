@@ -37,12 +37,12 @@ public class EventDeleteUseCase {
         Events.raise(EventDeletedEvent.of(event));
         event.deleteEvent();
         event.updateStatus(EventStatus.CLOSED, null);
-        deleteEventStreamAfterCommit(eventId);
+        deleteEventRedisStateAfterCommit(eventId);
         sectorAdaptor.deleteByEvent(eventId);
         registrationAdaptor.deleteByEvent(eventId);
     }
 
-    private void deleteEventStreamAfterCommit(Long eventId) {
+    private void deleteEventRedisStateAfterCommit(Long eventId) {
         if (!ableRedis || waitingQueueService == null) {
             return;
         }
@@ -52,11 +52,16 @@ public class EventDeleteUseCase {
                     new TransactionSynchronization() {
                         @Override
                         public void afterCommit() {
-                            waitingQueueService.deleteEventStream(eventId);
+                            deleteEventRedisState(eventId);
                         }
                     });
             return;
         }
+        deleteEventRedisState(eventId);
+    }
+
+    private void deleteEventRedisState(Long eventId) {
         waitingQueueService.deleteEventStream(eventId);
+        waitingQueueService.deleteEventStockKeys(eventId);
     }
 }

@@ -97,13 +97,34 @@
         </filter>
     </appender>
 
-    <root level="${LOGGING_LEVEL_ROOT}">
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
         <appender-ref ref="CONSOLE" />
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
         <appender-ref ref="FILE" />
+    </appender>
+
+    <appender name="ASYNC_SPECIAL_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="SPECIAL_FILE" />
+    </appender>
+
+    <root level="${LOGGING_LEVEL_ROOT}">
+        <appender-ref ref="ASYNC_CONSOLE" />
+        <appender-ref ref="ASYNC_FILE" />
     </root>
 
     <logger name="processTracker" level="INFO" additivity="false">
-        <appender-ref ref="SPECIAL_FILE"/>
+        <appender-ref ref="ASYNC_SPECIAL_FILE"/>
     </logger>
 
 </configuration>

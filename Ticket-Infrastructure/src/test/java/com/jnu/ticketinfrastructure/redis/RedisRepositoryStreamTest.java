@@ -8,11 +8,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.StockReservationResult;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -98,6 +102,155 @@ class RedisRepositoryStreamTest {
         assertThat(parsed.getUserId()).isEqualTo(1L);
         assertThat(parsed.getSectorId()).isEqualTo(2L);
         assertThat(parsed.getEventId()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("blocking XREADGROUP은 Redis 예약 script의 확정 결과 필드를 raw payload로 복원한다")
+    void xReadGroupParsesReservedDecisionFields() throws Exception {
+        MapRecord<String, Object, Object> record =
+                MapRecord.create(
+                                STREAM_KEY,
+                                Map.<Object, Object>of(
+                                        "registration",
+                                        "{\"id\":10}",
+                                        "userId",
+                                        "1",
+                                        "sectorId",
+                                        "2",
+                                        "eventId",
+                                        "3",
+                                        "position",
+                                        "4",
+                                        "resultStatus",
+                                        "PREPARE",
+                                        "sequence",
+                                        "2"))
+                        .withId(RecordId.of("1690000000000-1"));
+        when(redisTemplate.execute(any(RedisCallback.class))).thenReturn("OK");
+        when(redisTemplate.opsForStream()).thenReturn(streamOperations);
+        when(streamOperations.read(
+                        any(Consumer.class), any(StreamReadOptions.class), any(StreamOffset.class)))
+                .thenReturn(List.of(record));
+
+        List<RawStreamMessage> result =
+                redisRepository.xReadGroupBlocking(
+                        STREAM_KEY, GROUP, CONSUMER, 100, Duration.ofMillis(500));
+
+        ChatMessage message =
+                objectMapper.readValue(result.get(0).getPayload(), ChatMessage.class);
+        assertThat(message.getRegistration()).isEqualTo("{\"id\":10}");
+        assertThat(message.getUserId()).isEqualTo(1L);
+        assertThat(message.getSectorId()).isEqualTo(2L);
+        assertThat(message.getEventId()).isEqualTo(3L);
+        assertThat(message.getPosition()).isEqualTo(4);
+        assertThat(message.getResultStatus()).isEqualTo(UserStatus.PREPARE);
+        assertThat(message.getSequence()).isEqualTo(2);
+        assertThat(message.hasDecision()).isTrue();
+    }
+
+    @Test
+    @DisplayName("reserveStockAndAddToStream은 Redis Lua 결과를 예약 성공으로 변환한다")
+    void reserveStockAndAddToStreamParsesReservedResult() {
+        when(redisTemplate.execute(any(RedisCallback.class)))
+                .thenReturn(List.of(1L, "RESERVED", 1L, "SUCCESS", -2L, 299L));
+
+        StockReservationResult result =
+                redisRepository.reserveStockAndAddToStream(
+                        "stock",
+                        "sequence",
+                        "reserved-email",
+                        STREAM_KEY,
+                        "closed",
+                        "{\"id\":10}",
+                        1L,
+                        2L,
+                        3L,
+                        "student@jnu.ac.kr",
+                        300,
+                        300,
+                        250);
+
+        assertThat(result.isReserved()).isTrue();
+        assertThat(result.getPosition()).isEqualTo(1);
+        assertThat(result.getResultStatus()).isEqualTo(UserStatus.SUCCESS);
+        assertThat(result.getSequence()).isEqualTo(-2);
+        assertThat(result.getRemainingAmount()).isEqualTo(299);
+    }
+
+    @Test
+    @DisplayName("reserveStockAndAddToStream은 Redis Lua 결과를 잔여 재고 없음으로 변환한다")
+    void reserveStockAndAddToStreamParsesNoStockResult() {
+        when(redisTemplate.execute(any(RedisCallback.class)))
+                .thenReturn(List.of(0L, "NO_STOCK", -1L, "", -1L, 0L));
+
+        StockReservationResult result =
+                redisRepository.reserveStockAndAddToStream(
+                        "stock",
+                        "sequence",
+                        "reserved-email",
+                        STREAM_KEY,
+                        "closed",
+                        "{\"id\":10}",
+                        1L,
+                        2L,
+                        3L,
+                        "student@jnu.ac.kr",
+                        300,
+                        300,
+                        250);
+
+        assertThat(result.isReserved()).isFalse();
+        assertThat(result.isNoStock()).isTrue();
+        assertThat(result.getRemainingAmount()).isZero();
+    }
+
+    @Test
+    @DisplayName("reserveStockAndAddToStream은 종료 마커 결과를 이벤트 종료로 변환한다")
+    void reserveStockAndAddToStreamParsesClosedResult() {
+        when(redisTemplate.execute(any(RedisCallback.class)))
+                .thenReturn(List.of(0L, "CLOSED", -1L, "", -1L, 17L));
+
+        StockReservationResult result =
+                redisRepository.reserveStockAndAddToStream(
+                        "stock",
+                        "sequence",
+                        "reserved-email",
+                        STREAM_KEY,
+                        "closed",
+                        "{\"id\":10}",
+                        1L,
+                        2L,
+                        3L,
+                        "student@jnu.ac.kr",
+                        300,
+                        300,
+                        250);
+
+        assertThat(result.isReserved()).isFalse();
+        assertThat(result.isClosed()).isTrue();
+        assertThat(result.getRemainingAmount()).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("getIntegerValue는 Lua가 저장한 raw 숫자 문자열을 serializer 없이 조회한다")
+    void getIntegerValueReadsRawLuaValue() {
+        when(redisTemplate.execute(any(RedisCallback.class)))
+                .thenReturn("239".getBytes(StandardCharsets.UTF_8));
+
+        assertThat(redisRepository.getIntegerValue("stock")).contains(239);
+    }
+
+    @Test
+    @DisplayName("expireKeysByPrefix는 조회된 모든 키에 동일한 TTL을 설정한다")
+    void expireKeysByPrefixExpiresEveryMatchingKey() {
+        Duration timeout = Duration.ofMinutes(5);
+        when(redisTemplate.keys("parking-ticket:event:{3}:*"))
+                .thenReturn(Set.of("stock", "sequence"));
+
+        redisRepository.expireKeysByPrefix("parking-ticket:event:{3}:", timeout);
+
+        verify(redisTemplate).expire("stock", timeout);
+        verify(redisTemplate).expire("sequence", timeout);
     }
 
     @Test
