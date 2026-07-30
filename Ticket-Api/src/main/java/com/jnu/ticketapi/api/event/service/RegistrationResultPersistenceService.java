@@ -98,7 +98,7 @@ public class RegistrationResultPersistenceService {
         Optional<Registration> existing =
                 registrationAdaptor.findSavedByEmailAndEventId(registration.getEmail(), eventId);
         if (existing.isPresent()) {
-            return toReservationResult(existing.get(), sector.getRemainingAmount());
+            return StockReservationResult.duplicate(sector.getRemainingAmount());
         }
 
         try {

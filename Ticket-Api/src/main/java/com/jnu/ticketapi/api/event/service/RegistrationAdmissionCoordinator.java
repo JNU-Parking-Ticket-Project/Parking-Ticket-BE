@@ -54,14 +54,20 @@ public class RegistrationAdmissionCoordinator implements RegistrationAdmissionFa
                 return persistWithDatabaseFallback(registration, userId, sector.getId(), eventId);
             }
 
+            StockReservationResult reservation = null;
             try {
-                StockReservationResult reservation =
+                reservation =
                         waitingQueueService.reserveAndRegisterQueue(
                                 waitingQueueService.eventStreamKey(eventId),
                                 registration,
                                 userId,
                                 sector,
                                 eventId);
+            } catch (DataAccessException exception) {
+                redisFailure = exception;
+            }
+
+            if (redisFailure == null) {
                 if (reservation.isUnavailable()) {
                     redisFailure =
                             new IllegalStateException(
@@ -77,8 +83,6 @@ public class RegistrationAdmissionCoordinator implements RegistrationAdmissionFa
                             reservation,
                             System.currentTimeMillis());
                 }
-            } catch (DataAccessException exception) {
-                redisFailure = exception;
             }
         } finally {
             readLock.unlock();
