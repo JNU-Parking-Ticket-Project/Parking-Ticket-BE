@@ -1,7 +1,6 @@
 package com.jnu.ticketbatch.config;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -12,6 +11,7 @@ import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketinfrastructure.admission.RegistrationAdmissionFallbackGateway;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import java.util.List;
@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +34,7 @@ class QuartzJobLauncherTest {
     @Mock private SectorAdaptor sectorAdaptor;
     @Mock private WaitingQueueService waitingQueueService;
     @Mock private RedisStreamConsumerManager streamConsumerManager;
+    @Mock private RegistrationAdmissionFallbackGateway admissionFallbackGateway;
     @Mock private JobExecutionContext context;
     @Mock private Event event;
     @Mock private Sector sector;
@@ -45,10 +46,11 @@ class QuartzJobLauncherTest {
         quartzJobLauncher = new QuartzJobLauncher();
         ReflectionTestUtils.setField(quartzJobLauncher, "eventAdaptor", eventAdaptor);
         ReflectionTestUtils.setField(quartzJobLauncher, "sectorAdaptor", sectorAdaptor);
-        ReflectionTestUtils.setField(
-                quartzJobLauncher, "waitingQueueService", waitingQueueService);
+        ReflectionTestUtils.setField(quartzJobLauncher, "waitingQueueService", waitingQueueService);
         ReflectionTestUtils.setField(
                 quartzJobLauncher, "streamConsumerManager", streamConsumerManager);
+        ReflectionTestUtils.setField(
+                quartzJobLauncher, "admissionFallbackGateway", admissionFallbackGateway);
     }
 
     @Test
@@ -61,11 +63,7 @@ class QuartzJobLauncherTest {
         quartzJobLauncher.execute(context);
 
         InOrder order =
-                inOrder(
-                        sectorAdaptor,
-                        waitingQueueService,
-                        eventAdaptor,
-                        streamConsumerManager);
+                inOrder(sectorAdaptor, waitingQueueService, eventAdaptor, streamConsumerManager);
         order.verify(sectorAdaptor).findByEventId(3L);
         order.verify(waitingQueueService).initializeEventStock(3L, List.of(sector));
         order.verify(eventAdaptor).updateEventStatus(event, EventStatus.OPEN);
@@ -73,18 +71,19 @@ class QuartzJobLauncherTest {
     }
 
     @Test
-    @DisplayName("Redis 초기화에 실패하면 이벤트 OPEN과 Stream consumer 시작을 모두 막는다")
-    void executeKeepsEventReadyWhenRedisInitializationFails() {
+    @DisplayName("Redis 연결 실패 시 DB fallback으로 이벤트를 OPEN한다")
+    void executeOpensEventWithDatabaseFallbackWhenRedisFails() throws Exception {
         givenEventJob();
         when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
-        when(waitingQueueService.initializeEventStock(3L, List.of(sector)))
-                .thenThrow(new IllegalStateException("Redis unavailable"));
+        RedisConnectionFailureException failure =
+                new RedisConnectionFailureException("Redis unavailable");
+        when(waitingQueueService.initializeEventStock(3L, List.of(sector))).thenThrow(failure);
 
-        assertThatThrownBy(() -> quartzJobLauncher.execute(context))
-                .isInstanceOf(JobExecutionException.class)
-                .hasMessageContaining("initialize and open");
-        verify(eventAdaptor, never()).updateEventStatus(event, EventStatus.OPEN);
-        verify(streamConsumerManager, never()).start(3L);
+        quartzJobLauncher.execute(context);
+
+        verify(admissionFallbackGateway).activateDatabaseFallback(3L, failure);
+        verify(eventAdaptor).updateEventStatus(event, EventStatus.OPEN);
+        verify(streamConsumerManager).start(3L);
     }
 
     @Test
@@ -97,6 +96,7 @@ class QuartzJobLauncherTest {
         assertThatCode(() -> quartzJobLauncher.execute(context)).doesNotThrowAnyException();
 
         verify(sectorAdaptor, never()).findByEventId(3L);
+        verify(admissionFallbackGateway).activateDatabaseFallback(3L, null);
         verify(eventAdaptor).updateEventStatus(event, EventStatus.OPEN);
     }
 
