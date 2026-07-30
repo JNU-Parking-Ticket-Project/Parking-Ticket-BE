@@ -7,9 +7,23 @@ const BASE_URL = (__ENV.BASE_URL || "http://localhost:8080").replace(/\/+$/, "")
 const EVENT_ID = requiredPositiveInteger("EVENT_ID");
 const RUN_ID = requiredRunId();
 const CAPTCHA_ANSWER = requiredEnvironmentValue("CAPTCHA_ANSWER");
-const TARGET_RPS = positiveInteger("TARGET_RPS", 3000);
+// This config schedules request starts; it does not claim completed HTTP throughput.
+const TARGET_RPS = positiveInteger("TARGET_RPS", 1000);
 const LOAD_DURATION_SECONDS = positiveInteger("LOAD_DURATION_SECONDS", 1);
 const TOTAL_REQUESTS = TARGET_RPS * LOAD_DURATION_SECONDS;
+const EXPECTED_SECTOR_COUNT = positiveInteger("EXPECTED_SECTOR_COUNT", 5);
+const EXPECTED_ISSUE_AMOUNT_PER_SECTOR = positiveInteger(
+  "EXPECTED_ISSUE_AMOUNT_PER_SECTOR",
+  60,
+);
+const EXPECTED_ACCEPTED = positiveInteger(
+  "EXPECTED_ACCEPTED",
+  EXPECTED_SECTOR_COUNT * EXPECTED_ISSUE_AMOUNT_PER_SECTOR,
+);
+if (EXPECTED_ACCEPTED > TOTAL_REQUESTS) {
+  throw new Error("EXPECTED_ACCEPTED cannot exceed the planned request count");
+}
+const EXPECTED_NO_STOCK = TOTAL_REQUESTS - EXPECTED_ACCEPTED;
 const BURST_WINDOW_MS = nonNegativeInteger(
   "BURST_WINDOW_MS",
   LOAD_DURATION_SECONDS * 1000,
@@ -84,6 +98,8 @@ export const options = {
   thresholds: {
     [`http_req_failed{phase:prepare}`]: ["rate==0"],
     registration_attempted: [`count==${TOTAL_REQUESTS}`],
+    registration_accepted: [`count==${EXPECTED_ACCEPTED}`],
+    registration_no_stock: [`count==${EXPECTED_NO_STOCK}`],
     registration_unexpected_rate: ["rate==0"],
     registration_request_duration: ["p(95)<5000"],
     registration_start_delay: [`p(95)<${MAX_START_DELAY_P95_MS}`],
@@ -105,6 +121,8 @@ export function setup() {
       `Preparing ${TOTAL_REQUESTS} users for run ${RUN_ID}.`,
       `eventId=${EVENT_ID}`,
       `sectorIds=${sectors.map((sector) => sector.id).join(",")}`,
+      `expectedSectorCount=${EXPECTED_SECTOR_COUNT}`,
+      `expectedIssueAmountPerSector=${EXPECTED_ISSUE_AMOUNT_PER_SECTOR}`,
       `configuredIssueAmount=${sectors.reduce((sum, sector) => sum + sector.issueAmount, 0)}`,
       `loadVUs=${LOAD_VUS}`,
       `requestsPerVU=${REQUESTS_PER_VU}`,
@@ -257,10 +275,14 @@ export function handleSummary(data) {
       runId: RUN_ID,
       eventId: EVENT_ID,
       baseUrl: BASE_URL,
-      targetRps: TARGET_RPS,
+      targetStartRatePerSecond: TARGET_RPS,
       loadDurationSeconds: LOAD_DURATION_SECONDS,
       burstWindowMs: BURST_WINDOW_MS,
       plannedRequests: TOTAL_REQUESTS,
+      expectedSectorCount: EXPECTED_SECTOR_COUNT,
+      expectedIssueAmountPerSector: EXPECTED_ISSUE_AMOUNT_PER_SECTOR,
+      expectedAccepted: EXPECTED_ACCEPTED,
+      expectedNoStock: EXPECTED_NO_STOCK,
       requestsPerVu: REQUESTS_PER_VU,
       loadVUs: LOAD_VUS,
       reuseHttpConnections: REUSE_HTTP_CONNECTIONS,
@@ -296,6 +318,8 @@ export function handleSummary(data) {
     "Registration load-test result",
     `  run id:               ${RUN_ID}`,
     `  planned requests:     ${TOTAL_REQUESTS}`,
+    `  expected accepted:    ${EXPECTED_ACCEPTED}`,
+    `  expected no stock:    ${EXPECTED_NO_STOCK}`,
     `  attempted requests:   ${attemptedCount}`,
     `  accepted (200):       ${acceptedCount}`,
     `  no stock (400):       ${noStockCount}`,
@@ -439,8 +463,19 @@ function selectSectors(sectors) {
     const available = sectors.map((sector) => sector.id).join(",");
     fail(`SECTOR_IDS contains an inactive sector. Available sector ids: ${available}`);
   }
-  if (selected.some((sector) => Number(sector.issueAmount) <= 0)) {
-    fail("Every selected sector must have issueAmount greater than zero");
+  if (selected.length !== EXPECTED_SECTOR_COUNT) {
+    fail(
+      `Expected ${EXPECTED_SECTOR_COUNT} sectors, but the active event exposes ${selected.length}`,
+    );
+  }
+  if (
+    selected.some(
+      (sector) => Number(sector.issueAmount) !== EXPECTED_ISSUE_AMOUNT_PER_SECTOR,
+    )
+  ) {
+    fail(
+      `Every selected sector must have issueAmount=${EXPECTED_ISSUE_AMOUNT_PER_SECTOR}`,
+    );
   }
 
   return selected.map((sector) => ({
