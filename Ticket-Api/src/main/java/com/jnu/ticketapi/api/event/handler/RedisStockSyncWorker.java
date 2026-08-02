@@ -46,7 +46,7 @@ public class RedisStockSyncWorker {
     void syncSector(Sector sector) {
         Long eventId = sector.getEvent().getId();
         if (sector.getEvent().getEventStatus() != EventStatus.OPEN
-                || registrationAdmissionCoordinator.isDatabaseFallback(eventId)) {
+                || registrationAdmissionCoordinator.isRedisAdmissionUnavailable(eventId)) {
             return;
         }
         try {
@@ -56,7 +56,7 @@ public class RedisStockSyncWorker {
             if (redisRemaining.isEmpty()
                     || dbRemaining == null
                     || redisRemaining.get() > dbRemaining) {
-                registrationAdmissionCoordinator.activateDatabaseFallback(
+                registrationAdmissionCoordinator.activateRedisRecovery(
                         eventId,
                         new IllegalStateException(
                                 "Redis admission checkpoint is unsafe. sectorId="
@@ -67,7 +67,7 @@ public class RedisStockSyncWorker {
                                         + dbRemaining));
             }
         } catch (RuntimeException exception) {
-            registrationAdmissionCoordinator.activateDatabaseFallback(eventId, exception);
+            registrationAdmissionCoordinator.activateRedisRecovery(eventId, exception);
         }
     }
 }

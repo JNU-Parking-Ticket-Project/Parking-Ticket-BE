@@ -30,7 +30,7 @@ public class RegistrationAdmissionRecoveryWorker {
     public void restoreOpenEventAdmission() {
         try {
             Event event = eventAdaptor.findOpenEvent();
-            registrationAdmissionCoordinator.activateDatabaseFallback(event.getId(), null);
+            registrationAdmissionCoordinator.activateRedisRecovery(event.getId(), null);
             registrationAdmissionCoordinator.recover(event.getId());
         } catch (NotFoundEventException ignored) {
             log.info("No OPEN event admission state to recover");
@@ -40,8 +40,8 @@ public class RegistrationAdmissionRecoveryWorker {
     @Scheduled(
             fixedDelayString = "${redis.admission.recovery-fixed-delay-ms:1000}",
             initialDelayString = "${redis.admission.recovery-initial-delay-ms:1000}")
-    public void recoverFallbackEvents() {
-        registrationAdmissionCoordinator.fallbackEventIds().forEach(this::recoverIfOpen);
+    public void recoverUnavailableEvents() {
+        registrationAdmissionCoordinator.recoveryEventIds().forEach(this::recoverIfOpen);
     }
 
     private void recoverIfOpen(Long eventId) {
