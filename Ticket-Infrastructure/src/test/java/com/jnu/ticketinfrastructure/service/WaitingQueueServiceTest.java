@@ -79,10 +79,10 @@ class WaitingQueueServiceTest {
     @Test
     @DisplayName("Redis 예약은 DB 잔여여석과 이메일 중복 키, Stream 저장을 한 번에 위임한다")
     void reserveAndRegisterQueueDelegatesAtomicStockReservation() throws Exception {
-        Registration registration = registration();
         Sector sector = org.mockito.Mockito.mock(Sector.class);
         when(sector.getId()).thenReturn(2L);
         when(sector.getInitSectorCapacity()).thenReturn(250);
+        when(sector.getIssueAmount()).thenReturn(300);
         StockReservationResult reservationResult =
                 StockReservationResult.reserved(1, UserStatus.SUCCESS, -2, 299);
         when(redisRepository.reserveStockAndAddToStream(
@@ -92,17 +92,28 @@ class WaitingQueueServiceTest {
                         eq(STREAM_KEY),
                         eq("parking-ticket:event:{3}:closed"),
                         eq("parking-ticket:event:{3}:initialized"),
+                        eq("parking-ticket:event:{3}:decision:journal"),
                         anyString(),
                         eq(1L),
                         eq(2L),
                         eq(3L),
                         eq("student@jnu.ac.kr"),
-                        eq(250)))
+                        eq(250),
+                        eq(300),
+                        eq(100L),
+                        eq(7L)))
                 .thenReturn(reservationResult);
 
         StockReservationResult result =
                 waitingQueueService.reserveAndRegisterQueue(
-                        STREAM_KEY, registration, 1L, sector, 3L);
+                        STREAM_KEY,
+                        "{\"email\":\"student@jnu.ac.kr\"}",
+                        "student@jnu.ac.kr",
+                        1L,
+                        sector,
+                        3L,
+                        100L,
+                        7L);
 
         assertThat(result).isSameAs(reservationResult);
         ArgumentCaptor<String> registrationPayloadCaptor = ArgumentCaptor.forClass(String.class);
@@ -114,15 +125,18 @@ class WaitingQueueServiceTest {
                         eq(STREAM_KEY),
                         eq("parking-ticket:event:{3}:closed"),
                         eq("parking-ticket:event:{3}:initialized"),
+                        eq("parking-ticket:event:{3}:decision:journal"),
                         registrationPayloadCaptor.capture(),
                         eq(1L),
                         eq(2L),
                         eq(3L),
                         eq("student@jnu.ac.kr"),
-                        eq(250));
+                        eq(250),
+                        eq(300),
+                        eq(100L),
+                        eq(7L));
         JSONObject payload = new JSONObject(registrationPayloadCaptor.getValue());
         assertThat(payload.getString("email")).isEqualTo("student@jnu.ac.kr");
-        assertThat(payload.getString("studentNum")).isEqualTo("20240001");
     }
 
     @Test
@@ -207,6 +221,16 @@ class WaitingQueueServiceTest {
         when(redisRepository.ping()).thenReturn(true);
 
         assertThat(waitingQueueService.isAvailable()).isTrue();
+    }
+
+    @Test
+    @DisplayName("이벤트 Redis 초기화 여부는 event hash tag의 initialized key로 확인한다")
+    void isEventStockInitializedUsesInitializedKey() {
+        when(redisRepository.hasKey("parking-ticket:event:{3}:initialized")).thenReturn(true);
+
+        assertThat(waitingQueueService.isEventStockInitialized(3L)).isTrue();
+
+        verify(redisRepository).hasKey("parking-ticket:event:{3}:initialized");
     }
 
     @Test
@@ -378,6 +402,18 @@ class WaitingQueueServiceTest {
         Optional<Integer> remainingStock = waitingQueueService.findRemainingStock(3L, 2L);
 
         assertThat(remainingStock).contains(10);
+    }
+
+    @Test
+    @DisplayName("Redis 배정 position 조회는 구간 sequence key를 사용한다")
+    void findAssignedPositionUsesSequenceKey() {
+        when(redisRepository.getIntegerValue("parking-ticket:event:{3}:sector:2:sequence"))
+                .thenReturn(Optional.of(60));
+
+        Optional<Integer> assignedPosition = waitingQueueService.findAssignedPosition(3L, 2L);
+
+        assertThat(assignedPosition).contains(60);
+        verify(redisRepository).getIntegerValue("parking-ticket:event:{3}:sector:2:sequence");
     }
 
     @Test

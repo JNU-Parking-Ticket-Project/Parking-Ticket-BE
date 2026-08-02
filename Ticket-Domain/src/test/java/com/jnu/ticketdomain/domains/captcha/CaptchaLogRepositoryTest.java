@@ -130,4 +130,25 @@ class CaptchaLogRepositoryTest {
         // then
         assertThat(result).isEmpty();
     }
+
+    @Test
+    @DisplayName("캡차 로그를 ID로 여러 번 소비해도 성공 상태를 유지한다")
+    void markUsedByIdIsIdempotent() {
+        // given
+        CaptchaLog captchaLog =
+                captchaLogRepository.saveAndFlush(
+                        CaptchaLog.builder().userId(1L).captchaId(1L).salt("salt").build());
+
+        // when
+        int firstUpdateCount = captchaLogRepository.markUsed(captchaLog.getId());
+        int secondUpdateCount = captchaLogRepository.markUsed(captchaLog.getId());
+
+        // then
+        assertThat(firstUpdateCount).isEqualTo(1);
+        assertThat(secondUpdateCount).isZero();
+        assertThat(captchaLogRepository.findById(captchaLog.getId()))
+                .get()
+                .extracting(CaptchaLog::getIsSuccess)
+                .isEqualTo(true);
+    }
 }

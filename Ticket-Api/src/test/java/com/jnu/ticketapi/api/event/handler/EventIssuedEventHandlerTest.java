@@ -1,8 +1,10 @@
 package com.jnu.ticketapi.api.event.handler;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -10,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.api.event.service.RegistrationResultPersistenceService;
+import com.jnu.ticketapi.api.event.service.RegistrationResultPersistenceService.StreamDecisionAction;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
@@ -51,14 +54,7 @@ class EventIssuedEventHandlerTest {
         StreamQueueMessage event =
                 event(
                         "1234-0",
-                        new ChatMessage(
-                                registrationJson(),
-                                1L,
-                                2L,
-                                3L,
-                                1,
-                                UserStatus.SUCCESS,
-                                -2));
+                        new ChatMessage(registrationJson(), 1L, 2L, 3L, 1, UserStatus.SUCCESS, -2));
 
         eventIssuedEventHandler.handle(event);
 
@@ -79,8 +75,7 @@ class EventIssuedEventHandlerTest {
     @Test
     @DisplayName("결정 정보가 없는 레거시 메시지는 DB fallback으로 확정한다")
     void handleLegacyMessageWithDatabaseFallback() {
-        StreamQueueMessage event =
-                event("2-0", new ChatMessage(registrationJson(), 1L, 2L, 3L));
+        StreamQueueMessage event = event("2-0", new ChatMessage(registrationJson(), 1L, 2L, 3L));
 
         eventIssuedEventHandler.handle(event);
 
@@ -97,14 +92,7 @@ class EventIssuedEventHandlerTest {
         StreamQueueMessage event =
                 event(
                         "3-0",
-                        new ChatMessage(
-                                registrationJson(),
-                                1L,
-                                2L,
-                                3L,
-                                1,
-                                UserStatus.SUCCESS,
-                                -2));
+                        new ChatMessage(registrationJson(), 1L, 2L, 3L, 1, UserStatus.SUCCESS, -2));
         when(registrationResultPersistenceService.persistRedisReservation(
                         any(), any(), any(), any(), any(), eq(3L)))
                 .thenThrow(new IllegalStateException("DB 저장 실패"));
@@ -114,6 +102,81 @@ class EventIssuedEventHandlerTest {
 
         verify(waitingQueueService, never())
                 .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "3-0");
+    }
+
+    @Test
+    @DisplayName("확정된 저널 메시지는 Stream payload를 파싱하지 않고 본 저장한 뒤 ACK한다")
+    void handleMaterializesConfirmedJournalWithoutParsingStreamPayload() {
+        StreamQueueMessage event =
+                event(
+                        "35-0",
+                        new ChatMessage(
+                                "not-json", 1L, 2L, 3L, 1, UserStatus.SUCCESS, -2, 2, 40L, 7L));
+        when(registrationResultPersistenceService.recordStreamDecision(
+                        eq(40L), eq(7L), any(StockReservationResult.class), anyLong()))
+                .thenReturn(StreamDecisionAction.MATERIALIZE);
+
+        eventIssuedEventHandler.handle(event);
+
+        ArgumentCaptor<StockReservationResult> reservationCaptor =
+                ArgumentCaptor.forClass(StockReservationResult.class);
+        verify(registrationResultPersistenceService)
+                .recordStreamDecision(eq(40L), eq(7L), reservationCaptor.capture(), anyLong());
+        assertThat(reservationCaptor.getValue().getPosition()).isEqualTo(1);
+        assertThat(reservationCaptor.getValue().getRemainingAmount()).isEqualTo(2);
+        verify(registrationResultPersistenceService).materializeConfirmedJournal(40L);
+        verify(waitingQueueService)
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "35-0");
+    }
+
+    @Test
+    @DisplayName("RECEIVED 저널을 먼저 본 consumer는 본 저장을 미루고 Stream record를 ACK한다")
+    void handleDefersMaterializationAndAcknowledgesReceivedJournal() {
+        StreamQueueMessage event = journalEvent("36-0");
+        when(registrationResultPersistenceService.recordStreamDecision(
+                        eq(40L), eq(7L), any(StockReservationResult.class), anyLong()))
+                .thenReturn(StreamDecisionAction.DEFER_MATERIALIZATION);
+
+        eventIssuedEventHandler.handle(event);
+
+        verify(registrationResultPersistenceService, never()).materializeConfirmedJournal(any());
+        verify(registrationResultPersistenceService, never())
+                .persistJournalWithDatabaseFallback(any(), any(Long.class));
+        verify(waitingQueueService)
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "36-0");
+    }
+
+    @Test
+    @DisplayName("fallback 전환 뒤의 저널 메시지는 DB fallback으로 본 저장한 뒤 ACK한다")
+    void handlePersistsJournalWithDatabaseFallbackAndAcknowledges() {
+        StreamQueueMessage event = journalEvent("37-0");
+        when(registrationResultPersistenceService.recordStreamDecision(
+                        eq(40L), eq(7L), any(StockReservationResult.class), anyLong()))
+                .thenReturn(StreamDecisionAction.DATABASE_FALLBACK);
+
+        eventIssuedEventHandler.handle(event);
+
+        verify(registrationResultPersistenceService).persistJournalWithDatabaseFallback(40L, 37L);
+        verify(registrationResultPersistenceService, never()).materializeConfirmedJournal(any());
+        verify(waitingQueueService)
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "37-0");
+    }
+
+    @Test
+    @DisplayName("이미 처리된 저널 메시지는 본 저장 없이 Stream record만 ACK한다")
+    void handleAcknowledgesJournalWithoutAdditionalPersistence() {
+        StreamQueueMessage event = journalEvent("38-0");
+        when(registrationResultPersistenceService.recordStreamDecision(
+                        eq(40L), eq(7L), any(StockReservationResult.class), anyLong()))
+                .thenReturn(StreamDecisionAction.ACK_ONLY);
+
+        eventIssuedEventHandler.handle(event);
+
+        verify(registrationResultPersistenceService, never()).materializeConfirmedJournal(any());
+        verify(registrationResultPersistenceService, never())
+                .persistJournalWithDatabaseFallback(any(), any(Long.class));
+        verify(waitingQueueService)
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "38-0");
     }
 
     @Test
@@ -133,8 +196,7 @@ class EventIssuedEventHandlerTest {
     @Test
     @DisplayName("레거시 메시지 처리 시 DB 재고가 없으면 ACK하고 종료한다")
     void handleAcknowledgesLegacyMessageWhenDatabaseStockIsEmpty() {
-        StreamQueueMessage event =
-                event("5-0", new ChatMessage(registrationJson(), 1L, 2L, 3L));
+        StreamQueueMessage event = event("5-0", new ChatMessage(registrationJson(), 1L, 2L, 3L));
         when(registrationResultPersistenceService.persistWithDatabaseFallback(
                         any(), eq(1L), eq(2L), eq(3L), eq(5L)))
                 .thenThrow(NoEventStockLeftException.EXCEPTION);
@@ -147,6 +209,12 @@ class EventIssuedEventHandlerTest {
 
     private StreamQueueMessage event(String recordId, ChatMessage message) {
         return new StreamQueueMessage(EVENT_STREAM_KEY, recordId, message);
+    }
+
+    private StreamQueueMessage journalEvent(String recordId) {
+        return event(
+                recordId,
+                new ChatMessage("not-json", 1L, 2L, 3L, 1, UserStatus.SUCCESS, -2, 2, 40L, 7L));
     }
 
     private String registrationJson() {

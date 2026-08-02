@@ -113,21 +113,18 @@ class RedisRepositoryStreamTest {
         MapRecord<String, Object, Object> record =
                 MapRecord.create(
                                 STREAM_KEY,
-                                Map.<Object, Object>of(
-                                        "registration",
-                                        "{\"id\":10}",
-                                        "userId",
-                                        "1",
-                                        "sectorId",
-                                        "2",
-                                        "eventId",
-                                        "3",
-                                        "position",
-                                        "4",
-                                        "resultStatus",
-                                        "PREPARE",
-                                        "sequence",
-                                        "2"))
+                                Map.<Object, Object>ofEntries(
+                                        Map.entry("registration", "{\"id\":10}"),
+                                        Map.entry("userId", "1"),
+                                        Map.entry("sectorId", "2"),
+                                        Map.entry("eventId", "3"),
+                                        Map.entry("position", "4"),
+                                        Map.entry("resultStatus", "PREPARE"),
+                                        Map.entry("sequence", "2"),
+                                        Map.entry("remainingAmount", "296"),
+                                        Map.entry("journalId", "100"),
+                                        Map.entry("admissionEpoch", "7"),
+                                        Map.entry("messageVersion", "2")))
                         .withId(RecordId.of("1690000000000-1"));
         when(redisTemplate.execute(any(RedisCallback.class))).thenReturn("OK");
         when(redisTemplate.opsForStream()).thenReturn(streamOperations);
@@ -139,8 +136,7 @@ class RedisRepositoryStreamTest {
                 redisRepository.xReadGroupBlocking(
                         STREAM_KEY, GROUP, CONSUMER, 100, Duration.ofMillis(500));
 
-        ChatMessage message =
-                objectMapper.readValue(result.get(0).getPayload(), ChatMessage.class);
+        ChatMessage message = objectMapper.readValue(result.get(0).getPayload(), ChatMessage.class);
         assertThat(message.getRegistration()).isEqualTo("{\"id\":10}");
         assertThat(message.getUserId()).isEqualTo(1L);
         assertThat(message.getSectorId()).isEqualTo(2L);
@@ -148,7 +144,24 @@ class RedisRepositoryStreamTest {
         assertThat(message.getPosition()).isEqualTo(4);
         assertThat(message.getResultStatus()).isEqualTo(UserStatus.PREPARE);
         assertThat(message.getSequence()).isEqualTo(2);
+        assertThat(message.getRemainingAmount()).isEqualTo(296);
+        assertThat(message.getJournalId()).isEqualTo(100L);
+        assertThat(message.getAdmissionEpoch()).isEqualTo(7L);
+        assertThat(message.getMessageVersion()).isEqualTo(2);
         assertThat(message.hasDecision()).isTrue();
+        assertThat(message.hasJournalDecision()).isTrue();
+    }
+
+    @Test
+    @DisplayName("journal 메타데이터가 있어도 messageVersion 2가 아니면 journal 확정 메시지가 아니다")
+    void journalDecisionRequiresMessageVersionTwo() {
+        ChatMessage message =
+                new ChatMessage(
+                        "{\"id\":10}", 1L, 2L, 3L, 4, UserStatus.PREPARE, 2, 296, 100L, 7L, 1);
+
+        assertThat(message.hasDecision()).isTrue();
+        assertThat(message.hasJournalMetadata()).isTrue();
+        assertThat(message.hasJournalDecision()).isFalse();
     }
 
     @Test
@@ -165,12 +178,16 @@ class RedisRepositoryStreamTest {
                         STREAM_KEY,
                         "closed",
                         "initialized",
+                        "decision",
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        250);
+                        250,
+                        300,
+                        100L,
+                        7L);
 
         assertThat(result.isReserved()).isTrue();
         assertThat(result.getPosition()).isEqualTo(1);
@@ -193,12 +210,16 @@ class RedisRepositoryStreamTest {
                         STREAM_KEY,
                         "closed",
                         "initialized",
+                        "decision",
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        250);
+                        250,
+                        300,
+                        100L,
+                        7L);
 
         assertThat(result.isReserved()).isFalse();
         assertThat(result.isNoStock()).isTrue();
@@ -219,12 +240,16 @@ class RedisRepositoryStreamTest {
                         STREAM_KEY,
                         "closed",
                         "initialized",
+                        "decision",
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        250);
+                        250,
+                        300,
+                        100L,
+                        7L);
 
         assertThat(result.isReserved()).isFalse();
         assertThat(result.isClosed()).isTrue();
@@ -245,12 +270,16 @@ class RedisRepositoryStreamTest {
                         STREAM_KEY,
                         "closed",
                         "initialized",
+                        "decision",
                         "{\"id\":10}",
                         1L,
                         2L,
                         3L,
                         "student@jnu.ac.kr",
-                        250);
+                        250,
+                        300,
+                        100L,
+                        7L);
 
         assertThat(result.isUnavailable()).isTrue();
         assertThat(result.getRemainingAmount()).isNull();
@@ -398,7 +427,10 @@ class RedisRepositoryStreamTest {
         assertThat(result.get(0).getOriginalRecordId()).isEqualTo("1-0");
         assertThat(result.get(0).getFailureCount()).isEqualTo(3);
         assertThat(result.get(0).getLastError()).isEqualTo("DB error");
-        assertThat(objectMapper.readValue(result.get(0).getPayload(), ChatMessage.class).getUserId())
+        assertThat(
+                        objectMapper
+                                .readValue(result.get(0).getPayload(), ChatMessage.class)
+                                .getUserId())
                 .isEqualTo(1L);
     }
 
