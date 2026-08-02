@@ -36,8 +36,9 @@ JNU 주차권 백엔드 프로젝트에 많은 관심을 가져주셔서 감사�
 3. `/docker-compose.yml` 파일을 실행합니다. (redis, mysql)
 4. Ticket-Api 모듈을 실행합니다.
 
+DB 스키마는 애플리케이션 시작 시 Flyway가 적용합니다. 기존 DB를 처음 편입할 때는 [Flyway 데이터베이스 마이그레이션](docs/database-migration.md)의 절차를 확인해 주세요.
+
 ---
 # Architecture   
 *updated at 2025.11.17*
 ![TO_BE2](https://github.com/user-attachments/assets/94cf0769-1317-4fa6-bba8-d1e3f5c0eb48)
-
