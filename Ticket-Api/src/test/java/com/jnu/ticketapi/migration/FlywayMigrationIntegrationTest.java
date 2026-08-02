@@ -49,9 +49,9 @@ class FlywayMigrationIntegrationTest {
 
         MigrateResult firstMigration = flyway.migrate();
 
-        assertThat(firstMigration.migrationsExecuted).isEqualTo(4);
+        assertThat(firstMigration.migrationsExecuted).isEqualTo(5);
         assertThat(flyway.info().current().getVersion())
-                .isEqualTo(MigrationVersion.fromVersion("4"));
+                .isEqualTo(MigrationVersion.fromVersion("5"));
         assertResultSchema();
         assertHibernateSchemaValidation();
 
@@ -69,11 +69,12 @@ class FlywayMigrationIntegrationTest {
         Flyway flyway = flyway(true, null);
         MigrateResult migration = flyway.migrate();
 
-        assertThat(migration.migrationsExecuted).isEqualTo(3);
+        assertThat(migration.migrationsExecuted).isEqualTo(4);
         assertThat(flyway.info().current().getVersion())
-                .isEqualTo(MigrationVersion.fromVersion("4"));
+                .isEqualTo(MigrationVersion.fromVersion("5"));
         assertResultSchema();
         assertHistoricalRegistrationResults();
+        assertHistoricalEventAdmissionDefaults();
     }
 
     @Test
@@ -87,10 +88,25 @@ class FlywayMigrationIntegrationTest {
         Flyway flyway = flyway(true, null);
         MigrateResult migration = flyway.migrate();
 
-        assertThat(migration.migrationsExecuted).isEqualTo(3);
+        assertThat(migration.migrationsExecuted).isEqualTo(4);
         assertResultSchema();
         assertExistingExhaustedOutboxWasBackfilled();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
+    }
+
+    @Test
+    void versionFourDatabaseAddsOnlyAdmissionJournalSchema() throws SQLException {
+        Flyway currentSchema = flyway(false, MigrationVersion.fromVersion("4"));
+        assertThat(currentSchema.migrate().migrationsExecuted).isEqualTo(4);
+
+        Flyway flyway = flyway(false, null);
+        MigrateResult migration = flyway.migrate();
+
+        assertThat(migration.migrationsExecuted).isEqualTo(1);
+        assertThat(flyway.info().current().getVersion())
+                .isEqualTo(MigrationVersion.fromVersion("5"));
+        assertAdmissionSchema();
+        assertHibernateSchemaValidation();
     }
 
     @Test
@@ -102,7 +118,7 @@ class FlywayMigrationIntegrationTest {
 
         MigrateResult migration = flyway(false, null).migrate();
 
-        assertThat(migration.migrationsExecuted).isEqualTo(1);
+        assertThat(migration.migrationsExecuted).isEqualTo(2);
         assertHistoricalRegistrationResults();
     }
 
@@ -181,6 +197,46 @@ class FlywayMigrationIntegrationTest {
             assertThat(hasIndex(connection, "email_outbox", "idx_email_outbox_pending")).isTrue();
             assertThat(hasIndex(connection, "email_outbox", "idx_email_outbox_failed")).isTrue();
             assertThat(hasForeignKey(connection, "email_outbox", "fk_email_outbox_registration"))
+                    .isTrue();
+        }
+        assertAdmissionSchema();
+    }
+
+    private void assertAdmissionSchema() throws SQLException {
+        try (Connection connection = connection()) {
+            assertThat(hasColumn(connection, "event", "admission_mode")).isTrue();
+            assertThat(hasColumn(connection, "event", "admission_epoch")).isTrue();
+            assertThat(hasColumn(connection, "event", "version")).isTrue();
+            assertThat(hasTable(connection, "registration_admission_journal")).isTrue();
+            assertThat(
+                            hasColumn(
+                                    connection,
+                                    "registration_admission_journal",
+                                    "registration_payload"))
+                    .isTrue();
+            assertThat(
+                            hasIndex(
+                                    connection,
+                                    "registration_admission_journal",
+                                    "uk_admission_journal_event_email"))
+                    .isTrue();
+            assertThat(
+                            hasIndex(
+                                    connection,
+                                    "registration_admission_journal",
+                                    "uk_admission_journal_sector_position"))
+                    .isTrue();
+            assertThat(
+                            hasIndex(
+                                    connection,
+                                    "registration_admission_journal",
+                                    "uk_admission_journal_registration"))
+                    .isTrue();
+            assertThat(
+                            hasIndex(
+                                    connection,
+                                    "registration_admission_journal",
+                                    "idx_admission_journal_event_state"))
                     .isTrue();
         }
     }
@@ -337,6 +393,20 @@ class FlywayMigrationIntegrationTest {
             assertThat(result.next()).isTrue();
             assertThat(result.getString("status")).isEqualTo("예비");
             assertThat(result.getInt("sequence")).isEqualTo(99);
+        }
+    }
+
+    private void assertHistoricalEventAdmissionDefaults() throws SQLException {
+        try (Connection connection = connection();
+                Statement statement = connection.createStatement();
+                ResultSet result =
+                        statement.executeQuery(
+                                "SELECT admission_mode, admission_epoch, version "
+                                        + "FROM event WHERE event_id = 10")) {
+            assertThat(result.next()).isTrue();
+            assertThat(result.getString("admission_mode")).isEqualTo("REDIS");
+            assertThat(result.getLong("admission_epoch")).isZero();
+            assertThat(result.getLong("version")).isZero();
         }
     }
 
