@@ -3,6 +3,7 @@ package com.jnu.ticketapi.api.event.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.RedisStockUnavailableException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketinfrastructure.admission.RegistrationAdmissionFallbackGateway;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
@@ -53,6 +54,9 @@ public class RegistrationAdmissionCoordinator implements RegistrationAdmissionFa
             if (state.mode == AdmissionMode.DB_FALLBACK || waitingQueueService == null) {
                 return persistWithDatabaseFallback(registration, userId, sector.getId(), eventId);
             }
+            if (state.mode == AdmissionMode.RECOVERING) {
+                throw RedisStockUnavailableException.EXCEPTION;
+            }
 
             StockReservationResult reservation = null;
             try {
@@ -72,40 +76,57 @@ public class RegistrationAdmissionCoordinator implements RegistrationAdmissionFa
                     redisFailure =
                             new IllegalStateException(
                                     "Redis admission state is incomplete. eventId=" + eventId);
-                } else if (!reservation.isReserved()) {
-                    return reservation;
                 } else {
-                    return registrationResultPersistenceService.persistRedisReservation(
-                            registration,
-                            userId,
-                            sector.getId(),
-                            eventId,
-                            reservation,
-                            System.currentTimeMillis());
+                    // Lua가 결정과 Stream 적재를 함께 끝냈으므로 DB 저장은 consumer에 맡긴다.
+                    return reservation;
                 }
             }
         } finally {
             readLock.unlock();
         }
 
-        activateDatabaseFallback(eventId, redisFailure);
-        readLock.lock();
-        try {
-            return persistWithDatabaseFallback(registration, userId, sector.getId(), eventId);
-        } finally {
-            readLock.unlock();
-        }
+        // DB에는 아직 반영되지 않은 Redis 결정이 있을 수 있어 운영 중 즉시 DB fallback으로
+        // 전환할 수 없다. 복구가 Stream을 모두 drain할 때까지 신규 신청을 차단한다.
+        activateRedisRecovery(eventId, redisFailure);
+        throw RedisStockUnavailableException.EXCEPTION;
     }
 
     public boolean isDatabaseFallback(Long eventId) {
         return state(eventId).mode == AdmissionMode.DB_FALLBACK;
     }
 
-    public Set<Long> fallbackEventIds() {
+    public boolean isRedisAdmissionUnavailable(Long eventId) {
+        return state(eventId).mode != AdmissionMode.REDIS;
+    }
+
+    public Set<Long> recoveryEventIds() {
         return eventStates.entrySet().stream()
-                .filter(entry -> entry.getValue().mode == AdmissionMode.DB_FALLBACK)
+                .filter(entry -> entry.getValue().mode != AdmissionMode.REDIS)
                 .map(Map.Entry::getKey)
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
+    public void activateRedisRecovery(Long eventId, Throwable cause) {
+        EventAdmissionState state = state(eventId);
+        Lock writeLock = state.lock.writeLock();
+        writeLock.lock();
+        try {
+            if (state.mode == AdmissionMode.REDIS) {
+                state.mode = AdmissionMode.RECOVERING;
+                if (cause == null) {
+                    log.warn(
+                            "Registration admission paused until Redis recovery. eventId: {}",
+                            eventId);
+                } else {
+                    log.warn(
+                            "Registration admission paused until Redis recovery. eventId: {}, cause: {}",
+                            eventId,
+                            cause.toString());
+                }
+            }
+        } finally {
+            writeLock.unlock();
+        }
     }
 
     @Override
@@ -165,7 +186,7 @@ public class RegistrationAdmissionCoordinator implements RegistrationAdmissionFa
             return true;
         } catch (RuntimeException exception) {
             log.warn(
-                    "Redis admission recovery failed; DB fallback remains active. eventId: {}",
+                    "Redis admission recovery failed; admission remains unavailable. eventId: {}",
                     eventId,
                     exception);
             return false;
@@ -195,6 +216,7 @@ public class RegistrationAdmissionCoordinator implements RegistrationAdmissionFa
 
     private enum AdmissionMode {
         REDIS,
+        RECOVERING,
         DB_FALLBACK
     }
 

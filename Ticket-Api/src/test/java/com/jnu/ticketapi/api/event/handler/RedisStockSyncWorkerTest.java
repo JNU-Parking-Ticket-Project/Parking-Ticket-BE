@@ -45,7 +45,7 @@ class RedisStockSyncWorkerTest {
         redisStockSyncWorker.syncSector(sector);
 
         verify(registrationAdmissionCoordinator, never())
-                .activateDatabaseFallback(
+                .activateRedisRecovery(
                         org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
         verify(sectorAdaptor, never()).save(sector);
     }
@@ -59,36 +59,36 @@ class RedisStockSyncWorkerTest {
         redisStockSyncWorker.syncSector(sector);
 
         verify(registrationAdmissionCoordinator, never())
-                .activateDatabaseFallback(
+                .activateRedisRecovery(
                         org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
         verify(sectorAdaptor, never()).save(sector);
     }
 
     @Test
-    @DisplayName("Redis가 DB보다 많은 재고를 가지면 초과 접수를 막기 위해 fallback으로 전환한다")
-    void activatesFallbackWhenRedisCheckpointCanOversell() {
+    @DisplayName("Redis가 DB보다 많은 재고를 가지면 초과 접수를 막고 복구를 시작한다")
+    void activatesRecoveryWhenRedisCheckpointCanOversell() {
         Sector sector = sector();
         when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(4));
 
         redisStockSyncWorker.syncSector(sector);
 
         verify(registrationAdmissionCoordinator)
-                .activateDatabaseFallback(
+                .activateRedisRecovery(
                         org.mockito.ArgumentMatchers.eq(10L),
                         org.mockito.ArgumentMatchers.isA(IllegalStateException.class));
         verify(sectorAdaptor, never()).save(sector);
     }
 
     @Test
-    @DisplayName("Redis stock key가 없으면 DB fallback으로 전환한다")
-    void activatesFallbackWhenRedisStockIsMissing() {
+    @DisplayName("Redis stock key가 없으면 신청을 차단하고 복구를 시작한다")
+    void activatesRecoveryWhenRedisStockIsMissing() {
         Sector sector = sector();
         when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.empty());
 
         redisStockSyncWorker.syncSector(sector);
 
         verify(registrationAdmissionCoordinator)
-                .activateDatabaseFallback(
+                .activateRedisRecovery(
                         org.mockito.ArgumentMatchers.eq(10L),
                         org.mockito.ArgumentMatchers.isA(IllegalStateException.class));
     }
