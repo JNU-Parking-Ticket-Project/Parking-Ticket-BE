@@ -52,8 +52,24 @@ public class RedisRepository {
     private static final String STREAM_POSITION_KEY = "position";
     private static final String STREAM_RESULT_STATUS_KEY = "resultStatus";
     private static final String STREAM_SEQUENCE_KEY = "sequence";
+    private static final String STREAM_REMAINING_AMOUNT_KEY = "remainingAmount";
+    private static final String STREAM_JOURNAL_ID_KEY = "journalId";
+    private static final String STREAM_ADMISSION_EPOCH_KEY = "admissionEpoch";
+    private static final String STREAM_MESSAGE_VERSION_KEY = "messageVersion";
     private static final String INITIALIZE_EVENT_STOCK_SCRIPT =
-            "if redis.call('EXISTS', KEYS[1]) == 1 then return 0 end "
+            "if redis.call('EXISTS', KEYS[1]) == 1 then "
+                    + "  if redis.call('EXISTS', KEYS[3]) == 1 "
+                    + "      or redis.call('SCARD', KEYS[2]) > 0 then return 0 end "
+                    + "  local existingArgumentIndex = 1 "
+                    + "  for existingKeyIndex = 4, #KEYS, 2 do "
+                    + "    if redis.call('GET', KEYS[existingKeyIndex]) ~= "
+                    + "        ARGV[existingArgumentIndex] "
+                    + "        or redis.call('GET', KEYS[existingKeyIndex + 1]) ~= "
+                    + "        ARGV[existingArgumentIndex + 1] then return 0 end "
+                    + "    existingArgumentIndex = existingArgumentIndex + 2 "
+                    + "  end "
+                    + "  return 1 "
+                    + "end "
                     + "redis.call('DEL', KEYS[2]) "
                     + "redis.call('DEL', KEYS[3]) "
                     + "local argumentIndex = 1 "
@@ -113,59 +129,82 @@ public class RedisRepository {
                     + "redis.call('HDEL', KEYS[2], ARGV[2]) "
                     + "return {failureCount, 1}";
     private static final String REPLAY_DEAD_LETTER_SCRIPT =
-            "local records = redis.call('XRANGE', KEYS[1], ARGV[1], ARGV[1]) "
-                    + "if #records == 0 then return 0 end "
-                    + "local fields = records[1][2] "
-                    + "local payload = nil "
-                    + "local originalRecordId = nil "
-                    + "for index = 1, #fields, 2 do "
-                    + "  if fields[index] == 'payload' then payload = fields[index + 1] end "
-                    + "  if fields[index] == 'originalRecordId' then originalRecordId = fields[index + 1] end "
-                    + "end "
-                    + "if not payload then return -1 end "
-                    + "redis.call('XADD', KEYS[2], '*', 'payload', payload) "
-                    + "redis.call('XDEL', KEYS[1], ARGV[1]) "
-                    + "if originalRecordId then redis.call('HDEL', KEYS[3], originalRecordId) end "
-                    + "return 1";
+            "local records = redis.call('XRANGE', KEYS[1], ARGV[1], ARGV[1]) if #records == 0 then"
+                    + " return 0 end local fields = records[1][2] local payload = nil local"
+                    + " originalRecordId = nil for index = 1, #fields, 2 do   if fields[index] =="
+                    + " 'payload' then payload = fields[index + 1] end   if fields[index] =="
+                    + " 'originalRecordId' then originalRecordId = fields[index + 1] end end if not"
+                    + " payload then return -1 end redis.call('XADD', KEYS[2], '*', 'payload', payload)"
+                    + " redis.call('XDEL', KEYS[1], ARGV[1]) if originalRecordId then"
+                    + " redis.call('HDEL', KEYS[3], originalRecordId) end return 1";
     private static final String RESERVE_STOCK_SCRIPT =
-            "if redis.call('EXISTS', KEYS[5]) == 1 then "
-                    + "  local closedStock = redis.call('GET', KEYS[1]) "
-                    + "  if not closedStock then closedStock = 0 end "
-                    + "  return {0, 'CLOSED', -1, '', -1, tonumber(closedStock)} "
-                    + "end "
-                    + "if redis.call('EXISTS', KEYS[6]) == 0 then "
-                    + "  return {0, 'UNAVAILABLE', -1, '', -1, -1} "
-                    + "end "
-                    + "local stock = redis.call('GET', KEYS[1]) "
-                    + "local positionValue = redis.call('GET', KEYS[2]) "
-                    + "if not stock or not positionValue then "
-                    + "  return {0, 'UNAVAILABLE', -1, '', -1, -1} "
-                    + "end "
-                    + "stock = tonumber(stock) "
-                    + "if redis.call('SISMEMBER', KEYS[3], ARGV[6]) == 1 then "
-                    + "  return {0, 'DUPLICATE', -1, '', -1, stock} "
-                    + "end "
-                    + "if stock <= 0 then "
-                    + "  return {0, 'NO_STOCK', -1, '', -1, stock} "
-                    + "end "
-                    + "local position = redis.call('INCR', KEYS[2]) "
-                    + "local status = 'PREPARE' "
-                    + "local sequence = position - tonumber(ARGV[1]) "
-                    + "if position <= tonumber(ARGV[1]) then "
-                    + "  status = 'SUCCESS' "
-                    + "  sequence = -2 "
-                    + "end "
-                    + "local remaining = redis.call('DECR', KEYS[1]) "
-                    + "redis.call('SADD', KEYS[3], ARGV[6]) "
-                    + "redis.call('XADD', KEYS[4], '*', "
-                    + "  'registration', ARGV[2], "
-                    + "  'userId', ARGV[3], "
-                    + "  'sectorId', ARGV[4], "
-                    + "  'eventId', ARGV[5], "
-                    + "  'position', tostring(position), "
-                    + "  'resultStatus', status, "
-                    + "  'sequence', tostring(sequence)) "
-                    + "return {1, 'RESERVED', position, status, sequence, remaining}";
+            """
+            local issueAmount = tonumber(ARGV[2])
+            local successCapacity = tonumber(ARGV[1])
+            if not issueAmount or issueAmount < 1 or not successCapacity then
+            return {0, 'UNAVAILABLE', -1, '', -1, -1}
+            end
+            local existingDecision = redis.call('HGET', KEYS[7], ARGV[8])
+            if existingDecision then
+            local position, status, sequence, remaining = string.match(
+                existingDecision, '([^|]+)|([^|]+)|([^|]+)|([^|]+)')
+            position = tonumber(position)
+            sequence = tonumber(sequence)
+            remaining = tonumber(remaining)
+            local expectedStatus = 'PREPARE'
+            local expectedSequence = position and (position - successCapacity) or nil
+            if position and position <= successCapacity then
+                expectedStatus = 'SUCCESS'
+                expectedSequence = -2
+            end
+            if not position or not remaining or position < 1 or position > issueAmount
+                or remaining < 0 or remaining + position ~= issueAmount
+                or status ~= expectedStatus or sequence ~= expectedSequence then
+                return {0, 'UNAVAILABLE', -1, '', -1, -1}
+            end
+            return {1, 'RESERVED', position, status, sequence, remaining}
+            end
+            if redis.call('EXISTS', KEYS[5]) == 1 then
+            local closedStock = redis.call('GET', KEYS[1]) or 0
+            return {0, 'CLOSED', -1, '', -1, tonumber(closedStock)}
+            end
+            if redis.call('EXISTS', KEYS[6]) == 0 then
+            return {0, 'UNAVAILABLE', -1, '', -1, -1}
+            end
+            local stock = tonumber(redis.call('GET', KEYS[1]))
+            local positionValue = tonumber(redis.call('GET', KEYS[2]))
+            if not stock or not positionValue or stock < 0 or stock > issueAmount
+                or positionValue < 0 or positionValue > issueAmount
+                or stock + positionValue ~= issueAmount then
+            return {0, 'UNAVAILABLE', -1, '', -1, -1}
+            end
+            if redis.call('SISMEMBER', KEYS[3], ARGV[7]) == 1 then
+            return {0, 'DUPLICATE', -1, '', -1, stock}
+            end
+            if stock <= 0 then
+            return {0, 'NO_STOCK', -1, '', -1, stock}
+            end
+            local position = redis.call('INCR', KEYS[2])
+            local remaining = redis.call('DECR', KEYS[1])
+            if position > issueAmount or remaining < 0 or remaining + position ~= issueAmount then
+            return {0, 'UNAVAILABLE', -1, '', -1, -1}
+            end
+            local status = 'PREPARE'
+            local sequence = position - successCapacity
+            if position <= successCapacity then
+            status = 'SUCCESS'
+            sequence = -2
+            end
+            redis.call('SADD', KEYS[3], ARGV[7])
+            redis.call('HSET', KEYS[7], ARGV[8], tostring(position) .. '|' .. status .. '|'
+            .. tostring(sequence) .. '|' .. tostring(remaining))
+            redis.call('XADD', KEYS[4], '*',
+            'registration', ARGV[3], 'userId', ARGV[4], 'sectorId', ARGV[5],
+            'eventId', ARGV[6], 'position', tostring(position), 'resultStatus', status,
+            'sequence', tostring(sequence), 'remainingAmount', tostring(remaining),
+            'journalId', ARGV[8], 'admissionEpoch', ARGV[9], 'messageVersion', '2')
+            return {1, 'RESERVED', position, status, sequence, remaining}
+            """;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -241,6 +280,10 @@ public class RedisRepository {
         redisTemplate.delete(key);
     }
 
+    public boolean hasKey(String key) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    }
+
     public void deleteKeysByPrefix(String prefix) {
         // 1. 해당 prefix로 시작하는 모든 키 검색
         Set<String> keys = redisTemplate.keys(prefix + "*");
@@ -283,12 +326,16 @@ public class RedisRepository {
             String streamKey,
             String closedKey,
             String initializedKey,
+            String decisionKey,
             String registration,
             Long userId,
             Long sectorId,
             Long eventId,
             String email,
-            Integer initSectorCapacity) {
+            Integer initSectorCapacity,
+            Integer issueAmount,
+            Long journalId,
+            Long admissionEpoch) {
         List<Object> rawResult =
                 redisTemplate.execute(
                         (RedisCallback<List<Object>>)
@@ -298,7 +345,7 @@ public class RedisRepository {
                                                         RESERVE_STOCK_SCRIPT.getBytes(
                                                                 StandardCharsets.UTF_8),
                                                         ReturnType.MULTI,
-                                                        6,
+                                                        7,
                                                         redisArgs(
                                                                 stockKey,
                                                                 sequenceKey,
@@ -306,12 +353,16 @@ public class RedisRepository {
                                                                 streamKey,
                                                                 closedKey,
                                                                 initializedKey,
+                                                                decisionKey,
                                                                 String.valueOf(initSectorCapacity),
+                                                                String.valueOf(issueAmount),
                                                                 registration,
                                                                 String.valueOf(userId),
                                                                 String.valueOf(sectorId),
                                                                 String.valueOf(eventId),
-                                                                email)));
+                                                                email,
+                                                                String.valueOf(journalId),
+                                                                String.valueOf(admissionEpoch))));
         return toStockReservationResult(rawResult);
     }
 
@@ -675,7 +726,11 @@ public class RedisRepository {
                 longValue(values, STREAM_EVENT_ID_KEY),
                 integerValue(values, STREAM_POSITION_KEY),
                 UserStatus.valueOf(value(values, STREAM_RESULT_STATUS_KEY)),
-                integerValue(values, STREAM_SEQUENCE_KEY));
+                integerValue(values, STREAM_SEQUENCE_KEY),
+                nullableIntegerValue(values, STREAM_REMAINING_AMOUNT_KEY),
+                nullableLongValue(values, STREAM_JOURNAL_ID_KEY),
+                nullableLongValue(values, STREAM_ADMISSION_EPOCH_KEY),
+                nullableIntegerValue(values, STREAM_MESSAGE_VERSION_KEY));
     }
 
     private StockReservationResult toStockReservationResult(List<Object> rawResult) {
@@ -718,11 +773,22 @@ public class RedisRepository {
     }
 
     private String value(Map<Object, Object> values, String key) {
+        return stringValue(rawValue(values, key));
+    }
+
+    private Object rawValue(Map<Object, Object> values, String key) {
         Object value = values.get(key);
-        if (value == null) {
-            value = values.get(key.getBytes(StandardCharsets.UTF_8));
-        }
-        return stringValue(value);
+        return value != null ? value : values.get(key.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private Long nullableLongValue(Map<Object, Object> values, String key) {
+        Object value = rawValue(values, key);
+        return value == null ? null : longValue(value);
+    }
+
+    private Integer nullableIntegerValue(Map<Object, Object> values, String key) {
+        Object value = rawValue(values, key);
+        return value == null ? null : integerValue(value);
     }
 
     private Long longValue(Map<Object, Object> values, String key) {

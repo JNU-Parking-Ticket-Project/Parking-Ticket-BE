@@ -4,6 +4,7 @@ import static com.jnu.ticketcommon.consts.TicketStatic.REDIS_EVENT_ISSUE_GROUP;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jnu.ticketapi.api.event.service.RegistrationResultPersistenceService;
+import com.jnu.ticketapi.api.event.service.RegistrationResultPersistenceService.StreamDecisionAction;
 import com.jnu.ticketdomain.domains.events.exception.NoEventStockLeftException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketinfrastructure.model.ChatMessage;
@@ -46,12 +47,18 @@ public class EventIssuedEventHandler implements RegistrationStreamMessageHandler
             ChatMessage message = streamQueueMessage.getMessage();
 
             try {
-                Registration registration =
-                        objectMapper.readValue(
-                                streamQueueMessage.getMessage().getRegistration(),
-                                Registration.class);
-
-                persistRegistration(registration, message, resolveScore(streamQueueMessage));
+                long savedAt = resolveScore(streamQueueMessage);
+                if (message.hasJournalMetadata()) {
+                    if (!message.hasJournalDecision()) {
+                        throw new IllegalArgumentException(
+                                "Incomplete registration admission journal message");
+                    }
+                    persistJournalDecision(message, savedAt);
+                } else {
+                    Registration registration =
+                            objectMapper.readValue(message.getRegistration(), Registration.class);
+                    persistLegacyRegistration(registration, message, savedAt);
+                }
                 acknowledge(streamQueueMessage);
             } catch (NoEventStockLeftException e) {
                 tracker.info("해당 구간 잔여 여석이 없습니다.", e);
@@ -66,7 +73,27 @@ public class EventIssuedEventHandler implements RegistrationStreamMessageHandler
         }
     }
 
-    private void persistRegistration(
+    private void persistJournalDecision(ChatMessage message, long savedAt) {
+        StreamDecisionAction action =
+                registrationResultPersistenceService.recordStreamDecision(
+                        message.getJournalId(),
+                        message.getAdmissionEpoch(),
+                        StockReservationResult.reserved(
+                                message.getPosition(),
+                                message.getResultStatus(),
+                                message.getSequence(),
+                                message.getRemainingAmount()),
+                        System.currentTimeMillis());
+        if (action == StreamDecisionAction.MATERIALIZE) {
+            registrationResultPersistenceService.materializeConfirmedJournal(
+                    message.getJournalId());
+        } else if (action == StreamDecisionAction.DATABASE_FALLBACK) {
+            registrationResultPersistenceService.persistJournalWithDatabaseFallback(
+                    message.getJournalId(), savedAt);
+        }
+    }
+
+    private void persistLegacyRegistration(
             Registration registration, ChatMessage message, long savedAt) {
         if (message.hasDecision()) {
             registrationResultPersistenceService.persistRedisReservation(

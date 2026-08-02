@@ -16,6 +16,7 @@ import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,8 +51,21 @@ public class EventWithDrawUseCase {
         }
         event.validateIssuePeriod();
         StockReservationResult result =
-                registrationAdmissionCoordinator.admit(
-                        registration, userId, sector, eventId);
+                registrationAdmissionCoordinator.admit(registration, userId, sector, eventId);
+        return validateAdmissionResult(result);
+    }
+
+    @SneakyThrows
+    public StockReservationResult resumeExistingAdmission(
+            Registration registration, Long userId, Sector sector, Long eventId) {
+        if (sector.getEvent() == null || !Objects.equals(sector.getEvent().getId(), eventId)) {
+            throw NotFoundSectorException.EXCEPTION;
+        }
+        return validateAdmissionResult(
+                registrationAdmissionCoordinator.admit(registration, userId, sector, eventId));
+    }
+
+    private StockReservationResult validateAdmissionResult(StockReservationResult result) {
         if (result.isDuplicate()) {
             throw AlreadyExistRegistrationException.EXCEPTION;
         }
@@ -62,6 +76,12 @@ public class EventWithDrawUseCase {
             throw NotOpenEventStatusException.EXCEPTION;
         }
         return result;
+    }
+
+    public Optional<RegistrationAdmissionJournalService.ExistingAdmission> findExistingAdmission(
+            Registration registration, Long userId, Sector sector, Long eventId) {
+        return registrationAdmissionCoordinator.findExistingAdmission(
+                registration, userId, sector, eventId);
     }
 
     public GetEventPeriodResponse getEventPeriod() {

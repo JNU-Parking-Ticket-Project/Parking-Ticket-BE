@@ -52,22 +52,37 @@ public class RedisStockSyncWorker {
         try {
             Optional<Integer> redisRemaining =
                     waitingQueueService.findRemainingStock(eventId, sector.getId());
+            Optional<Integer> redisPosition =
+                    waitingQueueService.findAssignedPosition(eventId, sector.getId());
             Integer dbRemaining = sector.getRemainingAmount();
+            int issueAmount = sector.getIssueAmount();
+            int decidedPosition =
+                    registrationAdmissionCoordinator.findMaxDecidedPosition(sector.getId());
             if (redisRemaining.isEmpty()
+                    || redisPosition.isEmpty()
                     || dbRemaining == null
+                    || redisRemaining.get() < 0
+                    || redisRemaining.get() > issueAmount
+                    || redisPosition.get() < decidedPosition
+                    || redisPosition.get() > issueAmount
+                    || redisRemaining.get() + redisPosition.get() != issueAmount
                     || redisRemaining.get() > dbRemaining) {
-                registrationAdmissionCoordinator.activateRedisRecovery(
+                registrationAdmissionCoordinator.activateDatabaseFallback(
                         eventId,
                         new IllegalStateException(
                                 "Redis admission checkpoint is unsafe. sectorId="
                                         + sector.getId()
                                         + ", redisRemaining="
                                         + redisRemaining.orElse(null)
+                                        + ", redisPosition="
+                                        + redisPosition.orElse(null)
+                                        + ", decidedPosition="
+                                        + decidedPosition
                                         + ", dbRemaining="
                                         + dbRemaining));
             }
         } catch (RuntimeException exception) {
-            registrationAdmissionCoordinator.activateRedisRecovery(eventId, exception);
+            registrationAdmissionCoordinator.activateDatabaseFallback(eventId, exception);
         }
     }
 }

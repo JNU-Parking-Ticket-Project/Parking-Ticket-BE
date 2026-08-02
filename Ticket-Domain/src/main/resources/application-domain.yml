@@ -126,6 +126,11 @@ redis:
   stream:
     consumer:
       lifecycle-enabled: false
+
+registration:
+  admission:
+    recovery:
+      enabled: false
 ---
 
 spring:

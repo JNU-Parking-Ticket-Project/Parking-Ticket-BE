@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.registration.controller;
 
+
 import com.jnu.ticketapi.api.registration.docs.FinalSaveExceptionDocs;
 import com.jnu.ticketapi.api.registration.docs.TemporarySaveExceptionFDocs;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
@@ -12,9 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import javax.validation.Valid;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +49,10 @@ public class RegistrationController {
         return ResponseEntity.ok(responseDto);
     }
 
-    @Operation(summary = "1차 신청", description = "Redis에서 접수 순서와 결과를 확정한 뒤 응답하며 DB 저장은 비동기로 처리")
+    @Operation(
+            summary = "1차 신청",
+            description =
+                    "Redis에서 접수 순서와 결과를 확정하고 최소 결정 저널을 기록한 뒤 응답하며 신청서와 Email Outbox 저장은 비동기로 처리")
     @PostMapping("/registration/{event-id}")
     @ApiErrorExceptionsExample(FinalSaveExceptionDocs.class)
     public ResponseEntity<FinalSaveResponse> finalSave(

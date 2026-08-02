@@ -8,6 +8,7 @@ import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
+import com.jnu.ticketdomain.domains.events.exception.RedisStockUnavailableException;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class OpenEventUseCase {
     private final EventAdaptor eventAdaptor;
     private final SectorAdaptor sectorAdaptor;
-    private final RegistrationAdmissionCoordinator registrationAdmissionCoordinator;
 
     @Autowired(required = false)
     private WaitingQueueService waitingQueueService;
@@ -29,23 +29,28 @@ public class OpenEventUseCase {
         Result<Event, Object> readyEvent = eventAdaptor.findReadyEvent();
         readyEvent.fold(
                 event -> {
-                    if (waitingQueueService != null) {
-                        try {
-                            waitingQueueService.initializeEventStock(
-                                    event.getId(), sectorAdaptor.findByEventId(event.getId()));
-                        } catch (DataAccessException exception) {
-                            registrationAdmissionCoordinator.activateDatabaseFallback(
-                                    event.getId(), exception);
-                        }
-                    } else {
-                        registrationAdmissionCoordinator.activateDatabaseFallback(
-                                event.getId(), null);
-                    }
+                    initializeAdmission(event);
                     eventAdaptor.updateEventStatus(event, EventStatus.OPEN);
                     return null;
                 },
                 event -> {
                     throw NotFoundEventException.EXCEPTION;
                 });
+    }
+
+    private void initializeAdmission(Event event) {
+        if (waitingQueueService == null) {
+            throw RedisStockUnavailableException.EXCEPTION;
+        }
+        try {
+            boolean initialized =
+                    waitingQueueService.initializeEventStock(
+                            event.getId(), sectorAdaptor.findByEventId(event.getId()));
+            if (!initialized) {
+                throw RedisStockUnavailableException.EXCEPTION;
+            }
+        } catch (DataAccessException exception) {
+            throw RedisStockUnavailableException.EXCEPTION;
+        }
     }
 }
