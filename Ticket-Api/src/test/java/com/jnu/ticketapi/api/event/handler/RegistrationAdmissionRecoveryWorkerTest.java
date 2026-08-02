@@ -35,14 +35,14 @@ class RegistrationAdmissionRecoveryWorkerTest {
     }
 
     @Test
-    @DisplayName("서버 기동 시 OPEN 이벤트를 DB fallback으로 보호한 뒤 Redis 복구를 시도한다")
+    @DisplayName("서버 기동 시 OPEN 이벤트 신청을 차단한 뒤 Redis 복구를 시도한다")
     void restoresOpenEventAdmissionOnStartup() {
         when(eventAdaptor.findOpenEvent()).thenReturn(event);
         when(event.getId()).thenReturn(10L);
 
         worker.restoreOpenEventAdmission();
 
-        verify(registrationAdmissionCoordinator).activateDatabaseFallback(10L, null);
+        verify(registrationAdmissionCoordinator).activateRedisRecovery(10L, null);
         verify(registrationAdmissionCoordinator).recover(10L);
     }
 
@@ -55,15 +55,15 @@ class RegistrationAdmissionRecoveryWorkerTest {
     }
 
     @Test
-    @DisplayName("주기 작업은 DB fallback 이벤트만 Redis 복구 대상으로 전달한다")
-    void recoversFallbackEventsPeriodically() {
-        when(registrationAdmissionCoordinator.fallbackEventIds()).thenReturn(Set.of(10L, 11L));
+    @DisplayName("주기 작업은 Redis 사용 불가 이벤트만 복구 대상으로 전달한다")
+    void recoversUnavailableEventsPeriodically() {
+        when(registrationAdmissionCoordinator.recoveryEventIds()).thenReturn(Set.of(10L, 11L));
         when(eventAdaptor.findById(10L)).thenReturn(event);
         when(eventAdaptor.findById(11L)).thenReturn(closedEvent);
         when(event.getEventStatus()).thenReturn(EventStatus.OPEN);
         when(closedEvent.getEventStatus()).thenReturn(EventStatus.CLOSED);
 
-        worker.recoverFallbackEvents();
+        worker.recoverUnavailableEvents();
 
         verify(registrationAdmissionCoordinator).recover(10L);
         verify(registrationAdmissionCoordinator, never()).recover(11L);
