@@ -4,6 +4,7 @@ package com.jnu.ticketdomain.domains.events.adaptor;
 import com.jnu.ticketcommon.annotation.Adaptor;
 import com.jnu.ticketcommon.utils.Result;
 import com.jnu.ticketdomain.domains.events.domain.Event;
+import com.jnu.ticketdomain.domains.events.domain.EventAdmissionMode;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import com.jnu.ticketdomain.domains.events.exception.UseOtherApiException;
@@ -27,6 +28,27 @@ public class EventAdaptor implements EventRecordPort, EventLoadPort {
         return eventRepository
                 .findById(eventId)
                 .orElseThrow(() -> NotFoundEventException.EXCEPTION);
+    }
+
+    public Event findByIdForUpdate(Long eventId) {
+        return eventRepository
+                .findByIdForUpdate(eventId)
+                .orElseThrow(() -> NotFoundEventException.EXCEPTION);
+    }
+
+    public Event findByIdForAdmissionRead(Long eventId) {
+        return eventRepository
+                .findByIdForAdmissionRead(eventId)
+                .orElseThrow(() -> NotFoundEventException.EXCEPTION);
+    }
+
+    public List<Event> findOpenEventsByAdmissionMode(EventAdmissionMode admissionMode) {
+        return eventRepository.findAllByEventStatusAndAdmissionMode(
+                EventStatus.OPEN, admissionMode);
+    }
+
+    public List<Event> findEventsByAdmissionMode(EventAdmissionMode admissionMode) {
+        return eventRepository.findAllByAdmissionMode(admissionMode);
     }
 
     @Override

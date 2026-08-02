@@ -10,6 +10,7 @@ truncate table credential_code_tb;
 truncate table email_outbox;
 truncate table event;
 truncate table notice_tb;
+truncate table registration_admission_journal;
 truncate table registration_tb;
 truncate table sector;
 truncate table user_tb;

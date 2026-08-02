@@ -22,9 +22,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Where;
 
 @Entity
+@DynamicUpdate
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -47,6 +50,20 @@ public class Event {
 
     @Enumerated(EnumType.STRING)
     private EventStatus eventStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "admission_mode", nullable = false)
+    @ColumnDefault("'REDIS'")
+    private EventAdmissionMode admissionMode;
+
+    @Column(name = "admission_epoch", nullable = false)
+    @ColumnDefault("0")
+    private Long admissionEpoch;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    @ColumnDefault("0")
+    private Long version;
     // 쿠폰 발행 가능 기간
 
     // 구간별 정보
@@ -61,7 +78,6 @@ public class Event {
     @Column(name = "is_deleted")
     private boolean isDeleted;
 
-
     @Builder
     public Event(DateTimePeriod dateTimePeriod, List<Sector> sector, String title) {
         this.eventCode = UUID.randomUUID().toString().substring(0, 6);
@@ -69,6 +85,8 @@ public class Event {
         this.sector = sector;
         this.title = title;
         this.eventStatus = EventStatus.READY;
+        this.admissionMode = EventAdmissionMode.REDIS;
+        this.admissionEpoch = 0L;
         this.publish = false;
         this.isDeleted = false;
     }
@@ -117,8 +135,40 @@ public class Event {
     }
 
     public void open() {
-        //        validateOpenStatus();
+        validateReadyToOpen();
+        initializeRedisAdmission();
         updateStatus(OPEN, AlreadyOpenStatusException.EXCEPTION);
+    }
+
+    public void validateReadyToOpen() {
+        if (eventStatus == OPEN) {
+            throw AlreadyOpenStatusException.EXCEPTION;
+        }
+        if (eventStatus != READY) {
+            throw NotReadyEventStatusException.EXCEPTION;
+        }
+    }
+
+    public void initializeRedisAdmission() {
+        this.admissionMode = EventAdmissionMode.REDIS;
+        this.admissionEpoch = currentAdmissionEpoch() + 1L;
+    }
+
+    public void activateDatabaseAdmissionFallback() {
+        if (this.admissionMode != EventAdmissionMode.DB_FALLBACK) {
+            this.admissionMode = EventAdmissionMode.DB_FALLBACK;
+            this.admissionEpoch = currentAdmissionEpoch() + 1L;
+        }
+    }
+
+    public boolean isRedisAdmission(long epoch) {
+        return this.admissionMode == EventAdmissionMode.REDIS
+                && this.admissionEpoch != null
+                && this.admissionEpoch == epoch;
+    }
+
+    private long currentAdmissionEpoch() {
+        return this.admissionEpoch == null ? 0L : this.admissionEpoch;
     }
 
     public void calculate() {
@@ -126,6 +176,9 @@ public class Event {
     }
 
     public void ready() {
+        if (eventStatus == OPEN) {
+            throw CannotModifyOpenEventException.EXCEPTION;
+        }
         updateStatus(READY, AlreadyReadyStatusException.EXCEPTION);
     }
 

@@ -19,6 +19,12 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     @Query("select s from Sector s where s.event.id = :eventId")
     List<Sector> findByEventId(@Param("eventId") Long eventId);
 
+    @Query(
+            "select s from Sector s join fetch s.event "
+                    + "where s.id = :sectorId and s.event.id = :eventId")
+    Optional<Sector> findByIdAndEventId(
+            @Param("sectorId") Long sectorId, @Param("eventId") Long eventId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from Sector s where s.id = :sectorId")
     Optional<Sector> findByIdForUpdate(@Param("sectorId") Long sectorId);

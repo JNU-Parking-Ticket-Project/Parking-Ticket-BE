@@ -5,9 +5,11 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.List;
 import java.util.Optional;
+import javax.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -63,6 +65,14 @@ public interface RegistrationRepository
     List<Registration> findByEmailAndIsSaved(
             @Param("email") String email, @Param("flag") boolean flag);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(
+            "select r from Registration r "
+                    + "where r.isDeleted = false and r.isSaved = false "
+                    + "and r.email = :email and r.eventId = :eventId order by r.id desc")
+    List<Registration> findTemporaryByEmailAndEventIdForUpdate(
+            @Param("email") String email, @Param("eventId") Long eventId);
+
     @Query("select r from Registration r where r.user.id = :userId")
     List<Registration> findByUserId(@Param("userId") Long userId);
 
@@ -88,4 +98,10 @@ public interface RegistrationRepository
                     + "and r.sector.id = :sectorId and r.position = :position")
     Optional<Registration> findSavedBySectorIdAndPosition(
             @Param("sectorId") Long sectorId, @Param("position") Integer position);
+
+    @Query(
+            "select r.position from Registration r "
+                    + "where r.isDeleted = false and r.isSaved = true "
+                    + "and r.sector.id = :sectorId and r.position is not null")
+    List<Integer> findSavedPositionsBySectorId(@Param("sectorId") Long sectorId);
 }
