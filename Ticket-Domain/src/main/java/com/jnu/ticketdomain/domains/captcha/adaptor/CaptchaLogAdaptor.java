@@ -24,4 +24,9 @@ class CaptchaLogAdaptor implements CaptchaLogPort {
                 .findTopByUserIdAndIsSuccessFalseOrderByTimestampDesc(userId)
                 .orElseThrow(() -> NotFoundCaptchaLogException.EXCEPTION);
     }
+
+    @Override
+    public void markUsed(Long captchaLogId) {
+        captchaLogRepository.markUsed(captchaLogId);
+    }
 }

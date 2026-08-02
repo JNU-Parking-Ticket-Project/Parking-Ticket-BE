@@ -9,4 +9,6 @@ public interface CaptchaLogPort {
     CaptchaLog save(CaptchaLog entity);
 
     CaptchaLog findLatestByUserId(Long userId);
+
+    void markUsed(Long captchaLogId);
 }

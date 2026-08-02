@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.api.captcha.service;
 
 
+import com.jnu.ticketapi.api.captcha.service.vo.CaptchaVerification;
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketdomain.domains.captcha.domain.CaptchaLog;
@@ -28,6 +29,18 @@ public class FixedCaptchaHashProcessor implements CaptchaHashProcessor {
 
     @Override
     public Long verify(String hashedCode, Long userId) {
+        CaptchaLog captchaLog = verifyLog(hashedCode, userId);
+        captchaLog.markUse();
+        return captchaLog.getCaptchaId();
+    }
+
+    @Override
+    public CaptchaVerification verifyWithoutConsume(String hashedCode, Long userId) {
+        CaptchaLog captchaLog = verifyLog(hashedCode, userId);
+        return new CaptchaVerification(captchaLog.getCaptchaId(), captchaLog.getId());
+    }
+
+    private CaptchaLog verifyLog(String hashedCode, Long userId) {
         CaptchaLog captchaLog = captchaLogPort.findLatestByUserId(userId);
         String decryptedCaptchaId =
                 encryption.decrypt(hashedCode, captchaLog.getSalt()); // getSalt() -> FIXED_IV
@@ -36,7 +49,6 @@ public class FixedCaptchaHashProcessor implements CaptchaHashProcessor {
             throw WrongCaptchaCodeException.EXCEPTION;
         }
 
-        captchaLog.markUse();
-        return captchaLog.getCaptchaId();
+        return captchaLog;
     }
 }
