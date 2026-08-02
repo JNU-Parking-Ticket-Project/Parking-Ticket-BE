@@ -71,10 +71,12 @@ public class RegistrationController {
         return ResponseEntity.ok(responseDto);
     }
 
-    @Operation(summary = "신청 결과 확정 확인", description = "신청 결과는 신청 저장 시점에 확정되며 기존 관리자 화면과의 호환을 위해 유지")
+    @Operation(
+            summary = "신청 결과 확정 확인",
+            description = "신청 결과는 접수 결정 저널 저장 시점에 확정되며 기존 관리자 화면과의 호환을 위해 유지")
     @PostMapping("/registrations/assign/result/{eventId}")
-    public ResponseEntity<AssignResultResponse> assignResult(@PathVariable("eventId") Long eventId) {
-        return ResponseEntity.ok()
-                .body(new AssignResultResponse("신청 결과는 신청 저장 시점에 확정됩니다."));
+    public ResponseEntity<AssignResultResponse> assignResult(
+            @PathVariable("eventId") Long eventId) {
+        return ResponseEntity.ok().body(new AssignResultResponse("신청 결과는 접수 결정 저널 저장 시점에 확정됩니다."));
     }
 }
