@@ -77,6 +77,6 @@ public class RegistrationController {
     @PostMapping("/registrations/assign/result/{eventId}")
     public ResponseEntity<AssignResultResponse> assignResult(
             @PathVariable("eventId") Long eventId) {
-        return ResponseEntity.ok().body(new AssignResultResponse("신청 결과는 접수 결정 저널 저장 시점에 확정됩니다."));
+        return ResponseEntity.ok().body(new AssignResultResponse("신청 결과는 신청 저장 시점에 확정됩니다."));
     }
 }
