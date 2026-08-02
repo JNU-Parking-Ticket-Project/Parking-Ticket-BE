@@ -97,7 +97,7 @@ spring:
   jpa:
     generate-ddl: true
     show-sql: true
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
   batch:
