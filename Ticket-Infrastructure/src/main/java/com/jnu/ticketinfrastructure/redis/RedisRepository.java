@@ -8,6 +8,7 @@ import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import io.lettuce.core.XAutoClaimArgs;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
@@ -51,6 +52,33 @@ public class RedisRepository {
     private static final String STREAM_POSITION_KEY = "position";
     private static final String STREAM_RESULT_STATUS_KEY = "resultStatus";
     private static final String STREAM_SEQUENCE_KEY = "sequence";
+    private static final String INITIALIZE_EVENT_STOCK_SCRIPT =
+            "if redis.call('EXISTS', KEYS[1]) == 1 then return 0 end "
+                    + "redis.call('DEL', KEYS[2]) "
+                    + "redis.call('DEL', KEYS[3]) "
+                    + "local argumentIndex = 1 "
+                    + "for keyIndex = 4, #KEYS, 2 do "
+                    + "  redis.call('SET', KEYS[keyIndex], ARGV[argumentIndex]) "
+                    + "  redis.call('SET', KEYS[keyIndex + 1], ARGV[argumentIndex + 1]) "
+                    + "  argumentIndex = argumentIndex + 2 "
+                    + "end "
+                    + "redis.call('SET', KEYS[1], '1') "
+                    + "return 1";
+    private static final String REBUILD_EVENT_STOCK_SCRIPT =
+            "redis.call('DEL', KEYS[1]) "
+                    + "redis.call('DEL', KEYS[2]) "
+                    + "redis.call('DEL', KEYS[3]) "
+                    + "local argumentIndex = 1 "
+                    + "for keyIndex = 4, #KEYS, 2 do "
+                    + "  redis.call('SET', KEYS[keyIndex], ARGV[argumentIndex]) "
+                    + "  redis.call('SET', KEYS[keyIndex + 1], ARGV[argumentIndex + 1]) "
+                    + "  argumentIndex = argumentIndex + 2 "
+                    + "end "
+                    + "for emailIndex = argumentIndex, #ARGV do "
+                    + "  redis.call('SADD', KEYS[2], ARGV[emailIndex]) "
+                    + "end "
+                    + "redis.call('SET', KEYS[1], '1') "
+                    + "return 1";
     private static final String DEAD_LETTER_ORIGINAL_RECORD_ID_KEY = "originalRecordId";
     private static final String DEAD_LETTER_FAILURE_COUNT_KEY = "failureCount";
     private static final String DEAD_LETTER_LAST_ERROR_KEY = "lastError";
@@ -105,17 +133,16 @@ public class RedisRepository {
                     + "  if not closedStock then closedStock = 0 end "
                     + "  return {0, 'CLOSED', -1, '', -1, tonumber(closedStock)} "
                     + "end "
+                    + "if redis.call('EXISTS', KEYS[6]) == 0 then "
+                    + "  return {0, 'UNAVAILABLE', -1, '', -1, -1} "
+                    + "end "
                     + "local stock = redis.call('GET', KEYS[1]) "
-                    + "if not stock then "
-                    + "  stock = tonumber(ARGV[1]) "
-                    + "  redis.call('SET', KEYS[1], stock) "
-                    + "else "
-                    + "  stock = tonumber(stock) "
+                    + "local positionValue = redis.call('GET', KEYS[2]) "
+                    + "if not stock or not positionValue then "
+                    + "  return {0, 'UNAVAILABLE', -1, '', -1, -1} "
                     + "end "
-                    + "if not redis.call('GET', KEYS[2]) then "
-                    + "  redis.call('SET', KEYS[2], tonumber(ARGV[2]) - stock) "
-                    + "end "
-                    + "if redis.call('SISMEMBER', KEYS[3], ARGV[8]) == 1 then "
+                    + "stock = tonumber(stock) "
+                    + "if redis.call('SISMEMBER', KEYS[3], ARGV[6]) == 1 then "
                     + "  return {0, 'DUPLICATE', -1, '', -1, stock} "
                     + "end "
                     + "if stock <= 0 then "
@@ -123,18 +150,18 @@ public class RedisRepository {
                     + "end "
                     + "local position = redis.call('INCR', KEYS[2]) "
                     + "local status = 'PREPARE' "
-                    + "local sequence = position - tonumber(ARGV[3]) "
-                    + "if position <= tonumber(ARGV[3]) then "
+                    + "local sequence = position - tonumber(ARGV[1]) "
+                    + "if position <= tonumber(ARGV[1]) then "
                     + "  status = 'SUCCESS' "
                     + "  sequence = -2 "
                     + "end "
                     + "local remaining = redis.call('DECR', KEYS[1]) "
-                    + "redis.call('SADD', KEYS[3], ARGV[8]) "
+                    + "redis.call('SADD', KEYS[3], ARGV[6]) "
                     + "redis.call('XADD', KEYS[4], '*', "
-                    + "  'registration', ARGV[4], "
-                    + "  'userId', ARGV[5], "
-                    + "  'sectorId', ARGV[6], "
-                    + "  'eventId', ARGV[7], "
+                    + "  'registration', ARGV[2], "
+                    + "  'userId', ARGV[3], "
+                    + "  'sectorId', ARGV[4], "
+                    + "  'eventId', ARGV[5], "
                     + "  'position', tostring(position), "
                     + "  'resultStatus', status, "
                     + "  'sequence', tostring(sequence)) "
@@ -255,13 +282,12 @@ public class RedisRepository {
             String reservedEmailKey,
             String streamKey,
             String closedKey,
+            String initializedKey,
             String registration,
             Long userId,
             Long sectorId,
             Long eventId,
             String email,
-            Integer initialRemainingAmount,
-            Integer issueAmount,
             Integer initSectorCapacity) {
         List<Object> rawResult =
                 redisTemplate.execute(
@@ -272,16 +298,14 @@ public class RedisRepository {
                                                         RESERVE_STOCK_SCRIPT.getBytes(
                                                                 StandardCharsets.UTF_8),
                                                         ReturnType.MULTI,
-                                                        5,
+                                                        6,
                                                         redisArgs(
                                                                 stockKey,
                                                                 sequenceKey,
                                                                 reservedEmailKey,
                                                                 streamKey,
                                                                 closedKey,
-                                                                String.valueOf(
-                                                                        initialRemainingAmount),
-                                                                String.valueOf(issueAmount),
+                                                                initializedKey,
                                                                 String.valueOf(initSectorCapacity),
                                                                 registration,
                                                                 String.valueOf(userId),
@@ -289,6 +313,78 @@ public class RedisRepository {
                                                                 String.valueOf(eventId),
                                                                 email)));
         return toStockReservationResult(rawResult);
+    }
+
+    public boolean initializeEventStock(
+            String initializedKey,
+            String reservedEmailKey,
+            String closedKey,
+            List<SectorStockInitialization> sectors) {
+        List<String> keys = new ArrayList<>();
+        keys.add(initializedKey);
+        keys.add(reservedEmailKey);
+        keys.add(closedKey);
+        List<String> arguments = new ArrayList<>();
+        for (SectorStockInitialization sector : sectors) {
+            keys.add(sector.getStockKey());
+            keys.add(sector.getSequenceKey());
+            arguments.add(String.valueOf(sector.getRemainingAmount()));
+            arguments.add(String.valueOf(sector.getAssignedPosition()));
+        }
+        List<String> scriptParameters = new ArrayList<>(keys);
+        scriptParameters.addAll(arguments);
+        Long initialized =
+                redisTemplate.execute(
+                        (RedisCallback<Long>)
+                                connection ->
+                                        connection.eval(
+                                                INITIALIZE_EVENT_STOCK_SCRIPT.getBytes(
+                                                        StandardCharsets.UTF_8),
+                                                ReturnType.INTEGER,
+                                                keys.size(),
+                                                redisArgs(
+                                                        scriptParameters.toArray(new String[0]))));
+        return initialized != null && initialized == 1L;
+    }
+
+    public boolean rebuildEventStock(
+            String initializedKey,
+            String reservedEmailKey,
+            String closedKey,
+            List<SectorStockInitialization> sectors,
+            Set<String> reservedEmails) {
+        List<String> keys = new ArrayList<>();
+        keys.add(initializedKey);
+        keys.add(reservedEmailKey);
+        keys.add(closedKey);
+        List<String> arguments = new ArrayList<>();
+        for (SectorStockInitialization sector : sectors) {
+            keys.add(sector.getStockKey());
+            keys.add(sector.getSequenceKey());
+            arguments.add(String.valueOf(sector.getRemainingAmount()));
+            arguments.add(String.valueOf(sector.getAssignedPosition()));
+        }
+        arguments.addAll(reservedEmails);
+        List<String> scriptParameters = new ArrayList<>(keys);
+        scriptParameters.addAll(arguments);
+        Long rebuilt =
+                redisTemplate.execute(
+                        (RedisCallback<Long>)
+                                connection ->
+                                        connection.eval(
+                                                REBUILD_EVENT_STOCK_SCRIPT.getBytes(
+                                                        StandardCharsets.UTF_8),
+                                                ReturnType.INTEGER,
+                                                keys.size(),
+                                                redisArgs(
+                                                        scriptParameters.toArray(new String[0]))));
+        return rebuilt != null && rebuilt == 1L;
+    }
+
+    public boolean ping() {
+        String response =
+                redisTemplate.execute((RedisCallback<String>) connection -> connection.ping());
+        return "PONG".equalsIgnoreCase(response);
     }
 
     public void createConsumerGroupIfAbsent(String key, String group) {
@@ -530,12 +626,12 @@ public class RedisRepository {
     private String payload(Map<byte[], byte[]> body) {
         Optional<String> payload =
                 body.entrySet().stream()
-                .filter(
-                        entry ->
-                                STREAM_PAYLOAD_KEY.equals(
-                                        new String(entry.getKey(), StandardCharsets.UTF_8)))
-                .map(entry -> new String(entry.getValue(), StandardCharsets.UTF_8))
-                .findFirst();
+                        .filter(
+                                entry ->
+                                        STREAM_PAYLOAD_KEY.equals(
+                                                new String(entry.getKey(), StandardCharsets.UTF_8)))
+                        .map(entry -> new String(entry.getValue(), StandardCharsets.UTF_8))
+                        .findFirst();
         if (payload.isPresent()) {
             return payload.get();
         }
@@ -543,9 +639,7 @@ public class RedisRepository {
                 body.entrySet().stream()
                         .collect(
                                 java.util.stream.Collectors.toMap(
-                                        entry ->
-                                                new String(
-                                                        entry.getKey(), StandardCharsets.UTF_8),
+                                        entry -> new String(entry.getKey(), StandardCharsets.UTF_8),
                                         entry ->
                                                 new String(
                                                         entry.getValue(), StandardCharsets.UTF_8)));
@@ -607,6 +701,10 @@ public class RedisRepository {
         }
         if ("CLOSED".equals(reason)) {
             return StockReservationResult.closed(remainingAmount);
+        }
+        if ("UNAVAILABLE".equals(reason)) {
+            return StockReservationResult.unavailable(
+                    remainingAmount != null && remainingAmount >= 0 ? remainingAmount : null);
         }
         throw new IllegalStateException("Unknown Redis stock reservation result: " + reason);
     }

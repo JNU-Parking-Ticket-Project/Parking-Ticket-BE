@@ -94,4 +94,20 @@ public interface RegistrationRepository
 
     @Query("select count(r) from Registration r where r.isSaved = true and r.sector.id = :sectorId")
     Long countSavedBySectorId(@Param("sectorId") Long sectorId);
+
+    @Query(
+            "select r from Registration r "
+                    + "join fetch r.sector "
+                    + "join fetch r.user "
+                    + "where r.isDeleted = false and r.isSaved = true "
+                    + "and r.email = :email and r.eventId = :eventId")
+    Optional<Registration> findSavedByEmailAndEventId(
+            @Param("email") String email, @Param("eventId") Long eventId);
+
+    @Query(
+            "select r from Registration r "
+                    + "where r.isDeleted = false and r.isSaved = true "
+                    + "and r.sector.id = :sectorId and r.position = :position")
+    Optional<Registration> findSavedBySectorIdAndPosition(
+            @Param("sectorId") Long sectorId, @Param("position") Integer position);
 }

@@ -2,6 +2,7 @@ package com.jnu.ticketdomain.domains.events.exception;
 
 import static com.jnu.ticketcommon.consts.TicketStatic.BAD_REQUEST;
 import static com.jnu.ticketcommon.consts.TicketStatic.NOT_FOUND;
+import static com.jnu.ticketcommon.consts.TicketStatic.SERVICE_UNAVAILABLE;
 
 import com.jnu.ticketcommon.annotation.ExplainError;
 import com.jnu.ticketcommon.exception.BaseErrorCode;
@@ -40,6 +41,10 @@ public enum EventErrorCode implements BaseErrorCode {
     ALREADY_PUBLISHED_EVENT(BAD_REQUEST, "EVENT_400_22", "이미 게시된 이벤트입니다."),
     NOT_PUBLISH_EVENT(BAD_REQUEST, "EVENT_400_23", "게시되지 않는 이벤트입니다."),
     STILL_OPEN_EVENT(BAD_REQUEST, "EVENT_400_24", "주차권 이벤트가 만료된 상태에서만 메일 발송이 가능합니다."),
+    REDIS_STOCK_UNAVAILABLE(
+            SERVICE_UNAVAILABLE,
+            "EVENT_503_1",
+            "신청 처리가 일시적으로 불가능합니다. 잠시 후 다시 시도해주세요."),
     ;
     private final Integer status;
     private final String code;

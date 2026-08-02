@@ -18,19 +18,18 @@ import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
 @RequiredArgsConstructor
-@Slf4j
 public class EventWithDrawUseCase {
+
+    private final EventAdaptor eventAdaptor;
+    private final RegistrationAdmissionCoordinator registrationAdmissionCoordinator;
 
     @Autowired(required = false)
     private WaitingQueueService waitingQueueService;
-
-    private final EventAdaptor eventAdaptor;
 
     /** 재고 감소 */
     //    @RedissonLock(
@@ -50,14 +49,9 @@ public class EventWithDrawUseCase {
             throw NotFoundSectorException.EXCEPTION;
         }
         event.validateIssuePeriod();
-
         StockReservationResult result =
-                waitingQueueService.reserveAndRegisterQueue(
-                        waitingQueueService.eventStreamKey(eventId),
-                        registration,
-                        userId,
-                        sector,
-                        eventId);
+                registrationAdmissionCoordinator.admit(
+                        registration, userId, sector, eventId);
         if (result.isDuplicate()) {
             throw AlreadyExistRegistrationException.EXCEPTION;
         }

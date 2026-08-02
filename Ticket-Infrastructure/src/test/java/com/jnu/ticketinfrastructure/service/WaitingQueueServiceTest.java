@@ -1,6 +1,7 @@
 package com.jnu.ticketinfrastructure.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -8,9 +9,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.NotFoundSectorException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
 import com.jnu.ticketinfrastructure.model.AutoClaimResult;
@@ -18,12 +21,14 @@ import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -77,8 +82,6 @@ class WaitingQueueServiceTest {
         Registration registration = registration();
         Sector sector = org.mockito.Mockito.mock(Sector.class);
         when(sector.getId()).thenReturn(2L);
-        when(sector.getRemainingAmount()).thenReturn(240);
-        when(sector.getIssueAmount()).thenReturn(300);
         when(sector.getInitSectorCapacity()).thenReturn(250);
         StockReservationResult reservationResult =
                 StockReservationResult.reserved(1, UserStatus.SUCCESS, -2, 299);
@@ -88,13 +91,12 @@ class WaitingQueueServiceTest {
                         eq("parking-ticket:event:{3}:reserved:email"),
                         eq(STREAM_KEY),
                         eq("parking-ticket:event:{3}:closed"),
+                        eq("parking-ticket:event:{3}:initialized"),
                         anyString(),
                         eq(1L),
                         eq(2L),
                         eq(3L),
                         eq("student@jnu.ac.kr"),
-                        eq(240),
-                        eq(300),
                         eq(250)))
                 .thenReturn(reservationResult);
 
@@ -111,17 +113,100 @@ class WaitingQueueServiceTest {
                         eq("parking-ticket:event:{3}:reserved:email"),
                         eq(STREAM_KEY),
                         eq("parking-ticket:event:{3}:closed"),
+                        eq("parking-ticket:event:{3}:initialized"),
                         registrationPayloadCaptor.capture(),
                         eq(1L),
                         eq(2L),
                         eq(3L),
                         eq("student@jnu.ac.kr"),
-                        eq(240),
-                        eq(300),
                         eq(250));
         JSONObject payload = new JSONObject(registrationPayloadCaptor.getValue());
         assertThat(payload.getString("email")).isEqualTo("student@jnu.ac.kr");
         assertThat(payload.getString("studentNum")).isEqualTo("20240001");
+    }
+
+    @Test
+    @DisplayName("이벤트 OPEN 초기화는 구간별 stock과 현재 position을 원자 설정한다")
+    void initializeEventStockBuildsSectorStockState() {
+        Sector sector = org.mockito.Mockito.mock(Sector.class);
+        when(sector.getId()).thenReturn(2L);
+        when(sector.getIssueAmount()).thenReturn(300);
+        when(sector.getRemainingAmount()).thenReturn(240);
+        when(redisRepository.initializeEventStock(
+                        eq("parking-ticket:event:{3}:initialized"),
+                        eq("parking-ticket:event:{3}:reserved:email"),
+                        eq("parking-ticket:event:{3}:closed"),
+                        any()))
+                .thenReturn(true);
+
+        boolean initialized = waitingQueueService.initializeEventStock(3L, List.of(sector));
+
+        assertThat(initialized).isTrue();
+        ArgumentCaptor<List<SectorStockInitialization>> initializationCaptor =
+                ArgumentCaptor.forClass(List.class);
+        verify(redisRepository)
+                .initializeEventStock(
+                        eq("parking-ticket:event:{3}:initialized"),
+                        eq("parking-ticket:event:{3}:reserved:email"),
+                        eq("parking-ticket:event:{3}:closed"),
+                        initializationCaptor.capture());
+        SectorStockInitialization initialization = initializationCaptor.getValue().get(0);
+        assertThat(initialization.getStockKey())
+                .isEqualTo("parking-ticket:event:{3}:sector:2:stock");
+        assertThat(initialization.getSequenceKey())
+                .isEqualTo("parking-ticket:event:{3}:sector:2:sequence");
+        assertThat(initialization.getRemainingAmount()).isEqualTo(240);
+        assertThat(initialization.getAssignedPosition()).isEqualTo(60);
+    }
+
+    @Test
+    @DisplayName("구간이 없는 이벤트는 Redis 초기화 마커를 만들지 않고 OPEN을 중단한다")
+    void initializeEventStockRejectsEventWithoutSectors() {
+        assertThatThrownBy(() -> waitingQueueService.initializeEventStock(3L, List.of()))
+                .isSameAs(NotFoundSectorException.EXCEPTION);
+
+        verifyNoInteractions(redisRepository);
+    }
+
+    @Test
+    @DisplayName("Redis 복구는 DB 체크포인트와 확정 이메일을 원자 재구축에 전달한다")
+    void rebuildEventStockUsesDatabaseSnapshot() {
+        Sector sector = org.mockito.Mockito.mock(Sector.class);
+        when(sector.getId()).thenReturn(2L);
+        when(sector.getIssueAmount()).thenReturn(300);
+        when(sector.getRemainingAmount()).thenReturn(240);
+        when(redisRepository.rebuildEventStock(
+                        eq("parking-ticket:event:{3}:initialized"),
+                        eq("parking-ticket:event:{3}:reserved:email"),
+                        eq("parking-ticket:event:{3}:closed"),
+                        any(),
+                        eq(Set.of("student@jnu.ac.kr"))))
+                .thenReturn(true);
+
+        boolean rebuilt =
+                waitingQueueService.rebuildEventStock(
+                        3L, List.of(sector), Set.of("student@jnu.ac.kr"));
+
+        assertThat(rebuilt).isTrue();
+        ArgumentCaptor<List<SectorStockInitialization>> initializationCaptor =
+                ArgumentCaptor.forClass(List.class);
+        verify(redisRepository)
+                .rebuildEventStock(
+                        eq("parking-ticket:event:{3}:initialized"),
+                        eq("parking-ticket:event:{3}:reserved:email"),
+                        eq("parking-ticket:event:{3}:closed"),
+                        initializationCaptor.capture(),
+                        eq(Set.of("student@jnu.ac.kr")));
+        assertThat(initializationCaptor.getValue().get(0).getRemainingAmount()).isEqualTo(240);
+        assertThat(initializationCaptor.getValue().get(0).getAssignedPosition()).isEqualTo(60);
+    }
+
+    @Test
+    @DisplayName("Redis 상태 확인은 PING 결과를 사용한다")
+    void availabilityUsesRedisPing() {
+        when(redisRepository.ping()).thenReturn(true);
+
+        assertThat(waitingQueueService.isAvailable()).isTrue();
     }
 
     @Test
@@ -248,13 +333,7 @@ class WaitingQueueServiceTest {
     void findDeadLettersCapsRequestedCount() {
         DeadLetterQueueMessage message =
                 new DeadLetterQueueMessage(
-                        "9-0",
-                        "1-0",
-                        "payload",
-                        3,
-                        "error",
-                        1_000L,
-                        "PROCESSING_FAILURE");
+                        "9-0", "1-0", "payload", 3, "error", 1_000L, "PROCESSING_FAILURE");
         when(redisRepository.xRangeDeadLetters("쿠폰 발급 스트림:{3}:dlq", 1_000L))
                 .thenReturn(List.of(message));
 

@@ -1,12 +1,13 @@
 package com.jnu.ticketapi.api.event.handler;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.jnu.ticketapi.api.event.service.RegistrationAdmissionCoordinator;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
+import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.util.Optional;
@@ -23,44 +24,79 @@ class RedisStockSyncWorkerTest {
 
     @Mock private SectorAdaptor sectorAdaptor;
     @Mock private WaitingQueueService waitingQueueService;
+    @Mock private RegistrationAdmissionCoordinator registrationAdmissionCoordinator;
 
     private RedisStockSyncWorker redisStockSyncWorker;
 
     @BeforeEach
     void setUp() {
-        redisStockSyncWorker = new RedisStockSyncWorker(sectorAdaptor);
+        redisStockSyncWorker =
+                new RedisStockSyncWorker(sectorAdaptor, registrationAdmissionCoordinator);
         ReflectionTestUtils.setField(
                 redisStockSyncWorker, "waitingQueueService", waitingQueueService);
     }
 
     @Test
-    @DisplayName("Redis 잔여 재고가 있으면 Sector 재고 필드를 동기화하고 저장한다")
-    void syncSectorUpdatesSectorWhenRedisStockExists() {
+    @DisplayName("Redis와 DB 체크포인트가 같으면 Redis 모드를 유지한다")
+    void keepsRedisModeWhenCheckpointsMatch() {
         Sector sector = sector();
-        when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(1));
+        when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(3));
 
         redisStockSyncWorker.syncSector(sector);
 
-        assertThat(sector.getSectorCapacity()).isZero();
-        assertThat(sector.getReserve()).isEqualTo(1);
-        assertThat(sector.getRemainingAmount()).isEqualTo(1);
-        verify(sectorAdaptor).save(sector);
+        verify(registrationAdmissionCoordinator, never())
+                .activateRedisRecovery(
+                        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(sectorAdaptor, never()).save(sector);
     }
 
     @Test
-    @DisplayName("Redis 잔여 재고가 없으면 Sector를 저장하지 않는다")
-    void syncSectorDoesNothingWhenRedisStockDoesNotExist() {
+    @DisplayName("Redis 예약 직후 DB commit 전의 일시적 재고 차이는 fallback으로 오판하지 않는다")
+    void keepsRedisModeWhenRedisIsTemporarilyAhead() {
+        Sector sector = sector();
+        when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(2));
+
+        redisStockSyncWorker.syncSector(sector);
+
+        verify(registrationAdmissionCoordinator, never())
+                .activateRedisRecovery(
+                        org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(sectorAdaptor, never()).save(sector);
+    }
+
+    @Test
+    @DisplayName("Redis가 DB보다 많은 재고를 가지면 초과 접수를 막고 복구를 시작한다")
+    void activatesRecoveryWhenRedisCheckpointCanOversell() {
+        Sector sector = sector();
+        when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(4));
+
+        redisStockSyncWorker.syncSector(sector);
+
+        verify(registrationAdmissionCoordinator)
+                .activateRedisRecovery(
+                        org.mockito.ArgumentMatchers.eq(10L),
+                        org.mockito.ArgumentMatchers.isA(IllegalStateException.class));
+        verify(sectorAdaptor, never()).save(sector);
+    }
+
+    @Test
+    @DisplayName("Redis stock key가 없으면 신청을 차단하고 복구를 시작한다")
+    void activatesRecoveryWhenRedisStockIsMissing() {
         Sector sector = sector();
         when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.empty());
 
         redisStockSyncWorker.syncSector(sector);
 
-        verify(sectorAdaptor, never()).save(sector);
+        verify(registrationAdmissionCoordinator)
+                .activateRedisRecovery(
+                        org.mockito.ArgumentMatchers.eq(10L),
+                        org.mockito.ArgumentMatchers.isA(IllegalStateException.class));
     }
 
     private Sector sector() {
         Event event = Event.builder().title("주차권").sector(java.util.List.of()).build();
         ReflectionTestUtils.setField(event, "id", 10L);
+        ReflectionTestUtils.setField(event, "eventStatus", EventStatus.OPEN);
 
         Sector sector =
                 Sector.builder()

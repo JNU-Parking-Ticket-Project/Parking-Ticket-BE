@@ -4,9 +4,12 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.jnu.ticketdomain.domains.user.domain.UserStatus;
+import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.redis.RedisRepository;
+import java.time.Duration;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -73,6 +76,7 @@ class RedisStockReservationConcurrencyTest {
         int issueAmount = 300;
         ExecutorService executor = Executors.newFixedThreadPool(64);
         CountDownLatch startSignal = new CountDownLatch(1);
+        initialize(1L, 1L, issueAmount, issueAmount);
 
         try {
             List<CompletableFuture<StockReservationResult>> futures =
@@ -86,8 +90,6 @@ class RedisStockReservationConcurrencyTest {
                                                                 1L,
                                                                 1L,
                                                                 "student" + index + "@jnu.ac.kr",
-                                                                issueAmount,
-                                                                issueAmount,
                                                                 capacity);
                                                     },
                                                     executor))
@@ -123,10 +125,11 @@ class RedisStockReservationConcurrencyTest {
     }
 
     @Test
-    @DisplayName("Redis 키가 없으면 DB 잔여여석 다음 position부터 예약하고 이메일 중복은 차감하지 않는다")
-    void initializesFromDatabaseRemainingAmountAndRejectsDuplicateEmail() {
-        StockReservationResult first = reserve(2L, 1L, "student@jnu.ac.kr", 240, 300, 250);
-        StockReservationResult duplicate = reserve(2L, 1L, "student@jnu.ac.kr", 240, 300, 250);
+    @DisplayName("OPEN 초기화 시 DB 잔여여석 다음 position부터 예약하고 이메일 중복은 차감하지 않는다")
+    void reservesFromExplicitlyInitializedPositionAndRejectsDuplicateEmail() {
+        initialize(2L, 1L, 240, 300);
+        StockReservationResult first = reserve(2L, 1L, "student@jnu.ac.kr", 250);
+        StockReservationResult duplicate = reserve(2L, 1L, "student@jnu.ac.kr", 250);
 
         assertThat(first.isReserved()).isTrue();
         assertThat(first.getPosition()).isEqualTo(61);
@@ -140,10 +143,11 @@ class RedisStockReservationConcurrencyTest {
     @Test
     @DisplayName("이벤트 종료 마커 이후에는 재고와 Stream을 변경하지 않는다")
     void rejectsReservationAfterEventIsClosed() {
-        StockReservationResult first = reserve(3L, 1L, "first@jnu.ac.kr", 300, 300, 250);
+        initialize(3L, 1L, 300, 300);
+        StockReservationResult first = reserve(3L, 1L, "first@jnu.ac.kr", 250);
         redisRepository.set(closedKey(3L), "true", java.time.Duration.ofMinutes(5));
 
-        StockReservationResult closed = reserve(3L, 1L, "late@jnu.ac.kr", 300, 300, 250);
+        StockReservationResult closed = reserve(3L, 1L, "late@jnu.ac.kr", 250);
 
         assertThat(first.isReserved()).isTrue();
         assertThat(closed.isClosed()).isTrue();
@@ -152,27 +156,119 @@ class RedisStockReservationConcurrencyTest {
         assertThat(redisRepository.xLength(streamKey(3L))).isEqualTo(1L);
     }
 
+    @Test
+    @DisplayName("initialized 마커가 유실되면 DB 값으로 재생성하지 않고 예약을 차단한다")
+    void rejectsReservationWhenInitializedMarkerIsLost() {
+        initialize(4L, 1L, 300, 300);
+        StockReservationResult first = reserve(4L, 1L, "first@jnu.ac.kr", 250);
+        redisRepository.delete(initializedKey(4L));
+
+        StockReservationResult unavailable = reserve(4L, 1L, "second@jnu.ac.kr", 250);
+
+        assertThat(first.isReserved()).isTrue();
+        assertThat(unavailable.isUnavailable()).isTrue();
+        assertThat(redisRepository.getIntegerValue(stockKey(4L, 1L))).contains(299);
+        assertThat(redisRepository.getIntegerValue(sequenceKey(4L, 1L))).contains(1);
+        assertThat(
+                        redisRepository.xReadGroupBlocking(
+                                streamKey(4L),
+                                "lost-marker",
+                                "consumer",
+                                10,
+                                Duration.ofMillis(10)))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("initialized 마커가 있어도 구간 stock이 유실되면 position과 Stream을 변경하지 않는다")
+    void rejectsReservationWhenSectorStockIsLost() {
+        initialize(5L, 1L, 300, 300);
+        redisRepository.delete(stockKey(5L, 1L));
+
+        StockReservationResult unavailable = reserve(5L, 1L, "student@jnu.ac.kr", 250);
+
+        assertThat(unavailable.isUnavailable()).isTrue();
+        assertThat(redisRepository.getIntegerValue(stockKey(5L, 1L))).isEmpty();
+        assertThat(redisRepository.getIntegerValue(sequenceKey(5L, 1L))).contains(0);
+        assertThat(
+                        redisRepository.xReadGroupBlocking(
+                                streamKey(5L), "lost-stock", "consumer", 10, Duration.ofMillis(10)))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("중복 OPEN 초기화는 이미 사용한 재고와 position을 덮어쓰지 않는다")
+    void duplicateInitializationDoesNotResetStockState() {
+        assertThat(initialize(6L, 1L, 300, 300)).isTrue();
+        assertThat(reserve(6L, 1L, "student@jnu.ac.kr", 250).isReserved()).isTrue();
+
+        boolean reinitialized = initialize(6L, 1L, 300, 300);
+
+        assertThat(reinitialized).isFalse();
+        assertThat(redisRepository.getIntegerValue(stockKey(6L, 1L))).contains(299);
+        assertThat(redisRepository.getIntegerValue(sequenceKey(6L, 1L))).contains(1);
+    }
+
+    @Test
+    @DisplayName("DB 스냅샷 복구 후 기존 신청은 중복 차단하고 다음 position부터 예약한다")
+    void rebuildsAdmissionStateFromDatabaseSnapshot() {
+        initialize(7L, 1L, 300, 300);
+        assertThat(reserve(7L, 1L, "redis@jnu.ac.kr", 250).isReserved()).isTrue();
+        redisRepository.delete(initializedKey(7L));
+        redisRepository.delete(stockKey(7L, 1L));
+        redisRepository.delete(sequenceKey(7L, 1L));
+        redisRepository.delete("parking-ticket:event:{7}:reserved:email");
+
+        boolean rebuilt =
+                redisRepository.rebuildEventStock(
+                        initializedKey(7L),
+                        "parking-ticket:event:{7}:reserved:email",
+                        closedKey(7L),
+                        List.of(
+                                new SectorStockInitialization(
+                                        stockKey(7L, 1L), sequenceKey(7L, 1L), 297, 3)),
+                        Set.of("redis@jnu.ac.kr", "fallback@jnu.ac.kr"));
+        StockReservationResult duplicate = reserve(7L, 1L, "fallback@jnu.ac.kr", 250);
+        StockReservationResult next = reserve(7L, 1L, "next@jnu.ac.kr", 250);
+
+        assertThat(rebuilt).isTrue();
+        assertThat(duplicate.isDuplicate()).isTrue();
+        assertThat(duplicate.getRemainingAmount()).isEqualTo(297);
+        assertThat(next.isReserved()).isTrue();
+        assertThat(next.getPosition()).isEqualTo(4);
+        assertThat(next.getRemainingAmount()).isEqualTo(296);
+        assertThat(redisRepository.getIntegerValue(sequenceKey(7L, 1L))).contains(4);
+        assertThat(redisRepository.xLength(streamKey(7L))).isEqualTo(2L);
+    }
+
     private StockReservationResult reserve(
-            Long eventId,
-            Long sectorId,
-            String email,
-            int initialRemainingAmount,
-            int issueAmount,
-            int capacity) {
+            Long eventId, Long sectorId, String email, int capacity) {
         return redisRepository.reserveStockAndAddToStream(
                 stockKey(eventId, sectorId),
-                "parking-ticket:event:{" + eventId + "}:sector:" + sectorId + ":sequence",
+                sequenceKey(eventId, sectorId),
                 "parking-ticket:event:{" + eventId + "}:reserved:email",
                 streamKey(eventId),
                 closedKey(eventId),
+                initializedKey(eventId),
                 "{\"email\":\"" + email + "\"}",
                 (long) email.hashCode(),
                 sectorId,
                 eventId,
                 email,
-                initialRemainingAmount,
-                issueAmount,
                 capacity);
+    }
+
+    private boolean initialize(Long eventId, Long sectorId, int remainingAmount, int issueAmount) {
+        return redisRepository.initializeEventStock(
+                initializedKey(eventId),
+                "parking-ticket:event:{" + eventId + "}:reserved:email",
+                closedKey(eventId),
+                List.of(
+                        new SectorStockInitialization(
+                                stockKey(eventId, sectorId),
+                                sequenceKey(eventId, sectorId),
+                                remainingAmount,
+                                issueAmount - remainingAmount)));
     }
 
     private String closedKey(Long eventId) {
@@ -183,8 +279,16 @@ class RedisStockReservationConcurrencyTest {
         return "쿠폰 발급 스트림:{" + eventId + "}";
     }
 
+    private String initializedKey(Long eventId) {
+        return "parking-ticket:event:{" + eventId + "}:initialized";
+    }
+
     private String stockKey(Long eventId, Long sectorId) {
         return "parking-ticket:event:{" + eventId + "}:sector:" + sectorId + ":stock";
+    }
+
+    private String sequenceKey(Long eventId, Long sectorId) {
+        return "parking-ticket:event:{" + eventId + "}:sector:" + sectorId + ":sequence";
     }
 
     private void await(CountDownLatch startSignal) {

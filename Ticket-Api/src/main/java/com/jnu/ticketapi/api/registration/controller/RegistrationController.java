@@ -52,7 +52,7 @@ public class RegistrationController {
         return ResponseEntity.ok(responseDto);
     }
 
-    @Operation(summary = "1차 신청", description = "1차 신청")
+    @Operation(summary = "1차 신청", description = "Redis에서 접수 순서와 결과를 확정한 뒤 응답하며 DB 저장은 비동기로 처리")
     @PostMapping("/registration/{event-id}")
     @ApiErrorExceptionsExample(FinalSaveExceptionDocs.class)
     public ResponseEntity<FinalSaveResponse> finalSave(

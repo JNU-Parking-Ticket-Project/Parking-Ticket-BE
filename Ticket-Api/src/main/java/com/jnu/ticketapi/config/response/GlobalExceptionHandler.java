@@ -113,10 +113,28 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         BaseErrorCode code = e.getErrorCode();
         ErrorReason errorReason = code.getErrorReason();
         logTicketCodeException(errorReason, request, e);
+        notifyServerError(errorReason, request, e);
         ErrorResponse errorResponse =
                 new ErrorResponse(errorReason, request.getRequestURL().toString());
         return ResponseEntity.status(HttpStatus.valueOf(errorReason.getStatus()))
                 .body(errorResponse);
+    }
+
+    private void notifyServerError(
+            ErrorReason errorReason, HttpServletRequest request, TicketCodeException exception) {
+        HttpStatus status = HttpStatus.valueOf(errorReason.getStatus());
+        if (!status.is5xxServerError()
+                || !Arrays.asList(environment.getActiveProfiles()).contains("prod")
+                || slackInternalErrorSender == null
+                || !(request instanceof ContentCachingRequestWrapper cachingRequest)) {
+            return;
+        }
+        try {
+            slackInternalErrorSender.execute(
+                    cachingRequest, exception, SecurityUtils.getCurrentUserId());
+        } catch (Exception notificationException) {
+            log.error("Failed to send Slack notification for TicketCodeException", notificationException);
+        }
     }
 
     private void logTicketCodeException(

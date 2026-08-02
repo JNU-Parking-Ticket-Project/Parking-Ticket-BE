@@ -1,9 +1,12 @@
 package com.jnu.ticketapi.api.event.handler;
 
 
+import com.jnu.ticketapi.api.event.service.RegistrationAdmissionCoordinator;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
+import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RedisStockSyncWorker {
 
     private final SectorAdaptor sectorAdaptor;
+    private final RegistrationAdmissionCoordinator registrationAdmissionCoordinator;
 
     @Autowired(required = false)
     private WaitingQueueService waitingQueueService;
@@ -31,7 +35,7 @@ public class RedisStockSyncWorker {
     @Scheduled(
             fixedDelayString = "${redis.stock-sync.fixed-delay-ms:10000}",
             initialDelayString = "${redis.stock-sync.initial-delay-ms:10000}")
-    @Transactional
+    @Transactional(readOnly = true)
     public void syncRemainingStock() {
         if (waitingQueueService == null) {
             return;
@@ -40,17 +44,30 @@ public class RedisStockSyncWorker {
     }
 
     void syncSector(Sector sector) {
-        waitingQueueService
-                .findRemainingStock(sector.getEvent().getId(), sector.getId())
-                .ifPresent(
-                        remainingAmount -> {
-                            sector.syncRemainingAmount(remainingAmount);
-                            sectorAdaptor.save(sector);
-                            log.info(
-                                    "Synced Redis stock to DB. eventId: {}, sectorId: {}, remaining: {}",
-                                    sector.getEvent().getId(),
-                                    sector.getId(),
-                                    remainingAmount);
-                        });
+        Long eventId = sector.getEvent().getId();
+        if (sector.getEvent().getEventStatus() != EventStatus.OPEN
+                || registrationAdmissionCoordinator.isRedisAdmissionUnavailable(eventId)) {
+            return;
+        }
+        try {
+            Optional<Integer> redisRemaining =
+                    waitingQueueService.findRemainingStock(eventId, sector.getId());
+            Integer dbRemaining = sector.getRemainingAmount();
+            if (redisRemaining.isEmpty()
+                    || dbRemaining == null
+                    || redisRemaining.get() > dbRemaining) {
+                registrationAdmissionCoordinator.activateRedisRecovery(
+                        eventId,
+                        new IllegalStateException(
+                                "Redis admission checkpoint is unsafe. sectorId="
+                                        + sector.getId()
+                                        + ", redisRemaining="
+                                        + redisRemaining.orElse(null)
+                                        + ", dbRemaining="
+                                        + dbRemaining));
+            }
+        } catch (RuntimeException exception) {
+            registrationAdmissionCoordinator.activateRedisRecovery(eventId, exception);
+        }
     }
 }

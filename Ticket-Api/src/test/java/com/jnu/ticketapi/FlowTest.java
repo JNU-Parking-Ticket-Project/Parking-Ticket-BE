@@ -39,6 +39,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -319,21 +320,21 @@ public class FlowTest implements UsingContainers {
                             .expectBody(CaptchaResponse.class)
                             .returnResult().getResponseBody().captchaCode();
 
+                    String studentNum = String.valueOf(studentNumSequence.incrementAndGet());
                     FinalSaveRequest request2 = FinalSaveRequestTestDataBuilder
                             .builder()
                             .withSelectSectorId(sectorId)
-                            .withStudentNum(String.valueOf(studentNumSequence.incrementAndGet()))
+                            .withStudentNum(studentNum)
                             .withCaptchaCode(captchaCode)
                             .withCaptchaAnswer("1")
                             .build();
 
-                    int statusCode = newClient.post().uri("/v1/registration/{event-id}", EVENT_VALUE)
+                    var response = newClient.post().uri("/v1/registration/{event-id}", EVENT_VALUE)
                             .bodyValue(request2)
                             .exchange()
                             .expectBody()
-                            .returnResult()
-                            .getStatus()
-                            .value();
+                            .returnResult();
+                    int statusCode = response.getStatus().value();
 
                     if (statusCode >= 200 && statusCode < 300) {
                         successFinalSaveCount.incrementAndGet();
@@ -343,7 +344,16 @@ public class FlowTest implements UsingContainers {
                         rejectedFinalSaveCount.incrementAndGet();
                         return;
                     }
-                    requestErrors.add(new AssertionError("Unexpected finalSave status: " + statusCode));
+                    byte[] responseBody = response.getResponseBody();
+                    requestErrors.add(
+                            new AssertionError(
+                                    "Unexpected finalSave response. sectorId=" + sectorId
+                                            + ", studentNum=" + studentNum
+                                            + ", status=" + statusCode
+                                            + ", body="
+                                            + (responseBody == null
+                                                    ? "<empty>"
+                                                    : new String(responseBody, StandardCharsets.UTF_8))));
                 } catch (Throwable e) {
                     requestErrors.add(e);
                 }
@@ -447,6 +457,7 @@ public class FlowTest implements UsingContainers {
 
     private void rescheduleJob() throws SchedulerException {
         scheduler.clear();
+        prepareEventPeriodForImmediateOpen();
 
         JobDetail openJob = createEventOpenJob();
         Trigger openTrigger = createEventOpenTrigger(openJob);
@@ -507,12 +518,21 @@ public class FlowTest implements UsingContainers {
                 .build();
 
         LocalDateTime now = LocalDateTime.now();
-        DateTimePeriod dateTimePeriod = new DateTimePeriod(now.plusSeconds(5), now.plusMinutes(10));
+        DateTimePeriod dateTimePeriod =
+                new DateTimePeriod(now.plusMinutes(5), now.plusMinutes(15));
 
         EventRegisterRequest registerRequest = new EventRegisterRequest(dateTimePeriod, "주차권 이벤트");
         client.post().uri("/v1/events")
                 .bodyValue(registerRequest)
                 .exchange().expectStatus().isOk();
+    }
+
+    private void prepareEventPeriodForImmediateOpen() {
+        LocalDateTime now = LocalDateTime.now();
+        Event event = eventRepository.findFirstByOrderByIdDesc().orElseThrow();
+        event.updateDateTimePeriod(
+                new DateTimePeriod(now.minusSeconds(1), now.plusMinutes(10)));
+        eventRepository.saveAndFlush(event);
     }
 
     private void createCaptcha() {
