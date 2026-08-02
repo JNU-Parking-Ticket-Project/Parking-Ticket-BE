@@ -4,6 +4,7 @@ import static com.jnu.ticketcommon.consts.TicketStatic.MAX_EMAIL_SEND_RETRY;
 
 import com.jnu.ticketdomain.domains.email.adaptor.EmailOutboxAdaptor;
 import com.jnu.ticketdomain.domains.email.domain.EmailOutbox;
+import com.jnu.ticketinfrastructure.model.MailSendResult;
 import com.jnu.ticketinfrastructure.service.MailService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,19 +42,28 @@ public class EmailOutboxWorker {
     }
 
     private void send(EmailOutbox outbox) {
-        boolean sent =
+        MailSendResult result =
                 mailService.sendRegistrationResultMail(
                         outbox.getEmail(),
                         outbox.getName(),
                         outbox.getResultStatus().getValue(),
                         outbox.getSequence());
 
-        if (sent) {
+        if (result.successful()) {
             emailOutboxAdaptor.markSent(outbox.getId());
             return;
         }
 
-        emailOutboxAdaptor.markFailed(outbox.getId());
-        log.warn("신청 결과 메일 outbox 발송 실패. outboxId: {}", outbox.getId());
+        boolean recorded =
+                emailOutboxAdaptor.markFailed(
+                        outbox.getId(), result.errorMessage(), MAX_EMAIL_SEND_RETRY);
+        if (!recorded) {
+            log.warn("신청 결과 메일 outbox 실패 상태 갱신 생략. outboxId: {}", outbox.getId());
+            return;
+        }
+        log.warn(
+                "신청 결과 메일 outbox 발송 실패. outboxId: {}, error: {}",
+                outbox.getId(),
+                result.errorMessage());
     }
 }

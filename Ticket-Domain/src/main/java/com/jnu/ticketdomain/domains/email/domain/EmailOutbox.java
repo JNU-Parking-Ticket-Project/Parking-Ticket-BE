@@ -65,6 +65,12 @@ public class EmailOutbox {
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
 
+    @Column(name = "failed_at")
+    private LocalDateTime failedAt;
+
+    @Column(name = "last_error", length = 1000)
+    private String lastError;
+
     @Column(name = "retry_count", nullable = false)
     private Integer retryCount = 0;
 
