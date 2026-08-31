@@ -18,12 +18,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class EventAdmissionControlService {
     private final EventAdaptor eventAdaptor;
+    private final EventAdmissionStateCache eventAdmissionStateCache;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void activateDatabaseFallback(Long eventId, Throwable cause) {
         Event event = eventAdaptor.findByIdForUpdate(eventId);
         EventAdmissionMode previousMode = event.getAdmissionMode();
         event.activateDatabaseAdmissionFallback();
+        eventAdmissionStateCache.putAfterCommit(
+                eventId,
+                new EventAdmissionStateCache.AdmissionState(
+                        event.getAdmissionMode(), event.getAdmissionEpoch()));
         if (previousMode != EventAdmissionMode.DB_FALLBACK) {
             if (cause == null) {
                 log.warn("Registration admission switched to DB fallback. eventId: {}", eventId);
@@ -38,7 +43,8 @@ public class EventAdmissionControlService {
 
     @Transactional(readOnly = true)
     public boolean isDatabaseFallback(Long eventId) {
-        return eventAdaptor.findById(eventId).getAdmissionMode() == EventAdmissionMode.DB_FALLBACK;
+        return eventAdmissionStateCache.get(eventId).admissionMode()
+                == EventAdmissionMode.DB_FALLBACK;
     }
 
     @Transactional(readOnly = true)

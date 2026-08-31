@@ -34,6 +34,7 @@ public class RegistrationAdmissionJournalService {
     private final EventAdaptor eventAdaptor;
     private final RegistrationAdaptor registrationAdaptor;
     private final UserAdaptor userAdaptor;
+    private final EventAdmissionStateCache eventAdmissionStateCache;
 
     @Value("${registration.admission.materialization-grace-ms:5000}")
     private long materializationGraceMillis;
@@ -50,6 +51,9 @@ public class RegistrationAdmissionJournalService {
             String registrationPayload,
             long receivedAt) {
         Event event = eventAdaptor.findByIdForAdmissionRead(eventId);
+        long admissionEpoch = event.getAdmissionEpoch() == null ? 0L : event.getAdmissionEpoch();
+        EventAdmissionStateCache.AdmissionState admissionState =
+                eventAdmissionStateCache.resolve(eventId, admissionEpoch, event::getAdmissionMode);
         userAdaptor.findByIdForUpdate(userId);
         String frozenRegistrationPayload =
                 registrationAdaptor
@@ -66,7 +70,7 @@ public class RegistrationAdmissionJournalService {
         if (existingJournal.isPresent()) {
             return existingAttempt(
                     existingJournal.get(),
-                    event.getAdmissionMode(),
+                    admissionState.admissionMode(),
                     userId,
                     sectorId,
                     registration.getEmail(),
@@ -85,10 +89,10 @@ public class RegistrationAdmissionJournalService {
                                 sectorId,
                                 userId,
                                 registration.getEmail(),
-                                event.getAdmissionEpoch(),
+                                admissionEpoch,
                                 frozenRegistrationPayload,
                                 receivedAt));
-        return new AdmissionAttempt(journal, event.getAdmissionMode(), false);
+        return new AdmissionAttempt(journal, admissionState.admissionMode(), false);
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -119,7 +123,8 @@ public class RegistrationAdmissionJournalService {
     @Transactional(readOnly = true)
     public AdmissionAttempt findExisting(
             Long eventId, String email, Long userId, Long sectorId, String registrationPayload) {
-        Event event = eventAdaptor.findByIdForAdmissionRead(eventId);
+        EventAdmissionStateCache.AdmissionState admissionState =
+                eventAdmissionStateCache.get(eventId);
         RegistrationAdmissionJournal journal =
                 admissionJournalAdaptor
                         .findByEventIdAndEmail(eventId, email)
@@ -131,7 +136,12 @@ public class RegistrationAdmissionJournalService {
                                                         + ", email="
                                                         + email));
         return existingAttempt(
-                journal, event.getAdmissionMode(), userId, sectorId, email, registrationPayload);
+                journal,
+                admissionState.admissionMode(),
+                userId,
+                sectorId,
+                email,
+                registrationPayload);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

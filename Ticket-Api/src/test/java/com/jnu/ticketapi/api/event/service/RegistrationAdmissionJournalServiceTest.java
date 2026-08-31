@@ -60,6 +60,7 @@ class RegistrationAdmissionJournalServiceTest {
     @Mock private EventAdaptor eventAdaptor;
     @Mock private RegistrationAdaptor registrationAdaptor;
     @Mock private UserAdaptor userAdaptor;
+    @Mock private EventAdmissionStateCache eventAdmissionStateCache;
     @Mock private Event event;
     @Mock private Registration registration;
 
@@ -73,7 +74,11 @@ class RegistrationAdmissionJournalServiceTest {
                         registrationResultPersistenceService,
                         eventAdaptor,
                         registrationAdaptor,
-                        userAdaptor);
+                        userAdaptor,
+                        eventAdmissionStateCache);
+        org.mockito.Mockito.lenient()
+                .when(eventAdmissionStateCache.resolve(eq(EVENT_ID), eq(ADMISSION_EPOCH), any()))
+                .thenReturn(admissionState());
         org.mockito.Mockito.lenient()
                 .when(eventAdaptor.findByIdForAdmissionRead(EVENT_ID))
                 .thenReturn(event);
@@ -441,6 +446,11 @@ class RegistrationAdmissionJournalServiceTest {
                         EVENT_ID, SECTOR_ID, USER_ID, EMAIL, ADMISSION_EPOCH, PAYLOAD, 1_000L);
         ReflectionTestUtils.setField(journal, "id", JOURNAL_ID);
         return journal;
+    }
+
+    private EventAdmissionStateCache.AdmissionState admissionState() {
+        return new EventAdmissionStateCache.AdmissionState(
+                EventAdmissionMode.REDIS, ADMISSION_EPOCH);
     }
 
     private Registration registration(String carNumber) {
