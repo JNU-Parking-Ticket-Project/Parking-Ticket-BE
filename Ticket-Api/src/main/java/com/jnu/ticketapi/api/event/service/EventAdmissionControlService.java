@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.api.event.service;
 
 
+import com.jnu.ticketapi.api.event.event.DatabaseFallbackActivatedEvent;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventAdmissionMode;
@@ -9,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventAdmissionControlService {
     private final EventAdaptor eventAdaptor;
     private final EventAdmissionStateCache eventAdmissionStateCache;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void activateDatabaseFallback(Long eventId, Throwable cause) {
@@ -38,6 +41,8 @@ public class EventAdmissionControlService {
                         eventId,
                         cause.toString());
             }
+            eventPublisher.publishEvent(
+                    DatabaseFallbackActivatedEvent.of(eventId, event.getAdmissionEpoch(), cause));
         }
     }
 
