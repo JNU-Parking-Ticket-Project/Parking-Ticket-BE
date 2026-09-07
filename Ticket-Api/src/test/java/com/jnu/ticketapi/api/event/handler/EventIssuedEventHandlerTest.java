@@ -130,20 +130,37 @@ class EventIssuedEventHandlerTest {
     }
 
     @Test
-    @DisplayName("RECEIVED 저널을 먼저 본 consumer는 본 저장을 미루고 Stream record를 ACK한다")
-    void handleDefersMaterializationAndAcknowledgesReceivedJournal() {
+    @DisplayName("RECEIVED 저널을 먼저 본 consumer도 본 저장을 완료한 뒤 Stream record를 ACK한다")
+    void handleMaterializesReceivedJournalBeforeAcknowledging() {
         StreamQueueMessage event = journalEvent("36-0");
         when(registrationResultPersistenceService.recordStreamDecision(
                         eq(40L), eq(7L), any(StockReservationResult.class), anyLong()))
-                .thenReturn(StreamDecisionAction.DEFER_MATERIALIZATION);
+                .thenReturn(StreamDecisionAction.MATERIALIZE);
 
         eventIssuedEventHandler.handle(event);
 
-        verify(registrationResultPersistenceService, never()).materializeConfirmedJournal(any());
+        verify(registrationResultPersistenceService).materializeConfirmedJournal(40L);
         verify(registrationResultPersistenceService, never())
                 .persistJournalWithDatabaseFallback(any(), any(Long.class));
         verify(waitingQueueService)
                 .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "36-0");
+    }
+
+    @Test
+    @DisplayName("RECEIVED 저널의 본 저장이 실패하면 Stream record를 ACK하지 않는다")
+    void handleKeepsReceivedJournalPendingOnMaterializationFailure() {
+        StreamQueueMessage event = journalEvent("36-1");
+        when(registrationResultPersistenceService.recordStreamDecision(
+                        eq(40L), eq(7L), any(StockReservationResult.class), anyLong()))
+                .thenReturn(StreamDecisionAction.MATERIALIZE);
+        when(registrationResultPersistenceService.materializeConfirmedJournal(40L))
+                .thenThrow(new IllegalStateException("신청서 본 저장 실패"));
+
+        assertThatThrownBy(() -> eventIssuedEventHandler.handle(event))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(waitingQueueService, never())
+                .acknowledgeAndDelete(EVENT_STREAM_KEY, REDIS_EVENT_ISSUE_GROUP, "36-1");
     }
 
     @Test

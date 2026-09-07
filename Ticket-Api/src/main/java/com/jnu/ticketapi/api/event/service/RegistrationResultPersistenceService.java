@@ -204,7 +204,7 @@ public class RegistrationResultPersistenceService {
                     reservation.getRemainingAmount(),
                     savedAt);
             admissionJournalAdaptor.saveAndFlush(journal);
-            return StreamDecisionAction.DEFER_MATERIALIZATION;
+            return StreamDecisionAction.MATERIALIZE;
         }
         if (journal.getDecisionSource() != RegistrationDecisionSource.REDIS) {
             return StreamDecisionAction.ACK_ONLY;
@@ -537,7 +537,6 @@ public class RegistrationResultPersistenceService {
     }
 
     public enum StreamDecisionAction {
-        DEFER_MATERIALIZATION,
         MATERIALIZE,
         DATABASE_FALLBACK,
         ACK_ONLY

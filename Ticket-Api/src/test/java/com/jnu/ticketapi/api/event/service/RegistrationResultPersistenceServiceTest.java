@@ -87,8 +87,8 @@ class RegistrationResultPersistenceServiceTest {
     }
 
     @Test
-    @DisplayName("RECEIVED 저널을 먼저 본 Stream consumer는 결정만 기록하고 본 저장을 미룬다")
-    void recordsReceivedStreamDecisionWithoutMaterializing() {
+    @DisplayName("RECEIVED 저널을 먼저 본 Stream consumer는 결정 기록 뒤 본 저장을 지시한다")
+    void recordsReceivedStreamDecisionAndRequestsMaterialization() {
         Event event = redisEvent();
         RegistrationAdmissionJournal journal = receivedJournal(event.getAdmissionEpoch());
         when(admissionJournalAdaptor.findByIdForUpdate(100L)).thenReturn(journal);
@@ -99,7 +99,7 @@ class RegistrationResultPersistenceServiceTest {
                 service.recordStreamDecision(
                         100L, event.getAdmissionEpoch(), reserved(1, 2), 1_234L);
 
-        assertThat(action).isEqualTo(StreamDecisionAction.DEFER_MATERIALIZATION);
+        assertThat(action).isEqualTo(StreamDecisionAction.MATERIALIZE);
         assertThat(journal.getState()).isEqualTo(RegistrationAdmissionState.DECIDED);
         assertThat(journal.getDecisionSource()).isEqualTo(RegistrationDecisionSource.REDIS);
         verify(admissionJournalAdaptor).saveAndFlush(journal);
