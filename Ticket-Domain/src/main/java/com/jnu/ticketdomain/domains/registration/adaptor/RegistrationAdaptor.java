@@ -36,10 +36,6 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
         return registrationRepository.save(registration);
     }
 
-    public void updateSavedAt(Registration registration) {
-        registrationRepository.updateSavedAt(registration.getId());
-    }
-
     @Override
     public void delete(Registration registration) {
         registrationRepository.delete(registration);
@@ -77,16 +73,13 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
         return registrationRepository.findByEmailAndIsSaved(email, flag);
     }
 
-    @Override
-    public List<Registration> findByIsDeletedFalseAndIsSavedTrue(Long eventId) {
-        return registrationRepository.findByIsDeletedFalseAndIsSavedTrue(eventId);
+    public Optional<Registration> findTemporaryByEmailAndEventIdForUpdate(
+            String email, Long eventId) {
+        return registrationRepository
+                .findTemporaryByEmailAndEventIdForUpdate(email, eventId)
+                .stream()
+                .findFirst();
     }
-
-    @Override
-    public List<Registration> findSavedByEventIdOrderBySavedAt(Long eventId) {
-        return registrationRepository.findSavedByEventIdOrderBySavedAt(eventId);
-    }
-
     public Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(Long eventId, int page) {
         Pageable pageable = PageRequest.of(page, REGISTRATION_SIZE);
         return registrationRepository.findByIsDeletedFalseAndIsSavedTrueByPage(eventId, pageable);
@@ -111,11 +104,6 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
     }
 
     @Override
-    public Integer findPositionBySavedAt(Long id, Long sectorId) {
-        return registrationRepository.findPositionBySavedAt(id, sectorId);
-    }
-
-    @Override
     public Boolean existsByIdAndIsSavedTrue(Long id) {
         return registrationRepository.existsByIdAndIsSavedTrue(id);
     }
@@ -129,9 +117,16 @@ public class RegistrationAdaptor implements RegistrationLoadPort, RegistrationRe
         return registrationRepository.findSavedByEmailAndEventId(email, eventId);
     }
 
-    public Optional<Registration> findSavedBySectorIdAndPosition(
-            Long sectorId, Integer position) {
+    public Optional<Registration> findSavedBySectorIdAndPosition(Long sectorId, Integer position) {
         return registrationRepository.findSavedBySectorIdAndPosition(sectorId, position);
+    }
+
+    public List<Registration> findSavedForAdmissionRecovery(Long eventId) {
+        return registrationRepository.findSavedForAdmissionRecovery(eventId);
+    }
+
+    public List<Integer> findSavedPositionsBySectorId(Long sectorId) {
+        return registrationRepository.findSavedPositionsBySectorId(sectorId);
     }
 
     @Override

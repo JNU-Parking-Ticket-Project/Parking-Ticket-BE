@@ -8,6 +8,7 @@ import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
+import com.jnu.ticketdomain.domains.events.exception.RedisStockUnavailableException;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,6 @@ public class UpdateEventStatusUseCase {
 
     private final EventAdaptor eventAdaptor;
     private final SectorAdaptor sectorAdaptor;
-    private final RegistrationAdmissionCoordinator registrationAdmissionCoordinator;
 
     @Autowired(required = false)
     private WaitingQueueService waitingQueueService;
@@ -32,9 +32,10 @@ public class UpdateEventStatusUseCase {
     @Transactional
     //    @HostRolesAllowed(role = MANAGER, findHostFrom = EVENT_ID)
     public EventResponse execute(Long eventId, UpdateEventStatusRequest updateEventStatusRequest) {
-        final Event event = eventAdaptor.findById(eventId);
+        final Event event = eventAdaptor.findByIdForUpdate(eventId);
         final EventStatus status = updateEventStatusRequest.getStatus();
         if (status == EventStatus.OPEN) {
+            event.validateReadyToOpen();
             initializeAdmission(eventId);
         }
         if (status == EventStatus.CLOSED && waitingQueueService != null) {
@@ -49,7 +50,8 @@ public class UpdateEventStatusUseCase {
             waitingQueueService.expireEventStockKeys(eventId, REDIS_STOCK_DRAIN_TIMEOUT);
         } catch (DataAccessException exception) {
             log.warn(
-                    "Redis event stock could not be closed; DB event status remains authoritative. eventId: {}",
+                    "Redis event stock could not be closed; DB event status remains authoritative."
+                            + " eventId: {}",
                     eventId,
                     exception);
         }
@@ -57,13 +59,17 @@ public class UpdateEventStatusUseCase {
 
     private void initializeAdmission(Long eventId) {
         if (waitingQueueService == null) {
-            registrationAdmissionCoordinator.activateDatabaseFallback(eventId, null);
-            return;
+            throw RedisStockUnavailableException.EXCEPTION;
         }
         try {
-            waitingQueueService.initializeEventStock(eventId, sectorAdaptor.findByEventId(eventId));
+            boolean initialized =
+                    waitingQueueService.initializeEventStock(
+                            eventId, sectorAdaptor.findByEventId(eventId));
+            if (!initialized) {
+                throw RedisStockUnavailableException.EXCEPTION;
+            }
         } catch (DataAccessException exception) {
-            registrationAdmissionCoordinator.activateDatabaseFallback(eventId, exception);
+            throw RedisStockUnavailableException.EXCEPTION;
         }
     }
 }

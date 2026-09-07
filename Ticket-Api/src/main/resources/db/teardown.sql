@@ -10,6 +10,7 @@ truncate table credential_code_tb;
 truncate table email_outbox;
 truncate table event;
 truncate table notice_tb;
+truncate table registration_admission_journal;
 truncate table registration_tb;
 truncate table sector;
 truncate table user_tb;
@@ -51,13 +52,13 @@ values (1, 40, '사회대 / 농대 / 수의대 / 치전원', 40, 0, 40, '1구간
        (5, 30, '자연대 / 약대 / 생활대', 30, 0, 30, '5구간', 1, 2, 2, false);
 
 insert into registration_tb(id, affiliation, car_num, created_at, email, is_light, is_saved, name, student_num,
-                            phone_num, sector_id, user_id, is_deleted, saved_at)
+                            phone_num, sector_id, user_id, is_deleted, saved_at, position, result_status, sequence)
 values
-    (1, '공과대학', '1234가1234', CURRENT_TIMESTAMP, 'user@jnu.ac.kr', true, false, '이진혁', '215555', '010-000-0000', 4, 3, false, null),
-    (2, '경영대학', '가1234', DATEADD('SECOND', -5, CURRENT_TIMESTAMP), 'council@jnu.ac.kr', true, true, '박영규', '192155', '010-000-0000', 4, 1, false, TIMESTAMPDIFF(SECOND, TIMESTAMP '1970-01-01 00:00:00', DATEADD('SECOND', -5, CURRENT_TIMESTAMP))),
-    (3, '농대', '나1234', DATEADD('SECOND', -4, CURRENT_TIMESTAMP), 'user2@jnu.ac.kr', true, true, '임채승', '1821555', '010-000-0000', 4, 4, true, TIMESTAMPDIFF(SECOND, TIMESTAMP '1970-01-01 00:00:00', DATEADD('SECOND', -4, CURRENT_TIMESTAMP))),
-    (4, '의대', '다1234', CURRENT_TIMESTAMP, 'user3@jnu.ac.kr', true, false, '김동완', '172155', '010-000-0000', 4, 5, true, null),
-    (5, '인문대', '라1234', CURRENT_TIMESTAMP, 'admin@jnu.ac.kr', true, false, '이윤성', '162155', '010-000-0000', 4, 2, false, null);
+    (1, '공과대학', '1234가1234', CURRENT_TIMESTAMP, 'user@jnu.ac.kr', true, false, '이진혁', '215555', '010-000-0000', 4, 3, false, null, null, null, null),
+    (2, '경영대학', '가1234', DATEADD('SECOND', -5, CURRENT_TIMESTAMP), 'council@jnu.ac.kr', true, true, '박영규', '192155', '010-000-0000', 4, 1, false, TIMESTAMPDIFF(MILLISECOND, TIMESTAMP '1970-01-01 00:00:00', DATEADD('SECOND', -5, CURRENT_TIMESTAMP)), 1, '합격', -2),
+    (3, '농대', '나1234', DATEADD('SECOND', -4, CURRENT_TIMESTAMP), 'user2@jnu.ac.kr', true, true, '임채승', '1821555', '010-000-0000', 4, 4, true, TIMESTAMPDIFF(MILLISECOND, TIMESTAMP '1970-01-01 00:00:00', DATEADD('SECOND', -4, CURRENT_TIMESTAMP)), null, null, null),
+    (4, '의대', '다1234', CURRENT_TIMESTAMP, 'user3@jnu.ac.kr', true, false, '김동완', '172155', '010-000-0000', 4, 5, true, null, null, null, null),
+    (5, '인문대', '라1234', CURRENT_TIMESTAMP, 'admin@jnu.ac.kr', true, false, '이윤성', '162155', '010-000-0000', 4, 2, false, null, null, null, null);
 
 
 insert into captcha_tb(id, answer, image_name)

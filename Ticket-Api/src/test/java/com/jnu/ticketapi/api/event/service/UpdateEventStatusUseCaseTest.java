@@ -1,5 +1,6 @@
 package com.jnu.ticketapi.api.event.service;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -11,6 +12,8 @@ import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
+import com.jnu.ticketdomain.domains.events.exception.AlreadyOpenStatusException;
+import com.jnu.ticketdomain.domains.events.exception.RedisStockUnavailableException;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import java.time.Duration;
 import java.util.List;
@@ -29,7 +32,6 @@ class UpdateEventStatusUseCaseTest {
     @Mock private EventAdaptor eventAdaptor;
     @Mock private SectorAdaptor sectorAdaptor;
     @Mock private WaitingQueueService waitingQueueService;
-    @Mock private RegistrationAdmissionCoordinator registrationAdmissionCoordinator;
     @Mock private Event event;
     @Mock private Sector sector;
 
@@ -37,12 +39,10 @@ class UpdateEventStatusUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        updateEventStatusUseCase =
-                new UpdateEventStatusUseCase(
-                        eventAdaptor, sectorAdaptor, registrationAdmissionCoordinator);
+        updateEventStatusUseCase = new UpdateEventStatusUseCase(eventAdaptor, sectorAdaptor);
         ReflectionTestUtils.setField(
                 updateEventStatusUseCase, "waitingQueueService", waitingQueueService);
-        when(eventAdaptor.findById(3L)).thenReturn(event);
+        when(eventAdaptor.findByIdForUpdate(3L)).thenReturn(event);
     }
 
     @Test
@@ -50,15 +50,78 @@ class UpdateEventStatusUseCaseTest {
     void executeInitializesRedisBeforeOpenStatusUpdate() {
         UpdateEventStatusRequest request = request(EventStatus.OPEN);
         when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
+        when(waitingQueueService.initializeEventStock(3L, List.of(sector))).thenReturn(true);
         when(eventAdaptor.updateEventStatus(event, EventStatus.OPEN)).thenReturn(event);
 
         updateEventStatusUseCase.execute(3L, request);
 
         InOrder order = inOrder(sectorAdaptor, waitingQueueService, eventAdaptor);
-        order.verify(eventAdaptor).findById(3L);
+        order.verify(eventAdaptor).findByIdForUpdate(3L);
         order.verify(sectorAdaptor).findByEventId(3L);
         order.verify(waitingQueueService).initializeEventStock(3L, List.of(sector));
         order.verify(eventAdaptor).updateEventStatus(event, EventStatus.OPEN);
+    }
+
+    @Test
+    @DisplayName("Redis 초기화가 실패하면 OPEN 상태 변경을 롤백한다")
+    void executeDoesNotOpenWhenRedisInitializationFails() {
+        UpdateEventStatusRequest request = request(EventStatus.OPEN);
+        when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
+        when(waitingQueueService.initializeEventStock(3L, List.of(sector)))
+                .thenThrow(
+                        new org.springframework.data.redis.RedisConnectionFailureException(
+                                "connection refused"));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> updateEventStatusUseCase.execute(3L, request))
+                .isSameAs(RedisStockUnavailableException.EXCEPTION);
+
+        verify(eventAdaptor, never()).updateEventStatus(event, EventStatus.OPEN);
+    }
+
+    @Test
+    @DisplayName("Redis 초기화가 false를 반환하면 OPEN 상태 변경을 거부한다")
+    void executeDoesNotOpenWhenRedisInitializationReturnsFalse() {
+        UpdateEventStatusRequest request = request(EventStatus.OPEN);
+        when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
+        when(waitingQueueService.initializeEventStock(3L, List.of(sector))).thenReturn(false);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> updateEventStatusUseCase.execute(3L, request))
+                .isSameAs(RedisStockUnavailableException.EXCEPTION);
+
+        verify(eventAdaptor, never()).updateEventStatus(event, EventStatus.OPEN);
+    }
+
+    @Test
+    @DisplayName("이미 OPEN된 이벤트의 OPEN 재요청은 Redis를 다시 초기화하지 않고 거부한다")
+    void executeRejectsRepeatedOpenRequest() {
+        UpdateEventStatusRequest request = request(EventStatus.OPEN);
+        doThrow(AlreadyOpenStatusException.EXCEPTION).when(event).validateReadyToOpen();
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> updateEventStatusUseCase.execute(3L, request))
+                .isSameAs(AlreadyOpenStatusException.EXCEPTION);
+
+        verify(sectorAdaptor, never()).findByEventId(3L);
+        verify(waitingQueueService, never())
+                .initializeEventStock(
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.anyList());
+        verify(eventAdaptor, never()).updateEventStatus(event, EventStatus.OPEN);
+    }
+
+    @Test
+    @DisplayName("scale-down 서버는 Redis 없이 OPEN 상태로 변경하지 않는다")
+    void executeDoesNotOpenWhenRedisIsDisabled() {
+        ReflectionTestUtils.setField(updateEventStatusUseCase, "waitingQueueService", null);
+        UpdateEventStatusRequest request = request(EventStatus.OPEN);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> updateEventStatusUseCase.execute(3L, request))
+                .isSameAs(RedisStockUnavailableException.EXCEPTION);
+
+        verify(eventAdaptor, never()).updateEventStatus(event, EventStatus.OPEN);
     }
 
     @Test
@@ -70,7 +133,7 @@ class UpdateEventStatusUseCaseTest {
         updateEventStatusUseCase.execute(3L, request);
 
         InOrder order = inOrder(waitingQueueService, eventAdaptor);
-        order.verify(eventAdaptor).findById(3L);
+        order.verify(eventAdaptor).findByIdForUpdate(3L);
         order.verify(waitingQueueService).markEventStockClosed(3L, Duration.ofMinutes(5));
         order.verify(waitingQueueService).expireEventStockKeys(3L, Duration.ofMinutes(5));
         order.verify(eventAdaptor).updateEventStatus(event, EventStatus.CLOSED);

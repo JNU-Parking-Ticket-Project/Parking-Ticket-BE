@@ -6,9 +6,11 @@ import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import javax.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,14 +20,30 @@ public interface EventRepository extends JpaRepository<Event, Long>, CustomEvent
 
     Optional<Event> findByEventStatus(EventStatus eventStatus);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select e from Event e where e.id = :eventId")
+    Optional<Event> findByIdForUpdate(@Param("eventId") Long eventId);
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("select e from Event e where e.id = :eventId")
+    Optional<Event> findByIdForAdmissionRead(@Param("eventId") Long eventId);
+
+    List<Event> findAllByEventStatusAndAdmissionMode(
+            EventStatus eventStatus,
+            com.jnu.ticketdomain.domains.events.domain.EventAdmissionMode admissionMode);
+
+    List<Event> findAllByAdmissionMode(
+            com.jnu.ticketdomain.domains.events.domain.EventAdmissionMode admissionMode);
+
     @Query(
-            "select e from Event e where e.dateTimePeriod.endAt < :time and e.eventStatus = com.jnu.ticketdomain.domains.events.domain.EventStatus.OPEN")
+            "select e from Event e where e.dateTimePeriod.endAt < :time and e.eventStatus ="
+                    + " com.jnu.ticketdomain.domains.events.domain.EventStatus.OPEN")
     List<Event> findByEndAtBeforeAndStatusOpen(@Param("time") LocalDateTime time);
 
     @Query(
-            "SELECT e FROM Event e "
-                    + "WHERE e.eventStatus = 'CLOSED' AND e.dateTimePeriod.endAt < :time "
-                    + "ORDER BY e.dateTimePeriod.endAt DESC, e.dateTimePeriod.startAt DESC, e.id DESC ")
+            "SELECT e FROM Event e WHERE e.eventStatus = 'CLOSED' AND e.dateTimePeriod.endAt <"
+                    + " :time ORDER BY e.dateTimePeriod.endAt DESC, e.dateTimePeriod.startAt DESC, e.id"
+                    + " DESC ")
     List<Event> findClosestClosedEvent(@Param("time") LocalDateTime time, Pageable pageable);
     //    @Query("SELECT e FROM Event e " +
     //        "WHERE e.eventStatus = 'CLOSED' AND e.dateTimePeriod.endAt < :time " +

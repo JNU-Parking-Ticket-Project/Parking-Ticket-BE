@@ -1,21 +1,19 @@
 package com.jnu.ticketapi.api.registration.controller;
 
+
 import com.jnu.ticketapi.api.registration.docs.FinalSaveExceptionDocs;
 import com.jnu.ticketapi.api.registration.docs.TemporarySaveExceptionFDocs;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.*;
 import com.jnu.ticketapi.api.registration.service.RegistrationUseCase;
-import com.jnu.ticketapi.api.user.ResultAssignment;
 import com.jnu.ticketapi.common.aop.GetEmail;
 import com.jnu.ticketcommon.annotation.ApiErrorExceptionsExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import javax.validation.Valid;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +26,6 @@ import org.springframework.web.bind.annotation.*;
 public class RegistrationController {
 
     private final RegistrationUseCase registrationUseCase;
-    private final ResultAssignment resultAssignment;
 
     @Operation(
             summary = "임시 저장 조회",
@@ -52,7 +49,10 @@ public class RegistrationController {
         return ResponseEntity.ok(responseDto);
     }
 
-    @Operation(summary = "1차 신청", description = "Redis에서 접수 순서와 결과를 확정한 뒤 응답하며 DB 저장은 비동기로 처리")
+    @Operation(
+            summary = "1차 신청",
+            description =
+                    "Redis에서 접수 순서와 결과를 확정하고 최소 결정 저널을 기록한 뒤 응답하며 신청서와 Email Outbox 저장은 비동기로 처리")
     @PostMapping("/registration/{event-id}")
     @ApiErrorExceptionsExample(FinalSaveExceptionDocs.class)
     public ResponseEntity<FinalSaveResponse> finalSave(
@@ -71,10 +71,12 @@ public class RegistrationController {
         return ResponseEntity.ok(responseDto);
     }
 
-    @Operation(summary = "신청 결과 집계", description = "신청 결과 집계")
+    @Operation(
+            summary = "신청 결과 확정 확인",
+            description = "신청 결과는 접수 결정 저널 저장 시점에 확정되며 기존 관리자 화면과의 호환을 위해 유지")
     @PostMapping("/registrations/assign/result/{eventId}")
-    public ResponseEntity<AssignResultResponse> assignResult(@PathVariable("eventId") Long eventId) {
-        resultAssignment.assign(eventId);
-        return ResponseEntity.ok().body(new AssignResultResponse("성공"));
+    public ResponseEntity<AssignResultResponse> assignResult(
+            @PathVariable("eventId") Long eventId) {
+        return ResponseEntity.ok().body(new AssignResultResponse("신청 결과는 신청 저장 시점에 확정됩니다."));
     }
 }

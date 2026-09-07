@@ -1,6 +1,7 @@
 package com.jnu.ticketbatch.config;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -11,7 +12,8 @@ import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
 import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
-import com.jnu.ticketinfrastructure.admission.RegistrationAdmissionFallbackGateway;
+import com.jnu.ticketdomain.domains.events.exception.AlreadyOpenStatusException;
+import com.jnu.ticketdomain.domains.events.exception.RedisStockUnavailableException;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
 import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import java.util.List;
@@ -24,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -34,7 +37,6 @@ class QuartzJobLauncherTest {
     @Mock private SectorAdaptor sectorAdaptor;
     @Mock private WaitingQueueService waitingQueueService;
     @Mock private RedisStreamConsumerManager streamConsumerManager;
-    @Mock private RegistrationAdmissionFallbackGateway admissionFallbackGateway;
     @Mock private JobExecutionContext context;
     @Mock private Event event;
     @Mock private Sector sector;
@@ -49,8 +51,6 @@ class QuartzJobLauncherTest {
         ReflectionTestUtils.setField(quartzJobLauncher, "waitingQueueService", waitingQueueService);
         ReflectionTestUtils.setField(
                 quartzJobLauncher, "streamConsumerManager", streamConsumerManager);
-        ReflectionTestUtils.setField(
-                quartzJobLauncher, "admissionFallbackGateway", admissionFallbackGateway);
     }
 
     @Test
@@ -71,33 +71,69 @@ class QuartzJobLauncherTest {
     }
 
     @Test
-    @DisplayName("Redis 연결 실패 시 DB fallback으로 이벤트를 OPEN한다")
-    void executeOpensEventWithDatabaseFallbackWhenRedisFails() throws Exception {
+    @DisplayName("Redis 연결 실패 시 이벤트를 OPEN하거나 consumer를 시작하지 않는다")
+    void executeDoesNotOpenEventWhenRedisFails() {
         givenEventJob();
         when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
         RedisConnectionFailureException failure =
                 new RedisConnectionFailureException("Redis unavailable");
         when(waitingQueueService.initializeEventStock(3L, List.of(sector))).thenThrow(failure);
 
-        quartzJobLauncher.execute(context);
+        assertThatThrownBy(() -> quartzJobLauncher.execute(context))
+                .isInstanceOf(JobExecutionException.class)
+                .hasCause(failure);
 
-        verify(admissionFallbackGateway).activateDatabaseFallback(3L, failure);
-        verify(eventAdaptor).updateEventStatus(event, EventStatus.OPEN);
-        verify(streamConsumerManager).start(3L);
+        verify(eventAdaptor, never()).updateEventStatus(event, EventStatus.OPEN);
+        verify(streamConsumerManager, never()).start(3L);
     }
 
     @Test
-    @DisplayName("Redis가 비활성화된 환경에서는 DB 이벤트만 OPEN으로 전환한다")
-    void executeOpensEventWhenRedisIsDisabled() {
+    @DisplayName("Redis 초기화가 false를 반환하면 이벤트를 OPEN하거나 consumer를 시작하지 않는다")
+    void executeDoesNotOpenEventWhenRedisInitializationReturnsFalse() {
+        givenEventJob();
+        when(sectorAdaptor.findByEventId(3L)).thenReturn(List.of(sector));
+        when(waitingQueueService.initializeEventStock(3L, List.of(sector))).thenReturn(false);
+
+        assertThatThrownBy(() -> quartzJobLauncher.execute(context))
+                .isInstanceOf(JobExecutionException.class)
+                .hasCause(RedisStockUnavailableException.EXCEPTION);
+
+        verify(eventAdaptor, never()).updateEventStatus(event, EventStatus.OPEN);
+        verify(streamConsumerManager, never()).start(3L);
+    }
+
+    @Test
+    @DisplayName("이미 OPEN된 이벤트의 스케줄 재실행은 Redis를 덮어쓰지 않고 거부한다")
+    void executeRejectsRepeatedOpenRequest() {
+        givenEventJob();
+        doThrow(AlreadyOpenStatusException.EXCEPTION).when(event).validateReadyToOpen();
+
+        assertThatThrownBy(() -> quartzJobLauncher.execute(context))
+                .isInstanceOf(JobExecutionException.class)
+                .hasCause(AlreadyOpenStatusException.EXCEPTION);
+
+        verify(sectorAdaptor, never()).findByEventId(3L);
+        verify(waitingQueueService, never())
+                .initializeEventStock(
+                        org.mockito.ArgumentMatchers.anyLong(),
+                        org.mockito.ArgumentMatchers.anyList());
+        verify(eventAdaptor, never()).updateEventStatus(event, EventStatus.OPEN);
+        verify(streamConsumerManager, never()).start(3L);
+    }
+
+    @Test
+    @DisplayName("scale-down 환경에서는 Redis 없이 이벤트를 OPEN하지 않는다")
+    void executeDoesNotOpenEventWhenRedisIsDisabled() {
         givenEventJob();
         ReflectionTestUtils.setField(quartzJobLauncher, "waitingQueueService", null);
         ReflectionTestUtils.setField(quartzJobLauncher, "streamConsumerManager", null);
 
-        assertThatCode(() -> quartzJobLauncher.execute(context)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> quartzJobLauncher.execute(context))
+                .isInstanceOf(JobExecutionException.class)
+                .hasCause(RedisStockUnavailableException.EXCEPTION);
 
         verify(sectorAdaptor, never()).findByEventId(3L);
-        verify(admissionFallbackGateway).activateDatabaseFallback(3L, null);
-        verify(eventAdaptor).updateEventStatus(event, EventStatus.OPEN);
+        verify(eventAdaptor, never()).updateEventStatus(event, EventStatus.OPEN);
     }
 
     private void givenEventJob() {

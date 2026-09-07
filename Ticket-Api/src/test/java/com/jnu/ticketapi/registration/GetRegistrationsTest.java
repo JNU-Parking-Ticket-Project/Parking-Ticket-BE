@@ -54,9 +54,25 @@ public class GetRegistrationsTest extends RestDocsConfig {
             // then
             resultActions.andExpectAll(
                     status().isOk(),
-                    jsonPath("$.registrations[0].email").value("council@jnu.ac.kr"));
+                    jsonPath("$.registrations[0].email").value("council@jnu.ac.kr"),
+                    jsonPath("$.registrations[0].position").value(1),
+                    jsonPath("$.registrations[0].resultStatus").value("합격"),
+                    jsonPath("$.registrations[0].sequence").value(-2),
+                    jsonPath("$.registrations[0].savedAtEstimated").value(false));
             resultActions.andDo(MockMvcResultHandlers.print()).andDo(document);
             log.info("responseBody : {}", responseBody);
+        }
+
+        @Test
+        @DisplayName("실패 : 일반 사용자는 신청 목록을 조회할 수 없다")
+        void userCannotReadRegistrationList() throws Exception {
+            String accessToken = jwtGenerator.generateAccessToken("user@jnu.ac.kr", "USER");
+
+            mvc.perform(
+                            get("/v1/registrations/1")
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + accessToken))
+                    .andExpect(status().isForbidden());
         }
     }
 }

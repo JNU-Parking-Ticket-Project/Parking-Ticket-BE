@@ -3,6 +3,7 @@ package com.jnu.ticketapi.api.registration.service;
 
 import com.jnu.ticketapi.api.captcha.service.ValidateCaptchaUseCase;
 import com.jnu.ticketapi.api.event.service.EventWithDrawUseCase;
+import com.jnu.ticketapi.api.event.service.RegistrationAdmissionJournalService;
 import com.jnu.ticketapi.api.registration.model.request.FinalSaveRequest;
 import com.jnu.ticketapi.api.registration.model.request.TemporarySaveRequest;
 import com.jnu.ticketapi.api.registration.model.response.FinalSaveResponse;
@@ -14,6 +15,7 @@ import com.jnu.ticketapi.config.SecurityUtils;
 import com.jnu.ticketcommon.annotation.UseCase;
 import com.jnu.ticketcommon.consts.TicketStatic;
 import com.jnu.ticketcommon.utils.Result;
+import com.jnu.ticketdomain.domains.captcha.exception.NotFoundCaptchaLogException;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.adaptor.SectorAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
@@ -37,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @UseCase
@@ -50,6 +53,7 @@ public class RegistrationUseCase {
     private final UserAdaptor userAdaptor;
     private final EventWithDrawUseCase eventWithDrawUseCase;
     private final ValidateCaptchaUseCase validateCaptchaUseCase;
+    private final RegistrationAdmissionJournalService registrationAdmissionJournalService;
 
     @Autowired(required = false)
     private RedisService redisService;
@@ -68,7 +72,7 @@ public class RegistrationUseCase {
         Optional<Registration> registration =
                 registrationAdaptor.findByEmailAndIsSaved(email, flag).stream().findFirst();
         return registration
-                .filter(r -> r.getSector().getEvent().getId().equals(eventId))
+                .filter(r -> eventId.equals(r.getEventId()))
                 .map(Result::success)
                 .orElseGet(() -> Result.failure(NotFoundRegistrationException.EXCEPTION));
     }
@@ -103,35 +107,98 @@ public class RegistrationUseCase {
         validateEventStatusIsClosed(event);
         Long currentUserId = SecurityUtils.getCurrentUserId();
         User user = findById(currentUserId);
+        Optional<Registration> temporaryRegistration =
+                registrationAdmissionJournalService.lockForTemporarySave(
+                        currentUserId, eventId, email);
         Registration registration =
                 requestDto.toEntity(requestDto, sector, email, user, event.getId()); // 등록을 만듦
-        return findResultByEmail(email, false, eventId)
-                .fold(
-                        tempRegistration -> {
-                            tempRegistration.update(registration);
-                            return TemporarySaveResponse.from(tempRegistration);
-                        },
-                        emptyCase -> {
-                            Registration jpaRegistration = saveAndFlush(registration);
-                            return TemporarySaveResponse.from(jpaRegistration);
-                        });
+        if (temporaryRegistration.isPresent()) {
+            Registration existing = temporaryRegistration.get();
+            existing.update(registration);
+            return TemporarySaveResponse.from(existing);
+        }
+        Registration jpaRegistration = saveAndFlush(registration);
+        return TemporarySaveResponse.from(jpaRegistration);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public FinalSaveResponse finalSave(FinalSaveRequest requestDto, String email, Long eventId) {
-        Sector sector = sectorAdaptor.findById(requestDto.selectSectorId());
+        // Redis 정상 경로의 짧은 journal 트랜잭션이 별도 커넥션을 사용할 수 있도록
+        // 최종 신청 전체를 감싸는 외부 트랜잭션을 두지 않는다.
+        Sector sector = sectorAdaptor.findByIdAndEventId(requestDto.selectSectorId(), eventId);
         Event event = eventAdaptor.findById(eventId);
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        User user = findById(currentUserId);
+        Registration registration =
+                requestDto.toEntity(requestDto, sector, email, user, event.getId());
+        Optional<RegistrationAdmissionJournalService.ExistingAdmission> existingAdmission =
+                findExistingAdmission(registration, currentUserId, sector, eventId);
+        if (existingAdmission.isPresent()) {
+            return resumeExistingAdmission(
+                    existingAdmission.get(), registration, sector, user, email, eventId);
+        }
+
         validateEventPublish(event);
         validateEventStatusIsClosed(event);
         validateEventPeriod(event);
+        Long captchaLogId;
+        try {
+            captchaLogId =
+                    validateCaptchaUseCase.validateWithoutConsume(
+                            requestDto.captchaCode(), requestDto.captchaAnswer());
+        } catch (NotFoundCaptchaLogException captchaAlreadyConsumed) {
+            existingAdmission = findExistingAdmission(registration, currentUserId, sector, eventId);
+            if (existingAdmission.isPresent()) {
+                return resumeExistingAdmission(
+                        existingAdmission.get(), registration, sector, user, email, eventId);
+            }
+            throw captchaAlreadyConsumed;
+        }
+        try {
+            checkDuplicateRegistration(email, eventId);
+        } catch (AlreadyExistRegistrationException duplicate) {
+            existingAdmission = findExistingAdmission(registration, currentUserId, sector, eventId);
+            if (existingAdmission.isPresent()) {
+                return resumeExistingAdmission(
+                        existingAdmission.get(), registration, sector, user, email, eventId);
+            }
+            throw duplicate;
+        }
 
-        validateCaptchaUseCase.execute(requestDto.captchaCode(), requestDto.captchaAnswer());
-        checkDuplicateRegistration(email, eventId);
-        Long currentUserId = SecurityUtils.getCurrentUserId();
-        User user = findById(currentUserId);
+        FinalSaveResponse response =
+                issueRegistration(registration, sector, user, currentUserId, email, eventId);
+        consumeCaptchaAfterAdmission(captchaLogId, currentUserId, eventId);
+        return response;
+    }
 
-        Registration registration =
-                requestDto.toEntity(requestDto, sector, email, user, event.getId());
+    private Optional<RegistrationAdmissionJournalService.ExistingAdmission> findExistingAdmission(
+            Registration registration, Long userId, Sector sector, Long eventId) {
+        return eventWithDrawUseCase.findExistingAdmission(registration, userId, sector, eventId);
+    }
+
+    private FinalSaveResponse resumeExistingAdmission(
+            RegistrationAdmissionJournalService.ExistingAdmission existingAdmission,
+            Registration registration,
+            Sector sector,
+            User user,
+            String email,
+            Long eventId) {
+        if (existingAdmission.accepted()) {
+            deleteRefreshTokenAfterReservation(email, user.getId(), eventId);
+            return FinalSaveResponse.from(registration);
+        }
+        eventWithDrawUseCase.resumeExistingAdmission(registration, user.getId(), sector, eventId);
+        deleteRefreshTokenAfterReservation(email, user.getId(), eventId);
+        return FinalSaveResponse.from(registration);
+    }
+
+    private FinalSaveResponse issueRegistration(
+            Registration registration,
+            Sector sector,
+            User user,
+            Long currentUserId,
+            String email,
+            Long eventId) {
         return findResultByEmail(email, false, eventId)
                 .fold(
                         tempRegistration ->
@@ -203,6 +270,20 @@ public class RegistrationUseCase {
         }
     }
 
+    private void consumeCaptchaAfterAdmission(Long captchaLogId, Long userId, Long eventId) {
+        try {
+            validateCaptchaUseCase.consume(captchaLogId);
+        } catch (RuntimeException exception) {
+            log.error(
+                    "Failed to consume captcha after registration was durably accepted. userId: {},"
+                            + " eventId: {}, captchaLogId: {}",
+                    userId,
+                    eventId,
+                    captchaLogId,
+                    exception);
+        }
+    }
+
     private void validateEventPublish(Event event) {
         if (Boolean.FALSE.equals(event.getPublish())) {
             throw NotPublishEventException.EXCEPTION;
@@ -242,7 +323,4 @@ public class RegistrationUseCase {
         }
     }
 
-    private Integer parseSectorNumber(String sectorNumber) {
-        return Integer.parseInt(sectorNumber.split("구간")[0]);
-    }
 }

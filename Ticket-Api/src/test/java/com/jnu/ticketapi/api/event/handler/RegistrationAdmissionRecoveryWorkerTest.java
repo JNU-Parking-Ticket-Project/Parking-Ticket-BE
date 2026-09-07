@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 import com.jnu.ticketapi.api.event.service.RegistrationAdmissionCoordinator;
 import com.jnu.ticketdomain.domains.events.adaptor.EventAdaptor;
 import com.jnu.ticketdomain.domains.events.domain.Event;
-import com.jnu.ticketdomain.domains.events.domain.EventStatus;
 import com.jnu.ticketdomain.domains.events.exception.NotFoundEventException;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,15 +34,15 @@ class RegistrationAdmissionRecoveryWorkerTest {
     }
 
     @Test
-    @DisplayName("서버 기동 시 OPEN 이벤트 신청을 차단한 뒤 Redis 복구를 시도한다")
+    @DisplayName("서버 기동 시 OPEN 이벤트의 Redis 상태 검증과 저널 복구를 coordinator에 위임한다")
     void restoresOpenEventAdmissionOnStartup() {
         when(eventAdaptor.findOpenEvent()).thenReturn(event);
         when(event.getId()).thenReturn(10L);
 
         worker.restoreOpenEventAdmission();
 
-        verify(registrationAdmissionCoordinator).activateRedisRecovery(10L, null);
-        verify(registrationAdmissionCoordinator).recover(10L);
+        verify(registrationAdmissionCoordinator).restoreOpenEventAdmission(10L);
+        verify(registrationAdmissionCoordinator, never()).activateDatabaseFallback(10L, null);
     }
 
     @Test
@@ -55,17 +54,16 @@ class RegistrationAdmissionRecoveryWorkerTest {
     }
 
     @Test
-    @DisplayName("주기 작업은 Redis 사용 불가 이벤트만 복구 대상으로 전달한다")
+    @DisplayName("주기 작업은 확정 저널과 종료된 이벤트를 포함한 DB fallback 저널을 복구한다")
     void recoversUnavailableEventsPeriodically() {
         when(registrationAdmissionCoordinator.recoveryEventIds()).thenReturn(Set.of(10L, 11L));
         when(eventAdaptor.findById(10L)).thenReturn(event);
         when(eventAdaptor.findById(11L)).thenReturn(closedEvent);
-        when(event.getEventStatus()).thenReturn(EventStatus.OPEN);
-        when(closedEvent.getEventStatus()).thenReturn(EventStatus.CLOSED);
 
         worker.recoverUnavailableEvents();
 
+        verify(registrationAdmissionCoordinator).reconcileConfirmedRegistrations();
         verify(registrationAdmissionCoordinator).recover(10L);
-        verify(registrationAdmissionCoordinator, never()).recover(11L);
+        verify(registrationAdmissionCoordinator).recover(11L);
     }
 }

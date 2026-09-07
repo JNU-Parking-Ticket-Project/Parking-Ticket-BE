@@ -2,227 +2,250 @@ package com.jnu.ticketapi.api.event.service;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.jnu.ticketdomain.domains.events.domain.EventAdmissionMode;
 import com.jnu.ticketdomain.domains.events.domain.Sector;
 import com.jnu.ticketdomain.domains.events.exception.RedisStockUnavailableException;
 import com.jnu.ticketdomain.domains.registration.domain.Registration;
-import com.jnu.ticketinfrastructure.admission.RegistrationAdmissionFallbackGateway;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.service.WaitingQueueService;
-import com.jnu.ticketinfrastructure.stream.RedisStreamConsumerManager;
 import java.time.Duration;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
-public class RegistrationAdmissionCoordinator implements RegistrationAdmissionFallbackGateway {
+public class RegistrationAdmissionCoordinator {
+    private static final Duration FALLBACK_REDIS_FENCE_TTL = Duration.ofDays(30);
 
     private final RegistrationResultPersistenceService registrationResultPersistenceService;
-    private final Map<Long, EventAdmissionState> eventStates = new ConcurrentHashMap<>();
+    private final RegistrationAdmissionJournalService registrationAdmissionJournalService;
+    private final EventAdmissionControlService eventAdmissionControlService;
 
     @Autowired(required = false)
     private WaitingQueueService waitingQueueService;
 
-    @Autowired(required = false)
-    private RedisStreamConsumerManager streamConsumerManager;
-
-    @Value("${redis.admission.recovery-drain-timeout-ms:30000}")
-    private long recoveryDrainTimeoutMillis = 30_000L;
-
-    public RegistrationAdmissionCoordinator(
-            RegistrationResultPersistenceService registrationResultPersistenceService) {
-        this.registrationResultPersistenceService = registrationResultPersistenceService;
-    }
-
     public StockReservationResult admit(
             Registration registration, Long userId, Sector sector, Long eventId)
             throws JsonProcessingException {
-        EventAdmissionState state = state(eventId);
-        Throwable redisFailure = null;
-        Lock readLock = state.lock.readLock();
-        readLock.lock();
-        try {
-            if (state.mode == AdmissionMode.DB_FALLBACK || waitingQueueService == null) {
-                return persistWithDatabaseFallback(registration, userId, sector.getId(), eventId);
-            }
-            if (state.mode == AdmissionMode.RECOVERING) {
-                throw RedisStockUnavailableException.EXCEPTION;
-            }
+        if (waitingQueueService == null) {
+            throw RedisStockUnavailableException.EXCEPTION;
+        }
 
-            StockReservationResult reservation = null;
+        String registrationPayload = waitingQueueService.convertRegistrationJSON(registration);
+        RegistrationAdmissionJournalService.AdmissionAttempt attempt =
+                openJournal(registration, userId, sector.getId(), eventId, registrationPayload);
+        if (attempt.hasResult()) {
+            return registrationAdmissionJournalService.toResult(attempt.journal());
+        }
+        if (attempt.admissionMode() == EventAdmissionMode.DB_FALLBACK) {
+            persistReceivedPrefix(eventId, attempt.journal().getId());
+            return persistWithDatabaseFallback(attempt.journal().getId());
+        }
+
+        StockReservationResult reservation = null;
+        RuntimeException redisFailure = null;
+        // Lua는 journalId 기준 멱등이다. 응답 유실 가능성을 먼저 한 번 재확인한 뒤
+        // Redis가 실제로 사용할 수 없을 때만 DB 순번으로 전환한다.
+        for (int redisAttempt = 0; redisAttempt < 2; redisAttempt++) {
             try {
                 reservation =
                         waitingQueueService.reserveAndRegisterQueue(
                                 waitingQueueService.eventStreamKey(eventId),
-                                registration,
-                                userId,
+                                attempt.journal().getRegistrationPayload(),
+                                attempt.journal().getEmail(),
+                                attempt.journal().getUserId(),
                                 sector,
-                                eventId);
-            } catch (DataAccessException exception) {
+                                eventId,
+                                attempt.journal().getId(),
+                                attempt.journal().getAdmissionEpoch());
+                break;
+            } catch (RuntimeException exception) {
                 redisFailure = exception;
             }
-
-            if (redisFailure == null) {
-                if (reservation.isUnavailable()) {
-                    redisFailure =
-                            new IllegalStateException(
-                                    "Redis admission state is incomplete. eventId=" + eventId);
-                } else {
-                    // Lua가 결정과 Stream 적재를 함께 끝냈으므로 DB 저장은 consumer에 맡긴다.
-                    return reservation;
-                }
-            }
-        } finally {
-            readLock.unlock();
+        }
+        if (reservation == null) {
+            return fallBackCurrentRequest(eventId, attempt.journal().getId(), redisFailure);
         }
 
-        // DB에는 아직 반영되지 않은 Redis 결정이 있을 수 있어 운영 중 즉시 DB fallback으로
-        // 전환할 수 없다. 복구가 Stream을 모두 drain할 때까지 신규 신청을 차단한다.
-        activateRedisRecovery(eventId, redisFailure);
-        throw RedisStockUnavailableException.EXCEPTION;
+        if (reservation.isUnavailable()) {
+            return fallBackCurrentRequest(
+                    eventId,
+                    attempt.journal().getId(),
+                    new IllegalStateException(
+                            "Redis admission state is incomplete. eventId=" + eventId));
+        }
+        if (reservation.isClosed() && eventAdmissionControlService.isOpenForAdmission(eventId)) {
+            return fallBackCurrentRequest(
+                    eventId,
+                    attempt.journal().getId(),
+                    new IllegalStateException(
+                            "Redis admission was fenced while the DB event remained open. eventId="
+                                    + eventId));
+        }
+        if (!reservation.isReserved()) {
+            try {
+                return registrationAdmissionJournalService.rejectRedisDecision(
+                        attempt.journal().getId(), reservation, System.currentTimeMillis());
+            } catch (AdmissionEpochChangedException exception) {
+                return fallBackCurrentRequest(eventId, attempt.journal().getId(), exception);
+            }
+        }
+
+        try {
+            return registrationResultPersistenceService.confirmRedisDecision(
+                    attempt.journal().getId(), reservation, System.currentTimeMillis());
+        } catch (AdmissionEpochChangedException
+                | DataIntegrityViolationException
+                | RedisAdmissionInvariantException exception) {
+            return fallBackCurrentRequest(eventId, attempt.journal().getId(), exception);
+        }
     }
 
     public boolean isDatabaseFallback(Long eventId) {
-        return state(eventId).mode == AdmissionMode.DB_FALLBACK;
+        return eventAdmissionControlService.isDatabaseFallback(eventId);
+    }
+
+    public Optional<RegistrationAdmissionJournalService.ExistingAdmission> findExistingAdmission(
+            Registration registration, Long userId, Sector sector, Long eventId) {
+        return registrationAdmissionJournalService.findExistingAdmission(
+                registration, userId, sector.getId(), eventId);
     }
 
     public boolean isRedisAdmissionUnavailable(Long eventId) {
-        return state(eventId).mode != AdmissionMode.REDIS;
+        return isDatabaseFallback(eventId);
     }
 
     public Set<Long> recoveryEventIds() {
-        return eventStates.entrySet().stream()
-                .filter(entry -> entry.getValue().mode != AdmissionMode.REDIS)
-                .map(Map.Entry::getKey)
-                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        return eventAdmissionControlService.fallbackEventIds();
     }
 
-    public void activateRedisRecovery(Long eventId, Throwable cause) {
-        EventAdmissionState state = state(eventId);
-        Lock writeLock = state.lock.writeLock();
-        writeLock.lock();
-        try {
-            if (state.mode == AdmissionMode.REDIS) {
-                state.mode = AdmissionMode.RECOVERING;
-                if (cause == null) {
-                    log.warn(
-                            "Registration admission paused until Redis recovery. eventId: {}",
-                            eventId);
-                } else {
-                    log.warn(
-                            "Registration admission paused until Redis recovery. eventId: {}, cause: {}",
-                            eventId,
-                            cause.toString());
-                }
-            }
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    @Override
     public void activateDatabaseFallback(Long eventId, Throwable cause) {
-        EventAdmissionState state = state(eventId);
-        Lock writeLock = state.lock.writeLock();
-        writeLock.lock();
-        try {
-            if (state.mode != AdmissionMode.DB_FALLBACK) {
-                state.mode = AdmissionMode.DB_FALLBACK;
-                if (cause == null) {
-                    log.warn(
-                            "Registration admission switched to DB fallback. eventId: {}", eventId);
-                } else {
-                    log.warn(
-                            "Registration admission switched to DB fallback. eventId: {}, cause: {}",
-                            eventId,
-                            cause.toString());
-                }
+        if (waitingQueueService != null) {
+            try {
+                waitingQueueService.markEventStockClosed(eventId, FALLBACK_REDIS_FENCE_TTL);
+            } catch (RuntimeException fenceFailure) {
+                log.warn(
+                        "Redis fallback fence could not be written; continuing with persistent DB"
+                                + " fallback. eventId: {}",
+                        eventId,
+                        fenceFailure);
             }
-        } finally {
-            writeLock.unlock();
         }
+        eventAdmissionControlService.activateDatabaseFallback(eventId, cause);
+    }
+
+    public void restoreOpenEventAdmission(Long eventId) {
+        if (isDatabaseFallback(eventId)) {
+            recover(eventId);
+            return;
+        }
+        try {
+            if (waitingQueueService != null
+                    && waitingQueueService.isAvailable()
+                    && waitingQueueService.isEventStockInitialized(eventId)) {
+                recover(eventId);
+                return;
+            }
+        } catch (RuntimeException exception) {
+            activateDatabaseFallback(eventId, exception);
+            recover(eventId);
+            return;
+        }
+        activateDatabaseFallback(
+                eventId,
+                new IllegalStateException("Redis admission is unavailable during startup"));
+        recover(eventId);
     }
 
     public boolean recover(Long eventId) {
-        EventAdmissionState state = state(eventId);
-        if (!state.recoveryRunning.compareAndSet(false, true)) {
-            return false;
-        }
         try {
-            if (waitingQueueService == null || !waitingQueueService.isAvailable()) {
-                return false;
+            if (isDatabaseFallback(eventId)) {
+                registrationAdmissionJournalService.recoverReceivedInDatabaseFallback(eventId);
             }
-            if (!drainExistingStream(eventId)) {
-                return false;
-            }
-
-            Lock writeLock = state.lock.writeLock();
-            writeLock.lock();
-            try {
-                EventStockRecoverySnapshot snapshot =
-                        registrationResultPersistenceService.prepareRecoverySnapshot(eventId);
-                if (!waitingQueueService.rebuildEventStock(
-                        eventId, snapshot.sectors(), snapshot.reservedEmails())) {
-                    return false;
-                }
-                state.mode = AdmissionMode.REDIS;
-            } finally {
-                writeLock.unlock();
-            }
-
-            if (streamConsumerManager != null) {
-                streamConsumerManager.start(eventId);
-            }
-            log.info("Redis admission state recovered from DB. eventId: {}", eventId);
+            registrationAdmissionJournalService.materializeMissingRegistrations(eventId);
             return true;
         } catch (RuntimeException exception) {
             log.warn(
-                    "Redis admission recovery failed; admission remains unavailable. eventId: {}",
+                    "Admission journal reconciliation failed; DB fallback remains active. eventId:"
+                            + " {}",
                     eventId,
                     exception);
             return false;
-        } finally {
-            state.recoveryRunning.set(false);
         }
     }
 
-    private boolean drainExistingStream(Long eventId) {
-        if (streamConsumerManager == null) {
-            return true;
+    public void reconcileConfirmedRegistrations() {
+        registrationAdmissionJournalService.materializeMissingRegistrations();
+    }
+
+    public int findMaxDecidedPosition(Long sectorId) {
+        return registrationAdmissionJournalService.findMaxDecidedPosition(sectorId);
+    }
+
+    private RegistrationAdmissionJournalService.AdmissionAttempt openJournal(
+            Registration registration,
+            Long userId,
+            Long sectorId,
+            Long eventId,
+            String registrationPayload) {
+        try {
+            return registrationAdmissionJournalService.openJournal(
+                    registration,
+                    userId,
+                    sectorId,
+                    eventId,
+                    registrationPayload,
+                    System.currentTimeMillis());
+        } catch (DataIntegrityViolationException conflict) {
+            try {
+                return registrationAdmissionJournalService.findExisting(
+                        eventId, registration.getEmail(), userId, sectorId, registrationPayload);
+            } catch (IllegalStateException noUniqueConflict) {
+                conflict.addSuppressed(noUniqueConflict);
+                throw conflict;
+            }
         }
-        Duration timeout = Duration.ofMillis(Math.max(1L, recoveryDrainTimeoutMillis));
-        return streamConsumerManager.requestDrain(eventId)
-                && streamConsumerManager.awaitDrainCompletion(eventId, timeout);
     }
 
-    private StockReservationResult persistWithDatabaseFallback(
-            Registration registration, Long userId, Long sectorId, Long eventId) {
-        return registrationResultPersistenceService.persistWithDatabaseFallback(
-                registration, userId, sectorId, eventId, System.currentTimeMillis());
+    private StockReservationResult fallBackCurrentRequest(
+            Long eventId, Long journalId, Throwable cause) {
+        activateDatabaseFallback(eventId, cause);
+        persistReceivedPrefix(eventId, journalId);
+        return persistWithDatabaseFallback(journalId);
     }
 
-    private EventAdmissionState state(Long eventId) {
-        return eventStates.computeIfAbsent(eventId, ignored -> new EventAdmissionState());
+    private void persistReceivedPrefix(Long eventId, Long throughJournalId) {
+        DataIntegrityViolationException lastConflict = null;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                registrationAdmissionJournalService.persistReceivedInDatabaseFallback(
+                        eventId, throughJournalId);
+                return;
+            } catch (DataIntegrityViolationException conflict) {
+                lastConflict = conflict;
+            }
+        }
+        throw new IllegalStateException(
+                "DB fallback 선행 순번 경합을 해결하지 못했습니다. eventId=" + eventId, lastConflict);
     }
 
-    private enum AdmissionMode {
-        REDIS,
-        RECOVERING,
-        DB_FALLBACK
-    }
-
-    private static final class EventAdmissionState {
-        private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
-        private final AtomicBoolean recoveryRunning = new AtomicBoolean();
-        private volatile AdmissionMode mode = AdmissionMode.REDIS;
+    private StockReservationResult persistWithDatabaseFallback(Long journalId) {
+        DataIntegrityViolationException lastConflict = null;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                return registrationResultPersistenceService.persistJournalWithDatabaseFallback(
+                        journalId, System.currentTimeMillis());
+            } catch (DataIntegrityViolationException conflict) {
+                lastConflict = conflict;
+            }
+        }
+        throw new IllegalStateException(
+                "DB fallback 순번 경합을 해결하지 못했습니다. journalId=" + journalId, lastConflict);
     }
 }

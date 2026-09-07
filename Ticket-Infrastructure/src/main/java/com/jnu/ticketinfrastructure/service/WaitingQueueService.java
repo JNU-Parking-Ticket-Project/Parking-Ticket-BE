@@ -14,6 +14,7 @@ import com.jnu.ticketinfrastructure.model.ChatMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterQueueMessage;
 import com.jnu.ticketinfrastructure.model.DeadLetterTransferResult;
 import com.jnu.ticketinfrastructure.model.RawStreamMessage;
+import com.jnu.ticketinfrastructure.model.RegistrationPayloadConverter;
 import com.jnu.ticketinfrastructure.model.SectorStockInitialization;
 import com.jnu.ticketinfrastructure.model.StockReservationResult;
 import com.jnu.ticketinfrastructure.model.StreamConsumerState;
@@ -26,7 +27,6 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,9 +64,15 @@ public class WaitingQueueService {
     }
 
     public StockReservationResult reserveAndRegisterQueue(
-            String key, Registration registration, Long userId, Sector sector, Long eventId)
+            String key,
+            String registrationPayload,
+            String email,
+            Long userId,
+            Sector sector,
+            Long eventId,
+            Long journalId,
+            Long admissionEpoch)
             throws JsonProcessingException {
-        String registrationString = convertRegistrationJSON(registration);
         StockReservationResult result =
                 redisRepository.reserveStockAndAddToStream(
                         stockKey(eventId, sector.getId()),
@@ -75,14 +81,19 @@ public class WaitingQueueService {
                         key,
                         closedKey(eventId),
                         initializedKey(eventId),
-                        registrationString,
+                        decisionKey(eventId),
+                        registrationPayload,
                         userId,
                         sector.getId(),
                         eventId,
-                        registration.getEmail(),
-                        sector.getInitSectorCapacity());
+                        email,
+                        sector.getInitSectorCapacity(),
+                        sector.getIssueAmount(),
+                        journalId,
+                        admissionEpoch);
         tracker.info(
-                "Reserved Redis stock. sectorId: {}, reserved: {}, position: {}, status: {}, remaining: {}",
+                "Reserved Redis stock. sectorId: {}, reserved: {}, position: {}, status: {},"
+                        + " remaining: {}",
                 sector.getId(),
                 result.isReserved(),
                 result.getPosition(),
@@ -123,23 +134,12 @@ public class WaitingQueueService {
         return redisRepository.ping();
     }
 
+    public boolean isEventStockInitialized(Long eventId) {
+        return redisRepository.hasKey(initializedKey(eventId));
+    }
+
     public String convertRegistrationJSON(Registration registration) {
-        JSONObject registrationJson = new JSONObject();
-        registrationJson.put("email", registration.getEmail());
-        registrationJson.put("name", registration.getName());
-        registrationJson.put("studentNum", registration.getStudentNum());
-        registrationJson.put("affiliation", registration.getAffiliation());
-        registrationJson.put("department", registration.getDepartment());
-        registrationJson.put("carNum", registration.getCarNum());
-        registrationJson.put("phoneNum", registration.getPhoneNum());
-        registrationJson.put("isDeleted", registration.isDeleted());
-        registrationJson.put("isLight", registration.isLight());
-        registrationJson.put("isSaved", registration.isSaved());
-        registrationJson.put("savedAt", registration.getSavedAt());
-        registrationJson.put("id", registration.getId());
-        registrationJson.put("createdAt", registration.getCreatedAt());
-        registrationJson.put("eventId", registration.getEventId());
-        return registrationJson.toString();
+        return RegistrationPayloadConverter.toJson(registration);
     }
 
     private void publishMessage(ChatMessage message) {
@@ -318,6 +318,10 @@ public class WaitingQueueService {
         return redisRepository.getIntegerValue(stockKey(eventId, sectorId));
     }
 
+    public Optional<Integer> findAssignedPosition(Long eventId, Long sectorId) {
+        return redisRepository.getIntegerValue(sequenceKey(eventId, sectorId));
+    }
+
     public void deleteEventStockKeys(Long eventId) {
         redisRepository.deleteKeysByPrefix(eventStockPrefix(eventId));
     }
@@ -352,6 +356,10 @@ public class WaitingQueueService {
 
     public String initializedKey(Long eventId) {
         return eventStockPrefix(eventId) + "initialized";
+    }
+
+    public String decisionKey(Long eventId) {
+        return eventStockPrefix(eventId) + "decision:journal";
     }
 
     private SectorStockInitialization toStockInitialization(Long eventId, Sector sector) {

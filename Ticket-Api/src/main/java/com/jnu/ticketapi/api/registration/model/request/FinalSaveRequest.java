@@ -21,15 +21,19 @@ public record FinalSaveRequest(
                 String name,
         @Schema(defaultValue = "183027", description = "학번")
                 @NotBlank(message = "학번을 " + ValidationMessage.MUST_NOT_BLANK)
+                @Size(max = 255, message = ValidationMessage.MUST_NOT_OVER_255)
                 String studentNum,
         @Schema(defaultValue = "공과대학", description = "소속대학")
                 @NotBlank(message = "소속대학을 " + ValidationMessage.MUST_NOT_BLANK)
+                @Size(max = 255, message = ValidationMessage.MUST_NOT_OVER_255)
                 String affiliation,
         @Schema(defaultValue = "컴퓨터정보통신공학과", description = "소속학과")
                 @NotBlank(message = "소속학과를 " + ValidationMessage.MUST_NOT_BLANK)
+                @Size(max = 255, message = ValidationMessage.MUST_NOT_OVER_255)
                 String department,
         @Schema(defaultValue = "12가1234", description = "차량번호")
                 @NotBlank(message = "차량번호를 " + ValidationMessage.MUST_NOT_BLANK)
+                @Size(max = 255, message = ValidationMessage.MUST_NOT_OVER_255)
                 String carNum,
         @Schema(defaultValue = "true", description = "경차 여부")
                 @NotNull(message = "경차 여부를 " + ValidationMessage.MUST_NOT_NULL)
@@ -61,7 +65,7 @@ public record FinalSaveRequest(
                 .sector(sector)
                 .isSaved(true)
                 .user(user)
-                .savedAt(System.nanoTime())
+                .savedAt(System.currentTimeMillis())
                 .eventId(eventId)
                 .build();
     }

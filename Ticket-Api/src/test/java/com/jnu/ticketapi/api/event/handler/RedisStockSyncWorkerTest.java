@@ -41,11 +41,13 @@ class RedisStockSyncWorkerTest {
     void keepsRedisModeWhenCheckpointsMatch() {
         Sector sector = sector();
         when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(3));
+        when(waitingQueueService.findAssignedPosition(10L, 20L)).thenReturn(Optional.of(0));
+        when(registrationAdmissionCoordinator.findMaxDecidedPosition(20L)).thenReturn(0);
 
         redisStockSyncWorker.syncSector(sector);
 
         verify(registrationAdmissionCoordinator, never())
-                .activateRedisRecovery(
+                .activateDatabaseFallback(
                         org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
         verify(sectorAdaptor, never()).save(sector);
     }
@@ -55,11 +57,13 @@ class RedisStockSyncWorkerTest {
     void keepsRedisModeWhenRedisIsTemporarilyAhead() {
         Sector sector = sector();
         when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(2));
+        when(waitingQueueService.findAssignedPosition(10L, 20L)).thenReturn(Optional.of(1));
+        when(registrationAdmissionCoordinator.findMaxDecidedPosition(20L)).thenReturn(0);
 
         redisStockSyncWorker.syncSector(sector);
 
         verify(registrationAdmissionCoordinator, never())
-                .activateRedisRecovery(
+                .activateDatabaseFallback(
                         org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
         verify(sectorAdaptor, never()).save(sector);
     }
@@ -68,12 +72,15 @@ class RedisStockSyncWorkerTest {
     @DisplayName("Redis가 DB보다 많은 재고를 가지면 초과 접수를 막고 복구를 시작한다")
     void activatesRecoveryWhenRedisCheckpointCanOversell() {
         Sector sector = sector();
-        when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(4));
+        sector.syncRemainingAmount(2);
+        when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(3));
+        when(waitingQueueService.findAssignedPosition(10L, 20L)).thenReturn(Optional.of(0));
+        when(registrationAdmissionCoordinator.findMaxDecidedPosition(20L)).thenReturn(0);
 
         redisStockSyncWorker.syncSector(sector);
 
         verify(registrationAdmissionCoordinator)
-                .activateRedisRecovery(
+                .activateDatabaseFallback(
                         org.mockito.ArgumentMatchers.eq(10L),
                         org.mockito.ArgumentMatchers.isA(IllegalStateException.class));
         verify(sectorAdaptor, never()).save(sector);
@@ -84,11 +91,61 @@ class RedisStockSyncWorkerTest {
     void activatesRecoveryWhenRedisStockIsMissing() {
         Sector sector = sector();
         when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.empty());
+        when(waitingQueueService.findAssignedPosition(10L, 20L)).thenReturn(Optional.of(0));
+        when(registrationAdmissionCoordinator.findMaxDecidedPosition(20L)).thenReturn(0);
 
         redisStockSyncWorker.syncSector(sector);
 
         verify(registrationAdmissionCoordinator)
-                .activateRedisRecovery(
+                .activateDatabaseFallback(
+                        org.mockito.ArgumentMatchers.eq(10L),
+                        org.mockito.ArgumentMatchers.isA(IllegalStateException.class));
+    }
+
+    @Test
+    @DisplayName("Redis position key가 없으면 DB fallback으로 전환한다")
+    void activatesRecoveryWhenRedisPositionIsMissing() {
+        Sector sector = sector();
+        when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(3));
+        when(waitingQueueService.findAssignedPosition(10L, 20L)).thenReturn(Optional.empty());
+        when(registrationAdmissionCoordinator.findMaxDecidedPosition(20L)).thenReturn(0);
+
+        redisStockSyncWorker.syncSector(sector);
+
+        verify(registrationAdmissionCoordinator)
+                .activateDatabaseFallback(
+                        org.mockito.ArgumentMatchers.eq(10L),
+                        org.mockito.ArgumentMatchers.isA(IllegalStateException.class));
+    }
+
+    @Test
+    @DisplayName("Redis remaining과 position의 합이 발급량과 다르면 DB fallback으로 전환한다")
+    void activatesRecoveryWhenRedisStockAndPositionDoNotMatchIssueAmount() {
+        Sector sector = sector();
+        when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(1));
+        when(waitingQueueService.findAssignedPosition(10L, 20L)).thenReturn(Optional.of(1));
+        when(registrationAdmissionCoordinator.findMaxDecidedPosition(20L)).thenReturn(1);
+
+        redisStockSyncWorker.syncSector(sector);
+
+        verify(registrationAdmissionCoordinator)
+                .activateDatabaseFallback(
+                        org.mockito.ArgumentMatchers.eq(10L),
+                        org.mockito.ArgumentMatchers.isA(IllegalStateException.class));
+    }
+
+    @Test
+    @DisplayName("Redis position이 DB 확정 high-water보다 뒤처지면 DB fallback으로 전환한다")
+    void activatesRecoveryWhenRedisPositionFallsBehindDatabaseHighWater() {
+        Sector sector = sector();
+        when(waitingQueueService.findRemainingStock(10L, 20L)).thenReturn(Optional.of(2));
+        when(waitingQueueService.findAssignedPosition(10L, 20L)).thenReturn(Optional.of(1));
+        when(registrationAdmissionCoordinator.findMaxDecidedPosition(20L)).thenReturn(2);
+
+        redisStockSyncWorker.syncSector(sector);
+
+        verify(registrationAdmissionCoordinator)
+                .activateDatabaseFallback(
                         org.mockito.ArgumentMatchers.eq(10L),
                         org.mockito.ArgumentMatchers.isA(IllegalStateException.class));
     }

@@ -94,6 +94,25 @@ class EventWithDrawUseCaseTest {
     }
 
     @Test
+    @DisplayName("기존 RECEIVED 신청은 이벤트 종료 뒤에도 멱등 Redis 결정을 재개한다")
+    void resumesExistingAdmissionWithoutRequiringOpenStatus() throws Exception {
+        Registration registration = registration();
+        StockReservationResult result =
+                StockReservationResult.reserved(1, UserStatus.SUCCESS, -2, 299);
+        when(sector.getEvent()).thenReturn(event);
+        when(event.getId()).thenReturn(10L);
+        when(registrationAdmissionCoordinator.admit(registration, 100L, sector, 10L))
+                .thenReturn(result);
+
+        StockReservationResult actual =
+                eventWithDrawUseCase.resumeExistingAdmission(
+                        registration, 100L, sector, 10L);
+
+        assertThat(actual).isSameAs(result);
+        verify(eventAdaptor, never()).findById(10L);
+    }
+
+    @Test
     @DisplayName("선택한 구간이 요청 이벤트 소속이 아니면 신청 조정기를 호출하지 않는다")
     void issueEventRejectsSectorFromAnotherEvent() throws Exception {
         Registration registration = registration();

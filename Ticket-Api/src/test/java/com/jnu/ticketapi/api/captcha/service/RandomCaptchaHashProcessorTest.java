@@ -4,8 +4,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.jnu.ticketapi.api.captcha.service.vo.CaptchaVerification;
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.EncryptionProperties;
@@ -92,6 +95,32 @@ class RandomCaptchaHashProcessorTest {
 
             // when & then
             assertDoesNotThrow(() -> hashProcessor.verify(captchaCode, userId));
+            verify(captchaLog).markUse();
+        }
+
+        @Test
+        @DisplayName("소비 없는 CAPTCHA 검증은 로그 상태를 변경하지 않는다")
+        void shouldVerifyWithoutConsumingCaptchaLog() {
+            // given
+            Long userId = 1L;
+            Long captchaId = 12345L;
+            Long captchaLogId = 99L;
+            HashResult hashResult = hashProcessor.hash(captchaId);
+
+            CaptchaLog captchaLog = mock(CaptchaLog.class);
+            when(captchaLog.getId()).thenReturn(captchaLogId);
+            when(captchaLog.getCaptchaId()).thenReturn(captchaId);
+            when(captchaLog.getSalt()).thenReturn(hashResult.getSalt());
+            when(captchaLogPort.findLatestByUserId(userId)).thenReturn(captchaLog);
+
+            // when
+            CaptchaVerification verification =
+                    hashProcessor.verifyWithoutConsume(hashResult.getCaptchaCode(), userId);
+
+            // then
+            assertThat(verification.captchaId()).isEqualTo(captchaId);
+            assertThat(verification.captchaLogId()).isEqualTo(captchaLogId);
+            verify(captchaLog, never()).markUse();
         }
 
         @Test

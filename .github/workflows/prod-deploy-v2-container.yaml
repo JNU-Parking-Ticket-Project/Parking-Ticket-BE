@@ -52,9 +52,39 @@ jobs:
           key: ${{ secrets.PROD_SSH_KEY }}
           port: ${{ secrets.PROD_SSH_PORT }}
           script: |
-            sudo docker rm -f $(sudo docker ps -qa)
+            set -eu
+            containers="$(sudo docker ps -qa)"
+            if [ -n "$containers" ]; then
+              sudo docker rm -f $containers
+            fi
             sudo docker pull ${{ inputs.image-name }}:latest
             sudo docker compose up -d
+
+            attempt=1
+            while [ "$attempt" -le 60 ]; do
+              if curl -fsS http://localhost:8080/api/actuator/health | grep -Eq '"status"[[:space:]]*:[[:space:]]*"UP"'; then
+                break
+              fi
+
+              app_container="$(sudo docker ps -aq --filter "ancestor=${{ inputs.image-name }}:latest" | head -n 1)"
+              if [ -n "$app_container" ]; then
+                app_status="$(sudo docker inspect --format '{{.State.Status}}' "$app_container")"
+                if [ "$app_status" = "exited" ] || [ "$app_status" = "dead" ]; then
+                  sudo docker logs --tail 200 "$app_container"
+                  exit 1
+                fi
+              fi
+
+              attempt=$((attempt + 1))
+              sleep 5
+            done
+
+            if [ "$attempt" -gt 60 ]; then
+              sudo docker compose ps
+              sudo docker compose logs --tail 200
+              exit 1
+            fi
+
             sudo docker image prune -f
 
       - name: Slack CICD 성공 알림

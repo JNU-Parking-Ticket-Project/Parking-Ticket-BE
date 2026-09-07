@@ -5,9 +5,11 @@ import com.jnu.ticketdomain.domains.registration.domain.Registration;
 import com.jnu.ticketdomain.domains.user.domain.User;
 import java.util.List;
 import java.util.Optional;
+import javax.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,28 +36,17 @@ public interface RegistrationRepository
     Optional<Registration> findByEmail(String email);
 
     @Query(
-            "select r from Registration r join fetch r.sector join fetch r.user where r.isSaved = true and r.sector.event.id = :eventId")
-    List<Registration> findByIsDeletedFalseAndIsSavedTrue(@Param("eventId") Long eventId);
-
-    @Query(
             "select r from Registration r "
-                    + "join fetch r.sector "
-                    + "join fetch r.user "
-                    + "where r.isDeleted = false and r.isSaved = true and r.eventId = :eventId "
-                    + "order by r.savedAt asc, r.id asc")
-    List<Registration> findSavedByEventIdOrderBySavedAt(@Param("eventId") Long eventId);
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query(
-            value =
-                    "update registration_tb set saved_at = (UNIX_TIMESTAMP(NOW(6))*1000000) where id = :id",
-            nativeQuery = true)
-    void updateSavedAt(@Param("id") Long registrationId);
-
-    @Query(
-            "select r from Registration r where r.isDeleted = false and r.isSaved = true and r.sector.event.id = :eventId")
+                    + "where r.isDeleted = false and r.isSaved = true "
+                    + "and r.sector.event.id = :eventId order by r.id asc")
     Page<Registration> findByIsDeletedFalseAndIsSavedTrueByPage(
             @Param("eventId") Long eventId, Pageable pageable);
+
+    @Query(
+            "select r from Registration r join fetch r.sector "
+                    + "where r.isDeleted = false and r.isSaved = true "
+                    + "and r.sector.event.id = :eventId order by r.id asc")
+    List<Registration> findSavedForAdmissionRecovery(@Param("eventId") Long eventId);
 
     @Query("UPDATE Registration r SET r.isDeleted = true WHERE r.sector.id = :sectorId")
     @Modifying(clearAutomatically = true)
@@ -74,21 +65,18 @@ public interface RegistrationRepository
     List<Registration> findByEmailAndIsSaved(
             @Param("email") String email, @Param("flag") boolean flag);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(
+            "select r from Registration r "
+                    + "where r.isDeleted = false and r.isSaved = false "
+                    + "and r.email = :email and r.eventId = :eventId order by r.id desc")
+    List<Registration> findTemporaryByEmailAndEventIdForUpdate(
+            @Param("email") String email, @Param("eventId") Long eventId);
+
     @Query("select r from Registration r where r.user.id = :userId")
     List<Registration> findByUserId(@Param("userId") Long userId);
 
     List<Registration> findByUser(User user);
-
-    @Query(
-            value =
-                    "SELECT row_num FROM ( "
-                            + "  SELECT r.id, ROW_NUMBER() OVER (ORDER BY r.saved_at) AS row_num "
-                            + "  FROM registration_tb r "
-                            + "  WHERE r.is_saved = true AND r.sector_id = :sectorId "
-                            + ") AS numbered_registrations "
-                            + "WHERE numbered_registrations.id = :id",
-            nativeQuery = true)
-    Integer findPositionBySavedAt(@Param("id") Long id, @Param("sectorId") Long sectorId);
 
     Boolean existsByIdAndIsSavedTrue(Long id);
 
@@ -110,4 +98,10 @@ public interface RegistrationRepository
                     + "and r.sector.id = :sectorId and r.position = :position")
     Optional<Registration> findSavedBySectorIdAndPosition(
             @Param("sectorId") Long sectorId, @Param("position") Integer position);
+
+    @Query(
+            "select r.position from Registration r "
+                    + "where r.isDeleted = false and r.isSaved = true "
+                    + "and r.sector.id = :sectorId and r.position is not null")
+    List<Integer> findSavedPositionsBySectorId(@Param("sectorId") Long sectorId);
 }

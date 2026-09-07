@@ -1,6 +1,7 @@
 package com.jnu.ticketapi.api.captcha.service;
 
 
+import com.jnu.ticketapi.api.captcha.service.vo.CaptchaVerification;
 import com.jnu.ticketapi.api.captcha.service.vo.HashResult;
 import com.jnu.ticketapi.application.helper.Encryption;
 import com.jnu.ticketapi.config.EncryptionProperties;
@@ -35,6 +36,18 @@ public class RandomCaptchaHashProcessor implements CaptchaHashProcessor {
     @Transactional
     @Override
     public Long verify(String encryptedCode, Long userId) {
+        CaptchaLog captchaLog = verifyLog(encryptedCode, userId);
+        captchaLog.markUse();
+        return captchaLog.getCaptchaId();
+    }
+
+    @Override
+    public CaptchaVerification verifyWithoutConsume(String encryptedCode, Long userId) {
+        CaptchaLog captchaLog = verifyLog(encryptedCode, userId);
+        return new CaptchaVerification(captchaLog.getCaptchaId(), captchaLog.getId());
+    }
+
+    private CaptchaLog verifyLog(String encryptedCode, Long userId) {
         CaptchaLog captchaLog = captchaLogPort.findLatestByUserId(userId);
         String decryptedCaptchaId = encryption.decrypt(encryptedCode, captchaLog.getSalt());
 
@@ -42,8 +55,7 @@ public class RandomCaptchaHashProcessor implements CaptchaHashProcessor {
             throw WrongCaptchaCodeException.EXCEPTION;
         }
 
-        captchaLog.markUse();
-        return captchaLog.getCaptchaId();
+        return captchaLog;
     }
 
     private String generateIv() {
